@@ -19,7 +19,7 @@ export function AuthSection() {
         isVisible && "is-visible"
       )}>
         <div className="mb-10 text-center">
-          <p className="mb-3 text-sm font-bold uppercase tracking-wider text-[#e6b800]">
+          <p className="mb-3 text-sm font-bold uppercase tracking-wider text-[#f0b400]">
             Get Started
           </p>
           <h2 className="mb-4 text-3xl font-bold tracking-tight text-foreground text-balance">
@@ -45,7 +45,7 @@ export function AuthSection() {
                     className={cn(
                     "rounded-xl border p-3 text-sm font-semibold transition-all duration-400",
                     profileType === type.id
-                      ? "border-[#e6b800]/25 bg-[#e6b800]/10 text-[#e6b800] shadow-[0_2px_12px_rgba(230,184,0,0.12),inset_0_1px_0_rgba(255,255,255,0.06)]"
+                      ? "border-[#f0b400]/25 bg-[#f0b400]/10 text-[#f0b400] shadow-[0_2px_12px_rgba(240,180,0,0.12),inset_0_1px_0_rgba(255,255,255,0.06)]"
                       : "border-border/20 bg-card/30 text-muted-foreground shadow-[0_1px_4px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.04)] hover:border-[#b0c4de]/30 hover:text-[#b0c4de]"
                   )}
                 >

@@ -46,7 +46,7 @@ interface ServiceModule {
 }
 
 const availableModules: ServiceModule[] = [
-  { id: "fiat-onramp", label: "Fiat On-ramp", description: "Convert local currency to USDC", icon: "arrow-up", color: "#e6b800", category: "payment" },
+  { id: "fiat-onramp", label: "Fiat On-ramp", description: "Convert local currency to USDC", icon: "arrow-up", color: "#f0b400", category: "payment" },
   { id: "escrow-basic", label: "Basic Escrow", description: "Lock funds until conditions met", icon: "lock", color: "#3b82f6", category: "escrow" },
   { id: "milestone-release", label: "Milestone Release", description: "Release by deliverable stages", icon: "layers", color: "#10b981", category: "release" },
   { id: "one-time-release", label: "One-time Release", description: "Single conditional release", icon: "zap", color: "#8b5cf6", category: "release" },
@@ -86,7 +86,7 @@ const categories = [
   { key: "extras" as const, label: "Extras" },
 ]
 
-/* ────────────────────────────────────────────────
+/* ───────────────────────────────────────���────────
    Page Component
    ──────────────────────────────────────────────── */
 
@@ -179,13 +179,13 @@ export default function PersonalDashboardPage() {
           </Link>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded-full bg-[#e6b800]/10 flex items-center justify-center text-[#e6b800]">
+              <div className="h-8 w-8 rounded-full bg-[#f0b400]/10 flex items-center justify-center text-[#f0b400]">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
               </div>
               <span className="text-sm text-foreground font-medium hidden sm:inline">Personal Account</span>
             </div>
             <Link href="/">
-              <Button variant="outline" size="sm" className="rounded-full border-border/60 text-muted-foreground hover:text-[#e6b800] hover:border-[#e6b800]/30 hover:bg-[#e6b800]/10 transition-all duration-300 bg-transparent">
+              <Button variant="outline" size="sm" className="rounded-full border-border/60 text-muted-foreground hover:text-[#f0b400] hover:border-[#f0b400]/30 hover:bg-[#f0b400]/10 transition-all duration-300 bg-transparent">
                 Sign Out
               </Button>
             </Link>
@@ -208,7 +208,7 @@ export default function PersonalDashboardPage() {
             { label: "Yield Earned", value: "+$20.80" },
             { label: "Completed", value: "7" },
           ].map((s) => (
-            <div key={s.label} className="rounded-2xl border border-border/40 bg-card/40 p-5 shadow-[0_4px_16px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.04)] transition-all duration-300 hover:border-[#e6b800]/30 hover:shadow-[0_4px_24px_rgba(230,184,0,0.08)]">
+            <div key={s.label} className="rounded-2xl border border-border/40 bg-card/40 p-5 shadow-[0_4px_16px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.04)] transition-all duration-300 hover:border-[#f0b400]/30 hover:shadow-[0_4px_24px_rgba(240,180,0,0.08)]">
               <p className="text-xs text-muted-foreground">{s.label}</p>
               <p className="mt-1 text-2xl font-semibold text-foreground">{s.value}</p>
             </div>
@@ -228,8 +228,8 @@ export default function PersonalDashboardPage() {
                 "rounded-full border px-5 py-2.5 text-sm font-medium transition-all duration-300",
                 "shadow-[0_2px_8px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.04)]",
                 activeTab === tab.id
-                  ? "border-[#e6b800]/50 bg-[#e6b800] text-background shadow-[0_4px_20px_rgba(230,184,0,0.3),inset_0_1px_0_rgba(255,255,255,0.15)]"
-                  : "border-border/60 bg-card/40 text-muted-foreground hover:border-[#e6b800]/30 hover:text-[#e6b800] hover:bg-[#e6b800]/5"
+                  ? "border-[#f0b400]/50 bg-[#f0b400] text-background shadow-[0_4px_20px_rgba(240,180,0,0.3),inset_0_1px_0_rgba(255,255,255,0.15)]"
+                  : "border-border/60 bg-card/40 text-muted-foreground hover:border-[#f0b400]/30 hover:text-[#f0b400] hover:bg-[#f0b400]/5"
               )}
             >
               {tab.label}
@@ -250,9 +250,9 @@ export default function PersonalDashboardPage() {
                       "flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-all duration-300",
                       "shadow-[0_2px_6px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.04)]",
                       i === currentStep
-                        ? "bg-[#e6b800] text-background shadow-[0_4px_16px_rgba(230,184,0,0.3),inset_0_1px_0_rgba(255,255,255,0.15)]"
+                        ? "bg-[#f0b400] text-background shadow-[0_4px_16px_rgba(240,180,0,0.3),inset_0_1px_0_rgba(255,255,255,0.15)]"
                         : i < currentStep
-                          ? "bg-[#e6b800]/10 text-[#e6b800]"
+                          ? "bg-[#f0b400]/10 text-[#f0b400]"
                           : "bg-secondary text-muted-foreground"
                     )}
                   >
@@ -264,7 +264,7 @@ export default function PersonalDashboardPage() {
                     <span className="hidden sm:inline">{step}</span>
                   </button>
                   {i < wizardSteps.length - 1 && (
-                    <div className={cn("h-px w-6", i < currentStep ? "bg-[#e6b800]" : "bg-border")} />
+                    <div className={cn("h-px w-6", i < currentStep ? "bg-[#f0b400]" : "bg-border")} />
                   )}
                 </div>
               ))}
@@ -285,13 +285,13 @@ export default function PersonalDashboardPage() {
                           "flex items-start gap-4 rounded-xl border p-5 text-left transition-all duration-300",
                           "shadow-[0_2px_8px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.04)]",
                           selectedServices.has(service.id)
-                            ? "border-[#e6b800]/40 bg-[#e6b800]/5 shadow-[0_2px_16px_rgba(230,184,0,0.1),inset_0_1px_0_rgba(255,255,255,0.06)]"
-                            : "border-border hover:border-[#e6b800]/30 hover:bg-[#e6b800]/5"
+                            ? "border-[#f0b400]/40 bg-[#f0b400]/5 shadow-[0_2px_16px_rgba(240,180,0,0.1),inset_0_1px_0_rgba(255,255,255,0.06)]"
+                            : "border-border hover:border-[#f0b400]/30 hover:bg-[#f0b400]/5"
                         )}
                       >
                         <div className={cn(
                           "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition-colors",
-                          selectedServices.has(service.id) ? "bg-[#e6b800]/10 text-[#e6b800]" : "bg-secondary text-muted-foreground"
+                          selectedServices.has(service.id) ? "bg-[#f0b400]/10 text-[#f0b400]" : "bg-secondary text-muted-foreground"
                         )}>
                           {serviceIconMap[service.icon] || iconMap[service.icon]}
                         </div>
@@ -322,13 +322,13 @@ export default function PersonalDashboardPage() {
                           "flex items-center gap-4 rounded-xl border p-5 text-left transition-all duration-300",
                           "shadow-[0_2px_8px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.04)]",
                           selectedRoles.has(role.id)
-                            ? "border-[#e6b800]/40 bg-[#e6b800]/5 shadow-[0_2px_16px_rgba(230,184,0,0.1)]"
-                            : "border-border hover:border-[#e6b800]/30 hover:bg-[#e6b800]/5"
+                            ? "border-[#f0b400]/40 bg-[#f0b400]/5 shadow-[0_2px_16px_rgba(240,180,0,0.1)]"
+                            : "border-border hover:border-[#f0b400]/30 hover:bg-[#f0b400]/5"
                         )}
                       >
                         <div className={cn(
                           "flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-colors",
-                          selectedRoles.has(role.id) ? "bg-[#e6b800]/10 text-[#e6b800]" : "bg-secondary text-muted-foreground"
+                          selectedRoles.has(role.id) ? "bg-[#f0b400]/10 text-[#f0b400]" : "bg-secondary text-muted-foreground"
                         )}>
                           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                         </div>
@@ -359,15 +359,15 @@ export default function PersonalDashboardPage() {
                           "flex items-center gap-4 rounded-xl border p-5 text-left transition-all duration-300",
                           "shadow-[0_2px_8px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.04)]",
                           selectedLogic === logic.id
-                            ? "border-[#e6b800]/40 bg-[#e6b800]/5 shadow-[0_2px_16px_rgba(230,184,0,0.1)]"
-                            : "border-border hover:border-[#e6b800]/30 hover:bg-[#e6b800]/5"
+                            ? "border-[#f0b400]/40 bg-[#f0b400]/5 shadow-[0_2px_16px_rgba(240,180,0,0.1)]"
+                            : "border-border hover:border-[#f0b400]/30 hover:bg-[#f0b400]/5"
                         )}
                       >
                         <div className={cn(
                           "flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors",
-                          selectedLogic === logic.id ? "border-[#e6b800]" : "border-muted-foreground"
+                          selectedLogic === logic.id ? "border-[#f0b400]" : "border-muted-foreground"
                         )}>
-                          {selectedLogic === logic.id && <div className="h-2.5 w-2.5 rounded-full bg-[#e6b800]" />}
+                          {selectedLogic === logic.id && <div className="h-2.5 w-2.5 rounded-full bg-[#f0b400]" />}
                         </div>
                         <div>
                           <p className="text-sm font-medium text-foreground">{logic.label}</p>
@@ -393,7 +393,7 @@ export default function PersonalDashboardPage() {
                         <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">{group.title}</p>
                         <div className="flex flex-wrap gap-2">
                           {group.items.map((item) => (
-                            <span key={item} className="rounded-full bg-[#e6b800]/10 px-3 py-1 text-xs font-medium text-[#e6b800]">{item}</span>
+                            <span key={item} className="rounded-full bg-[#f0b400]/10 px-3 py-1 text-xs font-medium text-[#f0b400]">{item}</span>
                           ))}
                         </div>
                       </div>
@@ -405,9 +405,9 @@ export default function PersonalDashboardPage() {
                     <div className="flex flex-wrap items-center justify-center gap-3">
                       {["Sender", "Fiat On-ramp", "USDC", "Escrow", selectedLogic === "milestones" ? "Milestone Release" : selectedLogic === "accumulation" ? "Accumulation" : "Single Release", "Receiver"].map((node, i, arr) => (
                         <div key={node} className="flex items-center gap-3">
-                          <span className="rounded-lg bg-[#e6b800]/10 px-3 py-1.5 text-xs font-medium text-[#e6b800]">{node}</span>
+                          <span className="rounded-lg bg-[#f0b400]/10 px-3 py-1.5 text-xs font-medium text-[#f0b400]">{node}</span>
                           {i < arr.length - 1 && (
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#e6b800]/40">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#f0b400]/40">
                               <path d="M5 12h14M12 5l7 7-7 7"/>
                             </svg>
                           )}
@@ -424,19 +424,19 @@ export default function PersonalDashboardPage() {
                   variant="outline"
                   onClick={() => setCurrentStep(Math.max(0, currentStep - 1))}
                   disabled={currentStep === 0}
-                  className="rounded-full border-border/60 text-foreground shadow-[0_2px_6px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.04)] hover:bg-[#e6b800]/10 hover:text-[#e6b800] hover:border-[#e6b800]/30 transition-all duration-300"
+                  className="rounded-full border-border/60 text-foreground shadow-[0_2px_6px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.04)] hover:bg-[#f0b400]/10 hover:text-[#f0b400] hover:border-[#f0b400]/30 transition-all duration-300"
                 >
                   Back
                 </Button>
                 {currentStep < wizardSteps.length - 1 ? (
                   <Button
                     onClick={() => setCurrentStep(Math.min(wizardSteps.length - 1, currentStep + 1))}
-                    className="rounded-full bg-[#e6b800] text-background shadow-[0_4px_16px_rgba(230,184,0,0.25),inset_0_1px_0_rgba(255,255,255,0.15)] hover:bg-[#ffd000] hover:shadow-[0_6px_24px_rgba(230,184,0,0.35)] transition-all duration-300"
+                    className="rounded-full bg-[#f0b400] text-background shadow-[0_4px_16px_rgba(240,180,0,0.25),inset_0_1px_0_rgba(255,255,255,0.15)] hover:bg-[#ffd000] hover:shadow-[0_6px_24px_rgba(240,180,0,0.35)] transition-all duration-300"
                   >
                     Next Step
                   </Button>
                 ) : (
-                  <Button className="rounded-full bg-[#e6b800] text-background shadow-[0_4px_16px_rgba(230,184,0,0.25),inset_0_1px_0_rgba(255,255,255,0.15)] hover:bg-[#ffd000] hover:shadow-[0_6px_24px_rgba(230,184,0,0.35)] transition-all duration-300">
+                  <Button className="rounded-full bg-[#f0b400] text-background shadow-[0_4px_16px_rgba(240,180,0,0.25),inset_0_1px_0_rgba(255,255,255,0.15)] hover:bg-[#ffd000] hover:shadow-[0_6px_24px_rgba(240,180,0,0.35)] transition-all duration-300">
                     Create Payment Flow
                   </Button>
                 )}
@@ -470,7 +470,7 @@ export default function PersonalDashboardPage() {
                               "shadow-[0_2px_6px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.04)]",
                               inPipeline
                                 ? "border-border/30 bg-secondary/20 opacity-40 cursor-not-allowed"
-                                : "border-border/40 bg-card/60 cursor-grab hover:border-[#e6b800]/30 hover:shadow-[0_2px_12px_rgba(230,184,0,0.1)] active:cursor-grabbing"
+                                : "border-border/40 bg-card/60 cursor-grab hover:border-[#f0b400]/30 hover:shadow-[0_2px_12px_rgba(240,180,0,0.1)] active:cursor-grabbing"
                             )}
                           >
                             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg" style={{ backgroundColor: `${mod.color}15`, color: mod.color }}>
@@ -481,7 +481,7 @@ export default function PersonalDashboardPage() {
                               <p className="text-xs text-muted-foreground truncate">{mod.description}</p>
                             </div>
                             {inPipeline && (
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="ml-auto shrink-0 text-[#e6b800]"><polyline points="20 6 9 17 4 12"/></svg>
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="ml-auto shrink-0 text-[#f0b400]"><polyline points="20 6 9 17 4 12"/></svg>
                             )}
                           </div>
                         )
@@ -497,7 +497,7 @@ export default function PersonalDashboardPage() {
               <div
                 className={cn(
                   "min-h-[500px] rounded-2xl border-2 border-dashed p-6 transition-all duration-300",
-                  pipeline.length === 0 && !draggingId ? "border-border/30 bg-card/20" : draggingId ? "border-[#e6b800]/40 bg-[#e6b800]/5" : "border-border/40 bg-card/30",
+                  pipeline.length === 0 && !draggingId ? "border-border/30 bg-card/20" : draggingId ? "border-[#f0b400]/40 bg-[#f0b400]/5" : "border-border/40 bg-card/30",
                   "shadow-[0_8px_32px_rgba(0,0,0,0.15)]"
                 )}
                 onDragOver={(e) => e.preventDefault()}
@@ -506,7 +506,7 @@ export default function PersonalDashboardPage() {
                 <div className="mb-4 flex items-center justify-between">
                   <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Your Payment Pipeline</h3>
                   {pipeline.length > 0 && (
-                    <Button variant="ghost" size="sm" onClick={() => setPipeline([])} className="text-xs text-muted-foreground hover:text-[#e6b800]">Clear All</Button>
+                    <Button variant="ghost" size="sm" onClick={() => setPipeline([])} className="text-xs text-muted-foreground hover:text-[#f0b400]">Clear All</Button>
                   )}
                 </div>
 
@@ -526,7 +526,7 @@ export default function PersonalDashboardPage() {
                         if (!mod) return null
                         return (
                           <div key={mod.id} className="flex items-center gap-2">
-                            <div onDragOver={(e) => handleDragOver(e, index)} onDrop={(e) => handleDrop(e, index)} className={cn("h-16 w-1 rounded-full transition-all", dragOverIndex === index ? "bg-[#e6b800] w-2" : "bg-transparent")} />
+                            <div onDragOver={(e) => handleDragOver(e, index)} onDrop={(e) => handleDrop(e, index)} className={cn("h-16 w-1 rounded-full transition-all", dragOverIndex === index ? "bg-[#f0b400] w-2" : "bg-transparent")} />
                             <div
                               draggable
                               onDragStart={() => handleDragStart(mod.id, "pipeline", index)}
@@ -534,7 +534,7 @@ export default function PersonalDashboardPage() {
                               className={cn(
                                 "group relative flex items-center gap-3 rounded-xl border p-4 cursor-grab active:cursor-grabbing transition-all duration-200",
                                 "shadow-[0_4px_16px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.05)]",
-                                "border-border/40 bg-card/60 hover:border-[#e6b800]/30",
+                                "border-border/40 bg-card/60 hover:border-[#f0b400]/30",
                                 draggingId === mod.id && "opacity-50 scale-95"
                               )}
                             >
@@ -550,10 +550,10 @@ export default function PersonalDashboardPage() {
                               </div>
                             </div>
                             {index < pipeline.length - 1 && (
-                              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="shrink-0 text-[#e6b800]/40"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="shrink-0 text-[#f0b400]/40"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                             )}
                             {index === pipeline.length - 1 && (
-                              <div onDragOver={(e) => handleDragOver(e, index + 1)} onDrop={(e) => handleDrop(e, index + 1)} className={cn("h-16 w-1 rounded-full transition-all", dragOverIndex === index + 1 ? "bg-[#e6b800] w-2" : "bg-transparent")} />
+                              <div onDragOver={(e) => handleDragOver(e, index + 1)} onDrop={(e) => handleDrop(e, index + 1)} className={cn("h-16 w-1 rounded-full transition-all", dragOverIndex === index + 1 ? "bg-[#f0b400] w-2" : "bg-transparent")} />
                             )}
                           </div>
                         )
@@ -569,8 +569,8 @@ export default function PersonalDashboardPage() {
                         })}
                       </div>
                       <div className="mt-4 flex gap-3">
-                        <Button className="rounded-full bg-[#e6b800] text-background shadow-[0_4px_20px_rgba(230,184,0,0.25)] hover:bg-[#ffd000] hover:shadow-[0_6px_28px_rgba(230,184,0,0.35)] transition-all duration-300">Deploy Escrow Flow</Button>
-                        <Button variant="outline" className="rounded-full border-border/60 text-muted-foreground hover:text-[#e6b800] hover:border-[#e6b800]/30 hover:bg-[#e6b800]/10 transition-all duration-300 bg-transparent">Save Draft</Button>
+                        <Button className="rounded-full bg-[#f0b400] text-background shadow-[0_4px_20px_rgba(240,180,0,0.25)] hover:bg-[#ffd000] hover:shadow-[0_6px_28px_rgba(240,180,0,0.35)] transition-all duration-300">Deploy Escrow Flow</Button>
+                        <Button variant="outline" className="rounded-full border-border/60 text-muted-foreground hover:text-[#f0b400] hover:border-[#f0b400]/30 hover:bg-[#f0b400]/10 transition-all duration-300 bg-transparent">Save Draft</Button>
                       </div>
                     </div>
                   </div>

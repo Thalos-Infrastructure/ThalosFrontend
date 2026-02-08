@@ -150,7 +150,7 @@ export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }
             </button>
 
             <div className="mb-8 text-center">
-              <p className="mb-2 text-sm font-bold uppercase tracking-wider text-[#d4a843]">Get Started</p>
+              <p className="mb-2 text-sm font-bold uppercase tracking-wider text-[#f0b400]">Get Started</p>
               <h3 className="text-2xl font-bold text-foreground">Sign In to Build</h3>
               <p className="mt-2 text-sm font-medium text-muted-foreground">
                 Choose your profile type and start assembling your payment platform.
@@ -170,7 +170,7 @@ export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }
                     className={cn(
                       "rounded-xl border p-3 text-sm font-semibold transition-all duration-400 shadow-[0_2px_6px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.04)]",
                       profileType === type.id
-                        ? "border-[#d4a843]/25 bg-[#d4a843]/10 text-[#d4a843]"
+                        ? "border-[#f0b400]/25 bg-[#f0b400]/10 text-[#f0b400]"
                         : "border-border/20 bg-card/30 text-muted-foreground hover:border-[#b0c4de]/30 hover:text-[#b0c4de]"
                     )}
                   >
