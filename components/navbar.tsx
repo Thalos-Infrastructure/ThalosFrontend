@@ -62,7 +62,7 @@ export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }
         <nav className="mx-auto flex h-24 max-w-7xl items-center justify-between px-6">
           <button
             onClick={() => onNavigate("hero")}
-            className="flex items-center"
+            className="group flex items-center [perspective:800px]"
             aria-label="Go to homepage"
           >
             <Image
@@ -70,7 +70,7 @@ export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }
               alt="Thalos"
               width={250}
               height={250}
-              className="h-36 w-auto object-contain"
+              className="h-36 w-auto object-contain transition-transform duration-700 ease-in-out [transform-style:preserve-3d] group-hover:[transform:rotateY(360deg)]"
               priority
             />
           </button>
