@@ -58,7 +58,7 @@ const escrows = [
 ]
 
 const statusConfig = {
-  locked: { label: "Locked", className: "bg-[#e6b800]/10 text-[#e6b800] border-[#e6b800]/20" },
+  locked: { label: "Locked", className: "bg-[#d4a843]/10 text-[#d4a843] border-[#d4a843]/20" },
   partial: { label: "Partial Release", className: "bg-amber-500/10 text-amber-400 border-amber-500/20" },
   completed: { label: "Completed", className: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" },
 }
@@ -77,7 +77,7 @@ export function DashboardSection() {
         isVisible && "is-visible"
       )}>
         <div className="mb-14 text-center">
-          <p className="mb-3 text-sm font-bold uppercase tracking-wider text-[#e6b800]">
+          <p className="mb-3 text-sm font-bold uppercase tracking-wider text-[#d4a843]">
             Dashboard
           </p>
           <h2 className="mb-4 text-3xl font-bold tracking-tight text-foreground md:text-4xl text-balance">
@@ -119,7 +119,7 @@ export function DashboardSection() {
                 "section-reveal-child group rounded-2xl border border-border/20 bg-card/40 p-5 backdrop-blur-sm transition-all duration-500",
                 "shadow-[0_4px_16px_rgba(0,0,0,0.25),0_1px_2px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.06)]",
                 "hover:border-[#b0c4de]/15 hover:shadow-[0_4px_20px_rgba(176,196,222,0.06),0_1px_2px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.06)]",
-                selectedEscrow === escrow.id && "border-[#e6b800]/15 bg-card/45",
+                selectedEscrow === escrow.id && "border-[#d4a843]/15 bg-card/45",
               )}
               style={{ transitionDelay: isVisible ? `${400 + idx * 100}ms` : "0ms" }}
             >
@@ -156,7 +156,7 @@ export function DashboardSection() {
                         <div
                           className={cn(
                             "h-full rounded-full transition-all",
-                            escrow.status === "completed" ? "bg-emerald-400" : "bg-[#e6b800]"
+                            escrow.status === "completed" ? "bg-emerald-400" : "bg-[#d4a843]"
                           )}
                           style={{ width: `${escrow.progress}%` }}
                         />
@@ -177,7 +177,7 @@ export function DashboardSection() {
                     {escrow.status !== "completed" && (
                       <Button
                         size="sm"
-                        className="rounded-full bg-[#e6b800] text-xs font-semibold text-background shadow-[0_2px_8px_rgba(230,184,0,0.2),0_1px_2px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.2)] hover:bg-[#b0c4de] hover:text-background hover:shadow-[0_2px_12px_rgba(176,196,222,0.3),0_1px_2px_rgba(0,0,0,0.4)] transition-all duration-400"
+                        className="rounded-full bg-[#d4a843] text-xs font-semibold text-background shadow-[0_2px_8px_rgba(212,168,67,0.2),0_1px_2px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.2)] hover:bg-[#b0c4de] hover:text-background hover:shadow-[0_2px_12px_rgba(176,196,222,0.3),0_1px_2px_rgba(0,0,0,0.4)] transition-all duration-400"
                       >
                         Release
                       </Button>
