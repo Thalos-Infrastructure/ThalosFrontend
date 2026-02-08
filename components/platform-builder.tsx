@@ -68,13 +68,13 @@ export function PlatformBuilder() {
         isVisible && "is-visible"
       )}>
         <div className="mb-14 text-center">
-          <p className="mb-3 text-sm font-bold uppercase tracking-wider text-[#e6b800]">
+          <p className="mb-3 text-sm font-bold uppercase tracking-wider text-[#f0b400]">
             Platform Builder
           </p>
-          <h2 className="mb-4 text-3xl font-bold tracking-tight text-foreground md:text-4xl text-balance">
+          <h2 className="mb-4 text-4xl font-bold tracking-tight text-foreground md:text-5xl text-balance">
             How to Configure Your Payment Flow
           </h2>
-          <p className="mx-auto max-w-2xl font-medium text-muted-foreground text-pretty">
+          <p className="mx-auto max-w-2xl text-base font-medium text-white/55 leading-relaxed text-pretty">
             Select the services and logic that match your use case. Thalos assembles the infrastructure for you.
           </p>
         </div>
@@ -88,9 +88,9 @@ export function PlatformBuilder() {
                 className={cn(
                   "flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold transition-all duration-400",
                   i === currentStep
-                    ? "bg-[#e6b800] text-background shadow-[0_4px_20px_rgba(230,184,0,0.3)]"
+                    ? "bg-[#f0b400] text-background shadow-[0_4px_20px_rgba(240,180,0,0.3)]"
                     : i < currentStep
-                      ? "bg-[#e6b800]/15 text-[#e6b800]"
+                      ? "bg-[#f0b400]/15 text-[#f0b400]"
                       : "bg-card/30 text-muted-foreground"
                 )}
               >
@@ -106,7 +106,7 @@ export function PlatformBuilder() {
                 <span className="hidden sm:inline">{step}</span>
               </button>
               {i < steps.length - 1 && (
-                <div className={cn("h-px w-6", i < currentStep ? "bg-[#e6b800]" : "bg-border/30")} />
+                <div className={cn("h-px w-6", i < currentStep ? "bg-[#f0b400]" : "bg-border/30")} />
               )}
             </div>
           ))}
@@ -126,13 +126,13 @@ export function PlatformBuilder() {
                     className={cn(
                       "flex w-full max-w-[280px] items-start gap-4 rounded-xl border p-5 text-left transition-all duration-400",
                       selectedServices.has(service.id)
-                        ? "border-[#e6b800]/25 bg-[#e6b800]/8 shadow-[0_4px_16px_rgba(230,184,0,0.12),0_1px_2px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.06)]"
+                        ? "border-[#f0b400]/25 bg-[#f0b400]/8 shadow-[0_4px_16px_rgba(240,180,0,0.12),0_1px_2px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.06)]"
                         : "border-border/20 bg-card/30 shadow-[0_2px_8px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.04)] hover:border-[#b0c4de]/30 hover:shadow-[0_4px_16px_rgba(176,196,222,0.08),inset_0_1px_0_rgba(255,255,255,0.04)]"
                     )}
                   >
                     <div className={cn(
                       "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition-colors",
-                      selectedServices.has(service.id) ? "bg-[#e6b800]/15 text-[#e6b800]" : "bg-card/40 text-muted-foreground"
+                      selectedServices.has(service.id) ? "bg-[#f0b400]/15 text-[#f0b400]" : "bg-card/40 text-muted-foreground"
                     )}>
                       {serviceIcons[service.icon]}
                     </div>
@@ -163,13 +163,13 @@ export function PlatformBuilder() {
                     className={cn(
                       "flex items-center gap-4 rounded-xl border p-5 text-left transition-all duration-400",
                       selectedRoles.has(role.id)
-                        ? "border-[#e6b800]/25 bg-[#e6b800]/8 shadow-[0_4px_16px_rgba(230,184,0,0.12),0_1px_2px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.06)]"
+                        ? "border-[#f0b400]/25 bg-[#f0b400]/8 shadow-[0_4px_16px_rgba(240,180,0,0.12),0_1px_2px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.06)]"
                         : "border-border/20 bg-card/30 shadow-[0_2px_8px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.04)] hover:border-[#b0c4de]/30 hover:shadow-[0_4px_16px_rgba(176,196,222,0.08),inset_0_1px_0_rgba(255,255,255,0.04)]"
                     )}
                   >
                     <div className={cn(
                       "flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-colors",
-                      selectedRoles.has(role.id) ? "bg-[#e6b800]/15 text-[#e6b800]" : "bg-card/40 text-muted-foreground"
+                      selectedRoles.has(role.id) ? "bg-[#f0b400]/15 text-[#f0b400]" : "bg-card/40 text-muted-foreground"
                     )}>
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
@@ -203,15 +203,15 @@ export function PlatformBuilder() {
                     className={cn(
                       "flex items-center gap-4 rounded-xl border p-5 text-left transition-all duration-400",
                       selectedLogic === logic.id
-                        ? "border-[#e6b800]/25 bg-[#e6b800]/8 shadow-[0_4px_16px_rgba(230,184,0,0.12),0_1px_2px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.06)]"
+                        ? "border-[#f0b400]/25 bg-[#f0b400]/8 shadow-[0_4px_16px_rgba(240,180,0,0.12),0_1px_2px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.06)]"
                         : "border-border/20 bg-card/30 shadow-[0_2px_8px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.04)] hover:border-[#b0c4de]/30 hover:shadow-[0_4px_16px_rgba(176,196,222,0.08),inset_0_1px_0_rgba(255,255,255,0.04)]"
                     )}
                   >
                     <div className={cn(
                       "flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors",
-                      selectedLogic === logic.id ? "border-[#e6b800]" : "border-muted-foreground/40"
+                      selectedLogic === logic.id ? "border-[#f0b400]" : "border-muted-foreground/40"
                     )}>
-                      {selectedLogic === logic.id && <div className="h-2.5 w-2.5 rounded-full bg-[#e6b800]" />}
+                      {selectedLogic === logic.id && <div className="h-2.5 w-2.5 rounded-full bg-[#f0b400]" />}
                     </div>
                     <div>
                       <p className="text-sm font-semibold text-foreground">{logic.label}</p>
@@ -236,7 +236,7 @@ export function PlatformBuilder() {
                     <p className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">{group.title}</p>
                     <div className="flex flex-wrap gap-2">
                       {group.items.map((item) => (
-                        <span key={item} className="rounded-full bg-[#e6b800]/10 px-3 py-1 text-xs font-semibold text-[#e6b800]">{item}</span>
+                        <span key={item} className="rounded-full bg-[#f0b400]/10 px-3 py-1 text-xs font-semibold text-[#f0b400]">{item}</span>
                       ))}
                     </div>
                   </div>
@@ -248,9 +248,9 @@ export function PlatformBuilder() {
                 <div className="flex flex-wrap items-center justify-center gap-3">
                   {["Sender", "Fiat On-ramp", "USDC", "Escrow", selectedLogic === "milestones" ? "Milestone Release" : selectedLogic === "accumulation" ? "Accumulation" : "Single Release", "Receiver"].map((node, i, arr) => (
                     <div key={node} className="flex items-center gap-3">
-                      <span className="rounded-lg bg-[#e6b800]/10 px-3 py-1.5 text-xs font-semibold text-[#e6b800]">{node}</span>
+                      <span className="rounded-lg bg-[#f0b400]/10 px-3 py-1.5 text-xs font-semibold text-[#f0b400]">{node}</span>
                       {i < arr.length - 1 && (
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#e6b800]/30">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#f0b400]/30">
                           <path d="M5 12h14M12 5l7 7-7 7"/>
                         </svg>
                       )}
@@ -274,12 +274,12 @@ export function PlatformBuilder() {
             {currentStep < steps.length - 1 ? (
               <Button
                 onClick={() => setCurrentStep(Math.min(steps.length - 1, currentStep + 1))}
-                className="rounded-full bg-[#e6b800] text-background font-semibold shadow-[0_4px_16px_rgba(230,184,0,0.25),0_1px_3px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.2)] hover:bg-[#b0c4de] hover:text-background hover:shadow-[0_4px_20px_rgba(176,196,222,0.35),0_1px_3px_rgba(0,0,0,0.4)] transition-all duration-400"
+                className="rounded-full bg-[#f0b400] text-background font-semibold shadow-[0_4px_16px_rgba(240,180,0,0.25),0_1px_3px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.2)] hover:bg-[#b0c4de] hover:text-background hover:shadow-[0_4px_20px_rgba(176,196,222,0.35),0_1px_3px_rgba(0,0,0,0.4)] transition-all duration-400"
               >
                 Next Step
               </Button>
             ) : (
-              <Button className="rounded-full bg-[#e6b800] text-background font-semibold shadow-[0_4px_16px_rgba(230,184,0,0.25),0_1px_3px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.2)] hover:bg-[#b0c4de] hover:text-background hover:shadow-[0_4px_20px_rgba(176,196,222,0.35),0_1px_3px_rgba(0,0,0,0.4)] transition-all duration-400">
+              <Button className="rounded-full bg-[#f0b400] text-background font-semibold shadow-[0_4px_16px_rgba(240,180,0,0.25),0_1px_3px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.2)] hover:bg-[#b0c4de] hover:text-background hover:shadow-[0_4px_20px_rgba(176,196,222,0.35),0_1px_3px_rgba(0,0,0,0.4)] transition-all duration-400">
                 Create Payment Flow
               </Button>
             )}

@@ -1,10 +1,11 @@
 "use client"
 
-import React, { useState, useRef, useCallback } from "react"
+import React, { useState, useRef, useCallback, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { ThalosLoader } from "@/components/thalos-loader"
 
 /* ────────────────────────────────────────────────
    Step wizard data (enterprise-focused)
@@ -47,7 +48,7 @@ interface ServiceModule {
 
 const businessModules: ServiceModule[] = [
   { id: "multi-escrow", label: "Multi-Party Escrow", description: "N-party escrow with custom roles", icon: "users", color: "#3b82f6", category: "infrastructure" },
-  { id: "fiat-gateway", label: "Fiat Gateway", description: "Multi-currency on/off ramp", icon: "globe", color: "#e6b800", category: "infrastructure" },
+  { id: "fiat-gateway", label: "Fiat Gateway", description: "Multi-currency on/off ramp", icon: "globe", color: "#f0b400", category: "infrastructure" },
   { id: "api-bridge", label: "API Bridge", description: "REST & webhook integrations", icon: "code", color: "#8b5cf6", category: "infrastructure" },
   { id: "marketplace-engine", label: "Marketplace Engine", description: "Buyer-seller payment orchestration", icon: "store", color: "#f59e0b", category: "commerce" },
   { id: "travel-accum", label: "Travel Accumulator", description: "Installment travel package flows", icon: "plane", color: "#06b6d4", category: "commerce" },
@@ -98,7 +99,13 @@ const enterpriseCategories = [
    ──────────────────────────────────────────────── */
 
 export default function BusinessDashboardPage() {
+  const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<"builder" | "wizard">("wizard")
+
+  useEffect(() => {
+    const timer = setTimeout(() => setLoading(false), 1400)
+    return () => clearTimeout(timer)
+  }, [])
 
   // Wizard state
   const [currentStep, setCurrentStep] = useState(0)
@@ -176,28 +183,37 @@ export default function BusinessDashboardPage() {
 
   const removeFromPipeline = (id: string) => setPipeline(pipeline.filter((m) => m !== id))
 
+  if (loading) return <ThalosLoader />
+
   return (
     <div className="min-h-screen bg-background text-foreground">
-      {/* Top Bar */}
-      <header className="sticky top-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-xl">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
-          <Link href="/" className="flex items-center gap-3">
-            <Image src="/thalos-logo-dark.png" alt="Thalos" width={160} height={44} className="h-9 w-auto object-contain mix-blend-screen" priority />
+      {/* Top Bar - matching landing navbar */}
+      <header className="sticky top-0 z-50 border-b border-white/5 bg-background/70 backdrop-blur-2xl">
+        <nav className="mx-auto flex h-24 max-w-7xl items-center justify-between px-6">
+          <Link href="/" className="group flex items-center [perspective:800px]">
+            <Image
+              src="/thalos-icon.png"
+              alt="Thalos"
+              width={250}
+              height={250}
+              className="h-36 w-auto object-contain transition-transform duration-700 ease-in-out [transform-style:preserve-3d] group-hover:[transform:rotateY(360deg)]"
+              priority
+            />
           </Link>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
               <div className="h-8 w-8 rounded-full bg-[#3b82f6]/10 flex items-center justify-center text-[#3b82f6]">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>
               </div>
-              <span className="text-sm text-foreground font-medium hidden sm:inline">Enterprise Account</span>
+              <span className="text-sm text-white/70 font-medium hidden sm:inline">Enterprise Account</span>
             </div>
             <Link href="/">
-              <Button variant="outline" size="sm" className="rounded-full border-border/60 text-muted-foreground hover:text-[#e6b800] hover:border-[#e6b800]/30 hover:bg-[#e6b800]/10 transition-all duration-300 bg-transparent">
+              <Button variant="outline" size="sm" className="rounded-full border-white/20 bg-white/5 text-white/70 font-semibold shadow-[0_2px_8px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.06)] hover:bg-white/10 hover:text-white hover:border-white/30 transition-all duration-300">
                 Sign Out
               </Button>
             </Link>
           </div>
-        </div>
+        </nav>
       </header>
 
       <div className="mx-auto max-w-7xl px-6 py-8">
@@ -215,7 +231,7 @@ export default function BusinessDashboardPage() {
             { label: "APIs Connected", value: "8", sub: "endpoints" },
             { label: "Yield Earned", value: "$12.5K", sub: "this month" },
           ].map((s) => (
-            <div key={s.label} className="rounded-2xl border border-border/40 bg-card/40 p-5 shadow-[0_4px_16px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.04)] transition-all duration-300 hover:border-[#e6b800]/30 hover:shadow-[0_4px_24px_rgba(230,184,0,0.08)]">
+            <div key={s.label} className="rounded-2xl border border-border/40 bg-card/40 p-5 shadow-[0_4px_16px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.04)] transition-all duration-300 hover:border-[#f0b400]/30 hover:shadow-[0_4px_24px_rgba(240,180,0,0.08)]">
               <p className="text-xs text-muted-foreground">{s.label}</p>
               <div className="mt-1 flex items-baseline gap-1">
                 <p className="text-2xl font-semibold text-foreground">{s.value}</p>
@@ -238,8 +254,8 @@ export default function BusinessDashboardPage() {
                 "rounded-full border px-5 py-2.5 text-sm font-medium transition-all duration-300",
                 "shadow-[0_2px_8px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.04)]",
                 activeTab === tab.id
-                  ? "border-[#e6b800]/50 bg-[#e6b800] text-background shadow-[0_4px_20px_rgba(230,184,0,0.3),inset_0_1px_0_rgba(255,255,255,0.15)]"
-                  : "border-border/60 bg-card/40 text-muted-foreground hover:border-[#e6b800]/30 hover:text-[#e6b800] hover:bg-[#e6b800]/5"
+                  ? "border-[#f0b400]/50 bg-[#f0b400] text-background shadow-[0_4px_20px_rgba(240,180,0,0.3),inset_0_1px_0_rgba(255,255,255,0.15)]"
+                  : "border-border/60 bg-card/40 text-muted-foreground hover:border-[#f0b400]/30 hover:text-[#f0b400] hover:bg-[#f0b400]/5"
               )}
             >
               {tab.label}
@@ -259,9 +275,9 @@ export default function BusinessDashboardPage() {
                       "flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-all duration-300",
                       "shadow-[0_2px_6px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.04)]",
                       i === currentStep
-                        ? "bg-[#e6b800] text-background shadow-[0_4px_16px_rgba(230,184,0,0.3),inset_0_1px_0_rgba(255,255,255,0.15)]"
+                        ? "bg-[#f0b400] text-background shadow-[0_4px_16px_rgba(240,180,0,0.3),inset_0_1px_0_rgba(255,255,255,0.15)]"
                         : i < currentStep
-                          ? "bg-[#e6b800]/10 text-[#e6b800]"
+                          ? "bg-[#f0b400]/10 text-[#f0b400]"
                           : "bg-secondary text-muted-foreground"
                     )}
                   >
@@ -272,7 +288,7 @@ export default function BusinessDashboardPage() {
                     </span>
                     <span className="hidden sm:inline">{step}</span>
                   </button>
-                  {i < wizardSteps.length - 1 && <div className={cn("h-px w-6", i < currentStep ? "bg-[#e6b800]" : "bg-border")} />}
+                  {i < wizardSteps.length - 1 && <div className={cn("h-px w-6", i < currentStep ? "bg-[#f0b400]" : "bg-border")} />}
                 </div>
               ))}
             </div>
@@ -284,8 +300,8 @@ export default function BusinessDashboardPage() {
                   <p className="mb-4 text-sm text-muted-foreground">Toggle the building blocks for your enterprise payment platform.</p>
                   <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                     {services.map((service) => (
-                      <button key={service.id} onClick={() => toggleService(service.id)} className={cn("flex items-start gap-4 rounded-xl border p-5 text-left transition-all duration-300", "shadow-[0_2px_8px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.04)]", selectedServices.has(service.id) ? "border-[#e6b800]/40 bg-[#e6b800]/5 shadow-[0_2px_16px_rgba(230,184,0,0.1)]" : "border-border hover:border-[#e6b800]/30 hover:bg-[#e6b800]/5")}>
-                        <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition-colors", selectedServices.has(service.id) ? "bg-[#e6b800]/10 text-[#e6b800]" : "bg-secondary text-muted-foreground")}>
+                      <button key={service.id} onClick={() => toggleService(service.id)} className={cn("flex items-start gap-4 rounded-xl border p-5 text-left transition-all duration-300", "shadow-[0_2px_8px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.04)]", selectedServices.has(service.id) ? "border-[#f0b400]/40 bg-[#f0b400]/5 shadow-[0_2px_16px_rgba(240,180,0,0.1)]" : "border-border hover:border-[#f0b400]/30 hover:bg-[#f0b400]/5")}>
+                        <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition-colors", selectedServices.has(service.id) ? "bg-[#f0b400]/10 text-[#f0b400]" : "bg-secondary text-muted-foreground")}>
                           {serviceIconMap[service.icon] || iconMap[service.icon]}
                         </div>
                         <div>
@@ -307,8 +323,8 @@ export default function BusinessDashboardPage() {
                   <p className="mb-4 text-sm text-muted-foreground">Define the participants in your payment flow.</p>
                   <div className="flex flex-col gap-3">
                     {roles.map((role) => (
-                      <button key={role.id} onClick={() => toggleRole(role.id)} className={cn("flex items-center gap-4 rounded-xl border p-5 text-left transition-all duration-300", "shadow-[0_2px_8px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.04)]", selectedRoles.has(role.id) ? "border-[#e6b800]/40 bg-[#e6b800]/5 shadow-[0_2px_16px_rgba(230,184,0,0.1)]" : "border-border hover:border-[#e6b800]/30 hover:bg-[#e6b800]/5")}>
-                        <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-colors", selectedRoles.has(role.id) ? "bg-[#e6b800]/10 text-[#e6b800]" : "bg-secondary text-muted-foreground")}>
+                      <button key={role.id} onClick={() => toggleRole(role.id)} className={cn("flex items-center gap-4 rounded-xl border p-5 text-left transition-all duration-300", "shadow-[0_2px_8px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.04)]", selectedRoles.has(role.id) ? "border-[#f0b400]/40 bg-[#f0b400]/5 shadow-[0_2px_16px_rgba(240,180,0,0.1)]" : "border-border hover:border-[#f0b400]/30 hover:bg-[#f0b400]/5")}>
+                        <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-colors", selectedRoles.has(role.id) ? "bg-[#f0b400]/10 text-[#f0b400]" : "bg-secondary text-muted-foreground")}>
                           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                         </div>
                         <div>
@@ -330,9 +346,9 @@ export default function BusinessDashboardPage() {
                   <p className="mb-4 text-sm text-muted-foreground">Choose how funds are released in your escrow flow.</p>
                   <div className="flex flex-col gap-3">
                     {paymentLogic.map((logic) => (
-                      <button key={logic.id} onClick={() => setSelectedLogic(logic.id)} className={cn("flex items-center gap-4 rounded-xl border p-5 text-left transition-all duration-300", "shadow-[0_2px_8px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.04)]", selectedLogic === logic.id ? "border-[#e6b800]/40 bg-[#e6b800]/5 shadow-[0_2px_16px_rgba(230,184,0,0.1)]" : "border-border hover:border-[#e6b800]/30 hover:bg-[#e6b800]/5")}>
-                        <div className={cn("flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors", selectedLogic === logic.id ? "border-[#e6b800]" : "border-muted-foreground")}>
-                          {selectedLogic === logic.id && <div className="h-2.5 w-2.5 rounded-full bg-[#e6b800]" />}
+                      <button key={logic.id} onClick={() => setSelectedLogic(logic.id)} className={cn("flex items-center gap-4 rounded-xl border p-5 text-left transition-all duration-300", "shadow-[0_2px_8px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.04)]", selectedLogic === logic.id ? "border-[#f0b400]/40 bg-[#f0b400]/5 shadow-[0_2px_16px_rgba(240,180,0,0.1)]" : "border-border hover:border-[#f0b400]/30 hover:bg-[#f0b400]/5")}>
+                        <div className={cn("flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors", selectedLogic === logic.id ? "border-[#f0b400]" : "border-muted-foreground")}>
+                          {selectedLogic === logic.id && <div className="h-2.5 w-2.5 rounded-full bg-[#f0b400]" />}
                         </div>
                         <div>
                           <p className="text-sm font-medium text-foreground">{logic.label}</p>
@@ -357,7 +373,7 @@ export default function BusinessDashboardPage() {
                         <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">{group.title}</p>
                         <div className="flex flex-wrap gap-2">
                           {group.items.map((item) => (
-                            <span key={item} className="rounded-full bg-[#e6b800]/10 px-3 py-1 text-xs font-medium text-[#e6b800]">{item}</span>
+                            <span key={item} className="rounded-full bg-[#f0b400]/10 px-3 py-1 text-xs font-medium text-[#f0b400]">{item}</span>
                           ))}
                         </div>
                       </div>
@@ -368,9 +384,9 @@ export default function BusinessDashboardPage() {
                     <div className="flex flex-wrap items-center justify-center gap-3">
                       {["Platform", "Fiat Gateway", "USDC", "Multi-Party Escrow", selectedLogic === "milestones" ? "Staged Release" : selectedLogic === "accumulation" ? "Accumulation" : "Single Release", "Recipients"].map((node, i, arr) => (
                         <div key={node} className="flex items-center gap-3">
-                          <span className="rounded-lg bg-[#e6b800]/10 px-3 py-1.5 text-xs font-medium text-[#e6b800]">{node}</span>
+                          <span className="rounded-lg bg-[#f0b400]/10 px-3 py-1.5 text-xs font-medium text-[#f0b400]">{node}</span>
                           {i < arr.length - 1 && (
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#e6b800]/40"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#f0b400]/40"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                           )}
                         </div>
                       ))}
@@ -380,15 +396,15 @@ export default function BusinessDashboardPage() {
               )}
 
               <div className="mt-8 flex items-center justify-between">
-                <Button variant="outline" onClick={() => setCurrentStep(Math.max(0, currentStep - 1))} disabled={currentStep === 0} className="rounded-full border-border/60 text-foreground shadow-[0_2px_6px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.04)] hover:bg-[#e6b800]/10 hover:text-[#e6b800] hover:border-[#e6b800]/30 transition-all duration-300">
+                <Button variant="outline" onClick={() => setCurrentStep(Math.max(0, currentStep - 1))} disabled={currentStep === 0} className="rounded-full border-border/60 text-foreground shadow-[0_2px_6px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.04)] hover:bg-[#f0b400]/10 hover:text-[#f0b400] hover:border-[#f0b400]/30 transition-all duration-300">
                   Back
                 </Button>
                 {currentStep < wizardSteps.length - 1 ? (
-                  <Button onClick={() => setCurrentStep(Math.min(wizardSteps.length - 1, currentStep + 1))} className="rounded-full bg-[#e6b800] text-background shadow-[0_4px_16px_rgba(230,184,0,0.25),inset_0_1px_0_rgba(255,255,255,0.15)] hover:bg-[#ffd000] hover:shadow-[0_6px_24px_rgba(230,184,0,0.35)] transition-all duration-300">
+                  <Button onClick={() => setCurrentStep(Math.min(wizardSteps.length - 1, currentStep + 1))} className="rounded-full bg-[#f0b400] text-background shadow-[0_4px_16px_rgba(240,180,0,0.25),inset_0_1px_0_rgba(255,255,255,0.15)] hover:bg-[#ffd000] hover:shadow-[0_6px_24px_rgba(240,180,0,0.35)] transition-all duration-300">
                     Next Step
                   </Button>
                 ) : (
-                  <Button className="rounded-full bg-[#e6b800] text-background shadow-[0_4px_16px_rgba(230,184,0,0.25),inset_0_1px_0_rgba(255,255,255,0.15)] hover:bg-[#ffd000] hover:shadow-[0_6px_24px_rgba(230,184,0,0.35)] transition-all duration-300">
+                  <Button className="rounded-full bg-[#f0b400] text-background shadow-[0_4px_16px_rgba(240,180,0,0.25),inset_0_1px_0_rgba(255,255,255,0.15)] hover:bg-[#ffd000] hover:shadow-[0_6px_24px_rgba(240,180,0,0.35)] transition-all duration-300">
                     Create Payment Flow
                   </Button>
                 )}
@@ -411,7 +427,7 @@ export default function BusinessDashboardPage() {
                       {businessModules.filter((m) => m.category === cat.key).map((mod) => {
                         const inPipeline = pipeline.includes(mod.id)
                         return (
-                          <div key={mod.id} draggable={!inPipeline} onDragStart={() => handleDragStart(mod.id, "palette")} onDragEnd={() => { setDraggingId(null); setDragOverIndex(null) }} className={cn("flex items-center gap-3 rounded-xl border p-3 transition-all duration-200", "shadow-[0_2px_6px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.04)]", inPipeline ? "border-border/30 bg-secondary/20 opacity-40 cursor-not-allowed" : "border-border/40 bg-card/60 cursor-grab hover:border-[#e6b800]/30 hover:shadow-[0_2px_12px_rgba(230,184,0,0.1)] active:cursor-grabbing")}>
+                          <div key={mod.id} draggable={!inPipeline} onDragStart={() => handleDragStart(mod.id, "palette")} onDragEnd={() => { setDraggingId(null); setDragOverIndex(null) }} className={cn("flex items-center gap-3 rounded-xl border p-3 transition-all duration-200", "shadow-[0_2px_6px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.04)]", inPipeline ? "border-border/30 bg-secondary/20 opacity-40 cursor-not-allowed" : "border-border/40 bg-card/60 cursor-grab hover:border-[#f0b400]/30 hover:shadow-[0_2px_12px_rgba(240,180,0,0.1)] active:cursor-grabbing")}>
                             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg" style={{ backgroundColor: `${mod.color}15`, color: mod.color }}>
                               {iconMap[mod.icon]}
                             </div>
@@ -419,7 +435,7 @@ export default function BusinessDashboardPage() {
                               <p className="text-sm font-medium text-foreground truncate">{mod.label}</p>
                               <p className="text-xs text-muted-foreground truncate">{mod.description}</p>
                             </div>
-                            {inPipeline && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="ml-auto shrink-0 text-[#e6b800]"><polyline points="20 6 9 17 4 12"/></svg>}
+                            {inPipeline && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="ml-auto shrink-0 text-[#f0b400]"><polyline points="20 6 9 17 4 12"/></svg>}
                           </div>
                         )
                       })}
@@ -430,10 +446,10 @@ export default function BusinessDashboardPage() {
             </div>
 
             <div className="lg:col-span-8">
-              <div className={cn("min-h-[520px] rounded-2xl border-2 border-dashed p-6 transition-all duration-300", pipeline.length === 0 && !draggingId ? "border-border/30 bg-card/20" : draggingId ? "border-[#e6b800]/40 bg-[#e6b800]/5" : "border-border/40 bg-card/30", "shadow-[0_8px_32px_rgba(0,0,0,0.15)]")} onDragOver={(e) => e.preventDefault()} onDrop={handleDropOnCanvas}>
+              <div className={cn("min-h-[520px] rounded-2xl border-2 border-dashed p-6 transition-all duration-300", pipeline.length === 0 && !draggingId ? "border-border/30 bg-card/20" : draggingId ? "border-[#f0b400]/40 bg-[#f0b400]/5" : "border-border/40 bg-card/30", "shadow-[0_8px_32px_rgba(0,0,0,0.15)]")} onDragOver={(e) => e.preventDefault()} onDrop={handleDropOnCanvas}>
                 <div className="mb-4 flex items-center justify-between">
                   <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Platform Architecture</h3>
-                  {pipeline.length > 0 && <Button variant="ghost" size="sm" onClick={() => setPipeline([])} className="text-xs text-muted-foreground hover:text-[#e6b800]">Clear All</Button>}
+                  {pipeline.length > 0 && <Button variant="ghost" size="sm" onClick={() => setPipeline([])} className="text-xs text-muted-foreground hover:text-[#f0b400]">Clear All</Button>}
                 </div>
 
                 {pipeline.length === 0 ? (
@@ -452,8 +468,8 @@ export default function BusinessDashboardPage() {
                         if (!mod) return null
                         return (
                           <div key={mod.id} className="flex items-center gap-2">
-                            <div onDragOver={(e) => handleDragOver(e, index)} onDrop={(e) => handleDrop(e, index)} className={cn("h-16 w-1 rounded-full transition-all", dragOverIndex === index ? "bg-[#e6b800] w-2" : "bg-transparent")} />
-                            <div draggable onDragStart={() => handleDragStart(mod.id, "pipeline", index)} onDragEnd={() => { setDraggingId(null); setDragOverIndex(null) }} className={cn("group relative flex items-center gap-3 rounded-xl border p-4 cursor-grab active:cursor-grabbing transition-all duration-200", "shadow-[0_4px_16px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.05)]", "border-border/40 bg-card/60 hover:border-[#e6b800]/30", draggingId === mod.id && "opacity-50 scale-95")}>
+                            <div onDragOver={(e) => handleDragOver(e, index)} onDrop={(e) => handleDrop(e, index)} className={cn("h-16 w-1 rounded-full transition-all", dragOverIndex === index ? "bg-[#f0b400] w-2" : "bg-transparent")} />
+                            <div draggable onDragStart={() => handleDragStart(mod.id, "pipeline", index)} onDragEnd={() => { setDraggingId(null); setDragOverIndex(null) }} className={cn("group relative flex items-center gap-3 rounded-xl border p-4 cursor-grab active:cursor-grabbing transition-all duration-200", "shadow-[0_4px_16px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.05)]", "border-border/40 bg-card/60 hover:border-[#f0b400]/30", draggingId === mod.id && "opacity-50 scale-95")}>
                               <button onClick={() => removeFromPipeline(mod.id)} className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-card border border-border text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive hover:text-destructive-foreground hover:border-destructive" aria-label={`Remove ${mod.label}`}>
                                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M18 6L6 18M6 6l12 12"/></svg>
                               </button>
@@ -463,8 +479,8 @@ export default function BusinessDashboardPage() {
                                 <p className="text-xs text-muted-foreground">{mod.description}</p>
                               </div>
                             </div>
-                            {index < pipeline.length - 1 && <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="shrink-0 text-[#e6b800]/40"><path d="M5 12h14M12 5l7 7-7 7"/></svg>}
-                            {index === pipeline.length - 1 && <div onDragOver={(e) => handleDragOver(e, index + 1)} onDrop={(e) => handleDrop(e, index + 1)} className={cn("h-16 w-1 rounded-full transition-all", dragOverIndex === index + 1 ? "bg-[#e6b800] w-2" : "bg-transparent")} />}
+                            {index < pipeline.length - 1 && <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="shrink-0 text-[#f0b400]/40"><path d="M5 12h14M12 5l7 7-7 7"/></svg>}
+                            {index === pipeline.length - 1 && <div onDragOver={(e) => handleDragOver(e, index + 1)} onDrop={(e) => handleDrop(e, index + 1)} className={cn("h-16 w-1 rounded-full transition-all", dragOverIndex === index + 1 ? "bg-[#f0b400] w-2" : "bg-transparent")} />}
                           </div>
                         )
                       })}
@@ -478,8 +494,8 @@ export default function BusinessDashboardPage() {
                         })}
                       </div>
                       <div className="mt-4 flex gap-3">
-                        <Button className="rounded-full bg-[#e6b800] text-background shadow-[0_4px_20px_rgba(230,184,0,0.25)] hover:bg-[#ffd000] hover:shadow-[0_6px_28px_rgba(230,184,0,0.35)] transition-all duration-300">Deploy Platform</Button>
-                        <Button variant="outline" className="rounded-full border-border/60 text-muted-foreground hover:text-[#e6b800] hover:border-[#e6b800]/30 hover:bg-[#e6b800]/10 transition-all duration-300 bg-transparent">Export Config</Button>
+                        <Button className="rounded-full bg-[#f0b400] text-background shadow-[0_4px_20px_rgba(240,180,0,0.25)] hover:bg-[#ffd000] hover:shadow-[0_6px_28px_rgba(240,180,0,0.35)] transition-all duration-300">Deploy Platform</Button>
+                        <Button variant="outline" className="rounded-full border-border/60 text-muted-foreground hover:text-[#f0b400] hover:border-[#f0b400]/30 hover:bg-[#f0b400]/10 transition-all duration-300 bg-transparent">Export Config</Button>
                       </div>
                     </div>
                   </div>

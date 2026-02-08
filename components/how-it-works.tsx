@@ -100,14 +100,14 @@ function FlowDiagram({ steps }: { steps: typeof useCases[0]["steps"] }) {
     <div className="relative flex flex-col items-center gap-4 py-8 md:flex-row md:justify-between md:gap-0">
       <div className="absolute top-1/2 left-[8%] right-[8%] hidden h-px bg-border/30 md:block" aria-hidden="true">
         <div
-          className="h-full bg-[#e6b800] transition-all duration-700 ease-out"
+          className="h-full bg-[#f0b400] transition-all duration-700 ease-out"
           style={{ width: `${Math.max(0, (activeStep / (steps.length - 1)) * 100)}%` }}
         />
       </div>
 
       <div className="absolute top-[8%] bottom-[8%] left-1/2 w-px -translate-x-1/2 bg-border/30 md:hidden" aria-hidden="true">
         <div
-          className="w-full bg-[#e6b800] transition-all duration-700 ease-out"
+          className="w-full bg-[#f0b400] transition-all duration-700 ease-out"
           style={{ height: `${Math.max(0, (activeStep / (steps.length - 1)) * 100)}%` }}
         />
       </div>
@@ -124,7 +124,7 @@ function FlowDiagram({ steps }: { steps: typeof useCases[0]["steps"] }) {
             className={cn(
               "flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border transition-all duration-500",
               i <= activeStep
-                ? "border-[#e6b800]/30 bg-[#e6b800]/10 text-[#e6b800] shadow-[0_4px_20px_rgba(230,184,0,0.15)]"
+                ? "border-[#f0b400]/30 bg-[#f0b400]/10 text-[#f0b400] shadow-[0_4px_20px_rgba(240,180,0,0.15)]"
                 : "border-border/30 bg-card/30 text-muted-foreground"
             )}
           >
@@ -157,13 +157,13 @@ export function HowItWorks() {
         isVisible && "is-visible"
       )}>
         <div className="mb-14 text-center">
-          <p className="mb-3 text-sm font-bold uppercase tracking-wider text-[#e6b800]">
+          <p className="mb-3 text-sm font-bold uppercase tracking-wider text-[#f0b400]">
             How It Works
           </p>
-          <h2 className="mb-4 text-3xl font-bold tracking-tight text-foreground md:text-4xl text-balance">
+          <h2 className="mb-4 text-4xl font-bold tracking-tight text-foreground md:text-5xl text-balance">
             Modular Payment Infrastructure
           </h2>
-          <p className="mx-auto max-w-2xl font-medium text-muted-foreground text-pretty">
+          <p className="mx-auto max-w-2xl text-base font-medium text-white/55 leading-relaxed text-pretty">
             See how Thalos connects fiat payments, USDC conversion, and smart contract escrows into a seamless flow tailored to your use case.
           </p>
         </div>
@@ -176,7 +176,7 @@ export function HowItWorks() {
               className={cn(
                 "rounded-full border px-5 py-2.5 text-sm font-semibold transition-all duration-400",
                 activeUseCase === uc.id
-                  ? "border-[#e6b800]/30 bg-[#e6b800]/10 text-[#e6b800] shadow-[0_2px_10px_rgba(230,184,0,0.15),inset_0_1px_0_rgba(255,255,255,0.06)]"
+                  ? "border-[#f0b400]/30 bg-[#f0b400]/10 text-[#f0b400] shadow-[0_2px_10px_rgba(240,180,0,0.15),inset_0_1px_0_rgba(255,255,255,0.06)]"
                   : "border-border/20 bg-card/30 text-muted-foreground shadow-[0_1px_4px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.04)] hover:border-[#b0c4de]/30 hover:text-[#b0c4de]"
               )}
             >

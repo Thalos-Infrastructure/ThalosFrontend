@@ -17,7 +17,7 @@ interface ServiceModule {
 
 const businessModules: ServiceModule[] = [
   { id: "multi-escrow", label: "Multi-Party Escrow", description: "N-party escrow with custom roles", icon: "users", color: "#3b82f6", category: "infrastructure" },
-  { id: "fiat-gateway", label: "Fiat Gateway", description: "Multi-currency on/off ramp", icon: "globe", color: "#e6b800", category: "infrastructure" },
+  { id: "fiat-gateway", label: "Fiat Gateway", description: "Multi-currency on/off ramp", icon: "globe", color: "#f0b400", category: "infrastructure" },
   { id: "api-bridge", label: "API Bridge", description: "REST & webhook integrations", icon: "code", color: "#8b5cf6", category: "infrastructure" },
   { id: "marketplace-engine", label: "Marketplace Engine", description: "Buyer-seller payment orchestration", icon: "store", color: "#f59e0b", category: "commerce" },
   { id: "travel-accum", label: "Travel Accumulator", description: "Installment travel package flows", icon: "plane", color: "#06b6d4", category: "commerce" },
@@ -126,7 +126,7 @@ export function BusinessDashboard({ onLogout }: { onLogout: () => void }) {
             variant="outline"
             size="sm"
             onClick={onLogout}
-            className="rounded-full border-border/60 text-muted-foreground hover:text-[#e6b800] hover:border-[#e6b800]/30 hover:bg-[#e6b800]/10 transition-all duration-300 bg-transparent"
+            className="rounded-full border-border/60 text-muted-foreground hover:text-[#f0b400] hover:border-[#f0b400]/30 hover:bg-[#f0b400]/10 transition-all duration-300 bg-transparent"
           >
             Sign Out
           </Button>
@@ -178,7 +178,7 @@ export function BusinessDashboard({ onLogout }: { onLogout: () => void }) {
                               "shadow-[0_2px_6px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.04)]",
                               inPipeline
                                 ? "border-border/30 bg-secondary/20 opacity-40 cursor-not-allowed"
-                                : "border-border/40 bg-card/60 cursor-grab hover:border-[#e6b800]/30 hover:shadow-[0_2px_12px_rgba(230,184,0,0.1)] active:cursor-grabbing"
+                                : "border-border/40 bg-card/60 cursor-grab hover:border-[#f0b400]/30 hover:shadow-[0_2px_12px_rgba(240,180,0,0.1)] active:cursor-grabbing"
                             )}
                           >
                             <div
@@ -192,7 +192,7 @@ export function BusinessDashboard({ onLogout }: { onLogout: () => void }) {
                               <p className="text-xs text-muted-foreground truncate">{mod.description}</p>
                             </div>
                             {inPipeline && (
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="ml-auto shrink-0 text-[#e6b800]">
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="ml-auto shrink-0 text-[#f0b400]">
                                 <polyline points="20 6 9 17 4 12"/>
                               </svg>
                             )}
@@ -213,7 +213,7 @@ export function BusinessDashboard({ onLogout }: { onLogout: () => void }) {
                 pipeline.length === 0 && !draggingId
                   ? "border-border/30 bg-card/20"
                   : draggingId
-                    ? "border-[#e6b800]/40 bg-[#e6b800]/5"
+                    ? "border-[#f0b400]/40 bg-[#f0b400]/5"
                     : "border-border/40 bg-card/30",
                 "shadow-[0_8px_32px_rgba(0,0,0,0.15)]"
               )}
@@ -229,7 +229,7 @@ export function BusinessDashboard({ onLogout }: { onLogout: () => void }) {
                     variant="ghost"
                     size="sm"
                     onClick={() => setPipeline([])}
-                    className="text-xs text-muted-foreground hover:text-[#e6b800]"
+                    className="text-xs text-muted-foreground hover:text-[#f0b400]"
                   >
                     Clear All
                   </Button>
@@ -260,7 +260,7 @@ export function BusinessDashboard({ onLogout }: { onLogout: () => void }) {
                             onDrop={(e) => handleDrop(e, index)}
                             className={cn(
                               "h-16 w-1 rounded-full transition-all",
-                              dragOverIndex === index ? "bg-[#e6b800] w-2" : "bg-transparent"
+                              dragOverIndex === index ? "bg-[#f0b400] w-2" : "bg-transparent"
                             )}
                           />
 
@@ -271,7 +271,7 @@ export function BusinessDashboard({ onLogout }: { onLogout: () => void }) {
                             className={cn(
                               "group relative flex items-center gap-3 rounded-xl border p-4 cursor-grab active:cursor-grabbing transition-all duration-200",
                               "shadow-[0_4px_16px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.05)]",
-                              "border-border/40 bg-card/60 hover:border-[#e6b800]/30",
+                              "border-border/40 bg-card/60 hover:border-[#f0b400]/30",
                               draggingId === mod.id && "opacity-50 scale-95"
                             )}
                           >
@@ -295,7 +295,7 @@ export function BusinessDashboard({ onLogout }: { onLogout: () => void }) {
                           </div>
 
                           {index < pipeline.length - 1 && (
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="shrink-0 text-[#e6b800]/40">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="shrink-0 text-[#f0b400]/40">
                               <path d="M5 12h14M12 5l7 7-7 7"/>
                             </svg>
                           )}
@@ -306,7 +306,7 @@ export function BusinessDashboard({ onLogout }: { onLogout: () => void }) {
                               onDrop={(e) => handleDrop(e, index + 1)}
                               className={cn(
                                 "h-16 w-1 rounded-full transition-all",
-                                dragOverIndex === index + 1 ? "bg-[#e6b800] w-2" : "bg-transparent"
+                                dragOverIndex === index + 1 ? "bg-[#f0b400] w-2" : "bg-transparent"
                               )}
                             />
                           )}
@@ -328,10 +328,10 @@ export function BusinessDashboard({ onLogout }: { onLogout: () => void }) {
                       })}
                     </div>
                     <div className="mt-4 flex gap-3">
-                      <Button className="rounded-full bg-[#e6b800] text-background shadow-[0_4px_20px_rgba(230,184,0,0.25)] hover:bg-[#ffd000] hover:shadow-[0_6px_28px_rgba(230,184,0,0.35)] transition-all duration-300">
+                      <Button className="rounded-full bg-[#f0b400] text-background shadow-[0_4px_20px_rgba(240,180,0,0.25)] hover:bg-[#ffd000] hover:shadow-[0_6px_28px_rgba(240,180,0,0.35)] transition-all duration-300">
                         Deploy Platform
                       </Button>
-                      <Button variant="outline" className="rounded-full border-border/60 text-muted-foreground hover:text-[#e6b800] hover:border-[#e6b800]/30 hover:bg-[#e6b800]/10 transition-all duration-300 bg-transparent">
+                      <Button variant="outline" className="rounded-full border-border/60 text-muted-foreground hover:text-[#f0b400] hover:border-[#f0b400]/30 hover:bg-[#f0b400]/10 transition-all duration-300 bg-transparent">
                         Export Config
                       </Button>
                     </div>

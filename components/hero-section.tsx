@@ -1,36 +1,51 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 
-function TypewriterEscrows({ onComplete }: { onComplete: () => void }) {
+function TypewriterEscrows() {
   const word = "[Escrows]"
   const [displayText, setDisplayText] = useState("")
-  const [done, setDone] = useState(false)
+  const [phase, setPhase] = useState<"typing" | "pause" | "deleting" | "wait">("typing")
+  const indexRef = useRef(0)
 
   useEffect(() => {
-    if (done) return
-    const delay = setTimeout(() => {
-      if (displayText.length < word.length) {
-        setDisplayText(word.substring(0, displayText.length + 1))
+    let timer: NodeJS.Timeout
+
+    if (phase === "typing") {
+      if (indexRef.current < word.length) {
+        timer = setTimeout(() => {
+          indexRef.current++
+          setDisplayText(word.substring(0, indexRef.current))
+        }, 180)
       } else {
-        setDone(true)
-        // Notify parent intro is done after a short pause
-        setTimeout(() => onComplete(), 600)
+        timer = setTimeout(() => setPhase("pause"), 3500)
       }
-    }, displayText.length === 0 ? 1400 : 200)
-    return () => clearTimeout(delay)
-  }, [displayText, done, onComplete])
+    } else if (phase === "pause") {
+      timer = setTimeout(() => setPhase("deleting"), 100)
+    } else if (phase === "deleting") {
+      if (indexRef.current > 0) {
+        timer = setTimeout(() => {
+          indexRef.current--
+          setDisplayText(word.substring(0, indexRef.current))
+        }, 90)
+      } else {
+        timer = setTimeout(() => setPhase("wait"), 1000)
+      }
+    } else if (phase === "wait") {
+      timer = setTimeout(() => setPhase("typing"), 100)
+    }
+
+    return () => clearTimeout(timer)
+  }, [displayText, phase])
 
   return (
-    <span className="text-[#e6b800]">
+    <span className="text-[#f0b400]">
       {displayText}
-      {!done && (
-        <span
-          className="ml-0.5 inline-block h-[0.85em] w-[3px] bg-[#e6b800] align-middle"
-          style={{ animation: "typewriter-cursor 0.8s ease-in-out infinite" }}
-        />
-      )}
+      <span
+        className="ml-0.5 inline-block h-[0.85em] w-[3px] bg-[#f0b400] align-middle"
+        style={{ animation: "typewriter-cursor 0.8s ease-in-out infinite" }}
+      />
     </span>
   )
 }
@@ -42,92 +57,93 @@ interface HeroSectionProps {
 
 export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
   const [introReady, setIntroReady] = useState(false)
+  const [showDescription, setShowDescription] = useState(false)
+  const descRef = useRef<HTMLDivElement>(null)
 
-  const handleTypewriterDone = () => {
-    setIntroReady(true)
-    onIntroComplete?.()
-  }
+  useEffect(() => {
+    const t1 = setTimeout(() => {
+      setIntroReady(true)
+      onIntroComplete?.()
+    }, 3000)
+    return () => clearTimeout(t1)
+  }, [onIntroComplete])
+
+  useEffect(() => {
+    if (!descRef.current) return
+    const obs = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) setShowDescription(true)
+      },
+      { threshold: 0.2 }
+    )
+    obs.observe(descRef.current)
+    return () => obs.disconnect()
+  }, [])
 
   return (
-    <section id="hero" className="relative flex min-h-screen items-center overflow-hidden">
-      {/* Brighter overlay that fades once intro is done */}
-      <div
-        className="pointer-events-none absolute inset-0 z-[1] transition-opacity duration-[2500ms]"
-        style={{ opacity: introReady ? 0 : 1 }}
-        aria-hidden="true"
-      >
-        <div className="h-full w-full bg-gradient-to-b from-background/20 via-background/50 to-background/80" />
-      </div>
+    <section id="hero" className="relative overflow-hidden">
+      {/* Subtle glows */}
+      <div className="absolute top-20 left-1/4 h-72 w-72 rounded-full bg-[#f0b400]/5 blur-3xl animate-pulse-glow" aria-hidden="true" />
+      <div className="absolute bottom-20 right-1/4 h-96 w-96 rounded-full bg-[#f0b400]/3 blur-3xl animate-pulse-glow animation-delay-400" aria-hidden="true" />
 
-      {/* Standard overlay that stays */}
-      <div className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-b from-background/40 via-background/70 to-background" aria-hidden="true" />
+      {/* Hero viewport -- full screen */}
+      <div className="relative z-10 flex min-h-screen flex-col justify-center px-6 lg:px-16">
+        {/* "Thalos:" left-aligned, very large */}
+        <p className="animate-fade-in-up w-full text-left text-6xl font-bold tracking-tight text-white md:text-8xl lg:text-9xl">
+          Thalos:
+        </p>
 
-      <div className="absolute top-20 left-1/4 h-72 w-72 rounded-full bg-[#e6b800]/5 blur-3xl animate-pulse-glow" aria-hidden="true" />
-      <div className="absolute bottom-20 right-1/4 h-96 w-96 rounded-full bg-[#e6b800]/3 blur-3xl animate-pulse-glow animation-delay-400" aria-hidden="true" />
+        {/* "Secure Payments" centered */}
+        <h1 className="mt-2 animate-fade-in-up animation-delay-200 text-center text-5xl font-bold tracking-tight text-white md:text-7xl lg:text-8xl text-balance">
+          Secure Payments
+        </h1>
 
-      <div className="relative z-10 mx-auto w-full max-w-7xl px-6 py-32">
-        <div className="flex flex-col items-center text-center">
-          <h1 className="mb-6 max-w-4xl text-4xl font-bold leading-tight tracking-tight text-foreground animate-fade-in-up md:text-6xl md:leading-tight text-balance">
-            Thalos: Secure Payments{" "}
-            <br className="hidden md:block" />
-            with <TypewriterEscrows onComplete={handleTypewriterDone} />
-          </h1>
+        {/* "with [Escrows]" centered */}
+        <p className="mt-2 animate-fade-in-up animation-delay-400 text-center text-5xl font-bold tracking-tight text-white md:text-7xl lg:text-8xl">
+          with <TypewriterEscrows />
+        </p>
 
-          <p
-            className="mb-10 max-w-2xl text-lg font-medium leading-relaxed text-muted-foreground text-pretty transition-all duration-1000"
-            style={{
-              opacity: introReady ? 1 : 0,
-              transform: introReady ? "translateY(0)" : "translateY(16px)",
-            }}
-          >
-            We are a payments and escrow infrastructure on Stellar that enables businesses and merchants to create their own secure payment platforms, with protected funds, staged payments, and productive capital while retained.
-          </p>
-
-          <div
-            className="flex flex-col gap-4 sm:flex-row transition-all duration-1000 delay-200"
-            style={{
-              opacity: introReady ? 1 : 0,
-              transform: introReady ? "translateY(0)" : "translateY(16px)",
-            }}
-          >
-            <Button
-              size="lg"
-              onClick={() => onNavigate("builder")}
-              className="h-13 rounded-full bg-[#e6b800] px-8 text-background font-semibold shadow-[0_4px_20px_rgba(230,184,0,0.3),0_2px_4px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.25)] hover:bg-[#b0c4de] hover:text-background hover:shadow-[0_4px_24px_rgba(176,196,222,0.35),0_2px_4px_rgba(0,0,0,0.5)] transition-all duration-400"
+        {/* Description slides in from right */}
+        <div ref={descRef} className="mt-10">
+          <div className="flex justify-center">
+            <div
+              className="max-w-2xl text-center transition-all duration-[1200ms] ease-out"
+              style={{
+                opacity: showDescription ? 1 : 0,
+                transform: showDescription ? "translateX(0)" : "translateX(60px)",
+              }}
             >
-              Create Your Platform
-            </Button>
-            <Button
-              variant="outline"
-              size="lg"
-              onClick={() => onNavigate("how-it-works")}
-              className="h-13 rounded-full border-[#e6b800]/30 bg-transparent px-8 text-[#e6b800] font-semibold shadow-[0_2px_8px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] hover:bg-[#b0c4de]/15 hover:text-[#b0c4de] hover:border-[#b0c4de]/40 transition-all duration-400"
-            >
-              See How It Works
-            </Button>
+              <p className="text-lg font-medium leading-relaxed text-white/80 text-pretty">
+                <span className="text-[#f0b400] font-bold">{"<We are>"}</span>{" "}
+                a payments and escrow infrastructure on Stellar that enables businesses and merchants to create their own secure payment platforms, with protected funds, staged payments, and productive capital while retained.
+              </p>
+            </div>
           </div>
+        </div>
 
-          <div
-            className="mt-20 grid w-full max-w-3xl grid-cols-1 gap-6 md:grid-cols-3 transition-all duration-1000 delay-500"
-            style={{
-              opacity: introReady ? 1 : 0,
-              transform: introReady ? "translateY(0)" : "translateY(20px)",
-            }}
+        {/* Buttons at bottom of hero */}
+        <div
+          className="mt-14 flex flex-col items-center gap-4 sm:flex-row sm:justify-center transition-all duration-1000 delay-500"
+          style={{
+            opacity: introReady ? 1 : 0,
+            transform: introReady ? "translateY(0)" : "translateY(20px)",
+          }}
+        >
+          <Button
+            size="lg"
+            onClick={() => onNavigate("builder")}
+            className="h-14 rounded-full bg-[#f0b400] px-12 text-base font-bold text-background shadow-[0_6px_0_rgba(180,130,0,0.6),0_8px_24px_rgba(240,180,0,0.25),inset_0_1px_0_rgba(255,255,255,0.3)] hover:bg-[#f0b400]/90 hover:shadow-[0_4px_0_rgba(180,130,0,0.6),0_6px_20px_rgba(240,180,0,0.3)] hover:translate-y-[2px] active:shadow-[0_1px_0_rgba(180,130,0,0.6),0_2px_8px_rgba(240,180,0,0.2)] active:translate-y-[4px] transition-all duration-200"
           >
-            {[
-              { label: "Protected Funds", value: "Escrow Smart Contracts" },
-              { label: "Fast Settlement", value: "5 seconds on Stellar" },
-              { label: "Programmable", value: "Custom payment logic" },
-            ].map((stat) => (
-              <div
-                key={stat.label}
-                className="rounded-2xl border border-[#e6b800]/15 bg-card/50 p-6 backdrop-blur-sm shadow-[0_6px_24px_rgba(0,0,0,0.35),0_2px_4px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] transition-all duration-400 hover:border-[#b0c4de]/30 hover:shadow-[0_6px_28px_rgba(176,196,222,0.1),0_2px_4px_rgba(0,0,0,0.4)]"
-              >
-                <p className="text-sm font-semibold text-[#e6b800]">{stat.label}</p>
-                <p className="mt-1 font-semibold text-foreground">{stat.value}</p>
-              </div>
-            ))}
-          </div>
+            Get Started
+          </Button>
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={() => onNavigate("how-it-works")}
+            className="h-14 rounded-full border-white/30 bg-white/5 px-12 text-base font-bold text-white shadow-[0_6px_0_rgba(255,255,255,0.08),0_8px_24px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.15)] hover:bg-white/10 hover:shadow-[0_4px_0_rgba(255,255,255,0.08),0_6px_20px_rgba(0,0,0,0.4)] hover:translate-y-[2px] active:shadow-[0_1px_0_rgba(255,255,255,0.08),0_2px_8px_rgba(0,0,0,0.3)] active:translate-y-[4px] transition-all duration-200"
+          >
+            How It Works
+          </Button>
         </div>
       </div>
     </section>

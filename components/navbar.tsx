@@ -10,6 +10,8 @@ export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }
   const [mobileOpen, setMobileOpen] = useState(false)
   const [showSignIn, setShowSignIn] = useState(false)
   const [profileType, setProfileType] = useState<"personal" | "business">("personal")
+  const [visible, setVisible] = useState(true)
+  const lastScrollY = useRef(0)
   const modalRef = useRef<HTMLDivElement>(null)
 
   const navLinks = [
@@ -19,6 +21,24 @@ export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }
   ]
 
   const dashboardHref = profileType === "personal" ? "/dashboard/personal" : "/dashboard/business"
+
+  // Hide on scroll down, show on scroll up
+  useEffect(() => {
+    const onScroll = () => {
+      const y = window.scrollY
+      if (y < 100) {
+        setVisible(true)
+      } else if (y > lastScrollY.current + 8) {
+        setVisible(false)
+        setMobileOpen(false)
+      } else if (y < lastScrollY.current - 8) {
+        setVisible(true)
+      }
+      lastScrollY.current = y
+    }
+    window.addEventListener("scroll", onScroll, { passive: true })
+    return () => window.removeEventListener("scroll", onScroll)
+  }, [])
 
   // Close modal on outside click
   useEffect(() => {
@@ -33,11 +53,16 @@ export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }
 
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 z-50 bg-background/40 backdrop-blur-2xl">
+      <header
+        className={cn(
+          "fixed top-0 left-0 right-0 z-50 border-b border-white/5 bg-background/70 backdrop-blur-2xl transition-transform duration-500",
+          visible ? "translate-y-0" : "-translate-y-full"
+        )}
+      >
         <nav className="mx-auto flex h-24 max-w-7xl items-center justify-between px-6">
           <button
             onClick={() => onNavigate("hero")}
-            className="flex items-center"
+            className="group flex items-center [perspective:800px]"
             aria-label="Go to homepage"
           >
             <Image
@@ -45,7 +70,7 @@ export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }
               alt="Thalos"
               width={250}
               height={250}
-              className="h-36 w-auto object-contain"
+              className="h-36 w-auto object-contain transition-transform duration-700 ease-in-out [transform-style:preserve-3d] group-hover:[transform:rotateY(360deg)]"
               priority
             />
           </button>
@@ -66,9 +91,9 @@ export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }
             <Button
               size="sm"
               onClick={() => setShowSignIn(true)}
-              className="rounded-full bg-[#e6b800] px-6 text-background font-semibold shadow-[0_2px_12px_rgba(230,184,0,0.25),0_1px_2px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.2)] hover:bg-[#b0c4de] hover:text-background hover:shadow-[0_2px_20px_rgba(176,196,222,0.35),0_1px_2px_rgba(0,0,0,0.3)] transition-all duration-400"
+              className="rounded-full bg-white px-6 text-background font-semibold shadow-[0_2px_12px_rgba(255,255,255,0.15),0_1px_2px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.4)] hover:bg-[#b0c4de] hover:text-background hover:shadow-[0_2px_20px_rgba(176,196,222,0.35),0_1px_2px_rgba(0,0,0,0.3)] transition-all duration-400"
             >
-              Get Started
+              Sign In
             </Button>
           </div>
 
@@ -98,9 +123,9 @@ export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }
               <Button
                 size="sm"
                 onClick={() => { setShowSignIn(true); setMobileOpen(false) }}
-                className="mt-2 rounded-full bg-[#e6b800] text-background font-semibold shadow-[0_2px_12px_rgba(230,184,0,0.25),inset_0_1px_0_rgba(255,255,255,0.2)] hover:bg-[#b0c4de] hover:text-background"
+                className="mt-2 rounded-full bg-white text-background font-semibold shadow-[0_2px_12px_rgba(255,255,255,0.1),inset_0_1px_0_rgba(255,255,255,0.3)] hover:bg-[#b0c4de] hover:text-background"
               >
-                Get Started
+                Sign In
               </Button>
             </div>
           </div>
@@ -125,14 +150,13 @@ export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }
             </button>
 
             <div className="mb-8 text-center">
-              <p className="mb-2 text-sm font-bold uppercase tracking-wider text-[#e6b800]">Get Started</p>
+              <p className="mb-2 text-sm font-bold uppercase tracking-wider text-[#f0b400]">Get Started</p>
               <h3 className="text-2xl font-bold text-foreground">Sign In to Build</h3>
               <p className="mt-2 text-sm font-medium text-muted-foreground">
                 Choose your profile type and start assembling your payment platform.
               </p>
             </div>
 
-            {/* Profile Type */}
             <div className="mb-6">
               <p className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">Profile Type</p>
               <div className="grid grid-cols-2 gap-2">
@@ -144,10 +168,10 @@ export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }
                     key={type.id}
                     onClick={() => setProfileType(type.id)}
                     className={cn(
-                      "rounded-xl border p-3 text-sm font-semibold transition-all duration-400",
+                      "rounded-xl border p-3 text-sm font-semibold transition-all duration-400 shadow-[0_2px_6px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.04)]",
                       profileType === type.id
-                        ? "border-[#e6b800]/25 bg-[#e6b800]/10 text-[#e6b800] shadow-[0_2px_12px_rgba(230,184,0,0.12),inset_0_1px_0_rgba(255,255,255,0.06)]"
-                        : "border-border/20 bg-card/30 text-muted-foreground shadow-[0_1px_4px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.04)] hover:border-[#b0c4de]/30 hover:text-[#b0c4de]"
+                        ? "border-[#f0b400]/25 bg-[#f0b400]/10 text-[#f0b400]"
+                        : "border-border/20 bg-card/30 text-muted-foreground hover:border-[#b0c4de]/30 hover:text-[#b0c4de]"
                     )}
                   >
                     {type.label}
@@ -156,12 +180,11 @@ export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }
               </div>
             </div>
 
-            {/* Social Login Buttons */}
             <div className="flex flex-col gap-3">
               <Link href={dashboardHref} onClick={() => setShowSignIn(false)}>
                 <Button
                   variant="outline"
-                  className="h-11 w-full gap-3 rounded-xl border-border/20 bg-card/30 text-foreground font-semibold shadow-[0_2px_8px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.04)] hover:bg-[#b0c4de]/10 hover:text-[#b0c4de] hover:border-[#b0c4de]/30 transition-all duration-400"
+                  className="h-11 w-full gap-3 rounded-xl border-border/20 bg-card/30 text-foreground font-semibold shadow-[0_2px_8px_rgba(0,0,0,0.25),inset_0_1px_0_rgba(255,255,255,0.05)] hover:bg-[#b0c4de]/10 hover:text-[#b0c4de] hover:border-[#b0c4de]/30 transition-all duration-400"
                 >
                   <svg width="18" height="18" viewBox="0 0 24 24">
                     <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
@@ -175,7 +198,7 @@ export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }
               <Link href={dashboardHref} onClick={() => setShowSignIn(false)}>
                 <Button
                   variant="outline"
-                  className="h-11 w-full gap-3 rounded-xl border-border/20 bg-card/30 text-foreground font-semibold shadow-[0_2px_8px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.04)] hover:bg-[#b0c4de]/10 hover:text-[#b0c4de] hover:border-[#b0c4de]/30 transition-all duration-400"
+                  className="h-11 w-full gap-3 rounded-xl border-border/20 bg-card/30 text-foreground font-semibold shadow-[0_2px_8px_rgba(0,0,0,0.25),inset_0_1px_0_rgba(255,255,255,0.05)] hover:bg-[#b0c4de]/10 hover:text-[#b0c4de] hover:border-[#b0c4de]/30 transition-all duration-400"
                 >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
@@ -194,7 +217,7 @@ export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }
             <Link href={dashboardHref} onClick={() => setShowSignIn(false)}>
               <Button
                 variant="outline"
-                className="h-11 w-full gap-3 rounded-xl border-border/20 bg-card/30 text-foreground font-semibold shadow-[0_2px_8px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.04)] hover:bg-[#b0c4de]/10 hover:text-[#b0c4de] hover:border-[#b0c4de]/30 transition-all duration-400"
+                className="h-11 w-full gap-3 rounded-xl border-border/20 bg-card/30 text-foreground font-semibold shadow-[0_2px_8px_rgba(0,0,0,0.25),inset_0_1px_0_rgba(255,255,255,0.05)] hover:bg-[#b0c4de]/10 hover:text-[#b0c4de] hover:border-[#b0c4de]/30 transition-all duration-400"
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                   <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
