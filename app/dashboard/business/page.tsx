@@ -1,10 +1,11 @@
 "use client"
 
-import React, { useState, useRef, useCallback } from "react"
+import React, { useState, useRef, useCallback, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { ThalosLoader } from "@/components/thalos-loader"
 
 /* ────────────────────────────────────────────────
    Step wizard data (enterprise-focused)
@@ -98,7 +99,13 @@ const enterpriseCategories = [
    ──────────────────────────────────────────────── */
 
 export default function BusinessDashboardPage() {
+  const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<"builder" | "wizard">("wizard")
+
+  useEffect(() => {
+    const timer = setTimeout(() => setLoading(false), 1400)
+    return () => clearTimeout(timer)
+  }, [])
 
   // Wizard state
   const [currentStep, setCurrentStep] = useState(0)
@@ -176,28 +183,37 @@ export default function BusinessDashboardPage() {
 
   const removeFromPipeline = (id: string) => setPipeline(pipeline.filter((m) => m !== id))
 
+  if (loading) return <ThalosLoader />
+
   return (
     <div className="min-h-screen bg-background text-foreground">
-      {/* Top Bar */}
-      <header className="sticky top-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-xl">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
-          <Link href="/" className="flex items-center gap-3">
-            <Image src="/thalos-logo-dark.png" alt="Thalos" width={160} height={44} className="h-9 w-auto object-contain mix-blend-screen" priority />
+      {/* Top Bar - matching landing navbar */}
+      <header className="sticky top-0 z-50 border-b border-white/5 bg-background/70 backdrop-blur-2xl">
+        <nav className="mx-auto flex h-24 max-w-7xl items-center justify-between px-6">
+          <Link href="/" className="group flex items-center [perspective:800px]">
+            <Image
+              src="/thalos-icon.png"
+              alt="Thalos"
+              width={250}
+              height={250}
+              className="h-36 w-auto object-contain transition-transform duration-700 ease-in-out [transform-style:preserve-3d] group-hover:[transform:rotateY(360deg)]"
+              priority
+            />
           </Link>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
               <div className="h-8 w-8 rounded-full bg-[#3b82f6]/10 flex items-center justify-center text-[#3b82f6]">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>
               </div>
-              <span className="text-sm text-foreground font-medium hidden sm:inline">Enterprise Account</span>
+              <span className="text-sm text-white/70 font-medium hidden sm:inline">Enterprise Account</span>
             </div>
             <Link href="/">
-              <Button variant="outline" size="sm" className="rounded-full border-border/60 text-muted-foreground hover:text-[#f0b400] hover:border-[#f0b400]/30 hover:bg-[#f0b400]/10 transition-all duration-300 bg-transparent">
+              <Button variant="outline" size="sm" className="rounded-full border-white/20 bg-white/5 text-white/70 font-semibold shadow-[0_2px_8px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.06)] hover:bg-white/10 hover:text-white hover:border-white/30 transition-all duration-300">
                 Sign Out
               </Button>
             </Link>
           </div>
-        </div>
+        </nav>
       </header>
 
       <div className="mx-auto max-w-7xl px-6 py-8">

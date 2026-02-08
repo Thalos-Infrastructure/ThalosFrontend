@@ -94,6 +94,11 @@
   50% { transform: translateY(-10px); }
 }
 
+@keyframes thalos-spin {
+  0% { transform: rotateY(0deg); }
+  100% { transform: rotateY(360deg); }
+}
+
 @keyframes pulse-glow {
   0%, 100% { opacity: 0.4; }
   50% { opacity: 0.8; }

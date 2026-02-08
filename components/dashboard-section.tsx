@@ -80,10 +80,10 @@ export function DashboardSection() {
           <p className="mb-3 text-sm font-bold uppercase tracking-wider text-[#f0b400]">
             Dashboard
           </p>
-          <h2 className="mb-4 text-3xl font-bold tracking-tight text-foreground md:text-4xl text-balance">
+          <h2 className="mb-4 text-4xl font-bold tracking-tight text-foreground md:text-5xl text-balance">
             Manage Your Escrows
           </h2>
-          <p className="mx-auto max-w-2xl font-medium text-muted-foreground text-pretty">
+          <p className="mx-auto max-w-2xl text-base font-medium text-white/55 leading-relaxed text-pretty">
             Track active escrows, monitor fund status, and manage releases from a single view.
           </p>
         </div>

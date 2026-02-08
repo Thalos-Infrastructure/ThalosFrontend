@@ -160,10 +160,10 @@ export function HowItWorks() {
           <p className="mb-3 text-sm font-bold uppercase tracking-wider text-[#f0b400]">
             How It Works
           </p>
-          <h2 className="mb-4 text-3xl font-bold tracking-tight text-foreground md:text-4xl text-balance">
+          <h2 className="mb-4 text-4xl font-bold tracking-tight text-foreground md:text-5xl text-balance">
             Modular Payment Infrastructure
           </h2>
-          <p className="mx-auto max-w-2xl font-medium text-muted-foreground text-pretty">
+          <p className="mx-auto max-w-2xl text-base font-medium text-white/55 leading-relaxed text-pretty">
             See how Thalos connects fiat payments, USDC conversion, and smart contract escrows into a seamless flow tailored to your use case.
           </p>
         </div>

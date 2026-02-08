@@ -292,7 +292,7 @@ export function BottomBar({ onNavigate }: { onNavigate: (section: string) => voi
         )}
 
         {/* The bar itself */}
-        <div className="relative flex h-16 items-center gap-4 rounded-full border border-white/15 px-6 shadow-[0_8px_32px_rgba(0,0,0,0.4),0_2px_8px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.15)] overflow-hidden">
+        <div className="relative flex h-18 items-center gap-4 rounded-full border border-white/15 px-6 shadow-[0_8px_32px_rgba(0,0,0,0.4),0_2px_8px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.15)] overflow-hidden">
           {/* Ocean background visible through */}
           <div
             className="absolute inset-0 bg-cover bg-center opacity-20"
@@ -331,7 +331,7 @@ export function BottomBar({ onNavigate }: { onNavigate: (section: string) => voi
               alt="Thalos"
               width={200}
               height={50}
-              className="h-14 w-auto object-contain"
+              className="h-16 w-auto object-contain"
             />
           </button>
         </div>

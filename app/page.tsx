@@ -1,6 +1,7 @@
 "use client"
 
 import { useCallback, useRef, useState, useEffect } from "react"
+import { ThalosLoader } from "@/components/thalos-loader"
 import { Navbar } from "@/components/navbar"
 import { HeroSection } from "@/components/hero-section"
 import { HowItWorks } from "@/components/how-it-works"
@@ -12,8 +13,15 @@ import { BottomBar } from "@/components/bottom-bar"
 
 export default function Home() {
   const sectionsRef = useRef<Record<string, HTMLElement | null>>({})
+  const [loading, setLoading] = useState(true)
   const [introComplete, setIntroComplete] = useState(false)
   const [scrollDarken, setScrollDarken] = useState(0)
+
+  // Page loading spinner
+  useEffect(() => {
+    const timer = setTimeout(() => setLoading(false), 1800)
+    return () => clearTimeout(timer)
+  }, [])
 
   // Progressive darkening based on scroll position
   useEffect(() => {
@@ -39,6 +47,8 @@ export default function Home() {
 
   // Overlay opacity: starts at 0.40 (slightly visible), goes to 0.94 at footer
   const overlayOpacity = 0.40 + scrollDarken * 0.54
+
+  if (loading) return <ThalosLoader />
 
   return (
     <div className="relative min-h-screen bg-background text-foreground">
