@@ -44,7 +44,7 @@ export function ProfileSelection({ onNavigate }: { onNavigate: (section: string)
           <p className="mb-3 text-sm font-bold uppercase tracking-wider text-[#f0b400]">
             Choose Your Path
           </p>
-          <h2 className="mb-4 text-4xl font-bold tracking-tight text-foreground md:text-5xl text-balance">
+          <h2 className="mb-4 text-5xl font-bold tracking-tight text-foreground md:text-6xl text-balance">
             Select Your Profile
           </h2>
           <p className="mx-auto max-w-2xl text-base font-medium text-white/55 leading-relaxed text-pretty">
