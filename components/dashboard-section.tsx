@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import { useSectionReveal } from "@/hooks/use-section-reveal"
+import { useTypewriter } from "@/hooks/use-typewriter"
 
 const escrows = [
   {
@@ -65,6 +66,7 @@ const statusConfig = {
 
 export function DashboardSection() {
   const { ref, isVisible } = useSectionReveal()
+  const { displayed: twText, isTyping: twActive } = useTypewriter("[Dashboard]", isVisible, { typeSpeed: 120, deleteSpeed: 60, pauseBeforeDelete: 2500, pauseBeforeType: 800 })
   const [selectedEscrow, setSelectedEscrow] = useState<string | null>(null)
 
   const totalLocked = escrows.filter((e) => e.status !== "completed").reduce((sum, e) => sum + Number.parseFloat(e.amount.replace(",", "")), 0)
@@ -78,7 +80,8 @@ export function DashboardSection() {
       )}>
         <div className="mb-14 text-center">
           <p className="mb-3 text-sm font-bold uppercase tracking-wider text-[#f0b400]">
-            Dashboard
+            <span>{twText}</span>
+            <span className={cn("ml-0.5 inline-block h-4 w-0.5 bg-[#f0b400] align-middle", twActive ? "animate-pulse" : "opacity-0")} />
           </p>
           <h2 className="mb-4 text-4xl font-bold tracking-tight text-foreground md:text-5xl text-balance">
             Manage Your Escrows
