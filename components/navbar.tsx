@@ -55,7 +55,7 @@ export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }
     <>
       <header
         className={cn(
-          "fixed top-0 left-0 right-0 z-50 border-b border-white/5 bg-background/40 backdrop-blur-2xl transition-transform duration-500",
+          "fixed top-0 left-0 right-0 z-50 border-b border-white/5 bg-background/20 backdrop-blur-xl transition-transform duration-500",
           visible ? "translate-y-0" : "-translate-y-full"
         )}
       >
@@ -80,7 +80,7 @@ export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }
               <button
                 key={item.section}
                 onClick={() => onNavigate(item.section)}
-                className="text-sm font-semibold text-muted-foreground transition-all duration-300 hover:text-[#b0c4de]"
+                className="text-base font-bold text-white/80 transition-all duration-300 hover:text-white"
               >
                 {item.label}
               </button>
@@ -91,7 +91,7 @@ export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }
             <Button
               size="sm"
               onClick={() => setShowSignIn(true)}
-              className="rounded-full bg-white px-6 text-background font-semibold shadow-[0_2px_12px_rgba(255,255,255,0.15),0_1px_2px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.4)] hover:bg-[#b0c4de] hover:text-background hover:shadow-[0_2px_20px_rgba(176,196,222,0.35),0_1px_2px_rgba(0,0,0,0.3)] transition-all duration-400"
+              className="rounded-full bg-white px-7 py-2 text-base text-background font-bold shadow-[0_2px_12px_rgba(255,255,255,0.15),0_1px_2px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.4)] hover:bg-[#b0c4de] hover:text-background hover:shadow-[0_2px_20px_rgba(176,196,222,0.35),0_1px_2px_rgba(0,0,0,0.3)] transition-all duration-400"
             >
               Sign In
             </Button>
@@ -115,7 +115,7 @@ export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }
                 <button
                   key={item.section}
                   onClick={() => { onNavigate(item.section); setMobileOpen(false) }}
-                  className="rounded-lg px-4 py-3 text-left text-sm font-semibold text-muted-foreground transition-colors hover:bg-[#b0c4de]/10 hover:text-[#b0c4de]"
+                  className="rounded-lg px-4 py-3 text-left text-base font-bold text-white/80 transition-colors hover:bg-white/10 hover:text-white"
                 >
                   {item.label}
                 </button>
