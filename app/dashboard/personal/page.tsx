@@ -87,7 +87,7 @@ const categories = [
   { key: "extras" as const, label: "Extras" },
 ]
 
-/* ───────────────────────────────────────���────────
+/* ───────────────���───────────────────────���────────
    Page Component
    ──────────────────────────────────────────────── */
 
@@ -181,7 +181,7 @@ export default function PersonalDashboardPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* Top Bar - matching landing navbar */}
-      <header className="sticky top-0 z-50 border-b border-white/5 bg-background/70 backdrop-blur-2xl">
+      <header className="sticky top-0 z-50 border-b border-white/5 bg-background/10 backdrop-blur-md">
         <nav className="mx-auto flex h-24 max-w-7xl items-center justify-between px-6">
           <Link href="/" className="group flex items-center [perspective:800px]">
             <Image
@@ -189,7 +189,7 @@ export default function PersonalDashboardPage() {
               alt="Thalos"
               width={250}
               height={250}
-              className="h-36 w-auto object-contain transition-transform duration-700 ease-in-out [transform-style:preserve-3d] group-hover:[transform:rotateY(360deg)]"
+              className="h-36 w-auto object-contain brightness-0 invert transition-transform duration-700 ease-in-out [transform-style:preserve-3d] group-hover:[transform:rotateY(360deg)]"
               priority
             />
           </Link>

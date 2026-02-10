@@ -55,7 +55,7 @@ export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }
     <>
       <header
         className={cn(
-          "fixed top-0 left-0 right-0 z-50 border-b border-white/5 bg-background/20 backdrop-blur-xl transition-transform duration-500",
+          "fixed top-0 left-0 right-0 z-50 border-b border-white/5 bg-background/10 backdrop-blur-md transition-transform duration-500",
           visible ? "translate-y-0" : "-translate-y-full"
         )}
       >
