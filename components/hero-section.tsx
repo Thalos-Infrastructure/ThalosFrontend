@@ -82,14 +82,13 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
 
   return (
     <section id="hero" className="relative overflow-hidden">
-      {/* Subtle glows */}
-      <div className="absolute top-20 left-1/4 h-72 w-72 rounded-full bg-[#f0b400]/5 blur-3xl animate-pulse-glow" aria-hidden="true" />
-      <div className="absolute bottom-20 right-1/4 h-96 w-96 rounded-full bg-[#f0b400]/3 blur-3xl animate-pulse-glow animation-delay-400" aria-hidden="true" />
+      {/* Subtle accent line */}
+      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#f0b400]/20 to-transparent" aria-hidden="true" />
 
       {/* Hero viewport -- full screen */}
       <div className="relative z-10 flex min-h-screen flex-col justify-center px-6 lg:px-16">
         {/* "Thalos:" left-aligned, very large */}
-        <p className="animate-fade-in-up w-full text-left text-6xl font-bold tracking-tight text-white md:text-8xl lg:text-9xl">
+        <p className="animate-fade-in-up w-full text-left text-6xl font-bold tracking-tight text-[#f0b400] md:text-8xl lg:text-9xl drop-shadow-[0_2px_4px_rgba(240,180,0,0.2)]">
           Thalos:
         </p>
 

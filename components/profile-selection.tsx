@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useSectionReveal } from "@/hooks/use-section-reveal"
+import { useTypewriter } from "@/hooks/use-typewriter"
 
 const profiles = [
   {
@@ -33,6 +34,7 @@ const profiles = [
 
 export function ProfileSelection({ onNavigate }: { onNavigate: (section: string) => void }) {
   const { ref, isVisible } = useSectionReveal()
+  const { displayed: twText, isTyping: twActive } = useTypewriter("[Choose Your Path]", isVisible, { typeSpeed: 120, deleteSpeed: 60, pauseBeforeDelete: 2500, pauseBeforeType: 800 })
 
   return (
     <section id="profiles" className="relative py-28" ref={ref}>
@@ -42,9 +44,10 @@ export function ProfileSelection({ onNavigate }: { onNavigate: (section: string)
       )}>
         <div className="mb-14 text-center">
           <p className="mb-3 text-sm font-bold uppercase tracking-wider text-[#f0b400]">
-            Choose Your Path
+            <span>{twText}</span>
+            <span className={cn("ml-0.5 inline-block h-4 w-0.5 bg-[#f0b400] align-middle", twActive ? "animate-pulse" : "opacity-0")} />
           </p>
-          <h2 className="mb-4 text-4xl font-bold tracking-tight text-foreground md:text-5xl text-balance">
+          <h2 className="mb-4 text-5xl font-bold tracking-tight text-foreground md:text-6xl text-balance">
             Select Your Profile
           </h2>
           <p className="mx-auto max-w-2xl text-base font-medium text-white/55 leading-relaxed text-pretty">

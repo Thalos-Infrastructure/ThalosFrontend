@@ -5,6 +5,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useSectionReveal } from "@/hooks/use-section-reveal"
+import { useTypewriter } from "@/hooks/use-typewriter"
 
 const steps = ["Select Services", "Identity & Roles", "Payment Logic", "Review"]
 
@@ -38,6 +39,7 @@ const serviceIcons: Record<string, React.ReactNode> = {
 
 export function PlatformBuilder() {
   const { ref, isVisible } = useSectionReveal()
+  const { displayed: twText, isTyping: twActive } = useTypewriter("[Platform Builder]", isVisible, { typeSpeed: 120, deleteSpeed: 60, pauseBeforeDelete: 2500, pauseBeforeType: 800 })
   const [currentStep, setCurrentStep] = useState(0)
   const [selectedServices, setSelectedServices] = useState<Set<string>>(new Set(["onramp", "escrow"]))
   const [selectedRoles, setSelectedRoles] = useState<Set<string>>(new Set(["sender", "receiver"]))
@@ -69,9 +71,10 @@ export function PlatformBuilder() {
       )}>
         <div className="mb-14 text-center">
           <p className="mb-3 text-sm font-bold uppercase tracking-wider text-[#f0b400]">
-            Platform Builder
+            <span>{twText}</span>
+            <span className={cn("ml-0.5 inline-block h-4 w-0.5 bg-[#f0b400] align-middle", twActive ? "animate-pulse" : "opacity-0")} />
           </p>
-          <h2 className="mb-4 text-4xl font-bold tracking-tight text-foreground md:text-5xl text-balance">
+          <h2 className="mb-4 text-5xl font-bold tracking-tight text-foreground md:text-6xl text-balance">
             How to Configure Your Payment Flow
           </h2>
           <p className="mx-auto max-w-2xl text-base font-medium text-white/55 leading-relaxed text-pretty">
@@ -80,13 +83,13 @@ export function PlatformBuilder() {
         </div>
 
         {/* Step Indicators */}
-        <div className="mb-10 flex items-center justify-center gap-2">
+        <div className="mb-10 flex flex-wrap items-center justify-center gap-2">
           {steps.map((step, i) => (
             <div key={step} className="flex items-center gap-2">
               <button
                 onClick={() => setCurrentStep(i)}
                 className={cn(
-                  "flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold transition-all duration-400",
+                  "flex items-center gap-2 rounded-full px-3 py-2 text-xs font-semibold transition-all duration-400 sm:px-4 sm:py-2.5 sm:text-sm",
                   i === currentStep
                     ? "bg-[#f0b400] text-background shadow-[0_4px_20px_rgba(240,180,0,0.3)]"
                     : i < currentStep
@@ -118,13 +121,13 @@ export function PlatformBuilder() {
             <div className="flex flex-col gap-4">
               <h3 className="mb-2 text-lg font-bold text-foreground">Select Services</h3>
               <p className="mb-4 text-sm font-medium text-muted-foreground">Choose the building blocks for your payment platform.</p>
-              <div className="flex flex-wrap justify-center gap-4">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:flex lg:flex-wrap lg:justify-center lg:gap-4">
                 {services.map((service) => (
                   <button
                     key={service.id}
                     onClick={() => toggleService(service.id)}
                     className={cn(
-                      "flex w-full max-w-[280px] items-start gap-4 rounded-xl border p-5 text-left transition-all duration-400",
+                      "flex w-full items-start gap-4 rounded-xl border p-4 text-left transition-all duration-400 sm:p-5 lg:max-w-[280px]",
                       selectedServices.has(service.id)
                         ? "border-[#f0b400]/25 bg-[#f0b400]/8 shadow-[0_4px_16px_rgba(240,180,0,0.12),0_1px_2px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.06)]"
                         : "border-border/20 bg-card/30 shadow-[0_2px_8px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.04)] hover:border-[#b0c4de]/30 hover:shadow-[0_4px_16px_rgba(176,196,222,0.08),inset_0_1px_0_rgba(255,255,255,0.04)]"

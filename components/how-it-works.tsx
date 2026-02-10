@@ -4,6 +4,7 @@ import React from "react"
 import { useState, useEffect, useRef } from "react"
 import { cn } from "@/lib/utils"
 import { useSectionReveal } from "@/hooks/use-section-reveal"
+import { useTypewriter } from "@/hooks/use-typewriter"
 
 const useCases = [
   {
@@ -97,7 +98,8 @@ function FlowDiagram({ steps }: { steps: typeof useCases[0]["steps"] }) {
   }, [steps])
 
   return (
-    <div className="relative flex flex-col items-center gap-4 py-8 md:flex-row md:justify-between md:gap-0">
+    <div className="relative flex flex-col items-stretch gap-6 py-8 md:flex-row md:items-center md:justify-between md:gap-0">
+      {/* Desktop horizontal line */}
       <div className="absolute top-1/2 left-[8%] right-[8%] hidden h-px bg-border/30 md:block" aria-hidden="true">
         <div
           className="h-full bg-[#f0b400] transition-all duration-700 ease-out"
@@ -105,7 +107,8 @@ function FlowDiagram({ steps }: { steps: typeof useCases[0]["steps"] }) {
         />
       </div>
 
-      <div className="absolute top-[8%] bottom-[8%] left-1/2 w-px -translate-x-1/2 bg-border/30 md:hidden" aria-hidden="true">
+      {/* Mobile vertical line */}
+      <div className="absolute top-4 bottom-4 left-7 w-px bg-border/30 md:hidden" aria-hidden="true">
         <div
           className="w-full bg-[#f0b400] transition-all duration-700 ease-out"
           style={{ height: `${Math.max(0, (activeStep / (steps.length - 1)) * 100)}%` }}
@@ -116,13 +119,13 @@ function FlowDiagram({ steps }: { steps: typeof useCases[0]["steps"] }) {
         <div
           key={step.label}
           className={cn(
-            "relative z-10 flex flex-row items-center gap-4 transition-all duration-500 md:flex-col md:gap-3",
+            "relative z-10 flex items-center gap-4 transition-all duration-500 md:flex-col md:gap-3",
             i <= activeStep ? "opacity-100" : "opacity-30"
           )}
         >
           <div
             className={cn(
-              "flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border transition-all duration-500",
+              "flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border transition-all duration-500 md:h-14 md:w-14",
               i <= activeStep
                 ? "border-[#f0b400]/30 bg-[#f0b400]/10 text-[#f0b400] shadow-[0_4px_20px_rgba(240,180,0,0.15)]"
                 : "border-border/30 bg-card/30 text-muted-foreground"
@@ -130,14 +133,14 @@ function FlowDiagram({ steps }: { steps: typeof useCases[0]["steps"] }) {
           >
             {icons[step.icon]}
           </div>
-          <div className="text-left md:text-center">
+          <div className="min-w-0 flex-1 text-left md:flex-initial md:text-center">
             <p className={cn(
               "text-sm font-semibold transition-colors",
               i <= activeStep ? "text-foreground" : "text-muted-foreground"
             )}>
               {step.label}
             </p>
-            <p className="text-xs text-muted-foreground">{step.detail}</p>
+            <p className="text-xs text-muted-foreground leading-relaxed">{step.detail}</p>
           </div>
         </div>
       ))}
@@ -147,6 +150,7 @@ function FlowDiagram({ steps }: { steps: typeof useCases[0]["steps"] }) {
 
 export function HowItWorks() {
   const { ref, isVisible } = useSectionReveal()
+  const { displayed: twText, isTyping: twActive } = useTypewriter("[How It Works]", isVisible, { typeSpeed: 120, deleteSpeed: 60, pauseBeforeDelete: 2500, pauseBeforeType: 800 })
   const [activeUseCase, setActiveUseCase] = useState("freelancer")
   const current = useCases.find((uc) => uc.id === activeUseCase) ?? useCases[0]
 
@@ -158,9 +162,10 @@ export function HowItWorks() {
       )}>
         <div className="mb-14 text-center">
           <p className="mb-3 text-sm font-bold uppercase tracking-wider text-[#f0b400]">
-            How It Works
+            <span>{twText}</span>
+            <span className={cn("ml-0.5 inline-block h-4 w-0.5 bg-[#f0b400] align-middle", twActive ? "animate-pulse" : "opacity-0")} />
           </p>
-          <h2 className="mb-4 text-4xl font-bold tracking-tight text-foreground md:text-5xl text-balance">
+          <h2 className="mb-4 text-5xl font-bold tracking-tight text-foreground md:text-6xl text-balance">
             Modular Payment Infrastructure
           </h2>
           <p className="mx-auto max-w-2xl text-base font-medium text-white/55 leading-relaxed text-pretty">
@@ -168,7 +173,7 @@ export function HowItWorks() {
           </p>
         </div>
 
-        <div className="mb-10 flex flex-wrap items-center justify-center gap-2">
+        <div className="mb-10 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center sm:justify-center">
           {useCases.map((uc) => (
             <button
               key={uc.id}
