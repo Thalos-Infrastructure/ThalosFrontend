@@ -5,17 +5,17 @@ export function ThalosLoader() {
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background">
       <div
         style={{
-          animation: "thalos-spin 2.5s cubic-bezier(0.37, 0, 0.63, 1) infinite",
+          animation: "thalos-spin 3s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite",
           transformStyle: "preserve-3d",
-          perspective: "800px",
+          perspective: "1000px",
         }}
       >
         <Image
           src="/thalos-icon.png"
           alt="Loading..."
-          width={200}
-          height={200}
-          className="h-36 w-36 object-contain"
+          width={300}
+          height={300}
+          className="h-52 w-52 object-contain"
           priority
         />
       </div>
