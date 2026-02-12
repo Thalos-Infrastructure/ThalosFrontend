@@ -70,7 +70,7 @@ export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }
               alt="Thalos"
               width={250}
               height={250}
-              className="h-36 w-auto object-contain brightness-0 invert transition-transform duration-700 ease-in-out [transform-style:preserve-3d] group-hover:[transform:rotateY(360deg)]"
+              className="h-36 w-auto object-contain brightness-0 invert [transform-style:preserve-3d] transition-transform duration-[1.2s] ease-[cubic-bezier(0.45,0.05,0.55,0.95)] group-hover:[transform:rotateY(360deg)]"
               priority
             />
           </button>
@@ -229,6 +229,18 @@ export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }
             <p className="mt-3 text-center text-xs font-medium text-muted-foreground">
               Securely connect your wallet to access escrow features.
             </p>
+
+            <div className="mt-4 border-t border-border/15 pt-4">
+              <Link href="/admin" onClick={() => setShowSignIn(false)}>
+                <Button
+                  variant="ghost"
+                  className="h-9 w-full gap-2 rounded-lg text-xs font-medium text-muted-foreground/60 hover:text-[#f0b400] hover:bg-[#f0b400]/5 transition-all duration-300"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                  Admin Access
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       )}

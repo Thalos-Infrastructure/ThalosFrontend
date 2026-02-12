@@ -196,7 +196,7 @@ export default function BusinessDashboardPage() {
               alt="Thalos"
               width={250}
               height={250}
-              className="h-36 w-auto object-contain brightness-0 invert transition-transform duration-700 ease-in-out [transform-style:preserve-3d] group-hover:[transform:rotateY(360deg)]"
+              className="h-36 w-auto object-contain brightness-0 invert [transform-style:preserve-3d] transition-transform duration-[1.2s] ease-[cubic-bezier(0.45,0.05,0.55,0.95)] group-hover:[transform:rotateY(360deg)]"
               priority
             />
           </Link>
