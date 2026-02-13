@@ -8,49 +8,23 @@ import { cn } from "@/lib/utils"
 import { ThalosLoader } from "@/components/thalos-loader"
 
 /* ────────────────────────────────────────────────
-   Agreement Wizard Steps
+   Trustless Work Escrow Roles
    ──────────────────────────────────────────────── */
 
-const agreementSteps = ["Agreement Type", "Seller Info", "Buyer Info", "Agreement Details", "Review"]
-
-/* ────────────────────────────────────────────────
-   Escrow Builder Steps  
-   ──────────────────────────────────────────────── */
-
-const builderSteps = ["Escrow Type", "Roles", "Configure", "Milestones", "Review"]
-
-const escrowTypes = [
-  {
-    id: "single",
-    label: "Single Release",
-    description: "One-time release of funds when conditions are met. Best for simple purchases, freelance gigs, or service payments.",
-    icon: "zap",
-  },
-  {
-    id: "milestone",
-    label: "Milestone Release",
-    description: "Progressive fund release based on deliverable stages. Ideal for projects, contracts, and phased work.",
-    icon: "layers",
-  },
-]
-
-const builderRoles = [
-  { id: "service_provider", label: "Service Provider", description: "Can update milestone status and raise disputes." },
-  { id: "approver", label: "Approver", description: "Validates milestone completion, can raise disputes." },
-  { id: "platform", label: "Platform Address", description: "Can make changes before funding. Receives platform fee.", optional: true },
-  { id: "release_signer", label: "Release Signer", description: "Executes the final funds release." },
-  { id: "dispute_resolver", label: "Dispute Resolver", description: "Arbitrates when disputes are raised. Can re-route funds." },
-  { id: "receiver", label: "Receiver", description: "Final destination of released funds." },
+const twRoles = [
+  { key: "approver", label: "Approver", description: "Validates milestone completion, can raise disputes.", required: true },
+  { key: "serviceProvider", label: "Service Provider", description: "Delivers the work, can update milestone status.", required: true },
+  { key: "releaseSigner", label: "Release Signer", description: "Executes the final funds release.", required: true },
+  { key: "disputeResolver", label: "Dispute Resolver", description: "Arbitrates when disputes are raised.", required: true },
+  { key: "receiver", label: "Receiver", description: "Final destination of released funds.", required: true },
+  { key: "platformAddress", label: "Platform Address", description: "Receives platform fee. Can make changes before funding.", required: false },
 ]
 
 /* ────────────────────────────────────────────────
-   Icons
+   Wizard Steps
    ──────────────────────────────────────────────── */
 
-const iconMap: Record<string, React.ReactNode> = {
-  zap: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10"/></svg>,
-  layers: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polygon points="12 2 2 7 12 12 22 7"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>,
-}
+const agreementSteps = ["Agreement Info", "Roles & Wallets", "Milestones", "Review & JSON"]
 
 /* ────────────────────────────────────────────────
    Page Component
@@ -58,100 +32,123 @@ const iconMap: Record<string, React.ReactNode> = {
 
 export default function PersonalDashboardPage() {
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState<"agreement" | "builder">("agreement")
 
   useEffect(() => {
     const timer = setTimeout(() => setLoading(false), 1400)
     return () => clearTimeout(timer)
   }, [])
 
-  /* ── Agreement Wizard State ── */
-  const [agStep, setAgStep] = useState(0)
-  const [agType, setAgType] = useState<"one-time" | "milestone" | null>(null)
-  const [sellerName, setSellerName] = useState("")
-  const [sellerWallet, setSellerWallet] = useState("")
-  const [sellerEmail, setSellerEmail] = useState("")
-  const [buyerName, setBuyerName] = useState("")
-  const [buyerWallet, setBuyerWallet] = useState("")
-  const [buyerEmail, setBuyerEmail] = useState("")
+  /* ── Wizard State ── */
+  const [step, setStep] = useState(0)
+  const [submitted, setSubmitted] = useState(false)
+
+  // Step 1: Agreement Info
+  const [engagementId, setEngagementId] = useState("")
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
   const [amount, setAmount] = useState("")
-  const [platformFee, setPlatformFee] = useState("2")
-  const [stages, setStages] = useState([{ name: "Stage 1", amount: "" }])
-  const [agSubmitted, setAgSubmitted] = useState(false)
 
-  /* ── Builder State ── */
-  const [bStep, setBStep] = useState(0)
-  const [bEscrowType, setBEscrowType] = useState<"single" | "milestone" | null>(null)
-  const [selectedRoles, setSelectedRoles] = useState<Set<string>>(new Set(["service_provider", "approver", "release_signer", "receiver"]))
-  const [bTitle, setBTitle] = useState("")
-  const [bDescription, setBDescription] = useState("")
-  const [bAmount, setBAmount] = useState("")
-  const [bPlatformFee, setBPlatformFee] = useState("2")
-  const [bStages, setBStages] = useState([{ name: "Milestone 1", amount: "" }])
-  const [bSubmitted, setBSubmitted] = useState(false)
+  // Step 2: Roles (wallet addresses)
+  const [roles, setRoles] = useState<Record<string, string>>({
+    approver: "",
+    serviceProvider: "",
+    releaseSigner: "",
+    disputeResolver: "",
+    receiver: "",
+    platformAddress: "",
+  })
 
-  const addStage = () => setStages([...stages, { name: `Stage ${stages.length + 1}`, amount: "" }])
-  const removeStage = (i: number) => stages.length > 1 && setStages(stages.filter((_, idx) => idx !== i))
-  const updateStage = (i: number, field: "name" | "amount", val: string) => {
-    const n = [...stages]; n[i] = { ...n[i], [field]: val }; setStages(n)
+  // Step 3: Milestones
+  const [milestones, setMilestones] = useState([{ description: "" }])
+
+  // Computed
+  const platformFee = amount ? (parseFloat(amount) * 0.01).toFixed(2) : "0.00"
+  const signerAddress = "GXXXXXXXXXXXXXXXX" // Auto from wallet
+
+  const updateRole = (key: string, val: string) => setRoles((prev) => ({ ...prev, [key]: val }))
+  const addMilestone = () => setMilestones([...milestones, { description: "" }])
+  const removeMilestone = (i: number) => milestones.length > 1 && setMilestones(milestones.filter((_, idx) => idx !== i))
+  const updateMilestone = (i: number, val: string) => {
+    const n = [...milestones]; n[i] = { description: val }; setMilestones(n)
   }
 
-  const addBStage = () => setBStages([...bStages, { name: `Milestone ${bStages.length + 1}`, amount: "" }])
-  const removeBStage = (i: number) => bStages.length > 1 && setBStages(bStages.filter((_, idx) => idx !== i))
-  const updateBStage = (i: number, field: "name" | "amount", val: string) => {
-    const n = [...bStages]; n[i] = { ...n[i], [field]: val }; setBStages(n)
+  // Generate Trustless Work JSON
+  const generateJSON = () => ({
+    engagementId: engagementId || "Thalos-Agreement",
+    title: title || "Untitled Agreement",
+    description: description || "",
+    amount: amount || "0",
+    platformFee: platformFee,
+    signer: signerAddress,
+    roles: {
+      approver: roles.approver || "",
+      serviceProvider: roles.serviceProvider || "",
+      platformAddress: roles.platformAddress || "",
+      releaseSigner: roles.releaseSigner || "",
+      disputeResolver: roles.disputeResolver || "",
+      receiver: roles.receiver || "",
+    },
+    milestones: milestones.map((m) => ({ description: m.description || "Milestone" })),
+    trustline: {
+      symbol: "USDC",
+      address: "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5",
+    },
+  })
+
+  const [copiedJson, setCopiedJson] = useState(false)
+  const copyJson = () => {
+    navigator.clipboard.writeText(JSON.stringify(generateJSON(), null, 2))
+    setCopiedJson(true)
+    setTimeout(() => setCopiedJson(false), 2000)
   }
 
-  const toggleRole = (id: string) => {
-    setSelectedRoles((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id); else next.add(id)
-      return next
-    })
-  }
-
-  /* ── Input Component ── */
-  const Input = ({ label, value, onChange, placeholder, type = "text" }: { label: string; value: string; onChange: (v: string) => void; placeholder?: string; type?: string }) => (
+  /* ── Reusable Input ── */
+  const Input = ({ label, value, onChange, placeholder, type = "text", disabled = false, info }: { label: string; value: string; onChange: (v: string) => void; placeholder?: string; type?: string; disabled?: boolean; info?: string }) => (
     <div>
-      <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">{label}</label>
+      <label className="mb-1.5 flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+        {label}
+        {info && <span className="normal-case tracking-normal font-normal text-muted-foreground/50">({info})</span>}
+      </label>
       <input
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="h-11 w-full rounded-xl border border-border/50 bg-card/40 px-4 text-sm text-foreground placeholder:text-muted-foreground/50 focus:border-[#f0b400]/40 focus:outline-none focus:ring-1 focus:ring-[#f0b400]/20 transition-all"
+        disabled={disabled}
+        className={cn(
+          "h-11 w-full rounded-xl border border-border/50 bg-card/40 px-4 text-sm text-foreground placeholder:text-muted-foreground/50 focus:border-[#f0b400]/40 focus:outline-none focus:ring-1 focus:ring-[#f0b400]/20 transition-all",
+          disabled && "opacity-60 cursor-not-allowed"
+        )}
       />
     </div>
   )
 
-  /* ── Step Indicator Renderer ── */
-  const StepIndicator = ({ steps, current, onStep }: { steps: string[]; current: number; onStep: (i: number) => void }) => (
+  /* ── Step Indicator ── */
+  const StepIndicator = () => (
     <div className="mb-8 flex flex-wrap items-center justify-center gap-2">
-      {steps.map((step, i) => (
-        <div key={step} className="flex items-center gap-2">
+      {agreementSteps.map((s, i) => (
+        <div key={s} className="flex items-center gap-2">
           <button
-            onClick={() => onStep(i)}
+            onClick={() => setStep(i)}
             className={cn(
               "flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-all duration-300",
               "shadow-[0_2px_6px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.04)]",
-              i === current
+              i === step
                 ? "bg-[#f0b400] text-background shadow-[0_4px_16px_rgba(240,180,0,0.3),inset_0_1px_0_rgba(255,255,255,0.15)]"
-                : i < current
+                : i < step
                   ? "bg-[#f0b400]/10 text-[#f0b400]"
                   : "bg-secondary text-muted-foreground"
             )}
           >
             <span className="flex h-5 w-5 items-center justify-center rounded-full text-xs">
-              {i < current ? (
+              {i < step ? (
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
               ) : i + 1}
             </span>
-            <span className="hidden sm:inline">{step}</span>
+            <span className="hidden sm:inline">{s}</span>
           </button>
-          {i < steps.length - 1 && (
-            <div className={cn("h-px w-6", i < current ? "bg-[#f0b400]" : "bg-border")} />
+          {i < agreementSteps.length - 1 && (
+            <div className={cn("h-px w-6", i < step ? "bg-[#f0b400]" : "bg-border")} />
           )}
         </div>
       ))}
@@ -186,417 +183,248 @@ export default function PersonalDashboardPage() {
         </nav>
       </header>
 
-      <div className="mx-auto max-w-7xl px-6 py-8">
+      <div className="mx-auto max-w-5xl px-6 py-8">
         {/* Page Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-semibold tracking-tight text-foreground">Personal Workspace</h1>
-          <p className="mt-1 text-muted-foreground">{"Freelancer & Retail profile -- Create agreements and build escrow flows"}</p>
+          <h1 className="text-3xl font-semibold tracking-tight text-foreground">Create Agreement</h1>
+          <p className="mt-1 text-muted-foreground">Single-Release Escrow powered by Trustless Work on Stellar</p>
         </div>
 
-        {/* Stats */}
-        <div className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
+        {/* Fixed info bar */}
+        <div className="mb-8 flex flex-wrap gap-3">
           {[
-            { label: "Active Agreements", value: "3" },
-            { label: "Total Protected", value: "$8,200" },
-            { label: "Yield Earned", value: "+$20.80" },
-            { label: "Completed", value: "7" },
-          ].map((s) => (
-            <div key={s.label} className="rounded-2xl border border-border/40 bg-card/40 p-5 shadow-[0_4px_16px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.04)] transition-all duration-300 hover:border-[#f0b400]/30 hover:shadow-[0_4px_24px_rgba(240,180,0,0.08)]">
-              <p className="text-xs text-muted-foreground">{s.label}</p>
-              <p className="mt-1 text-2xl font-semibold text-foreground">{s.value}</p>
+            { label: "Network", value: "Stellar" },
+            { label: "Currency", value: "USDC" },
+            { label: "Platform Fee", value: "1%" },
+            { label: "Contract", value: "Single Release" },
+          ].map((t) => (
+            <div key={t.label} className="flex items-center gap-2 rounded-full border border-border/40 bg-card/40 px-4 py-2 text-xs shadow-[0_2px_6px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.03)]">
+              <span className="text-muted-foreground">{t.label}:</span>
+              <span className="font-semibold text-[#f0b400]">{t.value}</span>
             </div>
           ))}
         </div>
 
-        {/* Tab Switch */}
-        <div className="mb-6 flex gap-2">
-          {[
-            { id: "agreement" as const, label: "Create Agreement" },
-            { id: "builder" as const, label: "Escrow Builder" },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={cn(
-                "rounded-full border px-5 py-2.5 text-sm font-medium transition-all duration-300",
-                "shadow-[0_2px_8px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.04)]",
-                activeTab === tab.id
-                  ? "border-[#f0b400]/50 bg-[#f0b400] text-background shadow-[0_4px_20px_rgba(240,180,0,0.3),inset_0_1px_0_rgba(255,255,255,0.15)]"
-                  : "border-border/60 bg-card/40 text-muted-foreground hover:border-[#f0b400]/30 hover:text-[#f0b400] hover:bg-[#f0b400]/5"
+        {!submitted ? (
+          <>
+            <StepIndicator />
+            <div className="rounded-2xl border border-border/40 bg-card/40 p-6 backdrop-blur-sm shadow-[0_8px_32px_rgba(0,0,0,0.25),inset_0_1px_0_rgba(255,255,255,0.04)] md:p-10">
+
+              {/* Step 1: Agreement Info */}
+              {step === 0 && (
+                <div className="flex flex-col gap-5">
+                  <div>
+                    <h3 className="text-lg font-semibold text-foreground">Agreement Information</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">Basic details about this escrow agreement.</p>
+                  </div>
+                  <Input label="Engagement ID" value={engagementId} onChange={setEngagementId} placeholder="Thalos-Beta-Test" info="unique identifier" />
+                  <Input label="Title" value={title} onChange={setTitle} placeholder="Website Development Project" />
+                  <div>
+                    <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">Description</label>
+                    <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Brief description of the agreement scope..."
+                      className="h-24 w-full rounded-xl border border-border/50 bg-card/40 px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/50 focus:border-[#f0b400]/40 focus:outline-none focus:ring-1 focus:ring-[#f0b400]/20 transition-all resize-none" />
+                  </div>
+                  <Input label="Total Amount" value={amount} onChange={setAmount} placeholder="100" type="number" info="USDC" />
+
+                  {/* Read-only computed */}
+                  <div className="mt-2 grid grid-cols-2 gap-4">
+                    <div className="rounded-xl border border-border/30 bg-secondary/20 p-4">
+                      <p className="text-xs text-muted-foreground">Platform Fee (1%)</p>
+                      <p className="mt-1 text-lg font-bold text-[#f0b400]">{platformFee} USDC</p>
+                    </div>
+                    <div className="rounded-xl border border-border/30 bg-secondary/20 p-4">
+                      <p className="text-xs text-muted-foreground">Signer (your wallet)</p>
+                      <p className="mt-1 text-sm font-mono text-foreground/70 truncate">{signerAddress}</p>
+                    </div>
+                  </div>
+                </div>
               )}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
 
-        {/* ─── CREATE AGREEMENT TAB ─── */}
-        {activeTab === "agreement" && (
-          <div className="animate-fade-in-up">
-            {!agSubmitted ? (
-              <>
-                <StepIndicator steps={agreementSteps} current={agStep} onStep={setAgStep} />
-                <div className="rounded-2xl border border-border/40 bg-card/40 p-6 backdrop-blur-sm shadow-[0_8px_32px_rgba(0,0,0,0.25),inset_0_1px_0_rgba(255,255,255,0.04)] md:p-10">
-                  {/* Step 1: Agreement Type */}
-                  {agStep === 0 && (
-                    <div className="flex flex-col gap-4">
-                      <h3 className="mb-2 text-lg font-semibold text-foreground">Choose Agreement Type</h3>
-                      <p className="mb-4 text-sm text-muted-foreground">Select the type of payment agreement you want to create.</p>
-                      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                        {[
-                          { id: "one-time" as const, label: "One-Time Payment", desc: "Single payment released when both parties confirm. Best for purchases, gigs, or services.", icon: "zap" },
-                          { id: "milestone" as const, label: "Milestone-Based", desc: "Funds released progressively per deliverable stage. Ideal for projects and phased contracts.", icon: "layers" },
-                        ].map((t) => (
-                          <button key={t.id} onClick={() => setAgType(t.id)}
-                            className={cn(
-                              "flex flex-col items-center gap-4 rounded-2xl border p-8 text-center transition-all duration-300",
-                              "shadow-[0_2px_8px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.04)]",
-                              agType === t.id
-                                ? "border-[#f0b400]/40 bg-[#f0b400]/5 shadow-[0_4px_24px_rgba(240,180,0,0.12)]"
-                                : "border-border hover:border-[#f0b400]/30 hover:bg-[#f0b400]/5"
-                            )}>
-                            <div className={cn("flex h-14 w-14 items-center justify-center rounded-2xl transition-colors",
-                              agType === t.id ? "bg-[#f0b400]/10 text-[#f0b400]" : "bg-secondary text-muted-foreground")}>
-                              {iconMap[t.icon]}
-                            </div>
-                            <div>
-                              <p className="text-base font-semibold text-foreground">{t.label}</p>
-                              <p className="mt-2 text-xs text-muted-foreground leading-relaxed">{t.desc}</p>
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Step 2: Seller Info */}
-                  {agStep === 1 && (
-                    <div className="flex flex-col gap-5">
-                      <h3 className="mb-2 text-lg font-semibold text-foreground">Seller Information</h3>
-                      <p className="mb-2 text-sm text-muted-foreground">The party providing the service or product.</p>
-                      <Input label="Full Name" value={sellerName} onChange={setSellerName} placeholder="John Doe" />
-                      <Input label="Stellar Wallet Address" value={sellerWallet} onChange={setSellerWallet} placeholder="G..." />
-                      <Input label="Email (optional)" value={sellerEmail} onChange={setSellerEmail} placeholder="john@example.com" type="email" />
-                    </div>
-                  )}
-
-                  {/* Step 3: Buyer Info */}
-                  {agStep === 2 && (
-                    <div className="flex flex-col gap-5">
-                      <h3 className="mb-2 text-lg font-semibold text-foreground">Buyer Information</h3>
-                      <p className="mb-2 text-sm text-muted-foreground">The party funding and approving the agreement.</p>
-                      <Input label="Full Name" value={buyerName} onChange={setBuyerName} placeholder="Jane Smith" />
-                      <Input label="Stellar Wallet Address" value={buyerWallet} onChange={setBuyerWallet} placeholder="G..." />
-                      <Input label="Email (optional)" value={buyerEmail} onChange={setBuyerEmail} placeholder="jane@example.com" type="email" />
-                    </div>
-                  )}
-
-                  {/* Step 4: Agreement Details */}
-                  {agStep === 3 && (
-                    <div className="flex flex-col gap-5">
-                      <h3 className="mb-2 text-lg font-semibold text-foreground">Agreement Details</h3>
-                      <Input label="Agreement Title" value={title} onChange={setTitle} placeholder="Website Development" />
-                      <div>
-                        <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">Description</label>
-                        <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Describe the scope of work..."
-                          className="h-24 w-full rounded-xl border border-border/50 bg-card/40 px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/50 focus:border-[#f0b400]/40 focus:outline-none focus:ring-1 focus:ring-[#f0b400]/20 transition-all resize-none" />
-                      </div>
-                      {agType === "one-time" ? (
-                        <Input label="Total Amount (USDC)" value={amount} onChange={setAmount} placeholder="1000" type="number" />
-                      ) : (
-                        <div className="flex flex-col gap-3">
-                          <div className="flex items-center justify-between">
-                            <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Payment Stages</label>
-                            <Button variant="ghost" size="sm" onClick={addStage} className="text-xs text-[#f0b400] hover:bg-[#f0b400]/10">+ Add Stage</Button>
+              {/* Step 2: Roles & Wallets */}
+              {step === 1 && (
+                <div className="flex flex-col gap-5">
+                  <div>
+                    <h3 className="text-lg font-semibold text-foreground">Roles & Wallet Addresses</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">Assign Stellar wallet addresses to each participant role.</p>
+                  </div>
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    {twRoles.map((role) => (
+                      <div key={role.key} className="rounded-xl border border-border/40 bg-card/30 p-4 transition-all duration-300 hover:border-[#f0b400]/20">
+                        <div className="mb-3 flex items-center gap-2">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#f0b400]/10 text-[#f0b400]">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                           </div>
-                          {stages.map((s, i) => (
-                            <div key={i} className="flex items-center gap-3 rounded-xl border border-border/40 bg-card/30 p-3">
-                              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#f0b400]/10 text-xs font-bold text-[#f0b400]">{i + 1}</span>
-                              <input value={s.name} onChange={(e) => updateStage(i, "name", e.target.value)} placeholder="Stage name"
-                                className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none" />
-                              <input value={s.amount} onChange={(e) => updateStage(i, "amount", e.target.value)} placeholder="Amount" type="number"
-                                className="w-24 bg-transparent text-right text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none" />
-                              <span className="text-xs text-muted-foreground">USDC</span>
-                              {stages.length > 1 && (
-                                <button onClick={() => removeStage(i)} className="text-muted-foreground hover:text-destructive transition-colors">
-                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
-                                </button>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                      <Input label="Platform Fee (%)" value={platformFee} onChange={setPlatformFee} placeholder="2" type="number" />
-                    </div>
-                  )}
-
-                  {/* Step 5: Review */}
-                  {agStep === 4 && (
-                    <div className="flex flex-col gap-6">
-                      <h3 className="mb-2 text-lg font-semibold text-foreground">Review Agreement</h3>
-                      {[
-                        { title: "Type", items: [agType === "one-time" ? "One-Time Payment" : "Milestone-Based"] },
-                        { title: "Seller", items: [sellerName || "Not set", sellerWallet ? `${sellerWallet.slice(0, 6)}...${sellerWallet.slice(-4)}` : "No wallet"] },
-                        { title: "Buyer", items: [buyerName || "Not set", buyerWallet ? `${buyerWallet.slice(0, 6)}...${buyerWallet.slice(-4)}` : "No wallet"] },
-                        { title: "Details", items: [title || "Untitled", agType === "one-time" ? `${amount || "0"} USDC` : stages.map((s) => `${s.name}: ${s.amount || "0"} USDC`).join(", ")] },
-                      ].map((g) => (
-                        <div key={g.title} className="rounded-xl border border-border/40 bg-secondary/20 p-5">
-                          <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">{g.title}</p>
-                          <div className="flex flex-wrap gap-2">
-                            {g.items.map((item) => (
-                              <span key={item} className="rounded-full bg-[#f0b400]/10 px-3 py-1 text-xs font-medium text-[#f0b400]">{item}</span>
-                            ))}
+                          <div>
+                            <p className="text-sm font-medium text-foreground">{role.label}</p>
+                            {!role.required && <span className="text-xs text-muted-foreground/50">Optional</span>}
                           </div>
                         </div>
-                      ))}
-                      {/* Flow Preview */}
-                      <div className="rounded-xl border border-border/30 bg-card/30 p-5">
-                        <p className="mb-4 text-xs font-medium uppercase tracking-wider text-muted-foreground">Flow Preview</p>
-                        <div className="flex flex-wrap items-center justify-center gap-3">
-                          {["Buyer Funds", "Protected Escrow", ...(agType === "milestone" ? stages.map((s) => s.name || "Stage") : ["Release"]), "Seller Receives"].map((node, i, arr) => (
-                            <div key={`${node}-${i}`} className="flex items-center gap-3">
-                              <span className="rounded-lg bg-[#f0b400]/10 px-3 py-1.5 text-xs font-medium text-[#f0b400]">{node}</span>
-                              {i < arr.length - 1 && (
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#f0b400]/40"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-                              )}
-                            </div>
-                          ))}
-                        </div>
+                        <p className="mb-2 text-xs text-muted-foreground leading-relaxed">{role.description}</p>
+                        <input
+                          value={roles[role.key]}
+                          onChange={(e) => updateRole(role.key, e.target.value)}
+                          placeholder="GXXX..."
+                          className="h-10 w-full rounded-lg border border-border/40 bg-card/40 px-3 font-mono text-xs text-foreground placeholder:text-muted-foreground/40 focus:border-[#f0b400]/40 focus:outline-none focus:ring-1 focus:ring-[#f0b400]/20 transition-all"
+                        />
                       </div>
-                    </div>
-                  )}
-
-                  {/* Navigation */}
-                  <div className="mt-8 flex items-center justify-between">
-                    <Button variant="outline" onClick={() => setAgStep(Math.max(0, agStep - 1))} disabled={agStep === 0}
-                      className="rounded-full border-border/60 text-foreground shadow-[0_2px_6px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.04)] hover:bg-[#f0b400]/10 hover:text-[#f0b400] hover:border-[#f0b400]/30 transition-all duration-300">
-                      Back
-                    </Button>
-                    {agStep < agreementSteps.length - 1 ? (
-                      <Button onClick={() => setAgStep(agStep + 1)}
-                        className="rounded-full bg-[#f0b400] text-background shadow-[0_4px_16px_rgba(240,180,0,0.25),inset_0_1px_0_rgba(255,255,255,0.15)] hover:bg-[#ffd000] transition-all duration-300">
-                        Next Step
-                      </Button>
-                    ) : (
-                      <Button onClick={() => setAgSubmitted(true)}
-                        className="rounded-full bg-[#f0b400] text-background shadow-[0_4px_16px_rgba(240,180,0,0.25),inset_0_1px_0_rgba(255,255,255,0.15)] hover:bg-[#ffd000] transition-all duration-300">
-                        Create Agreement
-                      </Button>
-                    )}
+                    ))}
                   </div>
                 </div>
-              </>
-            ) : (
-              /* Success */
-              <div className="flex flex-col items-center gap-6 rounded-2xl border border-[#f0b400]/20 bg-[#f0b400]/5 p-12 text-center">
-                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#f0b400]/10">
-                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#f0b400" strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg>
+              )}
+
+              {/* Step 3: Milestones */}
+              {step === 2 && (
+                <div className="flex flex-col gap-5">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-lg font-semibold text-foreground">Milestones</h3>
+                      <p className="mt-1 text-sm text-muted-foreground">Define the deliverable stages for this agreement.</p>
+                    </div>
+                    <Button variant="ghost" size="sm" onClick={addMilestone} className="text-xs text-[#f0b400] hover:bg-[#f0b400]/10">+ Add Milestone</Button>
+                  </div>
+                  <div className="flex flex-col gap-3">
+                    {milestones.map((m, i) => (
+                      <div key={i} className="flex items-center gap-3 rounded-xl border border-border/40 bg-card/30 p-4 transition-all duration-300 hover:border-[#f0b400]/20">
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#f0b400]/10 text-sm font-bold text-[#f0b400]">{i + 1}</span>
+                        <input
+                          value={m.description}
+                          onChange={(e) => updateMilestone(i, e.target.value)}
+                          placeholder={`Milestone ${i + 1} description...`}
+                          className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none"
+                        />
+                        {milestones.length > 1 && (
+                          <button onClick={() => removeMilestone(i)} className="text-muted-foreground hover:text-destructive transition-colors">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground/60">All milestones are released together in a single transaction upon approval.</p>
                 </div>
-                <h3 className="text-2xl font-bold text-foreground">Agreement Created</h3>
-                <p className="max-w-md text-sm text-muted-foreground">Your agreement has been created. The counterparty will be notified to review and fund the escrow.</p>
-                <Button onClick={() => { setAgSubmitted(false); setAgStep(0); setAgType(null); setTitle(""); setDescription(""); setAmount(""); setStages([{ name: "Stage 1", amount: "" }]) }}
-                  className="rounded-full bg-[#f0b400] text-background hover:bg-[#ffd000] transition-all duration-300">
-                  Create Another
-                </Button>
-              </div>
-            )}
-          </div>
-        )}
+              )}
 
-        {/* ─── ESCROW BUILDER TAB ─── */}
-        {activeTab === "builder" && (
-          <div className="animate-fade-in-up">
-            {!bSubmitted ? (
-              <>
-                <StepIndicator steps={builderSteps} current={bStep} onStep={setBStep} />
-                <div className="rounded-2xl border border-border/40 bg-card/40 p-6 backdrop-blur-sm shadow-[0_8px_32px_rgba(0,0,0,0.25),inset_0_1px_0_rgba(255,255,255,0.04)] md:p-10">
-                  {/* Step 1: Escrow Type */}
-                  {bStep === 0 && (
-                    <div className="flex flex-col gap-4">
-                      <h3 className="mb-2 text-lg font-semibold text-foreground">Select Escrow Type</h3>
-                      <p className="mb-4 text-sm text-muted-foreground">Choose the smart contract type for your escrow.</p>
-                      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                        {escrowTypes.map((t) => (
-                          <button key={t.id} onClick={() => setBEscrowType(t.id as "single" | "milestone")}
-                            className={cn(
-                              "flex flex-col items-center gap-4 rounded-2xl border p-8 text-center transition-all duration-300",
-                              "shadow-[0_2px_8px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.04)]",
-                              bEscrowType === t.id
-                                ? "border-[#f0b400]/40 bg-[#f0b400]/5 shadow-[0_4px_24px_rgba(240,180,0,0.12)]"
-                                : "border-border hover:border-[#f0b400]/30 hover:bg-[#f0b400]/5"
-                            )}>
-                            <div className={cn("flex h-14 w-14 items-center justify-center rounded-2xl transition-colors",
-                              bEscrowType === t.id ? "bg-[#f0b400]/10 text-[#f0b400]" : "bg-secondary text-muted-foreground")}>
-                              {iconMap[t.icon]}
-                            </div>
-                            <div>
-                              <p className="text-base font-semibold text-foreground">{t.label}</p>
-                              <p className="mt-2 text-xs text-muted-foreground leading-relaxed">{t.description}</p>
-                            </div>
-                          </button>
-                        ))}
-                      </div>
+              {/* Step 4: Review & JSON */}
+              {step === 3 && (
+                <div className="flex flex-col gap-6">
+                  <div>
+                    <h3 className="text-lg font-semibold text-foreground">Review & Submit</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">Verify the agreement details before creating the escrow.</p>
+                  </div>
+
+                  {/* Summary cards */}
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <div className="rounded-xl border border-border/40 bg-secondary/20 p-5">
+                      <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">Agreement</p>
+                      <p className="text-sm font-semibold text-foreground">{title || "Untitled"}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">{engagementId || "No ID"}</p>
+                      <p className="mt-2 text-xs text-muted-foreground leading-relaxed">{description || "No description"}</p>
                     </div>
-                  )}
-
-                  {/* Step 2: Roles */}
-                  {bStep === 1 && (
-                    <div className="flex flex-col gap-4">
-                      <h3 className="mb-2 text-lg font-semibold text-foreground">Escrow Roles</h3>
-                      <p className="mb-4 text-sm text-muted-foreground">Define the participants and their roles in the escrow contract.</p>
-                      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                        {builderRoles.map((role) => (
-                          <button key={role.id} onClick={() => toggleRole(role.id)}
-                            className={cn(
-                              "flex items-start gap-4 rounded-xl border p-5 text-left transition-all duration-300",
-                              "shadow-[0_2px_8px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.04)]",
-                              selectedRoles.has(role.id)
-                                ? "border-[#f0b400]/40 bg-[#f0b400]/5 shadow-[0_2px_16px_rgba(240,180,0,0.1)]"
-                                : "border-border hover:border-[#f0b400]/30 hover:bg-[#f0b400]/5"
-                            )}>
-                            <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-colors",
-                              selectedRoles.has(role.id) ? "bg-[#f0b400]/10 text-[#f0b400]" : "bg-secondary text-muted-foreground")}>
-                              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                            </div>
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <p className="text-sm font-medium text-foreground">{role.label}</p>
-                                {role.optional && <span className="rounded-full bg-secondary px-2 py-0.5 text-xs text-muted-foreground">Optional</span>}
-                              </div>
-                              <p className="mt-1 text-xs text-muted-foreground">{role.description}</p>
-                            </div>
-                          </button>
-                        ))}
-                      </div>
+                    <div className="rounded-xl border border-border/40 bg-secondary/20 p-5">
+                      <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">Financial</p>
+                      <p className="text-2xl font-bold text-[#f0b400]">{amount || "0"} <span className="text-sm font-normal text-muted-foreground">USDC</span></p>
+                      <p className="mt-2 text-xs text-muted-foreground">Platform Fee: {platformFee} USDC (1%)</p>
+                      <p className="text-xs text-muted-foreground">Trustline: USDC on Stellar</p>
                     </div>
-                  )}
+                  </div>
 
-                  {/* Step 3: Configure */}
-                  {bStep === 2 && (
-                    <div className="flex flex-col gap-5">
-                      <h3 className="mb-2 text-lg font-semibold text-foreground">Configure Escrow</h3>
-                      <Input label="Escrow Title" value={bTitle} onChange={setBTitle} placeholder="Project Escrow" />
-                      <div>
-                        <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">Description</label>
-                        <textarea value={bDescription} onChange={(e) => setBDescription(e.target.value)} placeholder="Describe the escrow terms..."
-                          className="h-24 w-full rounded-xl border border-border/50 bg-card/40 px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/50 focus:border-[#f0b400]/40 focus:outline-none focus:ring-1 focus:ring-[#f0b400]/20 transition-all resize-none" />
-                      </div>
-                      {bEscrowType === "single" && (
-                        <Input label="Total Amount (USDC)" value={bAmount} onChange={setBAmount} placeholder="5000" type="number" />
-                      )}
-                      <Input label="Platform Fee (%)" value={bPlatformFee} onChange={setBPlatformFee} placeholder="2" type="number" />
-                    </div>
-                  )}
-
-                  {/* Step 4: Milestones (only for milestone type, or summary for single) */}
-                  {bStep === 3 && (
-                    <div className="flex flex-col gap-5">
-                      {bEscrowType === "milestone" ? (
-                        <>
-                          <h3 className="mb-2 text-lg font-semibold text-foreground">Define Milestones</h3>
-                          <p className="mb-2 text-sm text-muted-foreground">Add the deliverable stages and their associated amounts.</p>
-                          <div className="flex items-center justify-between">
-                            <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Milestones</label>
-                            <Button variant="ghost" size="sm" onClick={addBStage} className="text-xs text-[#f0b400] hover:bg-[#f0b400]/10">+ Add Milestone</Button>
-                          </div>
-                          {bStages.map((s, i) => (
-                            <div key={i} className="flex items-center gap-3 rounded-xl border border-border/40 bg-card/30 p-3">
-                              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#f0b400]/10 text-xs font-bold text-[#f0b400]">{i + 1}</span>
-                              <input value={s.name} onChange={(e) => updateBStage(i, "name", e.target.value)} placeholder="Milestone name"
-                                className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none" />
-                              <input value={s.amount} onChange={(e) => updateBStage(i, "amount", e.target.value)} placeholder="Amount" type="number"
-                                className="w-24 bg-transparent text-right text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none" />
-                              <span className="text-xs text-muted-foreground">USDC</span>
-                              {bStages.length > 1 && (
-                                <button onClick={() => removeBStage(i)} className="text-muted-foreground hover:text-destructive transition-colors">
-                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
-                                </button>
-                              )}
-                            </div>
-                          ))}
-                        </>
-                      ) : (
-                        <>
-                          <h3 className="mb-2 text-lg font-semibold text-foreground">Release Conditions</h3>
-                          <p className="text-sm text-muted-foreground">For a single release escrow, funds are released when both the Approver confirms and the Release Signer executes.</p>
-                          <div className="rounded-xl border border-border/40 bg-secondary/20 p-5">
-                            <p className="text-sm text-foreground">Total: <span className="font-bold text-[#f0b400]">{bAmount || "0"} USDC</span></p>
-                            <p className="mt-2 text-xs text-muted-foreground">Released in a single transaction upon approval and signing.</p>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Step 5: Review */}
-                  {bStep === 4 && (
-                    <div className="flex flex-col gap-6">
-                      <h3 className="mb-2 text-lg font-semibold text-foreground">Review Escrow Configuration</h3>
-                      {[
-                        { title: "Escrow Type", items: [bEscrowType === "single" ? "Single Release" : "Milestone Release"] },
-                        { title: "Roles", items: builderRoles.filter((r) => selectedRoles.has(r.id)).map((r) => r.label) },
-                        { title: "Details", items: [bTitle || "Untitled", bEscrowType === "single" ? `${bAmount || "0"} USDC` : bStages.map((s) => `${s.name}: ${s.amount || "0"} USDC`).join(", ")] },
-                        { title: "Platform Fee", items: [`${bPlatformFee}%`] },
-                      ].map((g) => (
-                        <div key={g.title} className="rounded-xl border border-border/40 bg-secondary/20 p-5">
-                          <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">{g.title}</p>
-                          <div className="flex flex-wrap gap-2">
-                            {g.items.map((item) => (
-                              <span key={item} className="rounded-full bg-[#f0b400]/10 px-3 py-1 text-xs font-medium text-[#f0b400]">{item}</span>
-                            ))}
-                          </div>
+                  {/* Roles summary */}
+                  <div className="rounded-xl border border-border/40 bg-secondary/20 p-5">
+                    <p className="mb-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">Roles</p>
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                      {twRoles.filter((r) => roles[r.key]).map((role) => (
+                        <div key={role.key} className="flex items-center gap-2 rounded-lg bg-card/30 px-3 py-2">
+                          <span className="text-xs font-medium text-[#f0b400]">{role.label}:</span>
+                          <span className="truncate font-mono text-xs text-foreground/60">{roles[role.key].slice(0, 8)}...{roles[role.key].slice(-4)}</span>
                         </div>
                       ))}
-                      {/* Flow Preview */}
-                      <div className="rounded-xl border border-border/30 bg-card/30 p-5">
-                        <p className="mb-4 text-xs font-medium uppercase tracking-wider text-muted-foreground">Escrow Flow</p>
-                        <div className="flex flex-wrap items-center justify-center gap-3">
-                          {["Funding", "Escrow Lock", ...(bEscrowType === "milestone" ? bStages.map((s) => s.name || "Milestone") : ["Approval"]), "Release", "Receiver"].map((node, i, arr) => (
-                            <div key={`${node}-${i}`} className="flex items-center gap-3">
-                              <span className="rounded-lg bg-[#f0b400]/10 px-3 py-1.5 text-xs font-medium text-[#f0b400]">{node}</span>
-                              {i < arr.length - 1 && (
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#f0b400]/40"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
                     </div>
-                  )}
+                  </div>
 
-                  {/* Navigation */}
-                  <div className="mt-8 flex items-center justify-between">
-                    <Button variant="outline" onClick={() => setBStep(Math.max(0, bStep - 1))} disabled={bStep === 0}
-                      className="rounded-full border-border/60 text-foreground shadow-[0_2px_6px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.04)] hover:bg-[#f0b400]/10 hover:text-[#f0b400] hover:border-[#f0b400]/30 transition-all duration-300">
-                      Back
-                    </Button>
-                    {bStep < builderSteps.length - 1 ? (
-                      <Button onClick={() => setBStep(bStep + 1)}
-                        className="rounded-full bg-[#f0b400] text-background shadow-[0_4px_16px_rgba(240,180,0,0.25),inset_0_1px_0_rgba(255,255,255,0.15)] hover:bg-[#ffd000] transition-all duration-300">
-                        Next Step
-                      </Button>
-                    ) : (
-                      <Button onClick={() => setBSubmitted(true)}
-                        className="rounded-full bg-[#f0b400] text-background shadow-[0_4px_16px_rgba(240,180,0,0.25),inset_0_1px_0_rgba(255,255,255,0.15)] hover:bg-[#ffd000] transition-all duration-300">
-                        Deploy Escrow
-                      </Button>
-                    )}
+                  {/* Milestones summary */}
+                  <div className="rounded-xl border border-border/40 bg-secondary/20 p-5">
+                    <p className="mb-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">Milestones ({milestones.length})</p>
+                    <div className="flex flex-wrap gap-2">
+                      {milestones.map((m, i) => (
+                        <span key={i} className="rounded-full bg-[#f0b400]/10 px-3 py-1.5 text-xs font-medium text-[#f0b400]">
+                          {m.description || `Milestone ${i + 1}`}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Flow Preview */}
+                  <div className="rounded-xl border border-border/30 bg-card/30 p-5">
+                    <p className="mb-4 text-xs font-medium uppercase tracking-wider text-muted-foreground">Escrow Flow</p>
+                    <div className="flex flex-wrap items-center justify-center gap-3">
+                      {["Signer Funds", "Escrow Lock", ...milestones.map((m, i) => m.description || `M${i + 1}`), "Single Release", "Receiver"].map((node, i, arr) => (
+                        <div key={`${node}-${i}`} className="flex items-center gap-3">
+                          <span className="rounded-lg bg-[#f0b400]/10 px-3 py-1.5 text-xs font-medium text-[#f0b400]">{node}</span>
+                          {i < arr.length - 1 && (
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#f0b400]/40"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Generated JSON */}
+                  <div className="rounded-xl border border-border/40 bg-background/60 p-5">
+                    <div className="mb-3 flex items-center justify-between">
+                      <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Trustless Work JSON</p>
+                      <button onClick={copyJson} className="flex items-center gap-1.5 rounded-lg bg-[#f0b400]/10 px-3 py-1.5 text-xs font-medium text-[#f0b400] transition-all hover:bg-[#f0b400]/20">
+                        {copiedJson ? (
+                          <><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg> Copied</>
+                        ) : (
+                          <><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Copy JSON</>
+                        )}
+                      </button>
+                    </div>
+                    <pre className="max-h-64 overflow-auto rounded-lg bg-background/80 p-4 font-mono text-xs text-foreground/70 leading-relaxed">
+                      {JSON.stringify(generateJSON(), null, 2)}
+                    </pre>
                   </div>
                 </div>
-              </>
-            ) : (
-              <div className="flex flex-col items-center gap-6 rounded-2xl border border-[#f0b400]/20 bg-[#f0b400]/5 p-12 text-center">
-                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#f0b400]/10">
-                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#f0b400" strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg>
-                </div>
-                <h3 className="text-2xl font-bold text-foreground">Escrow Deployed</h3>
-                <p className="max-w-md text-sm text-muted-foreground">Your escrow smart contract has been configured. Participants will be notified of their roles.</p>
-                <Button onClick={() => { setBSubmitted(false); setBStep(0); setBEscrowType(null); setBTitle(""); setBDescription(""); setBAmount(""); setBStages([{ name: "Milestone 1", amount: "" }]) }}
-                  className="rounded-full bg-[#f0b400] text-background hover:bg-[#ffd000] transition-all duration-300">
-                  Create Another
+              )}
+
+              {/* Navigation */}
+              <div className="mt-8 flex items-center justify-between">
+                <Button variant="outline" onClick={() => setStep(Math.max(0, step - 1))} disabled={step === 0}
+                  className="rounded-full border-border/60 text-foreground shadow-[0_2px_6px_rgba(0,0,0,0.15),inset_0_1px_0_rgba(255,255,255,0.04)] hover:bg-[#f0b400]/10 hover:text-[#f0b400] hover:border-[#f0b400]/30 transition-all duration-300">
+                  Back
                 </Button>
+                {step < agreementSteps.length - 1 ? (
+                  <Button onClick={() => setStep(step + 1)}
+                    className="rounded-full bg-[#f0b400] text-background shadow-[0_4px_16px_rgba(240,180,0,0.25),inset_0_1px_0_rgba(255,255,255,0.15)] hover:bg-[#ffd000] transition-all duration-300">
+                    Next Step
+                  </Button>
+                ) : (
+                  <Button onClick={() => setSubmitted(true)}
+                    className="rounded-full bg-[#f0b400] text-background shadow-[0_4px_16px_rgba(240,180,0,0.25),inset_0_1px_0_rgba(255,255,255,0.15)] hover:bg-[#ffd000] transition-all duration-300">
+                    Create Escrow
+                  </Button>
+                )}
               </div>
-            )}
+            </div>
+          </>
+        ) : (
+          /* Success */
+          <div className="flex flex-col items-center gap-6 rounded-2xl border border-[#f0b400]/20 bg-[#f0b400]/5 p-12 text-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#f0b400]/10">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#f0b400" strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <h3 className="text-2xl font-bold text-foreground">Escrow Created</h3>
+            <p className="max-w-md text-sm text-muted-foreground">Your Single-Release Escrow has been configured with {milestones.length} milestone{milestones.length > 1 ? "s" : ""}. The counterparty will be notified.</p>
+            <div className="rounded-xl border border-border/30 bg-card/30 p-4 max-w-sm w-full">
+              <p className="text-xs text-muted-foreground">Engagement ID</p>
+              <p className="mt-1 text-sm font-bold text-[#f0b400]">{engagementId || "Thalos-Agreement"}</p>
+              <p className="mt-2 text-xs text-muted-foreground">Amount</p>
+              <p className="text-sm font-bold text-foreground">{amount || "0"} USDC</p>
+            </div>
+            <Button onClick={() => { setSubmitted(false); setStep(0); setEngagementId(""); setTitle(""); setDescription(""); setAmount(""); setRoles({ approver: "", serviceProvider: "", releaseSigner: "", disputeResolver: "", receiver: "", platformAddress: "" }); setMilestones([{ description: "" }]) }}
+              className="rounded-full bg-[#f0b400] text-background hover:bg-[#ffd000] transition-all duration-300">
+              Create Another
+            </Button>
           </div>
         )}
       </div>
