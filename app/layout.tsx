@@ -12,6 +12,10 @@ export const metadata: Metadata = {
   title: 'Thalos - Escrow & Payments Infrastructure on Stellar',
   description: 'Build secure payment platforms with programmable escrows, protected funds, and staged releases on Stellar.',
   generator: 'v0.app',
+  icons: {
+    icon: '/thalos-icon.png',
+    apple: '/thalos-icon.png',
+  },
 }
 
 export const viewport: Viewport = {
