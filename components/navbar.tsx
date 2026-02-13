@@ -67,7 +67,7 @@ export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }
               alt="Thalos"
               width={250}
               height={250}
-              className="h-36 w-auto object-contain brightness-0 invert [transform-style:preserve-3d] transition-transform duration-[1.2s] ease-[cubic-bezier(0.45,0.05,0.55,0.95)] group-hover:[transform:rotateY(360deg)]"
+              className="h-20 w-auto object-contain [transform-style:preserve-3d] transition-transform duration-[1.2s] ease-[cubic-bezier(0.45,0.05,0.55,0.95)] group-hover:[transform:rotateY(360deg)]"
               priority
             />
           </button>

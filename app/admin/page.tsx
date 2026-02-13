@@ -133,7 +133,7 @@ export default function AdminDashboardPage() {
         <nav className="mx-auto flex h-24 max-w-7xl items-center justify-between px-6">
           <Link href="/" className="group flex items-center [perspective:800px]">
             <Image src="/thalos-icon.png" alt="Thalos" width={250} height={250}
-              className="h-36 w-auto object-contain brightness-0 invert [transform-style:preserve-3d] transition-transform duration-[1.2s] ease-[cubic-bezier(0.45,0.05,0.55,0.95)] group-hover:[transform:rotateY(360deg)]"
+              className="h-20 w-auto object-contain [transform-style:preserve-3d] transition-transform duration-[1.2s] ease-[cubic-bezier(0.45,0.05,0.55,0.95)] group-hover:[transform:rotateY(360deg)]"
               priority />
           </Link>
           <div className="flex items-center gap-3">

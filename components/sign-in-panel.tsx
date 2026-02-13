@@ -32,7 +32,7 @@ export function SignInPanel({ open, onClose }: SignInPanelProps) {
         {/* Subtle Thalos watermark pattern */}
         <div className="absolute inset-0 grid grid-cols-4 grid-rows-4 gap-16 p-16 opacity-[0.03]" aria-hidden="true">
           {Array.from({ length: 16 }).map((_, i) => (
-            <Image key={i} src="/thalos-icon.png" alt="" width={80} height={80} className="h-full w-full object-contain brightness-0 invert" />
+            <Image key={i} src="/thalos-icon.png" alt="" width={80} height={80} className="h-full w-full object-contain opacity-50" />
           ))}
         </div>
         <div className="relative z-10 w-full max-w-md px-12">
@@ -62,7 +62,7 @@ export function SignInPanel({ open, onClose }: SignInPanelProps) {
         <div className="absolute inset-0 opacity-[0.02] lg:opacity-[0.015]" aria-hidden="true">
           <div className="grid h-full grid-cols-3 grid-rows-3 gap-12 p-12">
             {Array.from({ length: 9 }).map((_, i) => (
-              <Image key={i} src="/thalos-icon.png" alt="" width={60} height={60} className="h-full w-full object-contain brightness-0 invert" />
+              <Image key={i} src="/thalos-icon.png" alt="" width={60} height={60} className="h-full w-full object-contain opacity-50" />
             ))}
           </div>
         </div>
@@ -81,7 +81,7 @@ export function SignInPanel({ open, onClose }: SignInPanelProps) {
         <div className="relative z-10 w-full max-w-sm">
           {/* Logo */}
           <div className="mb-8 flex justify-center">
-            <Image src="/thalos-icon.png" alt="Thalos" width={80} height={80} className="h-14 w-auto object-contain brightness-0 invert" />
+            <Image src="/thalos-icon.png" alt="Thalos" width={80} height={80} className="h-16 w-auto object-contain" />
           </div>
 
           {/* Header */}

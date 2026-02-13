@@ -13,7 +13,7 @@ export function Footer() {
           {/* Left: Logo + tagline + partners */}
           <div className="flex flex-col gap-5">
             <div className="flex items-center gap-3">
-              <Image src="/thalos-icon.png" alt="Thalos" width={44} height={44} className="h-9 w-9 shrink-0 object-contain brightness-0 invert" />
+              <Image src="/thalos-icon.png" alt="Thalos" width={48} height={48} className="h-10 w-10 shrink-0 object-contain" />
               <span className="text-lg font-bold text-foreground tracking-tight">Thalos</span>
             </div>
             <p className="max-w-sm text-sm font-medium leading-relaxed text-muted-foreground/60">
@@ -23,7 +23,7 @@ export function Footer() {
             <div className="flex items-center gap-5">
               <div className="flex items-center gap-2">
                 <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/40">Built on</span>
-                <Image src="/stellar-full.png" alt="Stellar" width={80} height={20} className="h-4 w-auto object-contain brightness-0 invert opacity-50" />
+                <Image src="/stellar-full.png" alt="Stellar" width={24} height={24} className="h-5 w-5 shrink-0 object-contain opacity-60" />
               </div>
               <div className="h-3.5 w-px bg-white/10" aria-hidden="true" />
               <div className="flex items-center gap-2">
