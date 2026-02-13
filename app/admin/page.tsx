@@ -95,6 +95,9 @@ const PAGE_SIZE = 6
 
 export default function AdminDashboardPage() {
   const [loading, setLoading] = useState(true)
+  const [authenticated, setAuthenticated] = useState(false)
+  const [password, setPassword] = useState("")
+  const [passwordError, setPasswordError] = useState(false)
   const [statusFilter, setStatusFilter] = useState<AgreementStatus | "all">("all")
   const [typeFilter, setTypeFilter] = useState<"all" | "one-time" | "milestone">("all")
   const [sortDir, setSortDir] = useState<"desc" | "asc">("desc")
@@ -104,6 +107,17 @@ export default function AdminDashboardPage() {
     const timer = setTimeout(() => setLoading(false), 1400)
     return () => clearTimeout(timer)
   }, [])
+
+  const handlePasswordSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (password === "Thalos2026*") {
+      setAuthenticated(true)
+      setPasswordError(false)
+    } else {
+      setPasswordError(true)
+      setPassword("")
+    }
+  }
 
   /* ── Computed ── */
   const filtered = useMemo(() => {
