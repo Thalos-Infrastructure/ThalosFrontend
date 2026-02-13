@@ -119,7 +119,7 @@ export function BottomBar({ onNavigate }: { onNavigate: (section: string) => voi
             <div className="relative z-10 p-3">
               {/* Header */}
               <div className="mb-2 px-3 pt-1 pb-2 border-b border-white/8">
-                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/50">Navigation</p>
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/50">{t("bar.navigation")}</p>
               </div>
 
               {/* Menu items */}
@@ -131,7 +131,7 @@ export function BottomBar({ onNavigate }: { onNavigate: (section: string) => voi
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
                   </svg>
-                  Sign In
+                  {t("nav.signIn")}
                 </button>
 
                 <button
@@ -141,7 +141,7 @@ export function BottomBar({ onNavigate }: { onNavigate: (section: string) => voi
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                     <circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/>
                   </svg>
-                  How It Works
+                  {t("nav.howItWorks")}
                 </button>
 
                 <button
@@ -151,7 +151,7 @@ export function BottomBar({ onNavigate }: { onNavigate: (section: string) => voi
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
                   </svg>
-                  Solutions
+                  {t("nav.solutions")}
                 </button>
               </div>
 
@@ -166,7 +166,7 @@ export function BottomBar({ onNavigate }: { onNavigate: (section: string) => voi
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><path d="M22 6l-10 7L2 6"/>
                 </svg>
-                Contact Us
+                {t("bar.contactUs")}
               </a>
             </div>
           </div>

@@ -39,6 +39,14 @@ const translations: Record<Lang, Record<string, string>> = {
     "profiles.business": "Enterprise",
     "profiles.businessDesc": "Manage travel packages, marketplace transactions, and high-value deals with advanced escrow workflows and team tools.",
     "profiles.cta": "Explore",
+    "profiles.personalF1": "Freelancer escrows",
+    "profiles.personalF2": "Planned payment schedules",
+    "profiles.personalF3": "Individual buyer protection",
+    "profiles.personalF4": "Yield on idle funds",
+    "profiles.businessF1": "Multi-party escrows",
+    "profiles.businessF2": "Travel & marketplace solutions",
+    "profiles.businessF3": "API access & integrations",
+    "profiles.businessF4": "Custom payment flows",
 
     // Platform Builder
     "builder.tag": "[Platform Builder]",
@@ -159,6 +167,14 @@ const translations: Record<Lang, Record<string, string>> = {
     "profiles.business": "Empresa",
     "profiles.businessDesc": "Gestiona paquetes de viaje, transacciones de marketplace y acuerdos de alto valor con flujos de escrow avanzados y herramientas de equipo.",
     "profiles.cta": "Explorar",
+    "profiles.personalF1": "Escrows para freelancers",
+    "profiles.personalF2": "Calendarios de pagos planificados",
+    "profiles.personalF3": "Proteccion individual del comprador",
+    "profiles.personalF4": "Rendimiento sobre fondos inactivos",
+    "profiles.businessF1": "Escrows multi-parte",
+    "profiles.businessF2": "Soluciones para viajes y marketplaces",
+    "profiles.businessF3": "Acceso a API e integraciones",
+    "profiles.businessF4": "Flujos de pago personalizados",
 
     // Platform Builder
     "builder.tag": "[Constructor de Plataforma]",

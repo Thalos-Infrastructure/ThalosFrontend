@@ -38,10 +38,10 @@ export function Footer() {
             <div>
               <p className="mb-3 text-xs font-bold uppercase tracking-widest text-muted-foreground/50">{t("footer.platform")}</p>
               <ul className="flex flex-col gap-2.5">
-                <li><a href="#how-it-works" className="text-sm font-medium text-muted-foreground/60 transition-colors hover:text-foreground">How It Works</a></li>
-                <li><a href="#profiles" className="text-sm font-medium text-muted-foreground/60 transition-colors hover:text-foreground">Solutions</a></li>
-                <li><a href="#builder" className="text-sm font-medium text-muted-foreground/60 transition-colors hover:text-foreground">Build Your Flow</a></li>
-                <li><a href="#dashboard" className="text-sm font-medium text-muted-foreground/60 transition-colors hover:text-foreground">Dashboard</a></li>
+                <li><a href="#how-it-works" className="text-sm font-medium text-muted-foreground/60 transition-colors hover:text-foreground">{t("nav.howItWorks")}</a></li>
+                <li><a href="#profiles" className="text-sm font-medium text-muted-foreground/60 transition-colors hover:text-foreground">{t("nav.solutions")}</a></li>
+                <li><a href="#builder" className="text-sm font-medium text-muted-foreground/60 transition-colors hover:text-foreground">{t("nav.buildFlow")}</a></li>
+                <li><a href="#dashboard" className="text-sm font-medium text-muted-foreground/60 transition-colors hover:text-foreground">{t("dash.tag")}</a></li>
               </ul>
             </div>
             <div>
