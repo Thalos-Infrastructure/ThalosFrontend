@@ -12,25 +12,27 @@ import { ThalosLoader } from "@/components/thalos-loader"
    ──────────────────────────────────────────────── */
 
 const useCases = [
-  { id: "freelancer", label: "Freelancer Service", icon: "user" },
-  { id: "rental", label: "Rental Agreement", icon: "home" },
-  { id: "car-sale", label: "Peer-to-Peer Car Sale", icon: "car" },
-  { id: "coaching", label: "Online Coaching / Course", icon: "book" },
-  { id: "home-repair", label: "Home Repair Service", icon: "tool" },
+  { id: "freelancer", label: "Freelancer Service", icon: "user", suggestedTitle: "Freelancer Service Agreement", suggestedDesc: "Describe the scope of work, deliverables, and timeline for this freelancer engagement." },
+  { id: "rental", label: "Rental Agreement", icon: "home", suggestedTitle: "Rental Agreement", suggestedDesc: "Describe the property, rental period, deposit conditions, and any special terms." },
+  { id: "car-sale", label: "Peer-to-Peer Car Sale", icon: "car", suggestedTitle: "Vehicle Sale Agreement", suggestedDesc: "Describe the vehicle details, agreed price, inspection conditions, and transfer terms." },
+  { id: "coaching", label: "Online Coaching / Course", icon: "book", suggestedTitle: "Coaching / Course Agreement", suggestedDesc: "Describe the course content, schedule, completion criteria, and refund policy." },
+  { id: "home-repair", label: "Home Repair Service", icon: "tool", suggestedTitle: "Home Repair Service Agreement", suggestedDesc: "Describe the repair work, materials, timeline, and warranty terms." },
+  { id: "other", label: "Other", icon: "plus", suggestedTitle: "", suggestedDesc: "" },
 ]
 
 /* ────────────────────────────────────────────────
-   Stable Form Components (defined OUTSIDE to prevent focus loss)
+   Stable Form Components (outside to prevent focus loss)
    ──────────────────────────────────────────────── */
 
-function FormInput({ label, value, onChange, placeholder, type = "text", disabled = false, info }: {
-  label: string; value: string; onChange: (v: string) => void; placeholder?: string; type?: string; disabled?: boolean; info?: string
+function FormInput({ label, value, onChange, placeholder, type = "text", disabled = false, info, required = false }: {
+  label: string; value: string; onChange: (v: string) => void; placeholder?: string; type?: string; disabled?: boolean; info?: string; required?: boolean
 }) {
   const id = useId()
   return (
     <div>
       <label htmlFor={id} className="mb-1.5 flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
         {label}
+        {required && <span className="text-[#f0b400]">*</span>}
         {info && <span className="normal-case tracking-normal font-normal text-muted-foreground/50">({info})</span>}
       </label>
       <input id={id} type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} disabled={disabled}
@@ -55,6 +57,25 @@ function FormTextarea({ label, value, onChange, placeholder, rows = 3 }: {
   )
 }
 
+function FormSelect({ label, value, onChange, options, info, required = false }: {
+  label: string; value: string; onChange: (v: string) => void; options: { value: string; label: string }[]; info?: string; required?: boolean
+}) {
+  const id = useId()
+  return (
+    <div>
+      <label htmlFor={id} className="mb-1.5 flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+        {label}
+        {required && <span className="text-[#f0b400]">*</span>}
+        {info && <span className="normal-case tracking-normal font-normal text-muted-foreground/50">({info})</span>}
+      </label>
+      <select id={id} value={value} onChange={(e) => onChange(e.target.value)}
+        className="h-12 w-full appearance-none rounded-xl border border-border/40 bg-card/30 px-4 text-sm text-foreground focus:border-[#f0b400]/50 focus:outline-none focus:ring-2 focus:ring-[#f0b400]/15 transition-all duration-200">
+        {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+      </select>
+    </div>
+  )
+}
+
 /* ────────────────────────────────────────────────
    Constants
    ──────────────────────────────────────────────── */
@@ -63,7 +84,13 @@ const PLATFORM_ADDRESS = "GBXGQJWVLWOYHFLVTKWV5FGHA3LNYY2JQKM7OAVRWPLXS"
 const DISPUTE_RESOLVER = "GBXGQJWVLWOYHFLVTKWV5FGHA3LNYY2JQKM7OAVDISPUTE"
 const TRUSTLINE_USDC = { symbol: "USDC", address: "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5" }
 
-const wizardSteps = ["Escrow Type", "Use Case", "Agreement Info", "Wallets", "Review"]
+// Simulated connected wallets
+const connectedWallets = [
+  { value: "GBXGQJWVLWOYHFLVTKWV5FGHA3PERSONAL01", label: "Main Wallet (G...AL01)" },
+  { value: "GBXGQJWVLWOYHFLVTKWV5FGHA3PERSONAL02", label: "Secondary Wallet (G...AL02)" },
+]
+
+const wizardSteps = ["Escrow Type", "Use Case", "Agreement Info", "Payment & Wallets", "Review & Send"]
 
 /* ────────────────────────────────────────────────
    Mock Created Agreements
@@ -80,6 +107,20 @@ const statusConfig: Record<string, { label: string; color: string }> = {
   in_progress: { label: "In Progress", color: "bg-[#f0b400]/10 text-[#f0b400] border-[#f0b400]/20" },
   awaiting: { label: "Awaiting Approval", color: "bg-orange-500/10 text-orange-400 border-orange-500/20" },
   released: { label: "Released", color: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" },
+}
+
+/* ────────────────────────────────────────────────
+   Icons helper
+   ──────────────────────────────────────────────── */
+
+function UseCaseIcon({ icon, className }: { icon: string; className?: string }) {
+  const c = className || ""
+  if (icon === "user") return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className={c}><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+  if (icon === "home") return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className={c}><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+  if (icon === "car") return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className={c}><rect x="1" y="3" width="15" height="13" rx="2"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+  if (icon === "book") return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className={c}><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+  if (icon === "tool") return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className={c}><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
+  return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className={c}><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
 }
 
 /* ────────────────────────────────────────────────
@@ -102,12 +143,15 @@ export default function PersonalDashboardPage() {
 
   // Step 1: Use case
   const [useCase, setUseCase] = useState<string | null>(null)
+  const [customUseCase, setCustomUseCase] = useState("")
 
   // Step 2: Agreement info
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
+  const [guidePrefilled, setGuidePrefilled] = useState(false)
 
   // Step 3: Wallets
+  const [selectedWallet, setSelectedWallet] = useState(connectedWallets[0].value)
   const [spWallet, setSpWallet] = useState("")
   const [signerWallet, setSignerWallet] = useState("")
 
@@ -115,9 +159,25 @@ export default function PersonalDashboardPage() {
   const [milestones, setMilestones] = useState([{ description: "Full delivery", amount: "" }])
   const [showCustomize, setShowCustomize] = useState(false)
 
+  // Review: email
+  const [notifyEmail, setNotifyEmail] = useState("")
+  const [signerEmail, setSignerEmail] = useState("")
+
   // Drag state
   const dragItem = useRef<number | null>(null)
   const dragOverItem = useRef<number | null>(null)
+
+  // When use case changes, auto-suggest title/description
+  useEffect(() => {
+    if (useCase && useCase !== "other" && !guidePrefilled) {
+      const preset = useCases.find((u) => u.id === useCase)
+      if (preset) {
+        setTitle(preset.suggestedTitle)
+        setDescription(preset.suggestedDesc)
+        setGuidePrefilled(true)
+      }
+    }
+  }, [useCase, guidePrefilled])
 
   const totalAmount = escrowType === "single"
     ? (parseFloat(milestones[0]?.amount) || 0)
@@ -149,12 +209,12 @@ export default function PersonalDashboardPage() {
     title, description,
     amount: totalAmount.toString(),
     platformFee: "1",
-    signer: signerWallet || "AUTO_FROM_CONNECTED_WALLET",
+    signer: selectedWallet,
     serviceType: escrowType === "single" ? "single-release" : "multi-release",
     roles: {
-      approver: "CONNECTED_WALLET",
+      approver: selectedWallet,
       serviceProvider: spWallet,
-      releaseSigner: signerWallet || "CONNECTED_WALLET",
+      releaseSigner: signerWallet,
       platformAddress: PLATFORM_ADDRESS,
       disputeResolver: DISPUTE_RESOLVER,
       receiver: spWallet,
@@ -163,6 +223,7 @@ export default function PersonalDashboardPage() {
       ? [{ description: milestones[0]?.description || "Full delivery", amount: totalAmount.toString(), status: "pending" }]
       : milestones.map((m) => ({ description: m.description || "Milestone", amount: m.amount || "0", status: "pending" })),
     trustline: TRUSTLINE_USDC,
+    notifications: { notifyEmail, signerEmail },
   })
 
   const [copiedJson, setCopiedJson] = useState(false)
@@ -173,17 +234,22 @@ export default function PersonalDashboardPage() {
 
   const canProceed = () => {
     if (step === 0) return true
-    if (step === 1) return !!useCase
+    if (step === 1) return useCase === "other" ? customUseCase.trim().length > 0 : !!useCase
     if (step === 2) return title.trim().length > 0
-    if (step === 3) return spWallet.trim().length > 0 && totalAmount > 0
+    if (step === 3) return spWallet.trim().length > 0 && signerWallet.trim().length > 0 && totalAmount > 0
     return true
   }
 
   const resetWizard = () => {
-    setStep(0); setSubmitted(false); setEscrowType("single"); setUseCase(null)
-    setTitle(""); setDescription(""); setSpWallet(""); setSignerWallet("")
+    setStep(0); setSubmitted(false); setEscrowType("single"); setUseCase(null); setCustomUseCase("")
+    setTitle(""); setDescription(""); setSpWallet(""); setSignerWallet(""); setGuidePrefilled(false)
     setMilestones([{ description: "Full delivery", amount: "" }]); setShowCustomize(false)
+    setNotifyEmail(""); setSignerEmail(""); setSelectedWallet(connectedWallets[0].value)
   }
+
+  // QR code URL (points to Thalos agreement page)
+  const agreementUrl = typeof window !== "undefined" ? `${window.location.origin}/dashboard/personal` : "https://thalos.app/dashboard/personal"
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(agreementUrl)}&bgcolor=0a0a0a&color=f0b400`
 
   if (loading) return <ThalosLoader />
 
@@ -250,7 +316,7 @@ export default function PersonalDashboardPage() {
                   </div>
                   <div className="flex items-center gap-4">
                     <span className={cn("rounded-full border px-3 py-1 text-xs font-semibold", st.color)}>{st.label}</span>
-                    <p className="text-lg font-bold text-foreground">${agr.amount} <span className="text-xs font-normal text-muted-foreground">USDC</span></p>
+                    <p className="text-lg font-bold text-foreground">{"$"}{agr.amount} <span className="text-xs font-normal text-muted-foreground">USDC</span></p>
                   </div>
                 </div>
               )
@@ -299,8 +365,16 @@ export default function PersonalDashboardPage() {
                 </div>
                 <div>
                   <h2 className="text-2xl font-bold text-foreground">Agreement Created</h2>
-                  <p className="mt-2 text-sm text-muted-foreground">Your secure payment has been set up. The counterparty will be notified.</p>
+                  <p className="mt-2 text-sm text-muted-foreground">Your secure payment has been set up. A notification has been sent to the Release Signer.</p>
                 </div>
+
+                {/* QR Code for mobile access */}
+                <div className="flex flex-col items-center gap-3 rounded-xl border border-border/20 bg-secondary/10 p-6">
+                  <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Scan to access on mobile</p>
+                  <Image src={qrUrl} alt="QR Code to access agreement" width={160} height={160} className="rounded-lg" unoptimized />
+                  <p className="max-w-[200px] text-[10px] text-muted-foreground/60 leading-relaxed">The Release Signer will also receive this QR code via email.</p>
+                </div>
+
                 <div className="flex gap-3">
                   <Button variant="outline" onClick={copyJson} className="rounded-full border-border/30 bg-card/40 text-sm font-medium hover:bg-white/10 hover:text-white transition-all">
                     {copiedJson ? "Copied" : "Copy Details"}
@@ -351,11 +425,11 @@ export default function PersonalDashboardPage() {
                   <div className="flex flex-col gap-6">
                     <div>
                       <h3 className="text-lg font-semibold text-foreground sm:text-xl">What is this agreement for?</h3>
-                      <p className="mt-1 text-sm text-muted-foreground">Select a category to get started quickly.</p>
+                      <p className="mt-1 text-sm text-muted-foreground">Select a category to get guided suggestions, or choose Other.</p>
                     </div>
                     <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                       {useCases.map((uc) => (
-                        <button key={uc.id} onClick={() => setUseCase(uc.id)}
+                        <button key={uc.id} onClick={() => { setUseCase(uc.id); setGuidePrefilled(false) }}
                           className={cn("flex items-center gap-3 rounded-xl border p-4 text-left transition-all duration-300",
                             useCase === uc.id
                               ? "border-[#f0b400]/40 bg-[#f0b400]/5"
@@ -364,16 +438,15 @@ export default function PersonalDashboardPage() {
                           <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition-colors",
                             useCase === uc.id ? "bg-[#f0b400]/10 text-[#f0b400]" : "bg-secondary/30 text-muted-foreground"
                           )}>
-                            {uc.icon === "user" && <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>}
-                            {uc.icon === "home" && <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>}
-                            {uc.icon === "car" && <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="1" y="3" width="15" height="13" rx="2"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>}
-                            {uc.icon === "book" && <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>}
-                            {uc.icon === "tool" && <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>}
+                            <UseCaseIcon icon={uc.icon} />
                           </div>
                           <span className="text-sm font-medium text-foreground">{uc.label}</span>
                         </button>
                       ))}
                     </div>
+                    {useCase === "other" && (
+                      <FormInput label="Describe your use case" value={customUseCase} onChange={setCustomUseCase} placeholder="e.g. Equipment purchase, consulting fee..." required />
+                    )}
                   </div>
                 )}
 
@@ -382,28 +455,50 @@ export default function PersonalDashboardPage() {
                   <div className="flex flex-col gap-5">
                     <div>
                       <h3 className="text-lg font-semibold text-foreground sm:text-xl">Agreement Information</h3>
-                      <p className="mt-1 text-sm text-muted-foreground">What is the agreement about?</p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {useCase && useCase !== "other"
+                          ? "We pre-filled some suggestions based on your selection. Feel free to edit."
+                          : "Describe what this agreement is about."}
+                      </p>
                     </div>
-                    <FormInput label="Title" value={title} onChange={setTitle} placeholder="e.g. Website Redesign Project" />
-                    <FormTextarea label="Description" value={description} onChange={setDescription} placeholder="Brief description of the agreement scope..." />
+                    {useCase && useCase !== "other" && (
+                      <div className="flex items-start gap-3 rounded-xl border border-[#f0b400]/20 bg-[#f0b400]/5 p-4">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f0b400" strokeWidth="1.5" className="mt-0.5 shrink-0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                        <p className="text-xs text-[#f0b400]/80 leading-relaxed">
+                          Based on <span className="font-semibold">{useCases.find((u) => u.id === useCase)?.label}</span> -- edit the title and description below to match your specific agreement.
+                        </p>
+                      </div>
+                    )}
+                    <FormInput label="Title" value={title} onChange={setTitle} placeholder="e.g. Website Redesign Project" required />
+                    <FormTextarea label="Description" value={description} onChange={setDescription} placeholder="Brief description of the agreement scope..." rows={4} />
                   </div>
                 )}
 
-                {/* ── Step 3: Wallets + Amount ── */}
+                {/* ── Step 3: Payment & Wallets ── */}
                 {step === 3 && (
                   <div className="flex flex-col gap-6">
                     <div>
                       <h3 className="text-lg font-semibold text-foreground sm:text-xl">Payment Details</h3>
-                      <p className="mt-1 text-sm text-muted-foreground">Enter the wallet addresses and payment amount.</p>
+                      <p className="mt-1 text-sm text-muted-foreground">Select your wallet and enter the counterparty information.</p>
                     </div>
 
+                    {/* Your wallet (dropdown) */}
+                    <FormSelect
+                      label="Your Wallet"
+                      value={selectedWallet}
+                      onChange={setSelectedWallet}
+                      options={connectedWallets}
+                      info="Connected wallet used for this agreement"
+                      required
+                    />
+
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                      <FormInput label="Service Provider Wallet" value={spWallet} onChange={setSpWallet} placeholder="G...FREELANCER" info="Who receives the funds" />
-                      <FormInput label="Release Signer Wallet" value={signerWallet} onChange={setSignerWallet} placeholder="G...SIGNER" info="Optional, defaults to you" />
+                      <FormInput label="Service Provider Wallet" value={spWallet} onChange={setSpWallet} placeholder="G...FREELANCER" info="Who receives the funds" required />
+                      <FormInput label="Release Signer Wallet" value={signerWallet} onChange={setSignerWallet} placeholder="G...SIGNER" info="Who releases the funds" required />
                     </div>
 
                     {escrowType === "single" ? (
-                      <FormInput label="Amount" value={milestones[0]?.amount || ""} onChange={(v) => updateMilestone(0, "amount", v)} placeholder="1000" type="number" info="USDC" />
+                      <FormInput label="Amount" value={milestones[0]?.amount || ""} onChange={(v) => updateMilestone(0, "amount", v)} placeholder="1000" type="number" info="USDC" required />
                     ) : (
                       <div className="flex flex-col gap-3">
                         <div className="flex items-center justify-between">
@@ -440,15 +535,53 @@ export default function PersonalDashboardPage() {
                         </div>
                       </div>
                     )}
+
+                    {/* Expandable customize section for milestones (Multi only) */}
+                    {escrowType === "multi" && (
+                      <div className="rounded-xl border border-border/20 bg-card/10">
+                        <button onClick={() => setShowCustomize(!showCustomize)}
+                          className="flex w-full items-center justify-between px-5 py-4 text-left text-sm font-medium text-muted-foreground hover:text-foreground transition-all">
+                          <span>Customize Agreement (Advanced)</span>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+                            className={cn("transition-transform duration-300", showCustomize && "rotate-180")}>
+                            <polyline points="6 9 12 15 18 9" />
+                          </svg>
+                        </button>
+                        {showCustomize && (
+                          <div className="border-t border-border/15 px-5 py-4">
+                            <p className="mb-3 text-xs text-muted-foreground leading-relaxed">Drag and drop to reorder payment stages. Adjust amounts as needed. The total will be recalculated automatically.</p>
+                            <div className="flex flex-col gap-2">
+                              {milestones.map((m, i) => (
+                                <div key={i}
+                                  draggable
+                                  onDragStart={() => handleDragStart(i)}
+                                  onDragEnter={() => handleDragEnter(i)}
+                                  onDragEnd={handleDragEnd}
+                                  onDragOver={(e) => e.preventDefault()}
+                                  className="flex items-center gap-3 rounded-lg border border-border/20 bg-card/20 px-4 py-3 cursor-grab active:cursor-grabbing transition-all hover:border-[#f0b400]/20"
+                                >
+                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0 text-muted-foreground/40"><circle cx="9" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="19" r="1"/></svg>
+                                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-[#f0b400]/10 text-[10px] font-bold text-[#f0b400]">{i + 1}</span>
+                                  <span className="flex-1 truncate text-sm text-foreground">{m.description || `Stage ${i + 1}`}</span>
+                                  <input value={m.amount} onChange={(e) => updateMilestone(i, "amount", e.target.value)} type="number" placeholder="0"
+                                    className="w-24 rounded-md border border-border/30 bg-card/30 px-2 py-1.5 text-right text-sm text-foreground focus:border-[#f0b400]/40 focus:outline-none" />
+                                  <span className="text-xs text-muted-foreground/60">USDC</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
 
-                {/* ── Step 4: Review ── */}
+                {/* ── Step 4: Review & Send ── */}
                 {step === 4 && (
                   <div className="flex flex-col gap-5">
                     <div>
-                      <h3 className="text-lg font-semibold text-foreground sm:text-xl">Review Your Agreement</h3>
-                      <p className="mt-1 text-sm text-muted-foreground">Confirm everything before creating the secure payment.</p>
+                      <h3 className="text-lg font-semibold text-foreground sm:text-xl">Review & Send</h3>
+                      <p className="mt-1 text-sm text-muted-foreground">Confirm the details and send a notification to the Release Signer.</p>
                     </div>
 
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -456,7 +589,9 @@ export default function PersonalDashboardPage() {
                         <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">Agreement</p>
                         <p className="text-sm font-semibold text-foreground">{title || "Untitled"}</p>
                         <p className="mt-1 text-xs text-muted-foreground leading-relaxed line-clamp-2">{description || "No description"}</p>
-                        <p className="mt-3 text-[10px] text-muted-foreground/50">{useCases.find((u) => u.id === useCase)?.label} &middot; {escrowType === "single" ? "One-time" : "Milestone-based"}</p>
+                        <p className="mt-3 text-[10px] text-muted-foreground/50">
+                          {useCase === "other" ? customUseCase : useCases.find((u) => u.id === useCase)?.label} &middot; {escrowType === "single" ? "One-time" : "Milestone-based"}
+                        </p>
                       </div>
                       <div className="rounded-xl border border-border/30 bg-secondary/15 p-5">
                         <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">Protected Funds</p>
@@ -483,7 +618,7 @@ export default function PersonalDashboardPage() {
                           </div>
                           <div className="min-w-0">
                             <p className="text-[10px] text-muted-foreground">Release Signer</p>
-                            <p className="truncate text-xs font-medium text-foreground">{signerWallet || "You (connected wallet)"}</p>
+                            <p className="truncate text-xs font-medium text-foreground">{signerWallet}</p>
                           </div>
                         </div>
                       </div>
@@ -505,6 +640,21 @@ export default function PersonalDashboardPage() {
                         </div>
                       </div>
                     )}
+
+                    {/* Email notification section */}
+                    <div className="rounded-xl border border-[#f0b400]/15 bg-[#f0b400]/5 p-5">
+                      <div className="mb-4 flex items-center gap-2">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f0b400" strokeWidth="1.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                        <p className="text-sm font-semibold text-[#f0b400]">Email Notifications</p>
+                      </div>
+                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <FormInput label="Release Signer Email" value={signerEmail} onChange={setSignerEmail} placeholder="signer@email.com" info="Required -- gets agreement + QR code" required />
+                        <FormInput label="Your Email (optional)" value={notifyEmail} onChange={setNotifyEmail} placeholder="you@email.com" info="Receive a copy of the agreement" />
+                      </div>
+                      <p className="mt-3 text-[10px] text-muted-foreground/60 leading-relaxed">
+                        The Release Signer will receive an email with the full agreement details, a link to access Thalos, and a QR code for mobile access.
+                      </p>
+                    </div>
 
                     {/* Escrow flow */}
                     <div className="rounded-xl border border-border/20 bg-card/20 p-5">
@@ -533,9 +683,9 @@ export default function PersonalDashboardPage() {
                       Continue
                     </Button>
                   ) : (
-                    <Button onClick={() => setSubmitted(true)}
-                      className="rounded-full bg-[#f0b400] px-8 text-sm font-semibold text-background hover:bg-[#d4a000] shadow-[0_4px_16px_rgba(240,180,0,0.25)] transition-all duration-300">
-                      Create Secure Payment
+                    <Button onClick={() => setSubmitted(true)} disabled={!signerEmail.trim()}
+                      className="rounded-full bg-[#f0b400] px-8 text-sm font-semibold text-background hover:bg-[#d4a000] disabled:opacity-20 shadow-[0_4px_16px_rgba(240,180,0,0.25)] transition-all duration-300">
+                      Create & Notify Signer
                     </Button>
                   )}
                 </div>
