@@ -216,11 +216,11 @@ export default function PersonalDashboardPage() {
 
   return (
     <div className="relative min-h-screen text-foreground">
-      {/* Background image */}
-      <div className="fixed inset-0 z-0">
-        <Image src="/bg-personal.png" alt="" fill className="object-cover" priority />
-        <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px]" />
-      </div>
+  {/* Background image - HD */}
+  <div className="fixed inset-0 z-0">
+  <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1507400492013-162706c8c05e?w=2560&q=90&auto=format&fit=crop')" }} />
+  <div className="absolute inset-0 bg-black/55" />
+  </div>
 
       {/* Header */}
       <header className="sticky top-0 z-40 border-b border-white/[0.06] bg-[#0a0a0c]/80 backdrop-blur-xl">

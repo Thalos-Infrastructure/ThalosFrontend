@@ -34,7 +34,10 @@ export function SignInPanel({ open, onClose }: SignInPanelProps) {
         {/* Left - Video */}
         <div className="relative hidden w-[400px] shrink-0 overflow-hidden md:block">
           <video autoPlay loop muted playsInline className="absolute inset-0 h-full w-full object-cover"
-            src="https://cdn.pixabay.com/video/2024/02/20/201243-915266492_large.mp4" />
+            poster="https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&q=80&auto=format&fit=crop">
+            <source src="https://cdn.pixabay.com/video/2020/07/30/45358-445018270_large.mp4" type="video/mp4" />
+            <source src="https://cdn.pixabay.com/video/2024/02/20/201243-915266492_large.mp4" type="video/mp4" />
+          </video>
           <div className="absolute inset-0 bg-gradient-to-r from-transparent to-[#0a0a0c]" />
           <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0c]/90 via-transparent to-[#0a0a0c]/50" />
           <div className="absolute bottom-0 left-0 right-0 p-8">

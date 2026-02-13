@@ -216,10 +216,10 @@ export default function BusinessDashboardPage() {
 
   return (
     <div className="relative min-h-screen text-foreground">
-      {/* Background */}
+      {/* Background - HD */}
       <div className="fixed inset-0 z-0">
-        <Image src="/bg-enterprise.png" alt="" fill className="object-cover" priority />
-        <div className="absolute inset-0 bg-black/65 backdrop-blur-[2px]" />
+        <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1519681393784-d120267933ba?w=2560&q=90&auto=format&fit=crop')" }} />
+        <div className="absolute inset-0 bg-black/60" />
       </div>
 
       {/* Header */}

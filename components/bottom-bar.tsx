@@ -78,9 +78,9 @@ export function BottomBar({ onNavigate }: { onNavigate: (section: string) => voi
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
             <p className="mb-6 text-center text-sm font-bold text-foreground">{t("bar.scanMobile")}</p>
-            <div className="mx-auto flex h-56 w-56 items-center justify-center rounded-2xl bg-white p-4 shadow-[0_8px_32px_rgba(0,0,0,0.3)]">
+            <div className="mx-auto flex h-56 w-56 items-center justify-center rounded-2xl bg-[#0a0a0a] p-4 shadow-[0_8px_32px_rgba(0,0,0,0.3)]">
               <Image
-                src={`https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent("https://thalos.app/mobile")}&bgcolor=FFFFFF&color=111111&qzone=3&format=png`}
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent("https://thalos-prototype.vercel.app/")}&bgcolor=0a0a0a&color=f0b400&qzone=3&format=png`}
                 alt="QR Code to Thalos Mobile"
                 width={224}
                 height={224}
@@ -88,7 +88,7 @@ export function BottomBar({ onNavigate }: { onNavigate: (section: string) => voi
                 unoptimized
               />
             </div>
-            <p className="mt-5 text-center text-xs font-semibold text-muted-foreground">thalos.app/mobile</p>
+            <p className="mt-5 text-center text-xs font-semibold text-[#f0b400]/60">thalos-prototype.vercel.app</p>
           </div>
         </div>
       )}
