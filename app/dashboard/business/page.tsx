@@ -141,11 +141,15 @@ export default function BusinessDashboardPage() {
   const dragOverItem = useRef<number | null>(null)
 
   useEffect(() => {
-    if (useCase && useCase !== "other" && !guidePrefilled) {
-      const preset = useCases.find((u) => u.id === useCase)
-      if (preset) { setTitle(preset.suggestedTitle); setDescription(preset.suggestedDesc); setGuidePrefilled(true) }
+    if (useCase && !guidePrefilled) {
+      if (useCase === "other") {
+        if (customUseCase.trim()) { setTitle(customUseCase.trim()); setDescription(customUseCase.trim()); setGuidePrefilled(true) }
+      } else {
+        const uc = useCases.find((u) => u.id === useCase)
+        if (uc) { setTitle(uc.suggestedTitle); setDescription(uc.suggestedDesc); setGuidePrefilled(true) }
+      }
     }
-  }, [useCase, guidePrefilled])
+  }, [useCase, guidePrefilled, customUseCase])
 
   const totalAmount = escrowType === "single" ? (parseFloat(milestones[0]?.amount) || 0) : milestones.reduce((s, m) => s + (parseFloat(m.amount) || 0), 0)
   const platformFee = (totalAmount * 0.01).toFixed(2)
@@ -194,7 +198,7 @@ export default function BusinessDashboardPage() {
   }
 
   const agreementUrl = typeof window !== "undefined" ? `${window.location.origin}/dashboard/business` : "https://thalos.app/dashboard/business"
-  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(agreementUrl)}&bgcolor=0a0a0a&color=f0b400`
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(agreementUrl)}&bgcolor=FFFFFF&color=000000&qzone=2&format=png`
 
   if (loading) return <ThalosLoader />
 
@@ -348,7 +352,7 @@ export default function BusinessDashboardPage() {
                         </button>
                       ))}
                     </div>
-                    {useCase === "other" && <FormInput label="Describe your use case" value={customUseCase} onChange={setCustomUseCase} placeholder="e.g. Vendor contract, licensing deal..." required />}
+                    {useCase === "other" && <FormInput label="Describe your use case" value={customUseCase} onChange={(v) => { setCustomUseCase(v); setGuidePrefilled(false) }} placeholder="e.g. Vendor contract, licensing deal..." required />}
                   </div>
                 )}
 

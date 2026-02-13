@@ -168,15 +168,15 @@ export default function PersonalDashboardPage() {
 
   // When use case changes, auto-suggest title/description
   useEffect(() => {
-    if (useCase && useCase !== "other" && !guidePrefilled) {
-      const preset = useCases.find((u) => u.id === useCase)
-      if (preset) {
-        setTitle(preset.suggestedTitle)
-        setDescription(preset.suggestedDesc)
-        setGuidePrefilled(true)
+    if (useCase && !guidePrefilled) {
+      if (useCase === "other") {
+        if (customUseCase.trim()) { setTitle(customUseCase.trim()); setDescription(customUseCase.trim()); setGuidePrefilled(true) }
+      } else {
+        const uc = useCases.find((u) => u.id === useCase)
+        if (uc) { setTitle(uc.suggestedTitle); setDescription(uc.suggestedDesc); setGuidePrefilled(true) }
       }
     }
-  }, [useCase, guidePrefilled])
+  }, [useCase, guidePrefilled, customUseCase])
 
   const totalAmount = escrowType === "single"
     ? (parseFloat(milestones[0]?.amount) || 0)
@@ -248,7 +248,7 @@ export default function PersonalDashboardPage() {
 
   // QR code URL (points to Thalos agreement page)
   const agreementUrl = typeof window !== "undefined" ? `${window.location.origin}/dashboard/personal` : "https://thalos.app/dashboard/personal"
-  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(agreementUrl)}&bgcolor=0a0a0a&color=f0b400`
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(agreementUrl)}&bgcolor=FFFFFF&color=000000&qzone=2&format=png`
 
   if (loading) return <ThalosLoader />
 
@@ -444,7 +444,7 @@ export default function PersonalDashboardPage() {
                       ))}
                     </div>
                     {useCase === "other" && (
-                      <FormInput label="Describe your use case" value={customUseCase} onChange={setCustomUseCase} placeholder="e.g. Equipment purchase, consulting fee..." required />
+                      <FormInput label="Describe your use case" value={customUseCase} onChange={(v) => { setCustomUseCase(v); setGuidePrefilled(false) }} placeholder="e.g. Equipment purchase, consulting fee..." required />
                     )}
                   </div>
                 )}
