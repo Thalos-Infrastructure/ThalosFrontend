@@ -131,7 +131,6 @@ export default function BusinessDashboardPage() {
   const [description, setDescription] = useState("")
   const [guidePrefilled, setGuidePrefilled] = useState(false)
   const [selectedWallet, setSelectedWallet] = useState(connectedWallets[0].value)
-  const [spWallet, setSpWallet] = useState("")
   const [signerWallet, setSignerWallet] = useState("")
   const [milestones, setMilestones] = useState([{ description: "Full delivery", amount: "" }])
   const [showCustomize, setShowCustomize] = useState(false)
@@ -170,7 +169,7 @@ export default function BusinessDashboardPage() {
     title, description, amount: totalAmount.toString(), platformFee: "1",
     signer: selectedWallet,
     serviceType: escrowType === "single" ? "single-release" : "multi-release",
-    roles: { approver: selectedWallet, serviceProvider: spWallet, releaseSigner: signerWallet, platformAddress: PLATFORM_ADDRESS, disputeResolver: DISPUTE_RESOLVER, receiver: spWallet },
+    roles: { approver: selectedWallet, serviceProvider: selectedWallet, releaseSigner: signerWallet, platformAddress: PLATFORM_ADDRESS, disputeResolver: DISPUTE_RESOLVER, receiver: selectedWallet },
     milestones: escrowType === "single" ? [{ description: milestones[0]?.description || "Full delivery", amount: totalAmount.toString(), status: "pending" }] : milestones.map((m) => ({ description: m.description || "Milestone", amount: m.amount || "0", status: "pending" })),
     trustline: TRUSTLINE_USDC,
     notifications: { notifyEmail, signerEmail },
@@ -183,13 +182,13 @@ export default function BusinessDashboardPage() {
     if (step === 0) return true
     if (step === 1) return useCase === "other" ? customUseCase.trim().length > 0 : !!useCase
     if (step === 2) return title.trim().length > 0
-    if (step === 3) return spWallet.trim().length > 0 && signerWallet.trim().length > 0 && totalAmount > 0
+    if (step === 3) return signerWallet.trim().length > 0 && totalAmount > 0
     return true
   }
 
   const resetWizard = () => {
     setStep(0); setSubmitted(false); setEscrowType("single"); setUseCase(null); setCustomUseCase("")
-    setTitle(""); setDescription(""); setSpWallet(""); setSignerWallet(""); setGuidePrefilled(false)
+    setTitle(""); setDescription(""); setSignerWallet(""); setGuidePrefilled(false)
     setMilestones([{ description: "Full delivery", amount: "" }]); setShowCustomize(false)
     setNotifyEmail(""); setSignerEmail(""); setSelectedWallet(connectedWallets[0].value)
   }
@@ -375,11 +374,8 @@ export default function BusinessDashboardPage() {
                 {step === 3 && (
                   <div className="flex flex-col gap-6">
                     <div><h3 className="text-lg font-semibold text-foreground sm:text-xl">Payment Details</h3><p className="mt-1 text-sm text-muted-foreground">Select your wallet and enter the counterparty information.</p></div>
-                    <FormSelect label="Your Wallet" value={selectedWallet} onChange={setSelectedWallet} options={connectedWallets} info="Connected wallet for this agreement" required />
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                      <FormInput label="Service Provider Wallet" value={spWallet} onChange={setSpWallet} placeholder="G...VENDOR" info="Who receives the funds" required />
-                      <FormInput label="Release Signer Wallet" value={signerWallet} onChange={setSignerWallet} placeholder="G...SIGNER" info="Who releases the funds" required />
-                    </div>
+                    <FormSelect label="Your Wallet" value={selectedWallet} onChange={setSelectedWallet} options={connectedWallets} info="Your connected wallet -- used as service provider" required />
+                    <FormInput label="Release Signer Wallet" value={signerWallet} onChange={setSignerWallet} placeholder="G...SIGNER" info="Who releases the funds" required />
                     {escrowType === "single" ? (
                       <FormInput label="Amount" value={milestones[0]?.amount || ""} onChange={(v) => updateMilestone(0, "amount", v)} placeholder="50000" type="number" info="USDC" required />
                     ) : (
@@ -456,7 +452,7 @@ export default function BusinessDashboardPage() {
                       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                         <div className="flex items-center gap-3 rounded-lg bg-card/20 px-4 py-3">
                           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#f0b400]/10 text-[#f0b400]"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
-                          <div className="min-w-0"><p className="text-[10px] text-muted-foreground">Service Provider</p><p className="truncate text-xs font-medium text-foreground">{spWallet}</p></div>
+                          <div className="min-w-0"><p className="text-[10px] text-muted-foreground">Your Wallet</p><p className="truncate text-xs font-medium text-foreground">{connectedWallets.find(w => w.value === selectedWallet)?.label || selectedWallet}</p></div>
                         </div>
                         <div className="flex items-center gap-3 rounded-lg bg-card/20 px-4 py-3">
                           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-500/10 text-blue-400"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
@@ -483,7 +479,7 @@ export default function BusinessDashboardPage() {
                         <p className="text-sm font-semibold text-[#f0b400]">Email Notifications</p>
                       </div>
                       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                        <FormInput label="Release Signer Email" value={signerEmail} onChange={setSignerEmail} placeholder="signer@email.com" info="Required -- gets agreement + QR" required />
+                        <FormInput label="Release Signer Email" value={signerEmail} onChange={setSignerEmail} placeholder="signer@email.com" required />
                         <FormInput label="Your Email (optional)" value={notifyEmail} onChange={setNotifyEmail} placeholder="you@email.com" info="Receive a copy" />
                       </div>
                       <p className="mt-3 text-[10px] text-muted-foreground/60 leading-relaxed">The Release Signer will receive an email with full agreement details, a link to Thalos, and a QR code for mobile access.</p>

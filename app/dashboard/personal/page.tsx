@@ -152,7 +152,6 @@ export default function PersonalDashboardPage() {
 
   // Step 3: Wallets
   const [selectedWallet, setSelectedWallet] = useState(connectedWallets[0].value)
-  const [spWallet, setSpWallet] = useState("")
   const [signerWallet, setSignerWallet] = useState("")
 
   // Multi-release milestones
@@ -213,11 +212,11 @@ export default function PersonalDashboardPage() {
     serviceType: escrowType === "single" ? "single-release" : "multi-release",
     roles: {
       approver: selectedWallet,
-      serviceProvider: spWallet,
+      serviceProvider: selectedWallet,
       releaseSigner: signerWallet,
       platformAddress: PLATFORM_ADDRESS,
       disputeResolver: DISPUTE_RESOLVER,
-      receiver: spWallet,
+      receiver: selectedWallet,
     },
     milestones: escrowType === "single"
       ? [{ description: milestones[0]?.description || "Full delivery", amount: totalAmount.toString(), status: "pending" }]
@@ -236,13 +235,13 @@ export default function PersonalDashboardPage() {
     if (step === 0) return true
     if (step === 1) return useCase === "other" ? customUseCase.trim().length > 0 : !!useCase
     if (step === 2) return title.trim().length > 0
-    if (step === 3) return spWallet.trim().length > 0 && signerWallet.trim().length > 0 && totalAmount > 0
+    if (step === 3) return signerWallet.trim().length > 0 && totalAmount > 0
     return true
   }
 
   const resetWizard = () => {
     setStep(0); setSubmitted(false); setEscrowType("single"); setUseCase(null); setCustomUseCase("")
-    setTitle(""); setDescription(""); setSpWallet(""); setSignerWallet(""); setGuidePrefilled(false)
+    setTitle(""); setDescription(""); setSignerWallet(""); setGuidePrefilled(false)
     setMilestones([{ description: "Full delivery", amount: "" }]); setShowCustomize(false)
     setNotifyEmail(""); setSignerEmail(""); setSelectedWallet(connectedWallets[0].value)
   }
@@ -488,14 +487,11 @@ export default function PersonalDashboardPage() {
                       value={selectedWallet}
                       onChange={setSelectedWallet}
                       options={connectedWallets}
-                      info="Connected wallet used for this agreement"
+                      info="Your connected wallet -- used as service provider"
                       required
                     />
 
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                      <FormInput label="Service Provider Wallet" value={spWallet} onChange={setSpWallet} placeholder="G...FREELANCER" info="Who receives the funds" required />
-                      <FormInput label="Release Signer Wallet" value={signerWallet} onChange={setSignerWallet} placeholder="G...SIGNER" info="Who releases the funds" required />
-                    </div>
+                    <FormInput label="Release Signer Wallet" value={signerWallet} onChange={setSignerWallet} placeholder="G...SIGNER" info="Who releases the funds" required />
 
                     {escrowType === "single" ? (
                       <FormInput label="Amount" value={milestones[0]?.amount || ""} onChange={(v) => updateMilestone(0, "amount", v)} placeholder="1000" type="number" info="USDC" required />
@@ -608,8 +604,8 @@ export default function PersonalDashboardPage() {
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                           </div>
                           <div className="min-w-0">
-                            <p className="text-[10px] text-muted-foreground">Service Provider</p>
-                            <p className="truncate text-xs font-medium text-foreground">{spWallet || "Not set"}</p>
+                            <p className="text-[10px] text-muted-foreground">Your Wallet</p>
+                            <p className="truncate text-xs font-medium text-foreground">{connectedWallets.find(w => w.value === selectedWallet)?.label || selectedWallet}</p>
                           </div>
                         </div>
                         <div className="flex items-center gap-3 rounded-lg bg-card/20 px-4 py-3">
@@ -648,7 +644,7 @@ export default function PersonalDashboardPage() {
                         <p className="text-sm font-semibold text-[#f0b400]">Email Notifications</p>
                       </div>
                       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                        <FormInput label="Release Signer Email" value={signerEmail} onChange={setSignerEmail} placeholder="signer@email.com" info="Required -- gets agreement + QR code" required />
+                        <FormInput label="Release Signer Email" value={signerEmail} onChange={setSignerEmail} placeholder="signer@email.com" required />
                         <FormInput label="Your Email (optional)" value={notifyEmail} onChange={setNotifyEmail} placeholder="you@email.com" info="Receive a copy of the agreement" />
                       </div>
                       <p className="mt-3 text-[10px] text-muted-foreground/60 leading-relaxed">
