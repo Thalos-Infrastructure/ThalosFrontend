@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from "react"
 import { cn } from "@/lib/utils"
 import { useSectionReveal } from "@/hooks/use-section-reveal"
 import { useTypewriter } from "@/hooks/use-typewriter"
+import { useLanguage } from "@/lib/i18n"
 
 const useCases = [
   {
@@ -149,8 +150,9 @@ function FlowDiagram({ steps }: { steps: typeof useCases[0]["steps"] }) {
 }
 
 export function HowItWorks() {
+  const { t } = useLanguage()
   const { ref, isVisible } = useSectionReveal()
-  const { displayed: twText, isTyping: twActive } = useTypewriter("[How It Works]", isVisible, { typeSpeed: 120, deleteSpeed: 60, pauseBeforeDelete: 2500, pauseBeforeType: 800 })
+  const { displayed: twText, isTyping: twActive } = useTypewriter(t("hiw.tag"), isVisible, { typeSpeed: 120, deleteSpeed: 60, pauseBeforeDelete: 2500, pauseBeforeType: 800 })
   const [activeUseCase, setActiveUseCase] = useState("freelancer")
   const current = useCases.find((uc) => uc.id === activeUseCase) ?? useCases[0]
 
@@ -166,10 +168,10 @@ export function HowItWorks() {
             <span className={cn("ml-0.5 inline-block h-4 w-0.5 bg-[#f0b400] align-middle", twActive ? "animate-pulse" : "opacity-0")} />
           </p>
           <h2 className="mb-4 text-5xl font-bold tracking-tight text-foreground md:text-6xl text-balance">
-            Modular Payment Infrastructure
+            {t("hiw.title")}
           </h2>
           <p className="mx-auto max-w-2xl text-base font-medium text-white/55 leading-relaxed text-pretty">
-            See how Thalos connects fiat payments, USDC conversion, and smart contract escrows into a seamless flow tailored to your use case.
+            {t("hiw.desc")}
           </p>
         </div>
 

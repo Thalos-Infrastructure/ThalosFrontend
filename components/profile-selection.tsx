@@ -4,37 +4,39 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useSectionReveal } from "@/hooks/use-section-reveal"
 import { useTypewriter } from "@/hooks/use-typewriter"
-
-const profiles = [
-  {
-    id: "personal",
-    title: "Personal / Retail",
-    description: "Freelancers and individual buyers looking for secure payments and planned installment structures.",
-    icon: (
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-        <circle cx="12" cy="7" r="4"/>
-      </svg>
-    ),
-    features: ["Freelancer escrows", "Planned payment schedules", "Individual buyer protection", "Yield on idle funds"],
-  },
-  {
-    id: "business",
-    title: "Business / Enterprise",
-    description: "Companies, marketplaces, and agencies that need to create custom payment platforms at scale.",
-    icon: (
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
-        <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
-      </svg>
-    ),
-    features: ["Multi-party escrows", "Travel & marketplace solutions", "API access & integrations", "Custom payment flows"],
-  },
-]
+import { useLanguage } from "@/lib/i18n"
 
 export function ProfileSelection({ onNavigate }: { onNavigate: (section: string) => void }) {
+  const { t } = useLanguage()
+
+  const profiles = [
+    {
+      id: "personal",
+      title: t("profiles.personal"),
+      description: t("profiles.personalDesc"),
+      icon: (
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+          <circle cx="12" cy="7" r="4"/>
+        </svg>
+      ),
+      features: [t("profiles.personalF1"), t("profiles.personalF2"), t("profiles.personalF3"), t("profiles.personalF4")],
+    },
+    {
+      id: "business",
+      title: t("profiles.business"),
+      description: t("profiles.businessDesc"),
+      icon: (
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+          <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+        </svg>
+      ),
+      features: [t("profiles.businessF1"), t("profiles.businessF2"), t("profiles.businessF3"), t("profiles.businessF4")],
+    },
+  ]
   const { ref, isVisible } = useSectionReveal()
-  const { displayed: twText, isTyping: twActive } = useTypewriter("[Choose Your Path]", isVisible, { typeSpeed: 120, deleteSpeed: 60, pauseBeforeDelete: 2500, pauseBeforeType: 800 })
+  const { displayed: twText, isTyping: twActive } = useTypewriter(t("profiles.tag"), isVisible, { typeSpeed: 120, deleteSpeed: 60, pauseBeforeDelete: 2500, pauseBeforeType: 800 })
 
   return (
     <section id="profiles" className="relative py-28" ref={ref}>
@@ -48,10 +50,10 @@ export function ProfileSelection({ onNavigate }: { onNavigate: (section: string)
             <span className={cn("ml-0.5 inline-block h-4 w-0.5 bg-[#f0b400] align-middle", twActive ? "animate-pulse" : "opacity-0")} />
           </p>
           <h2 className="mb-4 text-5xl font-bold tracking-tight text-foreground md:text-6xl text-balance">
-            Select Your Profile
+            {t("profiles.title")}
           </h2>
           <p className="mx-auto max-w-2xl text-base font-medium text-white/55 leading-relaxed text-pretty">
-            Whether you are an individual or a business, Thalos adapts to your needs with the right tools and services.
+            {t("profiles.desc")}
           </p>
         </div>
 
@@ -86,7 +88,7 @@ export function ProfileSelection({ onNavigate }: { onNavigate: (section: string)
                   onClick={() => onNavigate("auth")}
                   className="w-full rounded-full bg-[#f0b400] text-background font-semibold shadow-[0_4px_16px_rgba(240,180,0,0.25),0_1px_3px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.2)] hover:bg-[#b0c4de] hover:text-background hover:shadow-[0_4px_20px_rgba(176,196,222,0.35),0_1px_3px_rgba(0,0,0,0.4)] transition-all duration-400"
                 >
-                  Get Started
+                  {t("profiles.cta")}
                 </Button>
               </div>
             </div>
