@@ -12,7 +12,7 @@ export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }
   const [profileType, setProfileType] = useState<"personal" | "business">("personal")
   const [visible, setVisible] = useState(true)
   const lastScrollY = useRef(0)
-  const modalRef = useRef<HTMLDivElement>(null)
+  const panelRef = useRef<HTMLDivElement>(null)
 
   const navLinks = [
     { label: "How It Works", section: "how-it-works" },
@@ -40,15 +40,25 @@ export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }
     return () => window.removeEventListener("scroll", onScroll)
   }, [])
 
-  // Close modal on outside click
+  // Close panel on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
+      if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
         setShowSignIn(false)
       }
     }
     if (showSignIn) document.addEventListener("mousedown", handler)
     return () => document.removeEventListener("mousedown", handler)
+  }, [showSignIn])
+
+  // Lock body scroll when panel open
+  useEffect(() => {
+    if (showSignIn) {
+      document.body.style.overflow = "hidden"
+    } else {
+      document.body.style.overflow = ""
+    }
+    return () => { document.body.style.overflow = "" }
   }, [showSignIn])
 
   return (
@@ -132,118 +142,147 @@ export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }
         )}
       </header>
 
-      {/* Sign In Modal */}
-      {showSignIn && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-background/70 backdrop-blur-xl">
-          <div
-            ref={modalRef}
-            className="relative mx-4 w-full max-w-md rounded-2xl border border-border/20 bg-card/95 p-8 backdrop-blur-sm shadow-[0_24px_80px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.06)]"
+      {/* ─── Sign In Side Panel ─── */}
+      {/* Backdrop */}
+      <div
+        className={cn(
+          "fixed inset-0 z-[60] bg-background/50 backdrop-blur-sm transition-opacity duration-400",
+          showSignIn ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+        )}
+        aria-hidden={!showSignIn}
+      />
+
+      {/* Panel (slides from right) */}
+      <div
+        ref={panelRef}
+        className={cn(
+          "fixed top-0 right-0 z-[70] flex h-full w-full max-w-md flex-col border-l border-white/5 bg-background/95 backdrop-blur-xl shadow-[inset_1px_0_0_rgba(255,255,255,0.03),-24px_0_80px_rgba(0,0,0,0.4)] transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]",
+          showSignIn ? "translate-x-0" : "translate-x-full"
+        )}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Sign in panel"
+      >
+        {/* Panel Header */}
+        <div className="flex items-center justify-between border-b border-white/5 px-6 py-5">
+          <div className="flex items-center gap-3">
+            <Image src="/thalos-icon.png" alt="Thalos" width={80} height={80} className="h-10 w-auto brightness-0 invert" />
+          </div>
+          <button
+            onClick={() => setShowSignIn(false)}
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-white/5 text-muted-foreground transition-all duration-300 hover:bg-white/10 hover:text-foreground"
+            aria-label="Close"
           >
-            <button
-              onClick={() => setShowSignIn(false)}
-              className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition-colors"
-              aria-label="Close"
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-              </svg>
-            </button>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
 
-            <div className="mb-8 text-center">
-              <p className="mb-2 text-sm font-bold uppercase tracking-wider text-[#f0b400]">Get Started</p>
-              <h3 className="text-2xl font-bold text-foreground">Sign In to Build</h3>
-              <p className="mt-2 text-sm font-medium text-muted-foreground">
-                Choose your profile type and start assembling your payment platform.
-              </p>
-            </div>
+        {/* Panel Content */}
+        <div className="flex flex-1 flex-col overflow-y-auto px-6 py-8">
+          <div className="mb-8">
+            <p className="mb-2 text-sm font-bold uppercase tracking-wider text-[#f0b400]">Get Started</p>
+            <h3 className="text-2xl font-bold text-foreground">Sign In to Build</h3>
+            <p className="mt-2 text-sm font-medium text-muted-foreground">
+              Choose your profile type and start creating protected agreements.
+            </p>
+          </div>
 
-            <div className="mb-6">
-              <p className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">Profile Type</p>
-              <div className="grid grid-cols-2 gap-2">
-                {[
-                  { id: "personal" as const, label: "Personal / Retail" },
-                  { id: "business" as const, label: "Business / Enterprise" },
-                ].map((type) => (
-                  <button
-                    key={type.id}
-                    onClick={() => setProfileType(type.id)}
-                    className={cn(
-                      "rounded-xl border p-3 text-sm font-semibold transition-all duration-400 shadow-[0_2px_6px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.04)]",
-                      profileType === type.id
-                        ? "border-[#f0b400]/25 bg-[#f0b400]/10 text-[#f0b400]"
-                        : "border-border/20 bg-card/30 text-muted-foreground hover:border-[#b0c4de]/30 hover:text-[#b0c4de]"
-                    )}
-                  >
-                    {type.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-3">
-              <Link href={dashboardHref} onClick={() => setShowSignIn(false)}>
-                <Button
-                  variant="outline"
-                  className="h-11 w-full gap-3 rounded-xl border-border/20 bg-card/30 text-foreground font-semibold shadow-[0_2px_8px_rgba(0,0,0,0.25),inset_0_1px_0_rgba(255,255,255,0.05)] hover:bg-[#b0c4de]/10 hover:text-[#b0c4de] hover:border-[#b0c4de]/30 transition-all duration-400"
+          {/* Profile Type Selection */}
+          <div className="mb-8">
+            <p className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">Profile Type</p>
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                { id: "personal" as const, label: "Personal / Retail", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> },
+                { id: "business" as const, label: "Business / Enterprise", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg> },
+              ].map((type) => (
+                <button
+                  key={type.id}
+                  onClick={() => setProfileType(type.id)}
+                  className={cn(
+                    "flex flex-col items-center gap-2 rounded-xl border p-4 text-sm font-semibold transition-all duration-400 shadow-[0_2px_6px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.04)]",
+                    profileType === type.id
+                      ? "border-[#f0b400]/25 bg-[#f0b400]/10 text-[#f0b400]"
+                      : "border-border/20 bg-card/30 text-muted-foreground hover:border-[#b0c4de]/30 hover:text-[#b0c4de]"
+                  )}
                 >
-                  <svg width="18" height="18" viewBox="0 0 24 24">
-                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
-                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-                  </svg>
-                  Continue with Google
-                </Button>
-              </Link>
-              <Link href={dashboardHref} onClick={() => setShowSignIn(false)}>
-                <Button
-                  variant="outline"
-                  className="h-11 w-full gap-3 rounded-xl border-border/20 bg-card/30 text-foreground font-semibold shadow-[0_2px_8px_rgba(0,0,0,0.25),inset_0_1px_0_rgba(255,255,255,0.05)] hover:bg-[#b0c4de]/10 hover:text-[#b0c4de] hover:border-[#b0c4de]/30 transition-all duration-400"
-                >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
-                  </svg>
-                  Continue with Email
-                </Button>
-              </Link>
+                  {type.icon}
+                  {type.label}
+                </button>
+              ))}
             </div>
+          </div>
 
-            <div className="my-6 flex items-center gap-3">
-              <div className="h-px flex-1 bg-border/15" />
-              <span className="text-xs font-medium text-muted-foreground">or</span>
-              <div className="h-px flex-1 bg-border/15" />
-            </div>
-
+          {/* Auth Options */}
+          <div className="flex flex-col gap-3">
             <Link href={dashboardHref} onClick={() => setShowSignIn(false)}>
               <Button
                 variant="outline"
-                className="h-11 w-full gap-3 rounded-xl border-border/20 bg-card/30 text-foreground font-semibold shadow-[0_2px_8px_rgba(0,0,0,0.25),inset_0_1px_0_rgba(255,255,255,0.05)] hover:bg-[#b0c4de]/10 hover:text-[#b0c4de] hover:border-[#b0c4de]/30 transition-all duration-400"
+                className="h-12 w-full gap-3 rounded-xl border-border/20 bg-card/30 text-foreground font-semibold shadow-[0_2px_8px_rgba(0,0,0,0.25),inset_0_1px_0_rgba(255,255,255,0.05)] hover:bg-[#b0c4de]/10 hover:text-[#b0c4de] hover:border-[#b0c4de]/30 transition-all duration-400"
               >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
-                  <path d="M1 10h22"/>
+                <svg width="18" height="18" viewBox="0 0 24 24">
+                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
+                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
                 </svg>
-                Connect Stellar Wallet
+                Continue with Google
               </Button>
             </Link>
-            <p className="mt-3 text-center text-xs font-medium text-muted-foreground">
-              Securely connect your wallet to access escrow features.
-            </p>
+            <Link href={dashboardHref} onClick={() => setShowSignIn(false)}>
+              <Button
+                variant="outline"
+                className="h-12 w-full gap-3 rounded-xl border-border/20 bg-card/30 text-foreground font-semibold shadow-[0_2px_8px_rgba(0,0,0,0.25),inset_0_1px_0_rgba(255,255,255,0.05)] hover:bg-[#b0c4de]/10 hover:text-[#b0c4de] hover:border-[#b0c4de]/30 transition-all duration-400"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+                </svg>
+                Continue with Email
+              </Button>
+            </Link>
+          </div>
 
-            <div className="mt-4 border-t border-border/15 pt-4">
-              <Link href="/admin" onClick={() => setShowSignIn(false)}>
-                <Button
-                  variant="ghost"
-                  className="h-9 w-full gap-2 rounded-lg text-xs font-medium text-muted-foreground/60 hover:text-[#f0b400] hover:bg-[#f0b400]/5 transition-all duration-300"
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                  Admin Access
-                </Button>
-              </Link>
-            </div>
+          <div className="my-6 flex items-center gap-3">
+            <div className="h-px flex-1 bg-border/15" />
+            <span className="text-xs font-medium text-muted-foreground">or</span>
+            <div className="h-px flex-1 bg-border/15" />
+          </div>
+
+          <Link href={dashboardHref} onClick={() => setShowSignIn(false)}>
+            <Button
+              variant="outline"
+              className="h-12 w-full gap-3 rounded-xl border-border/20 bg-card/30 text-foreground font-semibold shadow-[0_2px_8px_rgba(0,0,0,0.25),inset_0_1px_0_rgba(255,255,255,0.05)] hover:bg-[#b0c4de]/10 hover:text-[#b0c4de] hover:border-[#b0c4de]/30 transition-all duration-400"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+                <path d="M1 10h22"/>
+              </svg>
+              Connect Stellar Wallet
+            </Button>
+          </Link>
+
+          <p className="mt-4 text-center text-xs font-medium text-muted-foreground">
+            Securely connect your wallet to access escrow features.
+          </p>
+
+          {/* Spacer */}
+          <div className="flex-1" />
+
+          {/* Admin access at bottom */}
+          <div className="mt-8 border-t border-border/10 pt-4">
+            <Link href="/admin" onClick={() => setShowSignIn(false)}>
+              <Button
+                variant="ghost"
+                className="h-10 w-full gap-2 rounded-lg text-xs font-medium text-muted-foreground/50 hover:text-[#f0b400] hover:bg-[#f0b400]/5 transition-all duration-300"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                Admin Access
+              </Button>
+            </Link>
           </div>
         </div>
-      )}
+      </div>
     </>
   )
 }
