@@ -11,53 +11,53 @@ const useCases = [
   {
     id: "freelancer",
     label: "Freelancer",
-    description: "Milestone-based payments for project deliverables",
+    description: "Milestone-based escrow for project deliverables",
     steps: [
-      { label: "Client", icon: "user", detail: "Initiates project contract" },
-      { label: "Fiat Payment", icon: "dollar", detail: "Pays in local currency" },
-      { label: "USDC on Stellar", icon: "coin", detail: "Converted to USDC" },
-      { label: "Escrow Contract", icon: "lock", detail: "Funds locked by milestones" },
-      { label: "Milestone Release", icon: "check", detail: "Released per deliverable" },
-      { label: "Freelancer", icon: "user-check", detail: "Receives payment" },
+      { label: "Create Agreement", icon: "user", detail: "Client defines milestones & terms" },
+      { label: "Fund Escrow", icon: "dollar", detail: "USDC locked in smart contract" },
+      { label: "Work Begins", icon: "coin", detail: "Freelancer delivers milestones" },
+      { label: "Milestone Approval", icon: "check", detail: "Client approves deliverables" },
+      { label: "Fund Release", icon: "lock", detail: "USDC released per milestone" },
+      { label: "Complete", icon: "user-check", detail: "Both parties satisfied" },
     ],
   },
   {
     id: "travel",
     label: "Travel Agency",
-    description: "Accumulative payments for travel packages",
+    description: "Accumulative staged payments for travel packages",
     steps: [
-      { label: "Traveler", icon: "user", detail: "Books travel package" },
-      { label: "Fiat Payment", icon: "dollar", detail: "Monthly installments" },
-      { label: "USDC on Stellar", icon: "coin", detail: "Converted to USDC" },
-      { label: "Escrow Contract", icon: "lock", detail: "Accumulates until target" },
-      { label: "Full Release", icon: "check", detail: "Released upon completion" },
-      { label: "Travel Agency", icon: "user-check", detail: "Receives full amount" },
+      { label: "Create Agreement", icon: "user", detail: "Agency sets payment schedule" },
+      { label: "Initial Deposit", icon: "dollar", detail: "Traveler funds first stage" },
+      { label: "Accumulate", icon: "coin", detail: "Monthly payments to escrow" },
+      { label: "Target Reached", icon: "lock", detail: "Full amount accumulated" },
+      { label: "Confirm Trip", icon: "check", detail: "Agency confirms booking" },
+      { label: "Release", icon: "user-check", detail: "Funds released to agency" },
     ],
   },
   {
     id: "marketplace",
     label: "Marketplace",
-    description: "Protected transactions between buyers and sellers",
+    description: "Protected buyer-seller transactions with escrow",
     steps: [
-      { label: "Buyer", icon: "user", detail: "Places order" },
-      { label: "Fiat Payment", icon: "dollar", detail: "Pays for goods" },
-      { label: "USDC on Stellar", icon: "coin", detail: "Converted to USDC" },
-      { label: "Escrow Contract", icon: "lock", detail: "Held until delivery" },
-      { label: "Conditional Release", icon: "check", detail: "On delivery confirmation" },
-      { label: "Seller", icon: "user-check", detail: "Receives payment" },
+      { label: "New Agreement", icon: "user", detail: "Buyer creates order escrow" },
+      { label: "Lock Funds", icon: "dollar", detail: "Payment held in contract" },
+      { label: "Ship Goods", icon: "coin", detail: "Seller ships the product" },
+      { label: "Delivery Proof", icon: "check", detail: "Buyer confirms receipt" },
+      { label: "Release Funds", icon: "lock", detail: "Escrow releases to seller" },
+      { label: "Rated", icon: "user-check", detail: "On-chain reputation updated" },
     ],
   },
   {
-    id: "vehicle",
-    label: "Vehicle Sale",
-    description: "Staged releases for large transactions",
+    id: "services",
+    label: "Service Contract",
+    description: "Multi-stage payments for professional services",
     steps: [
-      { label: "Buyer", icon: "user", detail: "Initiates purchase" },
-      { label: "Fiat Payment", icon: "dollar", detail: "Deposit + final payment" },
-      { label: "USDC on Stellar", icon: "coin", detail: "Converted to USDC" },
-      { label: "Escrow Contract", icon: "lock", detail: "Partial release stages" },
-      { label: "Staged Release", icon: "check", detail: "Inspection + transfer" },
-      { label: "Seller", icon: "user-check", detail: "Full amount released" },
+      { label: "Agreement", icon: "user", detail: "Define scope & milestones" },
+      { label: "Escrow Funded", icon: "dollar", detail: "Client deposits full amount" },
+      { label: "Phase 1 Done", icon: "coin", detail: "Provider delivers phase 1" },
+      { label: "Partial Release", icon: "lock", detail: "First milestone paid" },
+      { label: "Phase 2 Done", icon: "check", detail: "Provider delivers phase 2" },
+      { label: "Final Release", icon: "user-check", detail: "Remaining funds released" },
     ],
   },
 ]
@@ -168,10 +168,10 @@ export function HowItWorks() {
             <span className={cn("ml-0.5 inline-block h-4 w-0.5 bg-[#f0b400] align-middle", twActive ? "animate-pulse" : "opacity-0")} />
           </p>
           <h2 className="mb-4 text-5xl font-bold tracking-tight text-foreground md:text-6xl text-balance">
-            {t("hiw.title")}
+            Agreement-Based Escrow Flow
           </h2>
           <p className="mx-auto max-w-2xl text-base font-medium text-white/55 leading-relaxed text-pretty">
-            {t("hiw.desc")}
+            See how Thalos creates secure agreements with milestone-based escrow, on-chain fund locking, and conditional releases on Stellar.
           </p>
         </div>
 

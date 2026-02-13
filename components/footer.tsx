@@ -46,7 +46,6 @@ export function Footer() {
               <ul className="flex flex-col gap-2.5">
                 <li><a href="https://www.trustlesswork.com/" target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-white/50 transition-colors hover:text-white">Trustless Work</a></li>
                 <li><a href="https://stellar.org/" target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-white/50 transition-colors hover:text-white">Stellar Network</a></li>
-                <li><a href="https://github.com/Thalos-Infrastructure" target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-white/50 transition-colors hover:text-white">GitHub</a></li>
                 <li><Link href="/about" className="text-sm font-medium text-white/50 transition-colors hover:text-white">Vision & Team</Link></li>
               </ul>
             </div>
@@ -55,6 +54,7 @@ export function Footer() {
               <ul className="flex flex-col gap-2.5">
                 <li><a href="mailto:thalosinfrastructure@gmail.com" className="text-sm font-medium text-white/50 transition-colors hover:text-white">{t("footer.emailUs")}</a></li>
                 <li><a href="https://x.com/Thalos_infra" target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-white/50 transition-colors hover:text-white">{t("footer.followOnX")}</a></li>
+                <li><a href="https://github.com/Thalos-Infrastructure" target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-white/50 transition-colors hover:text-white">GitHub</a></li>
               </ul>
             </div>
           </div>
