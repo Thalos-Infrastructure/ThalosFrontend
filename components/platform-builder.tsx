@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useSectionReveal } from "@/hooks/use-section-reveal"
 import { useTypewriter } from "@/hooks/use-typewriter"
+import { useLanguage } from "@/lib/i18n"
 
 const steps = ["Select Services", "Identity & Roles", "Payment Logic", "Review"]
 
@@ -38,8 +39,9 @@ const serviceIcons: Record<string, React.ReactNode> = {
 }
 
 export function PlatformBuilder() {
+  const { t } = useLanguage()
   const { ref, isVisible } = useSectionReveal()
-  const { displayed: twText, isTyping: twActive } = useTypewriter("[Platform Builder]", isVisible, { typeSpeed: 120, deleteSpeed: 60, pauseBeforeDelete: 2500, pauseBeforeType: 800 })
+  const { displayed: twText, isTyping: twActive } = useTypewriter(t("builder.tag"), isVisible, { typeSpeed: 120, deleteSpeed: 60, pauseBeforeDelete: 2500, pauseBeforeType: 800 })
   const [currentStep, setCurrentStep] = useState(0)
   const [selectedServices, setSelectedServices] = useState<Set<string>>(new Set(["onramp", "escrow"]))
   const [selectedRoles, setSelectedRoles] = useState<Set<string>>(new Set(["sender", "receiver"]))
@@ -75,10 +77,10 @@ export function PlatformBuilder() {
             <span className={cn("ml-0.5 inline-block h-4 w-0.5 bg-[#f0b400] align-middle", twActive ? "animate-pulse" : "opacity-0")} />
           </p>
           <h2 className="mb-4 text-5xl font-bold tracking-tight text-foreground md:text-6xl text-balance">
-            Build Your Agreement Flow
+            {t("builder.title")}
           </h2>
           <p className="mx-auto max-w-2xl text-base font-medium text-white/55 leading-relaxed text-pretty">
-            Select the services and roles that match your use case. Thalos assembles the agreement infrastructure for you.
+            {t("builder.desc")}
           </p>
         </div>
 
@@ -272,18 +274,18 @@ export function PlatformBuilder() {
               disabled={currentStep === 0}
               className="rounded-full border-border/30 bg-card/20 text-foreground font-semibold hover:bg-[#b0c4de]/10 hover:text-[#b0c4de] hover:border-[#b0c4de]/30 hover:shadow-[0_0_20px_rgba(176,196,222,0.08)] transition-all duration-400"
             >
-              Back
+              {t("builder.back")}
             </Button>
             {currentStep < steps.length - 1 ? (
               <Button
                 onClick={() => setCurrentStep(Math.min(steps.length - 1, currentStep + 1))}
                 className="rounded-full bg-[#f0b400] text-background font-semibold shadow-[0_4px_16px_rgba(240,180,0,0.25),0_1px_3px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.2)] hover:bg-[#b0c4de] hover:text-background hover:shadow-[0_4px_20px_rgba(176,196,222,0.35),0_1px_3px_rgba(0,0,0,0.4)] transition-all duration-400"
               >
-                Next Step
+                {t("builder.next")}
               </Button>
             ) : (
               <Button className="rounded-full bg-[#f0b400] text-background font-semibold shadow-[0_4px_16px_rgba(240,180,0,0.25),0_1px_3px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.2)] hover:bg-[#b0c4de] hover:text-background hover:shadow-[0_4px_20px_rgba(176,196,222,0.35),0_1px_3px_rgba(0,0,0,0.4)] transition-all duration-400">
-                Create Payment Flow
+                {t("builder.create")}
               </Button>
             )}
           </div>

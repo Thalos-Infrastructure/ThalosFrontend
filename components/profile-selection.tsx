@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useSectionReveal } from "@/hooks/use-section-reveal"
 import { useTypewriter } from "@/hooks/use-typewriter"
+import { useLanguage } from "@/lib/i18n"
 
 const profiles = [
   {
@@ -33,8 +34,9 @@ const profiles = [
 ]
 
 export function ProfileSelection({ onNavigate }: { onNavigate: (section: string) => void }) {
+  const { t } = useLanguage()
   const { ref, isVisible } = useSectionReveal()
-  const { displayed: twText, isTyping: twActive } = useTypewriter("[Choose Your Path]", isVisible, { typeSpeed: 120, deleteSpeed: 60, pauseBeforeDelete: 2500, pauseBeforeType: 800 })
+  const { displayed: twText, isTyping: twActive } = useTypewriter(t("profiles.tag"), isVisible, { typeSpeed: 120, deleteSpeed: 60, pauseBeforeDelete: 2500, pauseBeforeType: 800 })
 
   return (
     <section id="profiles" className="relative py-28" ref={ref}>

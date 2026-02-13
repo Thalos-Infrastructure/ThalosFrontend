@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import { useSectionReveal } from "@/hooks/use-section-reveal"
 import { useTypewriter } from "@/hooks/use-typewriter"
+import { useLanguage } from "@/lib/i18n"
 
 const escrows = [
   {
@@ -65,8 +66,9 @@ const statusConfig = {
 }
 
 export function DashboardSection() {
+  const { t } = useLanguage()
   const { ref, isVisible } = useSectionReveal()
-  const { displayed: twText, isTyping: twActive } = useTypewriter("[Dashboard]", isVisible, { typeSpeed: 120, deleteSpeed: 60, pauseBeforeDelete: 2500, pauseBeforeType: 800 })
+  const { displayed: twText, isTyping: twActive } = useTypewriter(t("dash.tag"), isVisible, { typeSpeed: 120, deleteSpeed: 60, pauseBeforeDelete: 2500, pauseBeforeType: 800 })
   const [selectedEscrow, setSelectedEscrow] = useState<string | null>(null)
 
   const totalLocked = escrows.filter((e) => e.status !== "completed").reduce((sum, e) => sum + Number.parseFloat(e.amount.replace(",", "")), 0)
@@ -84,10 +86,10 @@ export function DashboardSection() {
             <span className={cn("ml-0.5 inline-block h-4 w-0.5 bg-[#f0b400] align-middle", twActive ? "animate-pulse" : "opacity-0")} />
           </p>
           <h2 className="mb-4 text-4xl font-bold tracking-tight text-foreground md:text-5xl text-balance">
-            Manage Your Agreements
+            {t("dash.title")}
           </h2>
           <p className="mx-auto max-w-2xl text-base font-medium text-white/55 leading-relaxed text-pretty">
-            Track active agreements, monitor fund status, and manage releases from a single view.
+            {t("dash.desc")}
           </p>
         </div>
 
