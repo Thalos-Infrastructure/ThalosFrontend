@@ -140,6 +140,42 @@ export default function AdminDashboardPage() {
 
   if (loading) return <ThalosLoader />
 
+  if (!authenticated) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-[#111] p-8 shadow-2xl">
+          <div className="mb-6 flex justify-center">
+            <Image src="/thalos-icon.png" alt="Thalos" width={64} height={64} className="h-16 w-16 object-contain" />
+          </div>
+          <h2 className="mb-1 text-center text-xl font-bold text-foreground">Admin Access</h2>
+          <p className="mb-6 text-center text-sm text-muted-foreground/60">Enter the admin password to continue</p>
+          <form onSubmit={handlePasswordSubmit} className="flex flex-col gap-4">
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => { setPassword(e.target.value); setPasswordError(false) }}
+              placeholder="Password"
+              className="h-11 w-full rounded-xl border border-white/10 bg-white/5 px-4 text-sm text-foreground placeholder:text-muted-foreground/40 focus:border-[#f0b400]/50 focus:outline-none focus:ring-1 focus:ring-[#f0b400]/30"
+              autoFocus
+            />
+            {passwordError && (
+              <p className="text-xs font-medium text-red-400">Incorrect password. Try again.</p>
+            )}
+            <button
+              type="submit"
+              className="h-11 w-full rounded-xl bg-[#f0b400] font-bold text-background transition-colors hover:bg-[#d4a000]"
+            >
+              Enter
+            </button>
+          </form>
+          <div className="mt-4 text-center">
+            <Link href="/" className="text-xs text-muted-foreground/40 transition-colors hover:text-foreground">Back to Home</Link>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* Header */}
