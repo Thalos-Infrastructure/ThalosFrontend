@@ -56,7 +56,7 @@ export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }
           visible ? "translate-y-0" : "-translate-y-full"
         )}
       >
-        <nav className="mx-auto flex h-24 max-w-7xl items-center justify-between px-6">
+        <nav className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6">
           <button
             onClick={() => onNavigate("hero")}
             className="group flex items-center [perspective:800px]"
@@ -65,9 +65,9 @@ export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }
             <Image
               src="/thalos-icon.png"
               alt="Thalos"
-              width={250}
-              height={250}
-              className="h-20 w-auto object-contain [transform-style:preserve-3d] transition-transform duration-[1.2s] ease-[cubic-bezier(0.45,0.05,0.55,0.95)] group-hover:[transform:rotateY(360deg)]"
+              width={64}
+              height={64}
+              className="h-14 w-14 object-contain [transform-style:preserve-3d] transition-transform duration-[1.2s] ease-[cubic-bezier(0.45,0.05,0.55,0.95)] group-hover:[transform:rotateY(360deg)]"
               priority
             />
           </button>
