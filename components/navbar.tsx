@@ -5,17 +5,19 @@ import { Button } from "@/components/ui/button"
 import { useState, useEffect, useRef } from "react"
 import { cn } from "@/lib/utils"
 import { SignInPanel } from "@/components/sign-in-panel"
+import { useLanguage, LanguageToggle } from "@/lib/i18n"
 
 export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }) {
+  const { t } = useLanguage()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [showSignIn, setShowSignIn] = useState(false)
   const [visible, setVisible] = useState(true)
   const lastScrollY = useRef(0)
 
   const navLinks = [
-    { label: "How It Works", section: "how-it-works" },
-    { label: "Solutions", section: "profiles" },
-    { label: "Create Your Platform", section: "builder" },
+    { label: t("nav.howItWorks"), section: "how-it-works" },
+    { label: t("nav.solutions"), section: "profiles" },
+    { label: t("nav.buildFlow"), section: "builder" },
   ]
 
   // Hide on scroll down, show on scroll up
@@ -83,12 +85,13 @@ export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }
           </div>
 
           <div className="hidden items-center gap-3 md:flex">
+            <LanguageToggle />
             <Button
               size="sm"
               onClick={() => setShowSignIn(true)}
               className="rounded-full bg-white px-7 py-2 text-base text-background font-bold shadow-[0_2px_12px_rgba(255,255,255,0.15),0_1px_2px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.4)] hover:bg-[#b0c4de] hover:text-background hover:shadow-[0_2px_20px_rgba(176,196,222,0.35),0_1px_2px_rgba(0,0,0,0.3)] transition-all duration-400"
             >
-              Sign In
+              {t("nav.signIn")}
             </Button>
           </div>
 
@@ -115,13 +118,16 @@ export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }
                   {item.label}
                 </button>
               ))}
-              <Button
-                size="sm"
-                onClick={() => { setShowSignIn(true); setMobileOpen(false) }}
-                className="mt-2 rounded-full bg-white text-background font-semibold shadow-[0_2px_12px_rgba(255,255,255,0.1),inset_0_1px_0_rgba(255,255,255,0.3)] hover:bg-[#b0c4de] hover:text-background"
-              >
-                Sign In
-              </Button>
+              <div className="mt-2 flex items-center gap-2">
+                <LanguageToggle />
+                <Button
+                  size="sm"
+                  onClick={() => { setShowSignIn(true); setMobileOpen(false) }}
+                  className="flex-1 rounded-full bg-white text-background font-semibold shadow-[0_2px_12px_rgba(255,255,255,0.1),inset_0_1px_0_rgba(255,255,255,0.3)] hover:bg-[#b0c4de] hover:text-background"
+                >
+                  {t("nav.signIn")}
+                </Button>
+              </div>
             </div>
           </div>
         )}

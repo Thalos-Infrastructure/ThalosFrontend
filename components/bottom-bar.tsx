@@ -5,8 +5,10 @@ import Image from "next/image"
 import { useState, useEffect, useRef, useCallback } from "react"
 import { cn } from "@/lib/utils"
 import { SignInPanel } from "@/components/sign-in-panel"
+import { useLanguage } from "@/lib/i18n"
 
 export function BottomBar({ onNavigate }: { onNavigate: (section: string) => void }) {
+  const { t } = useLanguage()
   const [showQR, setShowQR] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
   const [showSignIn, setShowSignIn] = useState(false)
@@ -75,13 +77,13 @@ export function BottomBar({ onNavigate }: { onNavigate: (section: string) => voi
             <button onClick={() => setShowQR(false)} className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition-colors" aria-label="Close">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
-            <p className="mb-6 text-center text-sm font-bold text-foreground">Scan to access Thalos Mobile</p>
-            <div className="mx-auto flex h-52 w-52 items-center justify-center rounded-xl bg-white p-3">
+            <p className="mb-6 text-center text-sm font-bold text-foreground">{t("bar.scanMobile")}</p>
+            <div className="mx-auto flex h-56 w-56 items-center justify-center rounded-2xl bg-white p-4 shadow-[0_8px_32px_rgba(0,0,0,0.3)]">
               <Image
-                src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent("https://thalos.app/mobile")}&bgcolor=FFFFFF&color=000000&qzone=2&format=png`}
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent("https://thalos.app/mobile")}&bgcolor=FFFFFF&color=111111&qzone=3&format=png`}
                 alt="QR Code to Thalos Mobile"
-                width={200}
-                height={200}
+                width={224}
+                height={224}
                 className="h-full w-full object-contain"
                 unoptimized
               />

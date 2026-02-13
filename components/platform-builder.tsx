@@ -75,10 +75,10 @@ export function PlatformBuilder() {
             <span className={cn("ml-0.5 inline-block h-4 w-0.5 bg-[#f0b400] align-middle", twActive ? "animate-pulse" : "opacity-0")} />
           </p>
           <h2 className="mb-4 text-5xl font-bold tracking-tight text-foreground md:text-6xl text-balance">
-            How to Configure Your Payment Flow
+            Build Your Agreement Flow
           </h2>
           <p className="mx-auto max-w-2xl text-base font-medium text-white/55 leading-relaxed text-pretty">
-            Select the services and logic that match your use case. Thalos assembles the infrastructure for you.
+            Select the services and roles that match your use case. Thalos assembles the agreement infrastructure for you.
           </p>
         </div>
 

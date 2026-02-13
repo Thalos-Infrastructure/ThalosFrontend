@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { useEffect, useState, useRef } from "react"
+import { useLanguage } from "@/lib/i18n"
 
 function TypewriterEscrows() {
   const word = "[Escrows]"
@@ -56,6 +57,7 @@ interface HeroSectionProps {
 }
 
 export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
+  const { t } = useLanguage()
   const [introReady, setIntroReady] = useState(false)
   const [showDescription, setShowDescription] = useState(false)
   const descRef = useRef<HTMLDivElement>(null)
@@ -133,7 +135,7 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
             onClick={() => onNavigate("builder")}
             className="h-14 rounded-full bg-[#f0b400] px-12 text-base font-bold text-background shadow-[0_6px_0_rgba(180,130,0,0.6),0_8px_24px_rgba(240,180,0,0.25),inset_0_1px_0_rgba(255,255,255,0.3)] hover:bg-[#f0b400]/90 hover:shadow-[0_4px_0_rgba(180,130,0,0.6),0_6px_20px_rgba(240,180,0,0.3)] hover:translate-y-[2px] active:shadow-[0_1px_0_rgba(180,130,0,0.6),0_2px_8px_rgba(240,180,0,0.2)] active:translate-y-[4px] transition-all duration-200"
           >
-            Get Started
+            {t("hero.cta1")}
           </Button>
           <Button
             variant="outline"
@@ -141,7 +143,7 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
             onClick={() => onNavigate("how-it-works")}
             className="h-14 rounded-full border-white/30 bg-white/5 px-12 text-base font-bold text-white shadow-[0_6px_0_rgba(255,255,255,0.08),0_8px_24px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.15)] hover:bg-white/10 hover:shadow-[0_4px_0_rgba(255,255,255,0.08),0_6px_20px_rgba(0,0,0,0.4)] hover:translate-y-[2px] active:shadow-[0_1px_0_rgba(255,255,255,0.08),0_2px_8px_rgba(0,0,0,0.3)] active:translate-y-[4px] transition-all duration-200"
           >
-            How It Works
+            {t("hero.cta2")}
           </Button>
         </div>
       </div>
