@@ -100,6 +100,10 @@ const translations: Record<Lang, Record<string, string>> = {
     "signin.email": "Continue with Email",
     "signin.or": "or",
     "signin.wallet": "Connect Stellar Wallet",
+    "signin.freighter": "Connect with Freighter",
+    "signin.freighterDesc": "Browser extension wallet for Stellar",
+    "signin.walletConnecting": "Connecting…",
+    "signin.walletError": "Could not connect. Install Freighter or unlock your wallet.",
     "signin.admin": "Admin",
     "signin.secured": "Secured by Thalos",
 
@@ -228,6 +232,10 @@ const translations: Record<Lang, Record<string, string>> = {
     "signin.email": "Continuar con Email",
     "signin.or": "o",
     "signin.wallet": "Conectar Billetera Stellar",
+    "signin.freighter": "Conectar con Freighter",
+    "signin.freighterDesc": "Extensión de navegador para Stellar",
+    "signin.walletConnecting": "Conectando…",
+    "signin.walletError": "No se pudo conectar. Instala Freighter o desbloquea tu billetera.",
     "signin.admin": "Admin",
     "signin.secured": "Protegido por Thalos",
 
