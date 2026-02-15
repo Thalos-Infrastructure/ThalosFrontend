@@ -71,13 +71,13 @@ export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }
       <header
         className={cn(
           "fixed top-0 left-0 right-0 z-50 transition-transform duration-500",
-          "border-b border-white/[0.06]",
-          "bg-gradient-to-b from-[#111113] via-[#0e0e10] to-[#0a0a0c]",
-          "shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_4px_20px_rgba(0,0,0,0.5)]",
+          "border-b border-white/[0.04]",
+          "bg-background/60 backdrop-blur-xl",
+          "shadow-[0_2px_16px_rgba(0,0,0,0.3)]",
           visible ? "translate-y-0" : "-translate-y-full"
         )}
       >
-        <nav className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6">
+        <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
           {/* Logo - static, no rotation */}
           <button
             onClick={() => onNavigate("hero")}
@@ -184,7 +184,7 @@ export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }
 
         {/* Mobile menu */}
         {mobileOpen && (
-          <div className="bg-[#0e0e10]/95 backdrop-blur-2xl md:hidden">
+          <div className="bg-background/80 backdrop-blur-2xl md:hidden">
             <div className="flex flex-col gap-1 p-4">
               {navLinks.map((item) => (
                 <button

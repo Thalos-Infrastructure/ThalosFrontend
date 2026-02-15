@@ -1,7 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useState, useRef, useCallback } from "react"
 import { useLanguage } from "@/lib/i18n"
 
 /* ── Typewriter for [Escrows] ── */
@@ -83,60 +83,66 @@ interface HeroSectionProps {
   onIntroComplete?: () => void
 }
 
+const LETTERS = "thalos".split("")
+
 export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
   const { t } = useLanguage()
   const [introReady, setIntroReady] = useState(false)
-  const [section2Progress, setSection2Progress] = useState(0)
-  const [thalosOpacity, setThalosOpacity] = useState(1)
+  const [section2Visible, setSection2Visible] = useState(false)
+  const [letterOpacities, setLetterOpacities] = useState<number[]>([1, 1, 1, 1, 1, 1])
   const section2Ref = useRef<HTMLDivElement>(null)
-  const heroRef = useRef<HTMLElement>(null)
 
   useEffect(() => {
     const t1 = setTimeout(() => { setIntroReady(true); onIntroComplete?.() }, 3000)
     return () => clearTimeout(t1)
   }, [onIntroComplete])
 
-  /* Scroll-driven: reveal section 2 + fade THALOS */
-  useEffect(() => {
-    function onScroll() {
-      if (!section2Ref.current || !heroRef.current) return
-      const rect = section2Ref.current.getBoundingClientRect()
-      const vh = window.innerHeight
-      const raw = 1 - (rect.top - vh * 0.3) / (vh * 0.7)
-      setSection2Progress(Math.max(0, Math.min(1, raw)))
+  /* Per-letter fade on scroll: each letter has its own threshold */
+  const onScroll = useCallback(() => {
+    const scrollY = window.scrollY
+    const vh = window.innerHeight
 
-      // Fade THALOS: starts fading at scrollY = vh, fully gone at 2*vh
-      const scrollY = window.scrollY
-      const fadeStart = vh * 0.5
-      const fadeEnd = vh * 1.8
-      const fadeProgress = Math.max(0, Math.min(1, (scrollY - fadeStart) / (fadeEnd - fadeStart)))
-      setThalosOpacity(1 - fadeProgress)
+    // Each letter starts fading at a staggered position
+    const newOpacities = LETTERS.map((_, i) => {
+      const fadeStart = vh * 0.15 + i * vh * 0.12
+      const fadeEnd = fadeStart + vh * 0.35
+      if (scrollY < fadeStart) return 1
+      if (scrollY > fadeEnd) return 0
+      return 1 - (scrollY - fadeStart) / (fadeEnd - fadeStart)
+    })
+    setLetterOpacities(newOpacities)
+
+    // Section 2 block reveal
+    if (section2Ref.current) {
+      const rect = section2Ref.current.getBoundingClientRect()
+      setSection2Visible(rect.top < vh * 0.65)
     }
+  }, [])
+
+  useEffect(() => {
     window.addEventListener("scroll", onScroll, { passive: true })
     onScroll()
     return () => window.removeEventListener("scroll", onScroll)
-  }, [])
+  }, [onScroll])
 
   return (
-    <section id="hero" className="relative" ref={heroRef}>
+    <section id="hero" className="relative">
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#f0b400]/20 to-transparent" aria-hidden="true" />
 
-      {/* Vertical "thalos" -- HUGE, right side, fades on scroll, spans both hero sections */}
+      {/* Vertical "thalos" -- very large, right side, per-letter fade */}
       <div
-        className="pointer-events-none fixed right-2 top-0 bottom-0 z-20 hidden select-none md:flex md:flex-col md:items-center md:justify-center lg:right-6 xl:right-10"
+        className="pointer-events-none fixed right-0 top-0 bottom-0 z-20 hidden select-none md:flex md:flex-col md:items-center md:justify-center lg:right-4 xl:right-8"
         aria-hidden="true"
-        style={{ opacity: thalosOpacity, transition: "opacity 100ms linear" }}
       >
-        {"thalos".split("").map((letter, i) => (
+        {LETTERS.map((letter, i) => (
           <span
             key={i}
-            className="animate-fade-in-up block font-black lowercase leading-[0.76] text-white/90"
+            className="block font-black lowercase leading-[0.72] text-white"
             style={{
-              animationDelay: `${i * 120}ms`,
-              animationFillMode: "both",
-              fontSize: "clamp(8rem, 16vh, 16rem)",
-              textShadow: "0 2px 60px rgba(255,255,255,0.04)",
-              letterSpacing: "-0.04em",
+              opacity: letterOpacities[i],
+              transition: "opacity 250ms cubic-bezier(0.4, 0, 0.2, 1)",
+              fontSize: "clamp(9rem, 17.5vh, 20rem)",
+              letterSpacing: "-0.05em",
             }}
           >
             {letter}
@@ -149,7 +155,7 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
         <div className="mx-auto w-full max-w-7xl">
           {/* Mobile THALOS horizontal */}
           <div className="flex md:hidden justify-center mb-10 gap-1">
-            {"thalos".split("").map((letter, i) => (
+            {LETTERS.map((letter, i) => (
               <span
                 key={i}
                 className="animate-fade-in-up text-7xl font-black lowercase text-white/90"
@@ -178,31 +184,32 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
         </div>
       </div>
 
-      {/* === SECTION 2: Trust layer - scroll reveal with subtle white overlay === */}
+      {/* === SECTION 2: Trust layer - block reveal === */}
       <div ref={section2Ref} className="relative z-10 min-h-[100dvh] overflow-hidden">
-        {/* Subtle frosted overlay */}
+        {/* Light frosted overlay */}
         <div
-          className="absolute inset-0 transition-opacity duration-700"
-          style={{ opacity: section2Progress }}
+          className="absolute inset-0 transition-all duration-700 ease-out"
+          style={{ opacity: section2Visible ? 1 : 0 }}
         >
-          <div className="absolute inset-0 bg-white/[0.04] backdrop-blur-[2px]" />
-          <div className="absolute inset-0 border-y border-white/[0.06]" />
+          <div className="absolute inset-0 bg-white/[0.07] backdrop-blur-sm" />
+          <div className="absolute inset-0 border-y border-white/[0.08]" />
         </div>
 
-        {/* Content */}
-        <div className="relative z-10 flex min-h-[100dvh] flex-col items-center justify-center px-6 lg:px-16 py-24">
-          <div
-            className="mx-auto max-w-3xl transition-all duration-[1200ms] ease-out"
-            style={{
-              opacity: section2Progress,
-              transform: `translateY(${(1 - section2Progress) * 60}px)`,
-            }}
-          >
+        {/* Content - block transition (appears/disappears as complete block) */}
+        <div
+          className="relative z-10 flex min-h-[100dvh] flex-col items-center justify-center px-6 lg:px-16 py-24"
+          style={{
+            opacity: section2Visible ? 1 : 0,
+            transform: section2Visible ? "translateY(0)" : "translateY(50px)",
+            transition: "opacity 0.9s cubic-bezier(0.16, 1, 0.3, 1), transform 0.9s cubic-bezier(0.16, 1, 0.3, 1)",
+          }}
+        >
+          <div className="mx-auto max-w-3xl">
             <p className="mb-10 text-sm font-bold uppercase tracking-[0.2em] text-[#f0b400] text-center">
               {t("hero.trustLayer")}
             </p>
 
-            <div className="space-y-8 text-lg font-medium leading-relaxed text-white/60 text-left max-w-2xl mx-auto">
+            <div className="space-y-8 text-lg font-medium leading-relaxed text-white/70 text-left max-w-2xl mx-auto">
               <p>{t("hero.trust1")}</p>
               <p>
                 {t("hero.trust2a")} <span className="text-white font-semibold">{t("hero.trust2highlight")}</span>{t("hero.trust2b")}
@@ -215,13 +222,7 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
           </div>
 
           {/* Buttons */}
-          <div
-            className="mt-16 flex flex-col items-center gap-4 sm:flex-row transition-all duration-[1200ms] ease-out"
-            style={{
-              opacity: Math.max(0, section2Progress - 0.3) / 0.7,
-              transform: `translateY(${Math.max(0, (1 - section2Progress) * 30)}px)`,
-            }}
-          >
+          <div className="mt-16 flex flex-col items-center gap-4 sm:flex-row">
             <Button
               size="lg"
               onClick={() => onNavigate("profiles")}
