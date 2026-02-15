@@ -83,7 +83,14 @@ interface HeroSectionProps {
   onIntroComplete?: () => void
 }
 
-const LETTERS = "Thalos".split("")
+const LETTERS_DATA = [
+  { letter: "T", word: "Trust" },
+  { letter: "h", word: "Hybrid" },
+  { letter: "a", word: "Agreement" },
+  { letter: "l", word: "Locked" },
+  { letter: "o", word: "On-chain" },
+  { letter: "s", word: "Stellar" },
+]
 
 export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
   const { t } = useLanguage()
@@ -103,7 +110,7 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
     const vh = window.innerHeight
 
     // Tighter stagger for faster, more fluid cascade effect
-    const newOpacities = LETTERS.map((_, i) => {
+    const newOpacities = LETTERS_DATA.map((_, i) => {
       const fadeStart = vh * 0.08 + i * vh * 0.08
       const fadeEnd = fadeStart + vh * 0.22
       if (scrollY < fadeStart) return 1
@@ -131,24 +138,32 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
     <section id="hero" className="relative">
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#f0b400]/20 to-transparent" aria-hidden="true" />
 
-      {/* Vertical "thalos" -- very large, right side, per-letter fade */}
+      {/* Vertical "thalos" -- very large, right side, per-letter fade with word reveal on hover */}
       <div
-        className="pointer-events-none fixed right-0 top-0 bottom-0 z-20 hidden select-none md:flex md:flex-col md:items-center md:justify-center lg:right-4 xl:right-8"
+        className="pointer-events-auto fixed right-0 top-0 bottom-0 z-20 hidden select-none md:flex md:flex-col md:items-end md:justify-center lg:right-4 xl:right-8"
         aria-hidden="true"
       >
-        {LETTERS.map((letter, i) => (
-          <span
-            key={i}
-            className="block font-black leading-[0.72] text-foreground"
-            style={{
-              opacity: letterOpacities[i],
-              transition: "opacity 120ms cubic-bezier(0.25, 0.1, 0.25, 1)",
-              fontSize: "clamp(10rem, 19vh, 24rem)",
-              letterSpacing: "-0.04em",
-            }}
-          >
-            {letter}
-          </span>
+        {LETTERS_DATA.map(({ letter, word }, i) => (
+          <div key={i} className="group relative flex items-center justify-end">
+            {/* Word reveal - appears on hover */}
+            <span
+              className="absolute right-full mr-4 whitespace-nowrap text-sm font-bold uppercase tracking-[0.15em] text-[#f0b400] opacity-0 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0 translate-x-4 pointer-events-none"
+              style={{ opacity: undefined }}
+            >
+              {word}
+            </span>
+            <span
+              className="block font-black leading-[0.72] text-foreground transition-colors duration-300 group-hover:text-[#f0b400]"
+              style={{
+                opacity: letterOpacities[i],
+                transition: "opacity 120ms cubic-bezier(0.25, 0.1, 0.25, 1), color 300ms ease",
+                fontSize: "clamp(10rem, 19vh, 24rem)",
+                letterSpacing: "-0.04em",
+              }}
+            >
+              {letter}
+            </span>
+          </div>
         ))}
       </div>
 
@@ -157,7 +172,7 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
         <div className="mx-auto w-full max-w-7xl">
           {/* Mobile THALOS horizontal */}
           <div className="flex md:hidden justify-center mb-10 gap-0.5">
-            {LETTERS.map((letter, i) => (
+            {LETTERS_DATA.map(({ letter }, i) => (
               <span
                 key={i}
                 className="animate-fade-in-up text-7xl font-black text-foreground/90"

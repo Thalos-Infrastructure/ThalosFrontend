@@ -78,32 +78,54 @@
   color-scheme: light;
 }
 
-/* Light theme global adjustments */
+/* Light theme global overrides - comprehensive approach */
 .light {
-  /* Override hardcoded white text to dark */
-  .text-white { color: var(--foreground) !important; }
-  .text-white\/90, .text-white\/80, .text-white\/70 { color: var(--foreground) !important; }
-  .text-white\/65, .text-white\/60, .text-white\/55, .text-white\/50 { color: var(--muted-foreground) !important; }
-  .text-white\/45, .text-white\/40, .text-white\/35, .text-white\/30, .text-white\/25, .text-white\/20, .text-white\/15 { color: var(--muted-foreground) !important; }
-  /* Override hardcoded dark backgrounds to light */
-  [class*="bg-[#0a0a0c]"], [class*="bg-[#0c0c0e]"], [class*="bg-[#0e0e10]"], [class*="bg-[#111113]"] { background-color: var(--card) !important; }
-  /* Override white-alpha borders to themed borders */
-  [class*="border-white/"] { border-color: var(--border) !important; }
-  /* Override white-alpha backgrounds to themed light tints */
-  [class*="bg-white/5"], [class*="bg-white/8"], [class*="bg-white/10"], [class*="bg-white/15"] { background-color: var(--secondary) !important; }
-  [class*="bg-white/[0."] { background-color: var(--secondary) !important; }
-  /* Card shadows softer in light */
-  --shadow-card: 0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04);
-  /* Hover states */
-  [class*="hover:bg-white/"] { &:hover { background-color: var(--muted) !important; } }
-  [class*="hover:text-white"] { &:hover { color: var(--foreground) !important; } }
-  /* Sign in panel video gradient */
-  [class*="to-[#0a0a0c]"] { --tw-gradient-to: var(--background) !important; }
-  [class*="from-[#0a0a0c]"] { --tw-gradient-from: var(--background) !important; }
-  /* Ocean background lighter in light mode */
-  .opacity-35 { opacity: 0.12 !important; }
-  .opacity-30 { opacity: 0.08 !important; }
-  .opacity-20 { opacity: 0.06 !important; }
+  /* ---- TEXT ---- */
+  /* All white text variants become dark */
+  [class*="text-white"] { color: var(--foreground) !important; }
+  /* Lower opacity white text becomes muted */
+  [class*="text-white\\/5"], [class*="text-white\\/4"], [class*="text-white\\/3"], [class*="text-white\\/2"], [class*="text-white\\/1"] { color: var(--muted-foreground) !important; }
+
+  /* ---- BACKGROUNDS ---- */
+  /* Hardcoded dark hex backgrounds to card */
+  [style*="#0a0a0c"], [style*="#0c0c0e"], [style*="#0e0e10"], [style*="#111113"] { background-color: var(--card) !important; }
+  /* White-alpha backgrounds become subtle secondary fills */
+  [class*="bg-white\\/"] { background-color: var(--secondary) !important; }
+
+  /* ---- BORDERS ---- */
+  [class*="border-white\\/"] { border-color: var(--border) !important; }
+  [class*="border-dashed"][class*="border-white"] { border-color: var(--border) !important; }
+
+  /* ---- HOVER STATES ---- */
+  [class*="hover\\:bg-white\\/"] { &:hover { background-color: var(--muted) !important; } }
+  [class*="hover\\:text-white"] { &:hover { color: var(--foreground) !important; } }
+  [class*="hover\\:border-white\\/"] { &:hover { border-color: var(--border) !important; } }
+
+  /* ---- GRADIENTS ---- */
+  [class*="to-\\[\\#0a0a0c\\]"] { --tw-gradient-to: var(--background) !important; }
+  [class*="from-\\[\\#0a0a0c\\]"] { --tw-gradient-from: var(--background) !important; }
+  [class*="via-\\[\\#0a0a0c\\]"] { --tw-gradient-via: var(--background) !important; }
+
+  /* ---- OCEAN BACKGROUND lighter in light ---- */
+  .opacity-35 { opacity: 0.10 !important; }
+  .opacity-30 { opacity: 0.07 !important; }
+  .opacity-20 { opacity: 0.04 !important; }
+
+  /* ---- CHART AXIS & GRID for dashboards ---- */
+  .recharts-cartesian-grid-horizontal line,
+  .recharts-cartesian-grid-vertical line { stroke: var(--border) !important; }
+  .recharts-text { fill: var(--muted-foreground) !important; }
+
+  /* ---- MISC DASHBOARD ---- */
+  /* Progress bar track */
+  [class*="bg-white\\/\\[0\\."] { background-color: var(--secondary) !important; }
+  /* Dividers using bg-white */
+  [class*="bg-white\\/8"], [class*="bg-white\\/15"] { background-color: var(--border) !important; }
+  /* Bottom bar and menu popup glass effect */
+  [class*="bg-background\\/60"] { background-color: oklch(0.98 0.002 250 / 0.85) !important; }
+  [class*="bg-background\\/85"] { background-color: oklch(0.995 0 0 / 0.92) !important; }
+  [class*="bg-background\\/80"] { background-color: oklch(0.995 0 0 / 0.88) !important; }
+  [class*="bg-background\\/75"] { background-color: oklch(0.995 0 0 / 0.82) !important; }
 }
 
 @theme inline {
