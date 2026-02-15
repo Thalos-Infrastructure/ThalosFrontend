@@ -8,6 +8,7 @@ import { HeroSection } from "@/components/hero-section"
 import { HowItWorks } from "@/components/how-it-works"
 import { ProfileSelection } from "@/components/profile-selection"
 import { UseCases } from "@/components/use-cases"
+import { WhoCanUse } from "@/components/who-can-use"
 import { DashboardSection } from "@/components/dashboard-section"
 import { FAQ } from "@/components/faq"
 import { Footer } from "@/components/footer"
@@ -116,6 +117,10 @@ export default function Home() {
 
           <div ref={setRef("use-cases")} className="mt-24">
             <UseCases />
+          </div>
+
+          <div ref={setRef("who-can-use")} className="mt-24">
+            <WhoCanUse />
           </div>
 
           <div ref={setRef("dashboard")} className="mt-24">

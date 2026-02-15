@@ -87,22 +87,30 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
   const { t } = useLanguage()
   const [introReady, setIntroReady] = useState(false)
   const [section2Progress, setSection2Progress] = useState(0)
+  const [thalosOpacity, setThalosOpacity] = useState(1)
   const section2Ref = useRef<HTMLDivElement>(null)
+  const heroRef = useRef<HTMLElement>(null)
 
   useEffect(() => {
     const t1 = setTimeout(() => { setIntroReady(true); onIntroComplete?.() }, 3000)
     return () => clearTimeout(t1)
   }, [onIntroComplete])
 
-  /* Scroll-driven reveal for section 2 */
+  /* Scroll-driven: reveal section 2 + fade THALOS */
   useEffect(() => {
     function onScroll() {
-      if (!section2Ref.current) return
+      if (!section2Ref.current || !heroRef.current) return
       const rect = section2Ref.current.getBoundingClientRect()
       const vh = window.innerHeight
-      // progress: 0 when top is at bottom of viewport, 1 when top is at 30% from top
       const raw = 1 - (rect.top - vh * 0.3) / (vh * 0.7)
       setSection2Progress(Math.max(0, Math.min(1, raw)))
+
+      // Fade THALOS: starts fading at scrollY = vh, fully gone at 2*vh
+      const scrollY = window.scrollY
+      const fadeStart = vh * 0.5
+      const fadeEnd = vh * 1.8
+      const fadeProgress = Math.max(0, Math.min(1, (scrollY - fadeStart) / (fadeEnd - fadeStart)))
+      setThalosOpacity(1 - fadeProgress)
     }
     window.addEventListener("scroll", onScroll, { passive: true })
     onScroll()
@@ -110,20 +118,25 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
   }, [])
 
   return (
-    <section id="hero" className="relative">
+    <section id="hero" className="relative" ref={heroRef}>
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#f0b400]/20 to-transparent" aria-hidden="true" />
 
-      {/* Vertical "thalos" spanning both sections -- right side, absolutely positioned */}
-      <div className="pointer-events-none absolute right-4 top-0 bottom-0 z-20 hidden select-none md:flex md:flex-col md:items-center md:justify-center lg:right-8 xl:right-12" aria-hidden="true">
+      {/* Vertical "thalos" -- HUGE, right side, fades on scroll, spans both hero sections */}
+      <div
+        className="pointer-events-none fixed right-2 top-0 bottom-0 z-20 hidden select-none md:flex md:flex-col md:items-center md:justify-center lg:right-6 xl:right-10"
+        aria-hidden="true"
+        style={{ opacity: thalosOpacity, transition: "opacity 100ms linear" }}
+      >
         {"thalos".split("").map((letter, i) => (
           <span
             key={i}
-            className="animate-fade-in-up block font-black lowercase leading-[0.78] text-white/90"
+            className="animate-fade-in-up block font-black lowercase leading-[0.76] text-white/90"
             style={{
               animationDelay: `${i * 120}ms`,
               animationFillMode: "both",
-              fontSize: "clamp(6rem, 14vh, 12rem)",
-              textShadow: "0 2px 40px rgba(255,255,255,0.05)",
+              fontSize: "clamp(8rem, 16vh, 16rem)",
+              textShadow: "0 2px 60px rgba(255,255,255,0.04)",
+              letterSpacing: "-0.04em",
             }}
           >
             {letter}
@@ -139,7 +152,7 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
             {"thalos".split("").map((letter, i) => (
               <span
                 key={i}
-                className="animate-fade-in-up text-6xl font-black lowercase text-white/90"
+                className="animate-fade-in-up text-7xl font-black lowercase text-white/90"
                 style={{ animationDelay: `${i * 120}ms`, animationFillMode: "both" }}
               >
                 {letter}
@@ -147,7 +160,7 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
             ))}
           </div>
 
-          <div className="max-w-3xl">
+          <div className="max-w-3xl mx-auto text-center">
             <h1 className="animate-fade-in-up animation-delay-200 text-4xl font-bold tracking-tight text-white md:text-5xl lg:text-6xl xl:text-7xl text-balance">
               Secure Payments
             </h1>
@@ -155,7 +168,7 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
               with <TypewriterEscrows />
             </p>
 
-            <div className="mt-16 max-w-2xl animate-fade-in-up animation-delay-600 text-center">
+            <div className="mt-16 max-w-2xl mx-auto animate-fade-in-up animation-delay-600">
               <p className="text-lg md:text-xl font-medium leading-relaxed text-white/65 text-pretty">
                 <span className="text-[#f0b400] font-bold">{"<We are>"}</span>{" "}
                 {t("hero.weAre")}
@@ -165,15 +178,15 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
         </div>
       </div>
 
-      {/* === SECTION 2: Trust layer - scroll reveal with white bg === */}
+      {/* === SECTION 2: Trust layer - scroll reveal with subtle white overlay === */}
       <div ref={section2Ref} className="relative z-10 min-h-[100dvh] overflow-hidden">
-        {/* White/light bg with collage showing through */}
+        {/* Subtle frosted overlay */}
         <div
           className="absolute inset-0 transition-opacity duration-700"
           style={{ opacity: section2Progress }}
         >
-          <div className="absolute inset-0 bg-white/[0.06] backdrop-blur-sm" />
-          <div className="absolute inset-0 border-y border-white/10" />
+          <div className="absolute inset-0 bg-white/[0.04] backdrop-blur-[2px]" />
+          <div className="absolute inset-0 border-y border-white/[0.06]" />
         </div>
 
         {/* Content */}
@@ -190,15 +203,11 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
             </p>
 
             <div className="space-y-8 text-lg font-medium leading-relaxed text-white/60 text-left max-w-2xl mx-auto">
-              <p>
-                {t("hero.trust1")}
-              </p>
+              <p>{t("hero.trust1")}</p>
               <p>
                 {t("hero.trust2a")} <span className="text-white font-semibold">{t("hero.trust2highlight")}</span>{t("hero.trust2b")}
               </p>
-              <p>
-                {t("hero.trust3")}
-              </p>
+              <p>{t("hero.trust3")}</p>
               <div className="pt-6 text-center">
                 <TypewriterPlatform />
               </div>
