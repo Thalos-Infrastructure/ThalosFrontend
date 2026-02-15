@@ -78,12 +78,33 @@
   color-scheme: light;
 }
 
-/* Light theme overrides for hardcoded dark colors */
-.light .text-white { color: var(--foreground) !important; }
-.light .text-white\/65, .light .text-white\/55, .light .text-white\/50, .light .text-white\/45, .light .text-white\/40, .light .text-white\/35, .light .text-white\/30, .light .text-white\/25, .light .text-white\/20 { color: var(--muted-foreground) !important; }
-.light .bg-\[\\#0a0a0c\], .light .bg-\[\\#0a0a0c\]\/70, .light .bg-\[\\#111113\] { background-color: oklch(1 0 0) !important; }
-.light .border-white\/10, .light .border-white\/\[0\.06\], .light .border-white\/\[0\.04\], .light .border-white\/\[0\.08\] { border-color: var(--border) !important; }
-.light .bg-white\/\[0\.02\], .light .bg-white\/\[0\.03\], .light .bg-white\/5, .light .bg-white\/10 { background-color: oklch(0.97 0.003 250) !important; }
+/* Light theme global adjustments */
+.light {
+  /* Override hardcoded white text to dark */
+  .text-white { color: var(--foreground) !important; }
+  .text-white\/90, .text-white\/80, .text-white\/70 { color: var(--foreground) !important; }
+  .text-white\/65, .text-white\/60, .text-white\/55, .text-white\/50 { color: var(--muted-foreground) !important; }
+  .text-white\/45, .text-white\/40, .text-white\/35, .text-white\/30, .text-white\/25, .text-white\/20, .text-white\/15 { color: var(--muted-foreground) !important; }
+  /* Override hardcoded dark backgrounds to light */
+  [class*="bg-[#0a0a0c]"], [class*="bg-[#0c0c0e]"], [class*="bg-[#0e0e10]"], [class*="bg-[#111113]"] { background-color: var(--card) !important; }
+  /* Override white-alpha borders to themed borders */
+  [class*="border-white/"] { border-color: var(--border) !important; }
+  /* Override white-alpha backgrounds to themed light tints */
+  [class*="bg-white/5"], [class*="bg-white/8"], [class*="bg-white/10"], [class*="bg-white/15"] { background-color: var(--secondary) !important; }
+  [class*="bg-white/[0."] { background-color: var(--secondary) !important; }
+  /* Card shadows softer in light */
+  --shadow-card: 0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04);
+  /* Hover states */
+  [class*="hover:bg-white/"] { &:hover { background-color: var(--muted) !important; } }
+  [class*="hover:text-white"] { &:hover { color: var(--foreground) !important; } }
+  /* Sign in panel video gradient */
+  [class*="to-[#0a0a0c]"] { --tw-gradient-to: var(--background) !important; }
+  [class*="from-[#0a0a0c]"] { --tw-gradient-from: var(--background) !important; }
+  /* Ocean background lighter in light mode */
+  .opacity-35 { opacity: 0.12 !important; }
+  .opacity-30 { opacity: 0.08 !important; }
+  .opacity-20 { opacity: 0.06 !important; }
+}
 
 @theme inline {
   --font-sans: 'Inter', 'Inter Fallback';

@@ -170,7 +170,7 @@ export function HowItWorks() {
           <h2 className="mb-4 text-5xl font-bold tracking-tight text-foreground md:text-6xl text-balance">
             {t("hiw.title")}
           </h2>
-          <p className="mx-auto max-w-2xl text-base font-medium text-white/55 leading-relaxed text-pretty">
+          <p className="mx-auto max-w-2xl text-base font-medium text-muted-foreground leading-relaxed text-pretty">
             {t("hiw.desc")}
           </p>
         </div>
