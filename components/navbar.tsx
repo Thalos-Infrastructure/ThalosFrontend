@@ -7,19 +7,35 @@ import { cn } from "@/lib/utils"
 import { SignInPanel } from "@/components/sign-in-panel"
 import { useLanguage, LanguageToggle } from "@/lib/i18n"
 
+const useCaseCategories = [
+  "Digital Economy", "Commerce & Trade", "Real Estate", "Automotive",
+  "Events & Services", "Education", "Agriculture", "Construction",
+  "Tourism & Hospitality", "Enterprise Procurement",
+]
+
 export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }) {
   const { t } = useLanguage()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [showSignIn, setShowSignIn] = useState(false)
   const [visible, setVisible] = useState(true)
+  const [useCaseOpen, setUseCaseOpen] = useState(false)
   const lastScrollY = useRef(0)
+  const dropdownRef = useRef<HTMLDivElement>(null)
 
   const navLinks = [
     { label: t("nav.howItWorks"), section: "how-it-works" },
     { label: t("nav.solutions"), section: "profiles" },
-    { label: "Use Cases", section: "use-cases" },
     { label: t("nav.buildFlow"), section: "builder" },
   ]
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) setUseCaseOpen(false)
+    }
+    document.addEventListener("mousedown", handler)
+    return () => document.removeEventListener("mousedown", handler)
+  }, [])
 
   useEffect(() => {
     const onScroll = () => {
@@ -73,7 +89,41 @@ export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }
 
           {/* Desktop nav links */}
           <div className="hidden items-center gap-8 md:flex">
-            {navLinks.map((item) => (
+            {navLinks.slice(0, 2).map((item) => (
+              <button
+                key={item.section}
+                onClick={() => onNavigate(item.section)}
+                className="text-base font-bold text-white/70 transition-all duration-300 hover:text-white"
+              >
+                {item.label}
+              </button>
+            ))}
+
+            {/* Use Cases dropdown */}
+            <div ref={dropdownRef} className="relative">
+              <button
+                onClick={() => setUseCaseOpen(!useCaseOpen)}
+                className="flex items-center gap-1.5 text-base font-bold text-white/70 transition-all duration-300 hover:text-white"
+              >
+                Use Cases
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={cn("transition-transform duration-200", useCaseOpen && "rotate-180")}><path d="M6 9l6 6 6-6" /></svg>
+              </button>
+              {useCaseOpen && (
+                <div className="absolute top-full left-1/2 z-50 mt-3 -translate-x-1/2 w-56 rounded-xl border border-white/10 bg-[#111113]/95 p-2 backdrop-blur-xl shadow-[0_12px_40px_rgba(0,0,0,0.5)]">
+                  {useCaseCategories.map((cat) => (
+                    <button
+                      key={cat}
+                      onClick={() => { onNavigate("use-cases"); setUseCaseOpen(false) }}
+                      className="flex w-full items-center rounded-lg px-3 py-2 text-sm font-medium text-white/60 transition-colors hover:bg-white/10 hover:text-white"
+                    >
+                      {cat}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {navLinks.slice(2).map((item) => (
               <button
                 key={item.section}
                 onClick={() => onNavigate(item.section)}
