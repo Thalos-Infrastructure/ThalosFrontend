@@ -7,15 +7,8 @@ import { useLanguage, LanguageToggle, ThemeToggle } from "@/lib/i18n"
 import { cn } from "@/lib/utils"
 import { ThalosLoader } from "@/components/thalos-loader"
 
-/* ── THALOS vertical data ── */
-const THALOS_WORDS = [
-  { letter: "T", key: "T" },
-  { letter: "h", key: "h" },
-  { letter: "a", key: "a" },
-  { letter: "l", key: "l" },
-  { letter: "o", key: "o" },
-  { letter: "s", key: "s" },
-]
+/* ── THALOS vertical letters ── */
+const THALOS_LETTERS = ["T", "h", "a", "l", "o", "s"]
 
 /* ── Tech stack data (matching pasted content) ── */
 const TECH_STACK = [
@@ -87,7 +80,6 @@ export default function AboutPage() {
   const [loading, setLoading] = useState(true)
   const [scrollDarken, setScrollDarken] = useState(0)
   const [letterOpacities, setLetterOpacities] = useState<number[]>([1, 1, 1, 1, 1, 1])
-  const [wordReveals, setWordReveals] = useState<number[]>([0, 0, 0, 0, 0, 0])
 
   useEffect(() => {
     const timer = setTimeout(() => setLoading(false), 1200)
@@ -104,7 +96,7 @@ export default function AboutPage() {
     const vh = window.innerHeight
 
     // Per-letter fade (same logic as main page hero)
-    const newOpacities = THALOS_WORDS.map((_, i) => {
+    const newOpacities = THALOS_LETTERS.map((_, i) => {
       const fadeStart = vh * 0.08 + i * vh * 0.08
       const fadeEnd = fadeStart + vh * 0.22
       if (scrollY < fadeStart) return 1
@@ -113,17 +105,6 @@ export default function AboutPage() {
       return raw * raw
     })
     setLetterOpacities(newOpacities)
-
-    // Word reveals - words appear as you scroll down, starting after the hero
-    const wordStart = vh * 0.3
-    const newWordReveals = THALOS_WORDS.map((_, i) => {
-      const revealAt = wordStart + i * vh * 0.15
-      const revealEnd = revealAt + vh * 0.12
-      if (scrollY < revealAt) return 0
-      if (scrollY > revealEnd) return 1
-      return (scrollY - revealAt) / (revealEnd - revealAt)
-    })
-    setWordReveals(newWordReveals)
   }, [])
 
   useEffect(() => {
@@ -154,36 +135,24 @@ export default function AboutPage() {
         aria-hidden="true"
       />
 
-      {/* ── THALOS Vertical LEFT with scroll-reveal words ── */}
+      {/* ── THALOS Vertical LEFT ── */}
       <div
         className="pointer-events-none fixed left-0 top-0 bottom-0 z-20 hidden select-none md:flex md:flex-col md:items-start md:justify-center lg:left-4 xl:left-8"
         aria-hidden="true"
       >
-        {THALOS_WORDS.map(({ letter, key }, i) => (
-          <div key={key} className="relative flex items-center">
-            <span
-              className="block font-black leading-[0.72] text-foreground"
-              style={{
-                opacity: letterOpacities[i],
-                transition: "opacity 120ms cubic-bezier(0.25, 0.1, 0.25, 1)",
-                fontSize: "clamp(10rem, 19vh, 24rem)",
-                letterSpacing: "-0.04em",
-              }}
-            >
-              {letter}
-            </span>
-            {/* Word reveal beside each letter */}
-            <span
-              className="absolute left-full ml-4 whitespace-nowrap text-sm font-bold uppercase tracking-[0.15em] text-[#f0b400]"
-              style={{
-                opacity: wordReveals[i],
-                transform: `translateX(${(1 - wordReveals[i]) * 16}px)`,
-                transition: "opacity 200ms ease, transform 200ms ease",
-              }}
-            >
-              {t(`thalos.${key}`)}
-            </span>
-          </div>
+        {THALOS_LETTERS.map((letter, i) => (
+          <span
+            key={i}
+            className="block font-black leading-[0.72] text-foreground"
+            style={{
+              opacity: letterOpacities[i],
+              transition: "opacity 120ms cubic-bezier(0.25, 0.1, 0.25, 1)",
+              fontSize: "clamp(10rem, 19vh, 24rem)",
+              letterSpacing: "-0.04em",
+            }}
+          >
+            {letter}
+          </span>
         ))}
       </div>
 
