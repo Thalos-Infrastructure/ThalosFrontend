@@ -12,12 +12,9 @@ export function useSectionReveal(threshold = 0.08) {
 
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true)
-          observer.unobserve(el)
-        }
+        setIsVisible(entry.isIntersecting)
       },
-      { threshold, rootMargin: "0px 0px -80px 0px" }
+      { threshold, rootMargin: "0px 0px -60px 0px" }
     )
 
     observer.observe(el)

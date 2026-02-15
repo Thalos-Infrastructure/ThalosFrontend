@@ -6,7 +6,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { ThalosLoader } from "@/components/thalos-loader"
-import { LanguageToggle } from "@/lib/i18n"
+import { LanguageToggle, ThemeToggle, useLanguage } from "@/lib/i18n"
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area,
 } from "recharts"
@@ -82,11 +82,14 @@ const connectedWallets = [
 
 const wizardSteps = ["Escrow Type", "Use Case", "Agreement Info", "Payment & Wallets", "Review & Send"]
 
-const mockAgreements = [
-  { id: "ENT-001", title: "Fleet Vehicle Purchase", status: "funded", type: "Multi Release", counterparty: "G...DLR5", amount: "125,000", date: "2026-01-20" },
-  { id: "ENT-002", title: "Resort Partnership Q2", status: "in_progress", type: "Multi Release", counterparty: "G...TRV8", amount: "48,000", date: "2026-01-15" },
-  { id: "ENT-003", title: "Corporate Event Setup", status: "released", type: "Single Release", counterparty: "G...EVT2", amount: "15,000", date: "2025-12-18" },
-  { id: "ENT-004", title: "Property Management Fee", status: "awaiting", type: "Single Release", counterparty: "G...RNT9", amount: "6,500", date: "2025-12-05" },
+interface Milestone { description: string; amount: string; status: "pending" | "approved" | "released" }
+interface Agreement { id: string; title: string; status: string; type: "Single Release" | "Multi Release"; counterparty: string; amount: string; date: string; releaseStrategy?: "per-milestone" | "all-at-once" | "upon-completion"; milestones: Milestone[]; receiver: string }
+
+const initialAgreements: Agreement[] = [
+  { id: "ENT-001", title: "Fleet Vehicle Purchase", status: "funded", type: "Multi Release", counterparty: "G...DLR5", amount: "125,000", date: "2026-01-20", releaseStrategy: "per-milestone", milestones: [{ description: "Down Payment (10 units)", amount: "50,000", status: "released" }, { description: "Delivery of first batch", amount: "37,500", status: "approved" }, { description: "Final batch + inspection", amount: "37,500", status: "pending" }], receiver: "GBXGQJWVLWOYHFLVTKWV5FGHA3DLR5" },
+  { id: "ENT-002", title: "Resort Partnership Q2", status: "in_progress", type: "Multi Release", counterparty: "G...TRV8", amount: "48,000", date: "2026-01-15", releaseStrategy: "upon-completion", milestones: [{ description: "Contract signing", amount: "12,000", status: "approved" }, { description: "Marketing materials", amount: "12,000", status: "approved" }, { description: "Launch campaign", amount: "12,000", status: "pending" }, { description: "Performance review", amount: "12,000", status: "pending" }], receiver: "GBXGQJWVLWOYHFLVTKWV5FGHA3TRV8" },
+  { id: "ENT-003", title: "Corporate Event Setup", status: "released", type: "Single Release", counterparty: "G...EVT2", amount: "15,000", date: "2025-12-18", milestones: [{ description: "Full event delivery", amount: "15,000", status: "released" }], receiver: "GBXGQJWVLWOYHFLVTKWV5FGHA3EVT2" },
+  { id: "ENT-004", title: "Property Management Fee", status: "in_progress", type: "Multi Release", counterparty: "G...RNT9", amount: "6,500", date: "2025-12-05", releaseStrategy: "all-at-once", milestones: [{ description: "Q1 management fee", amount: "1,625", status: "approved" }, { description: "Q2 management fee", amount: "1,625", status: "approved" }, { description: "Q3 management fee", amount: "1,625", status: "approved" }, { description: "Q4 management fee", amount: "1,625", status: "pending" }], receiver: "GBXGQJWVLWOYHFLVTKWV5FGHA3RNT9" },
 ]
 
 const statusConfig: Record<string, { label: string; color: string }> = {
@@ -118,22 +121,38 @@ function UseCaseIcon({ icon }: { icon: string }) {
 
 /* Sidebar nav items */
 const sidebarItems = [
-  { id: "dashboard", label: "Dashboard", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg> },
-  { id: "agreements", label: "Agreements", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> },
   { id: "create", label: "New Agreement", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg> },
+  { id: "agreements", label: "Agreements", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> },
   { id: "wallets", label: "Wallets", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg> },
+  { id: "analytics", label: "Analytics", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg> },
 ]
 
 /* ════════════════════════════════════════════════
    PAGE
    ════════════════════════════════════════════════ */
 export default function BusinessDashboardPage() {
+  const { t } = useLanguage()
   const [loading, setLoading] = useState(true)
   useEffect(() => { const t = setTimeout(() => setLoading(false), 1400); return () => clearTimeout(t) }, [])
 
-  const [activeSection, setActiveSection] = useState("dashboard")
+  const [activeSection, setActiveSection] = useState("agreements")
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
+  const [agreements, setAgreements] = useState<Agreement[]>(initialAgreements)
+  const [viewingAgreement, setViewingAgreement] = useState<string | null>(null)
+
+  const approveMilestone = (agrId: string, msIdx: number) => {
+    setAgreements(prev => prev.map(a => a.id === agrId ? { ...a, milestones: a.milestones.map((m, i) => i === msIdx && m.status === "pending" ? { ...m, status: "approved" as const } : m) } : a))
+  }
+  const releaseMilestone = (agrId: string, msIdx: number) => {
+    setAgreements(prev => prev.map(a => a.id === agrId ? { ...a, milestones: a.milestones.map((m, i) => i === msIdx && m.status === "approved" ? { ...m, status: "released" as const } : m) } : a))
+  }
+  const releaseAllApproved = (agrId: string) => {
+    setAgreements(prev => prev.map(a => a.id === agrId ? { ...a, milestones: a.milestones.map(m => m.status === "approved" ? { ...m, status: "released" as const } : m) } : a))
+  }
+  const approveAndReleaseAll = (agrId: string) => {
+    setAgreements(prev => prev.map(a => a.id === agrId ? { ...a, status: "released", milestones: a.milestones.map(m => ({ ...m, status: "released" as const })) } : a))
+  }
 
   /* ── Wizard State ── */
   const [step, setStep] = useState(0)
@@ -216,14 +235,19 @@ export default function BusinessDashboardPage() {
 
   return (
     <div className="relative min-h-screen text-foreground">
-      {/* Background - HD */}
+      {/* Collage background */}
       <div className="fixed inset-0 z-0">
-        <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1519681393784-d120267933ba?w=2560&q=90&auto=format&fit=crop')" }} />
-        <div className="absolute inset-0 bg-black/60" />
+        <div className="absolute inset-0 grid grid-cols-3 grid-rows-2 gap-0 opacity-30">
+          <div className="col-span-2 row-span-1 bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1505142468610-359e7d316be0?w=1920&q=85&auto=format&fit=crop')" }} />
+          <div className="col-span-1 row-span-2 bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=1920&q=85&auto=format&fit=crop')" }} />
+          <div className="col-span-1 row-span-1 bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1920&q=85&auto=format&fit=crop')" }} />
+          <div className="col-span-1 row-span-1 bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1476673160081-cf065607f449?w=1920&q=85&auto=format&fit=crop')" }} />
+        </div>
+        <div className="absolute inset-0 bg-background/75" />
       </div>
 
       {/* Header */}
-      <header className="sticky top-0 z-40 border-b border-white/[0.06] bg-[#0a0a0c]/80 backdrop-blur-xl">
+      <header className="sticky top-0 z-40 border-b border-white/[0.06] bg-transparent backdrop-blur-xl">
         <nav className="flex h-16 items-center justify-between px-4 lg:px-6">
           <div className="flex items-center gap-3">
             <button onClick={() => setSidebarOpen(!sidebarOpen)} className="lg:hidden flex h-9 w-9 items-center justify-center rounded-lg text-white/60 hover:bg-white/10 hover:text-white transition-colors" aria-label="Toggle sidebar">
@@ -262,6 +286,7 @@ export default function BusinessDashboardPage() {
               )}
             </div>
             <LanguageToggle />
+            <ThemeToggle />
           </div>
         </nav>
       </header>
@@ -269,7 +294,7 @@ export default function BusinessDashboardPage() {
       <div className="relative z-10 flex min-h-[calc(100vh-64px)]">
         {/* Sidebar */}
         <aside className={cn(
-          "fixed inset-y-16 left-0 z-30 w-64 border-r border-white/[0.06] bg-[#0a0a0c]/90 backdrop-blur-xl transition-transform duration-300 lg:sticky lg:top-16 lg:translate-x-0 lg:h-[calc(100vh-64px)]",
+          "fixed inset-y-16 left-0 z-30 w-64 border-r border-white/[0.06] bg-background/80 backdrop-blur-xl transition-transform duration-300 lg:sticky lg:top-16 lg:translate-x-0 lg:h-[calc(100vh-64px)]",
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}>
           <div className="border-b border-white/[0.06] p-5">
@@ -290,14 +315,14 @@ export default function BusinessDashboardPage() {
                 className={cn("flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200",
                   activeSection === item.id ? "bg-[#3b82f6]/10 text-[#3b82f6]" : "text-white/50 hover:bg-white/5 hover:text-white/80"
                 )}>
-                {item.icon}{item.label}
+                {item.icon}{t(`dashPage.${item.id === "create" ? "newAgreement" : item.id}`)}
               </button>
             ))}
           </nav>
 
           <div className="mt-auto border-t border-white/[0.06] p-4">
             <div className="rounded-xl bg-[#3b82f6]/5 border border-[#3b82f6]/10 p-4">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-[#3b82f6]/60">Total Balance</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-[#3b82f6]/60">{t("dashPage.totalBalance")}</p>
               <p className="mt-1 text-xl font-bold text-[#3b82f6]">845,700.50 <span className="text-xs font-normal text-white/40">USDC</span></p>
             </div>
           </div>
@@ -307,17 +332,17 @@ export default function BusinessDashboardPage() {
 
         {/* Main content */}
         <main className="flex-1 overflow-y-auto p-4 lg:p-8">
-          {/* ══════ DASHBOARD ══════ */}
-          {activeSection === "dashboard" && (
+          {/* ══════ ANALYTICS ══════ */}
+          {activeSection === "analytics" && (
             <div className="mx-auto max-w-5xl">
-              <h1 className="mb-6 text-2xl font-semibold text-white">Enterprise Dashboard</h1>
+              <h1 className="mb-6 text-2xl font-semibold text-white">{t("dashPage.enterprise")} {t("dashPage.analytics")}</h1>
 
               <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
                 {[
-                  { l: "Active", v: "12" },
-                  { l: "Volume", v: "$2.4M" },
-                  { l: "Fees", v: "$24K" },
-                  { l: "Completed", v: "48" },
+                  { l: t("dashPage.active"), v: "12" },
+                  { l: t("dashPage.totalVolume"), v: "$2.4M" },
+                  { l: t("dashPage.yieldEarned"), v: "$24K" },
+                  { l: t("dashPage.completed"), v: "48" },
                 ].map((s) => (
                   <div key={s.l} className="rounded-xl border border-white/[0.06] bg-[#0a0a0c]/70 p-4 backdrop-blur-md">
                     <p className="text-[10px] font-bold uppercase tracking-widest text-white/30">{s.l}</p>
@@ -328,8 +353,8 @@ export default function BusinessDashboardPage() {
 
               <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
                 <div className="rounded-xl border border-white/[0.06] bg-[#0a0a0c]/70 p-5 backdrop-blur-md">
-                  <h3 className="mb-1 text-sm font-semibold uppercase tracking-wider text-white/40">Monthly Agreements</h3>
-                  <p className="mb-4 text-xs text-white/25">Enterprise agreements per month</p>
+                  <h3 className="mb-1 text-sm font-semibold uppercase tracking-wider text-white/40">{t("dashPage.monthlyAgreements")}</h3>
+                  <p className="mb-4 text-xs text-white/25">&nbsp;</p>
                   <div className="h-52">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={monthlyData}>
@@ -344,8 +369,8 @@ export default function BusinessDashboardPage() {
                 </div>
 
                 <div className="rounded-xl border border-white/[0.06] bg-[#0a0a0c]/70 p-5 backdrop-blur-md">
-                  <h3 className="mb-1 text-sm font-semibold uppercase tracking-wider text-white/40">Volume (USDC)</h3>
-                  <p className="mb-4 text-xs text-white/25">Total USDC processed per month</p>
+                  <h3 className="mb-1 text-sm font-semibold uppercase tracking-wider text-white/40">{t("dashPage.volume")}</h3>
+                  <p className="mb-4 text-xs text-white/25">&nbsp;</p>
                   <div className="h-52">
                     <ResponsiveContainer width="100%" height="100%">
                       <AreaChart data={monthlyData}>
@@ -368,14 +393,16 @@ export default function BusinessDashboardPage() {
 
               <div className="rounded-xl border border-white/[0.06] bg-[#0a0a0c]/70 p-5 backdrop-blur-md">
                 <div className="mb-4 flex items-center justify-between">
-                  <h3 className="text-sm font-semibold uppercase tracking-wider text-white/40">Recent Agreements</h3>
-                  <button onClick={() => setActiveSection("agreements")} className="text-xs font-semibold text-[#3b82f6] hover:underline">View All</button>
+                  <h3 className="text-sm font-semibold uppercase tracking-wider text-white/40">{t("dashPage.recentAgreements")}</h3>
+                  <button onClick={() => setActiveSection("agreements")} className="text-xs font-semibold text-[#3b82f6] hover:underline">{t("dashPage.viewAll")}</button>
                 </div>
                 <div className="flex flex-col gap-3">
-                  {mockAgreements.slice(0, 4).map((agr) => {
-                    const st = statusConfig[agr.status] || statusConfig.funded
+                  {agreements.slice(0, 4).map((agr) => {
+                    const allReleased = agr.milestones.every(m => m.status === "released")
+                    const effectiveStatus = allReleased ? "released" : agr.status
+                    const st = statusConfig[effectiveStatus] || statusConfig.funded
                     return (
-                      <div key={agr.id} className="flex items-center justify-between rounded-lg border border-white/[0.04] bg-white/[0.02] px-4 py-3 hover:border-white/10 transition-all">
+                      <button key={agr.id} onClick={() => { setViewingAgreement(agr.id); setActiveSection("agreements") }} className="flex items-center justify-between rounded-lg border border-white/[0.04] bg-white/[0.02] px-4 py-3 hover:border-white/10 transition-all text-left w-full">
                         <div>
                           <p className="text-sm font-medium text-white">{agr.title}</p>
                           <p className="text-xs text-white/30">{agr.type} -- {agr.counterparty}</p>
@@ -384,7 +411,7 @@ export default function BusinessDashboardPage() {
                           <span className={cn("rounded-full border px-2.5 py-0.5 text-xs font-semibold", st.color)}>{st.label}</span>
                           <p className="text-sm font-bold text-white">{"$"}{agr.amount}</p>
                         </div>
-                      </div>
+                      </button>
                     )
                   })}
                 </div>
@@ -393,33 +420,192 @@ export default function BusinessDashboardPage() {
           )}
 
           {/* ══════ AGREEMENTS ══════ */}
-          {activeSection === "agreements" && (
+          {activeSection === "agreements" && !viewingAgreement && (
             <div className="mx-auto max-w-4xl">
               <div className="mb-6 flex items-center justify-between">
                 <h1 className="text-2xl font-semibold text-white">Enterprise Agreements</h1>
                 <Button onClick={() => { setActiveSection("create"); resetWizard() }} className="rounded-full bg-[#f0b400] px-6 text-sm font-semibold text-background hover:bg-[#d4a000] shadow-[0_4px_16px_rgba(240,180,0,0.25)]">+ New Agreement</Button>
               </div>
               <div className="flex flex-col gap-4">
-                {mockAgreements.map((agr) => {
-                  const st = statusConfig[agr.status] || statusConfig.funded
+                {agreements.map((agr) => {
+                  const allReleased = agr.milestones.every(m => m.status === "released")
+                  const effectiveStatus = allReleased ? "released" : agr.status
+                  const st = statusConfig[effectiveStatus] || statusConfig.funded
+                  const completedMs = agr.milestones.filter(m => m.status === "released").length
+                  const progressPct = (completedMs / agr.milestones.length) * 100
                   return (
-                    <div key={agr.id} className="flex flex-col gap-4 rounded-2xl border border-white/[0.06] bg-[#0a0a0c]/70 p-5 backdrop-blur-md transition-all hover:border-white/15 sm:flex-row sm:items-center sm:justify-between">
-                      <div>
-                        <p className="text-base font-semibold text-white">{agr.title}</p>
-                        <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-white/35">
-                          <span>{agr.type}</span><span className="text-white/15">|</span><span>{agr.counterparty}</span><span className="text-white/15">|</span><span>{agr.date}</span>
+                    <button key={agr.id} onClick={() => setViewingAgreement(agr.id)}
+                      className="flex flex-col gap-4 rounded-2xl border border-white/[0.06] bg-[#0a0a0c]/70 p-5 backdrop-blur-md transition-all hover:border-white/15 text-left w-full">
+                      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between w-full">
+                        <div>
+                          <p className="text-base font-semibold text-white">{agr.title}</p>
+                          <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-white/35">
+                            <span>{agr.type}</span><span className="text-white/15">|</span><span>{agr.counterparty}</span><span className="text-white/15">|</span><span>{agr.date}</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <span className={cn("rounded-full border px-3 py-1 text-xs font-semibold", st.color)}>{st.label}</span>
+                          <p className="text-lg font-bold text-white">{"$"}{agr.amount} <span className="text-xs font-normal text-white/35">USDC</span></p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-4">
-                        <span className={cn("rounded-full border px-3 py-1 text-xs font-semibold", st.color)}>{st.label}</span>
-                        <p className="text-lg font-bold text-white">{"$"}{agr.amount} <span className="text-xs font-normal text-white/35">USDC</span></p>
-                      </div>
-                    </div>
+                      {agr.milestones.length > 1 && (
+                        <div className="flex items-center gap-3 w-full">
+                          <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/[0.06]">
+                            <div className={cn("h-full rounded-full transition-all duration-500", allReleased ? "bg-emerald-400" : "bg-[#3b82f6]")} style={{ width: `${progressPct}%` }} />
+                          </div>
+                          <span className="text-xs text-white/30">{completedMs}/{agr.milestones.length}</span>
+                        </div>
+                      )}
+                    </button>
                   )
                 })}
               </div>
             </div>
           )}
+
+          {/* ══════ AGREEMENT DETAIL ══════ */}
+          {activeSection === "agreements" && viewingAgreement && (() => {
+            const agr = agreements.find(a => a.id === viewingAgreement)
+            if (!agr) return null
+            const allReleased = agr.milestones.every(m => m.status === "released")
+            const allApproved = agr.milestones.every(m => m.status === "approved" || m.status === "released")
+            const hasApproved = agr.milestones.some(m => m.status === "approved")
+            const effectiveStatus = allReleased ? "released" : agr.status
+            const st = statusConfig[effectiveStatus] || statusConfig.funded
+            const completedMs = agr.milestones.filter(m => m.status === "released").length
+            const progressPct = (completedMs / agr.milestones.length) * 100
+
+            return (
+              <div className="mx-auto max-w-4xl">
+                <button onClick={() => setViewingAgreement(null)} className="mb-6 flex items-center gap-2 text-sm text-white/40 hover:text-white transition-colors">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"/></svg>
+                  Back to Agreements
+                </button>
+
+                <div className="mb-6 rounded-2xl border border-white/[0.06] bg-[#0a0a0c]/70 p-6 backdrop-blur-md">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <div className="flex items-center gap-3 mb-2">
+                        <h1 className="text-2xl font-bold text-white">{agr.title}</h1>
+                        <span className={cn("rounded-full border px-3 py-1 text-xs font-semibold", st.color)}>{st.label}</span>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-3 text-xs text-white/35">
+                        <span className="font-mono">{agr.id}</span>
+                        <span className="text-white/15">|</span>
+                        <span>{agr.type}</span>
+                        <span className="text-white/15">|</span>
+                        <span>Counterparty: {agr.counterparty}</span>
+                        <span className="text-white/15">|</span>
+                        <span>{agr.date}</span>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-3xl font-bold text-[#3b82f6]">{"$"}{agr.amount}</p>
+                      <p className="text-xs text-white/35">USDC</p>
+                    </div>
+                  </div>
+                  <div className="mt-5 flex items-center gap-3">
+                    <div className="h-2 flex-1 overflow-hidden rounded-full bg-white/[0.06]">
+                      <div className={cn("h-full rounded-full transition-all duration-700", allReleased ? "bg-emerald-400" : "bg-[#3b82f6]")} style={{ width: `${progressPct}%` }} />
+                    </div>
+                    <span className="text-sm font-semibold text-white/50">{completedMs}/{agr.milestones.length} milestones</span>
+                  </div>
+                </div>
+
+                {agr.type === "Multi Release" && agr.releaseStrategy && (
+                  <div className="mb-4 rounded-xl border border-[#3b82f6]/15 bg-[#3b82f6]/5 px-5 py-3 flex items-center gap-3">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                    <p className="text-xs text-[#3b82f6]/80">
+                      <span className="font-semibold">Release strategy: </span>
+                      {agr.releaseStrategy === "per-milestone" && "Release funds per milestone as each is approved."}
+                      {agr.releaseStrategy === "all-at-once" && "Release all funds at once when all milestones are approved."}
+                      {agr.releaseStrategy === "upon-completion" && "Release all funds together upon full completion."}
+                    </p>
+                  </div>
+                )}
+
+                <div className="flex flex-col gap-3 mb-6">
+                  {agr.milestones.map((ms, idx) => (
+                    <div key={`${agr.id}-ms-${idx}`} className={cn("rounded-2xl border p-5 backdrop-blur-md transition-all",
+                      ms.status === "released" ? "border-emerald-500/20 bg-emerald-500/5" : ms.status === "approved" ? "border-[#3b82f6]/20 bg-[#3b82f6]/5" : "border-white/[0.06] bg-[#0a0a0c]/70"
+                    )}>
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex items-center gap-3">
+                          <span className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold",
+                            ms.status === "released" ? "bg-emerald-500/20 text-emerald-400" : ms.status === "approved" ? "bg-[#3b82f6]/20 text-[#3b82f6]" : "bg-white/10 text-white/40"
+                          )}>{idx + 1}</span>
+                          <div>
+                            <p className="text-sm font-semibold text-white">{ms.description}</p>
+                            <p className={cn("text-xs font-medium mt-0.5",
+                              ms.status === "released" ? "text-emerald-400" : ms.status === "approved" ? "text-[#3b82f6]" : "text-white/30"
+                            )}>
+                              {ms.status === "released" ? "Released" : ms.status === "approved" ? "Approved - Ready to release" : "Pending approval"}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <p className="text-lg font-bold text-white">{"$"}{ms.amount} <span className="text-xs font-normal text-white/35">USDC</span></p>
+                          {ms.status === "pending" && !allReleased && (
+                            <Button size="sm" onClick={() => approveMilestone(agr.id, idx)}
+                              className="rounded-full bg-white/10 px-4 text-xs font-semibold text-white hover:bg-white/20">
+                              Approve
+                            </Button>
+                          )}
+                          {ms.status === "approved" && agr.releaseStrategy === "per-milestone" && (
+                            <Button size="sm" onClick={() => releaseMilestone(agr.id, idx)}
+                              className="rounded-full bg-[#3b82f6] px-4 text-xs font-semibold text-white hover:bg-[#2563eb] shadow-[0_2px_8px_rgba(59,130,246,0.2)]">
+                              Release Funds
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {!allReleased && (
+                  <div className="rounded-2xl border border-white/[0.06] bg-[#0a0a0c]/70 p-6 backdrop-blur-md">
+                    <h3 className="mb-4 text-sm font-bold uppercase tracking-wider text-white/40">Release Actions</h3>
+                    <div className="flex flex-wrap gap-3">
+                      {agr.type === "Single Release" && agr.milestones[0]?.status === "pending" && (
+                        <Button onClick={() => approveMilestone(agr.id, 0)}
+                          className="rounded-full bg-white/10 px-6 text-sm font-semibold text-white hover:bg-white/20">
+                          Approve Agreement
+                        </Button>
+                      )}
+                      {agr.type === "Single Release" && agr.milestones[0]?.status === "approved" && (
+                        <Button onClick={() => releaseMilestone(agr.id, 0)}
+                          className="rounded-full bg-[#3b82f6] px-6 text-sm font-semibold text-white hover:bg-[#2563eb] shadow-[0_4px_16px_rgba(59,130,246,0.25)]">
+                          Release All Funds
+                        </Button>
+                      )}
+                      {agr.type === "Multi Release" && hasApproved && (
+                        <Button onClick={() => releaseAllApproved(agr.id)}
+                          className="rounded-full bg-[#3b82f6] px-6 text-sm font-semibold text-white hover:bg-[#2563eb] shadow-[0_4px_16px_rgba(59,130,246,0.25)]">
+                          Release All Approved
+                        </Button>
+                      )}
+                      {agr.type === "Multi Release" && !allApproved && (
+                        <Button onClick={() => approveAndReleaseAll(agr.id)}
+                          className="rounded-full bg-emerald-600 px-6 text-sm font-semibold text-white hover:bg-emerald-700 shadow-[0_4px_16px_rgba(16,185,129,0.2)]">
+                          Approve & Release All
+                        </Button>
+                      )}
+                    </div>
+                    <p className="mt-3 text-xs text-white/25">Receiver wallet: <span className="font-mono">{agr.receiver.substring(0, 8)}...{agr.receiver.substring(agr.receiver.length - 6)}</span></p>
+                  </div>
+                )}
+
+                {allReleased && (
+                  <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-6 text-center">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2" className="mx-auto mb-3"><polyline points="20 6 9 17 4 12"/></svg>
+                    <p className="text-lg font-bold text-emerald-400">All Funds Released</p>
+                    <p className="mt-1 text-sm text-white/40">This agreement has been fully completed and all funds sent to the receiver.</p>
+                  </div>
+                )}
+              </div>
+            )
+          })()}
 
           {/* ══════ WALLETS ══════ */}
           {activeSection === "wallets" && (

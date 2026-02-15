@@ -12,6 +12,7 @@ const translations: Record<Lang, Record<string, string>> = {
     "nav.buildFlow": "Create Your Platform",
     "nav.signIn": "Sign In",
     "nav.signOut": "Sign Out",
+    "nav.useCases": "Use Cases",
 
     // Hero
     "hero.tag": "Escrow Infrastructure on Stellar",
@@ -20,20 +21,29 @@ const translations: Record<Lang, Record<string, string>> = {
     "hero.desc": "Thalos powers agreements with programmable escrows on the Stellar network. Funds stay protected, milestones drive releases, and idle capital earns yield.",
     "hero.cta1": "Get Started",
     "hero.cta2": "See How It Works",
+    "hero.weAre": "a decentralized escrow and trust infrastructure built on Stellar that enables secure, programmable, milestone-based payments between individuals, entrepreneurs, and businesses across multiple industries without relying on traditional intermediaries.",
+    "hero.trustLayer": "The Trust Layer",
+    "hero.trust1": "Thalos solves the trust problem in digital and high-value transactions by locking funds on-chain until predefined conditions are met. It combines smart-contract-based escrow, wallet-based identity, and transparent agreement tracking to reduce fraud, disputes, payment delays, and counterparty risk.",
+    "hero.trust2a": "Unlike traditional platforms that extract high fees, impose custodial control, or limit flexibility, Thalos is ",
+    "hero.trust2highlight": "non-custodial, transparent, and programmable",
+    "hero.trust2b": ", making it adaptable to freelance services, commerce, real estate, agriculture, event management, enterprise procurement, and many other sectors.",
+    "hero.trust3": "If you want to start a business and you are unsure how to securely receive payments from new clients or partners, Thalos provides a reliable integration layer that ensures funds are protected, conditions are enforced, and transactions are executed transparently.",
 
     // How It Works
     "hiw.tag": "[How It Works]",
-    "hiw.title": "Modular Payment Infrastructure",
-    "hiw.desc": "See how Thalos connects fiat payments, USDC conversion, and smart contract escrows into a seamless flow tailored to your use case.",
+    "hiw.title": "Agreement-Based Escrow Flow",
+    "hiw.desc": "See how Thalos creates secure agreements with milestone-based escrow, on-chain fund locking, and conditional releases on Stellar.",
     "hiw.freelancer": "Freelancer",
     "hiw.travel": "Travel Agency",
     "hiw.marketplace": "Marketplace",
     "hiw.vehicle": "Vehicle Sale",
+    "hiw.serviceContract": "Service Contract",
+
+    // Where Thalos Applies
+    "profiles.tag": "[Where Thalos Applies]",
+    "profiles.desc": "Anywhere there is counterparty risk, payment uncertainty, milestone delivery, high-value exchange, or cross-border friction — Thalos can apply.",
 
     // Profiles
-    "profiles.tag": "[Solutions]",
-    "profiles.title": "One Platform, Many Solutions",
-    "profiles.desc": "Whether you are a freelancer protecting milestone payments or a platform managing thousands of transactions, Thalos adapts to your needs.",
     "profiles.personal": "Personal",
     "profiles.personalDesc": "Protect your freelance payments, rental deposits, and peer-to-peer transactions with simple escrow agreements.",
     "profiles.business": "Enterprise",
@@ -47,6 +57,11 @@ const translations: Record<Lang, Record<string, string>> = {
     "profiles.businessF2": "Travel & marketplace solutions",
     "profiles.businessF3": "API access & integrations",
     "profiles.businessF4": "Custom payment flows",
+
+    // Use Cases
+    "useCases.tag": "[Use Cases]",
+    "useCases.title": "One Platform, Many Solutions",
+    "useCases.desc": "From freelancers securing project payments to enterprises managing multi-party procurement, Thalos provides the trust infrastructure for every transaction that matters.",
 
     // Platform Builder
     "builder.tag": "[Platform Builder]",
@@ -82,6 +97,26 @@ const translations: Record<Lang, Record<string, string>> = {
     "dash.conditions": "Conditions",
     "dash.contract": "Contract",
 
+    // FAQ
+    "faq.tag": "[FAQ]",
+    "faq.title": "Frequently Asked Questions",
+    "faq.q1": "What is Thalos?",
+    "faq.a1": "Thalos is a decentralized escrow and trust infrastructure built on the Stellar network. It enables secure, programmable, milestone-based payments between individuals, entrepreneurs, and businesses without relying on traditional intermediaries.",
+    "faq.q2": "How does the escrow work?",
+    "faq.a2": "When an agreement is created, funds are locked in a Stellar smart contract. They are only released when predefined conditions are met, such as milestone completion, delivery confirmation, or mutual approval between parties.",
+    "faq.q3": "What is USDC and why does Thalos use it?",
+    "faq.a3": "USDC is a dollar-pegged stablecoin. Thalos uses USDC on Stellar for fast, low-cost settlements with price stability, eliminating the volatility risk associated with other cryptocurrencies.",
+    "faq.q4": "Do I need a crypto wallet to use Thalos?",
+    "faq.a4": "Yes. Thalos integrates with Stellar wallets like Freighter or Albedo. You can connect your existing wallet or create one during the onboarding process.",
+    "faq.q5": "Is Thalos safe?",
+    "faq.a5": "Funds are secured by Stellar smart contracts and are never held by Thalos itself. The escrow logic is trustless, meaning no single party can unilaterally move funds without meeting the agreed conditions.",
+    "faq.q6": "What industries can use Thalos?",
+    "faq.a6": "Thalos applies to any scenario with counterparty risk: real estate, freelancing, import/export, agriculture, events, software development, automotive sales, education, construction, and more.",
+    "faq.q7": "How fast are settlements?",
+    "faq.a7": "Stellar settles transactions in approximately 5 seconds with near-zero fees, making Thalos significantly faster and cheaper than traditional escrow or wire transfers.",
+    "faq.q8": "Can businesses integrate Thalos into their platforms?",
+    "faq.a8": "Yes. Thalos offers API access for businesses and marketplaces to embed programmable escrow directly into their workflows, creating custom payment flows at scale.",
+
     // Footer
     "footer.platform": "Platform",
     "footer.resources": "Resources",
@@ -89,6 +124,8 @@ const translations: Record<Lang, Record<string, string>> = {
     "footer.emailUs": "Email Us",
     "footer.followOnX": "Follow on X",
     "footer.rights": "All rights reserved.",
+    "footer.visionTeam": "Vision & Mission",
+    "footer.documentation": "Documentation",
 
     // Sign In
     "signin.welcome": "Welcome back",
@@ -136,6 +173,124 @@ const translations: Record<Lang, Record<string, string>> = {
     "common.inProgress": "In Progress",
     "common.released": "Released",
     "common.awaitingApproval": "Awaiting Approval",
+
+    // Stat cards
+    "stat.protectedFunds": "Protected Funds",
+    "stat.protectedFundsValue": "Escrow Smart Contracts",
+    "stat.fastSettlement": "Fast Settlement",
+    "stat.fastSettlementValue": "5 seconds on Stellar",
+    "stat.programmable": "Programmable",
+    "stat.programmableValue": "Custom payment logic",
+
+    // Who Can Use Thalos
+    "whoCanUse.tag": "[Who Can Use Thalos]",
+    "whoCanUse.title": "Built for Everyone Who Needs Trust",
+    "whoCanUse.desc": "Whether you are an independent freelancer, a growing startup, or a global enterprise, Thalos provides the programmable trust layer you need to transact with confidence.",
+    "whoCanUse.freelancers": "Freelancers & Independents",
+    "whoCanUse.freelancersDesc": "Protect your project payments with milestone-based escrows. Get paid on delivery, not on promises.",
+    "whoCanUse.entrepreneurs": "Entrepreneurs & Startups",
+    "whoCanUse.entrepreneursDesc": "Launch payment flows for your new venture. Secure early partnerships and client deposits without intermediaries.",
+    "whoCanUse.businesses": "Businesses & Enterprises",
+    "whoCanUse.businessesDesc": "Manage high-value procurement, vendor payments, and multi-party agreements at scale with full transparency.",
+    "whoCanUse.marketplaces": "Marketplaces & Platforms",
+    "whoCanUse.marketplacesDesc": "Embed programmable escrow into your platform. Protect buyers and sellers with automated fund releases.",
+    "whoCanUse.agencies": "Travel & Service Agencies",
+    "whoCanUse.agenciesDesc": "Secure travel packages, event contracts, and service agreements with conditional payment releases tied to deliverables.",
+    "whoCanUse.developers": "Developers & Integrators",
+    "whoCanUse.developersDesc": "Use the Thalos API to build custom escrow workflows into any application on the Stellar network.",
+
+    // Vision & Mission
+    "vision.tag": "[Vision & Mission]",
+    "vision.title": "Building the Trust Layer for Global Commerce",
+    "vision.vision": "Our Vision",
+    "vision.visionText": "A world where every transaction, no matter how complex, is executed with trust, transparency, and programmable certainty, without relying on intermediaries.",
+    "vision.mission": "Our Mission",
+    "vision.missionText": "To build the leading decentralized escrow and trust infrastructure on Stellar, empowering individuals, entrepreneurs, and businesses to transact securely across industries and borders.",
+    "vision.techTitle": "Core Technology Stack",
+    "vision.techDesc": "Each layer of Thalos is designed to work together, creating a complete trust infrastructure for programmable payments.",
+    "vision.T": "Trust Infrastructure",
+    "vision.TDesc": "The foundational layer that enables trustless transactions between parties who have never met.",
+    "vision.h": "Hybrid Settlement Layer",
+    "vision.hDesc": "Combining on-chain security with off-chain speed for optimal settlement.",
+    "vision.a": "Agreement Engine",
+    "vision.aDesc": "Smart contract logic that defines, enforces, and executes multi-party agreements.",
+    "vision.l": "Locked Funds",
+    "vision.lDesc": "Secure on-chain fund locking with conditional release mechanisms.",
+    "vision.o": "On-chain Logic",
+    "vision.oDesc": "Transparent, auditable, and immutable transaction logic on Stellar.",
+    "vision.s": "Stellar-based",
+    "vision.sDesc": "Built natively on Stellar for 5-second settlements and near-zero fees.",
+    "vision.trustlessWork": "Trustless Work",
+    "vision.trustlessWorkDesc": "Powered by Trustless Work escrow protocol for decentralized, non-custodial fund management.",
+
+    // THALOS vertical words (vision page)
+    "thalos.T": "Trust",
+    "thalos.h": "Honor",
+    "thalos.a": "Agreement",
+    "thalos.l": "Logic",
+    "thalos.o": "Openness",
+    "thalos.s": "Security",
+
+    // Team
+    "team.title": "The Team",
+    "team.desc": "The people building the trust layer for global commerce.",
+    "team.leandro": "Leandro Masotti",
+    "team.leandroRole": "Full Stack Developer",
+    "team.diego": "Diego Raul",
+    "team.diegoRole": "Full Stack Developer",
+    "team.manuel": "Manuel Jimenez G",
+    "team.manuelRole": "Product",
+
+    // Get Involved
+    "getInvolved.title": "Get Involved",
+    "getInvolved.desc": "We are building infrastructure for the future of digital agreements and trust-minimized work. If you are interested in collaboration, feedback, or partnerships:",
+    "getInvolved.email": "Email Us",
+    "getInvolved.repo": "View Repository",
+
+    // Theme
+    "theme.light": "Light",
+    "theme.dark": "Dark",
+    "dashPage.analytics": "Analytics",
+
+    // Dashboard page keys
+    "dashPage.dashboard": "Dashboard",
+    "dashPage.agreements": "Agreements",
+    "dashPage.newAgreement": "New Agreement",
+    "dashPage.wallets": "My Wallets",
+    "dashPage.active": "Active",
+    "dashPage.totalVolume": "Total Volume",
+    "dashPage.yieldEarned": "Yield Earned",
+    "dashPage.completed": "Completed",
+    "dashPage.monthlyAgreements": "Monthly Agreements",
+    "dashPage.volume": "Volume (USDC)",
+    "dashPage.recentAgreements": "Recent Agreements",
+    "dashPage.viewAll": "View All",
+    "dashPage.totalBalance": "Total Balance",
+    "dashPage.backToAgreements": "Back to Agreements",
+    "dashPage.milestones": "milestones",
+    "dashPage.releaseActions": "Release Actions",
+    "dashPage.approveAgreement": "Approve Agreement",
+    "dashPage.releaseAllFunds": "Release All Funds",
+    "dashPage.releaseAllApproved": "Release All Approved",
+    "dashPage.approveReleaseAll": "Approve & Release All",
+    "dashPage.allReleased": "All Funds Released",
+    "dashPage.allReleasedDesc": "This agreement has been fully completed and all funds sent to the receiver.",
+    "dashPage.approve": "Approve",
+    "dashPage.releaseFunds": "Release Funds",
+    "dashPage.released": "Released",
+    "dashPage.approvedReady": "Approved - Ready to release",
+    "dashPage.pendingApproval": "Pending approval",
+    "dashPage.releasePerMilestone": "Release funds per milestone as each is approved.",
+    "dashPage.releaseAllAtOnce": "Release all funds at once when all milestones are approved.",
+    "dashPage.releaseUponCompletion": "Release all funds together upon full completion.",
+    "dashPage.releaseStrategy": "Release strategy:",
+    "dashPage.receiverWallet": "Receiver wallet:",
+    "dashPage.signOut": "Sign Out",
+    "dashPage.personal": "Personal",
+    "dashPage.enterprise": "Enterprise",
+    "dashPage.connectWallet": "Connect New Wallet",
+    "dashPage.copyAddress": "Copy Address",
+    "dashPage.viewExplorer": "View on Explorer",
   },
   es: {
     // Navbar
@@ -144,6 +299,7 @@ const translations: Record<Lang, Record<string, string>> = {
     "nav.buildFlow": "Crea Tu Plataforma",
     "nav.signIn": "Iniciar Sesion",
     "nav.signOut": "Cerrar Sesion",
+    "nav.useCases": "Casos de Uso",
 
     // Hero
     "hero.tag": "Infraestructura de Escrow en Stellar",
@@ -152,20 +308,29 @@ const translations: Record<Lang, Record<string, string>> = {
     "hero.desc": "Thalos impulsa acuerdos con escrows programables en la red Stellar. Los fondos permanecen protegidos, los hitos impulsan las liberaciones y el capital inactivo genera rendimiento.",
     "hero.cta1": "Comenzar",
     "hero.cta2": "Ver Como Funciona",
+    "hero.weAre": "una infraestructura descentralizada de escrow y confianza construida sobre Stellar que permite pagos seguros, programables y basados en hitos entre individuos, emprendedores y empresas de multiples industrias sin depender de intermediarios tradicionales.",
+    "hero.trustLayer": "La Capa de Confianza",
+    "hero.trust1": "Thalos resuelve el problema de confianza en transacciones digitales y de alto valor bloqueando fondos en la cadena hasta que se cumplan condiciones predefinidas. Combina escrow basado en contratos inteligentes, identidad basada en billeteras y seguimiento transparente de acuerdos para reducir fraudes, disputas, retrasos en pagos y riesgo de contraparte.",
+    "hero.trust2a": "A diferencia de las plataformas tradicionales que cobran altas comisiones, imponen control custodial o limitan la flexibilidad, Thalos es ",
+    "hero.trust2highlight": "no custodial, transparente y programable",
+    "hero.trust2b": ", lo que lo hace adaptable a servicios freelance, comercio, bienes raices, agricultura, gestion de eventos, adquisiciones empresariales y muchos otros sectores.",
+    "hero.trust3": "Si quieres iniciar un negocio y no estas seguro de como recibir pagos de forma segura de nuevos clientes o socios, Thalos proporciona una capa de integracion confiable que asegura que los fondos esten protegidos, las condiciones se cumplan y las transacciones se ejecuten de forma transparente.",
 
     // How It Works
     "hiw.tag": "[Como Funciona]",
-    "hiw.title": "Infraestructura de Pagos Modular",
-    "hiw.desc": "Mira como Thalos conecta pagos fiat, conversion a USDC y escrows de contratos inteligentes en un flujo continuo adaptado a tu caso de uso.",
+    "hiw.title": "Flujo de Escrow Basado en Acuerdos",
+    "hiw.desc": "Descubre como Thalos crea acuerdos seguros con escrow basado en hitos, bloqueo de fondos en cadena y liberaciones condicionales en Stellar.",
     "hiw.freelancer": "Freelancer",
     "hiw.travel": "Agencia de Viajes",
     "hiw.marketplace": "Marketplace",
     "hiw.vehicle": "Venta de Vehiculo",
+    "hiw.serviceContract": "Contrato de Servicio",
+
+    // Where Thalos Applies
+    "profiles.tag": "[Donde Aplica Thalos]",
+    "profiles.desc": "Donde exista riesgo de contraparte, incertidumbre en pagos, entrega por hitos, intercambios de alto valor o friccion transfronteriza — Thalos puede aplicarse.",
 
     // Profiles
-    "profiles.tag": "[Soluciones]",
-    "profiles.title": "Una Plataforma, Muchas Soluciones",
-    "profiles.desc": "Ya sea que seas un freelancer protegiendo pagos por hitos o una plataforma gestionando miles de transacciones, Thalos se adapta a tus necesidades.",
     "profiles.personal": "Personal",
     "profiles.personalDesc": "Protege tus pagos freelance, depositos de alquiler y transacciones entre pares con acuerdos de escrow simples.",
     "profiles.business": "Empresa",
@@ -179,6 +344,11 @@ const translations: Record<Lang, Record<string, string>> = {
     "profiles.businessF2": "Soluciones para viajes y marketplaces",
     "profiles.businessF3": "Acceso a API e integraciones",
     "profiles.businessF4": "Flujos de pago personalizados",
+
+    // Use Cases
+    "useCases.tag": "[Casos de Uso]",
+    "useCases.title": "Una Plataforma, Muchas Soluciones",
+    "useCases.desc": "Desde freelancers asegurando pagos de proyectos hasta empresas gestionando adquisiciones multi-parte, Thalos provee la infraestructura de confianza para cada transaccion que importa.",
 
     // Platform Builder
     "builder.tag": "[Constructor de Plataforma]",
@@ -214,6 +384,26 @@ const translations: Record<Lang, Record<string, string>> = {
     "dash.conditions": "Condiciones",
     "dash.contract": "Contrato",
 
+    // FAQ
+    "faq.tag": "[Preguntas Frecuentes]",
+    "faq.title": "Preguntas Frecuentes",
+    "faq.q1": "Que es Thalos?",
+    "faq.a1": "Thalos es una infraestructura descentralizada de escrow y confianza construida sobre la red Stellar. Permite pagos seguros, programables y basados en hitos entre individuos, emprendedores y empresas sin depender de intermediarios tradicionales.",
+    "faq.q2": "Como funciona el escrow?",
+    "faq.a2": "Cuando se crea un acuerdo, los fondos se bloquean en un contrato inteligente de Stellar. Solo se liberan cuando se cumplen las condiciones predefinidas, como la finalizacion de hitos, confirmacion de entrega o aprobacion mutua entre las partes.",
+    "faq.q3": "Que es USDC y por que Thalos lo utiliza?",
+    "faq.a3": "USDC es una stablecoin vinculada al dolar. Thalos usa USDC en Stellar para liquidaciones rapidas y de bajo costo con estabilidad de precio, eliminando el riesgo de volatilidad asociado con otras criptomonedas.",
+    "faq.q4": "Necesito una billetera cripto para usar Thalos?",
+    "faq.a4": "Si. Thalos se integra con billeteras Stellar como Freighter o Albedo. Puedes conectar tu billetera existente o crear una durante el proceso de incorporacion.",
+    "faq.q5": "Es seguro Thalos?",
+    "faq.a5": "Los fondos estan asegurados por contratos inteligentes de Stellar y nunca son retenidos por Thalos. La logica del escrow es trustless, lo que significa que ninguna parte puede mover fondos unilateralmente sin cumplir las condiciones acordadas.",
+    "faq.q6": "Que industrias pueden usar Thalos?",
+    "faq.a6": "Thalos aplica a cualquier escenario con riesgo de contraparte: bienes raices, freelancing, importacion/exportacion, agricultura, eventos, desarrollo de software, ventas automotrices, educacion, construccion y mas.",
+    "faq.q7": "Que tan rapidas son las liquidaciones?",
+    "faq.a7": "Stellar liquida transacciones en aproximadamente 5 segundos con comisiones casi nulas, haciendo que Thalos sea significativamente mas rapido y economico que los escrows o transferencias bancarias tradicionales.",
+    "faq.q8": "Pueden las empresas integrar Thalos en sus plataformas?",
+    "faq.a8": "Si. Thalos ofrece acceso API para que empresas y marketplaces integren escrow programable directamente en sus flujos de trabajo, creando flujos de pago personalizados a escala.",
+
     // Footer
     "footer.platform": "Plataforma",
     "footer.resources": "Recursos",
@@ -221,6 +411,8 @@ const translations: Record<Lang, Record<string, string>> = {
     "footer.emailUs": "Escribenos",
     "footer.followOnX": "Siguenos en X",
     "footer.rights": "Todos los derechos reservados.",
+    "footer.visionTeam": "Vision y Mision",
+    "footer.documentation": "Documentacion",
 
     // Sign In
     "signin.welcome": "Bienvenido de nuevo",
@@ -268,27 +460,160 @@ const translations: Record<Lang, Record<string, string>> = {
     "common.inProgress": "En Progreso",
     "common.released": "Liberado",
     "common.awaitingApproval": "Esperando Aprobacion",
+
+    // Stat cards
+    "stat.protectedFunds": "Fondos Protegidos",
+    "stat.protectedFundsValue": "Contratos Inteligentes de Escrow",
+    "stat.fastSettlement": "Liquidacion Rapida",
+    "stat.fastSettlementValue": "5 segundos en Stellar",
+    "stat.programmable": "Programable",
+    "stat.programmableValue": "Logica de pago personalizada",
+
+    // Who Can Use Thalos
+    "whoCanUse.tag": "[Quien Puede Usar Thalos]",
+    "whoCanUse.title": "Construido para Todos los que Necesitan Confianza",
+    "whoCanUse.desc": "Ya seas un freelancer independiente, una startup en crecimiento o una empresa global, Thalos proporciona la capa de confianza programable que necesitas para realizar transacciones con seguridad.",
+    "whoCanUse.freelancers": "Freelancers e Independientes",
+    "whoCanUse.freelancersDesc": "Protege tus pagos de proyectos con escrows basados en hitos. Cobra al entregar, no por promesas.",
+    "whoCanUse.entrepreneurs": "Emprendedores y Startups",
+    "whoCanUse.entrepreneursDesc": "Lanza flujos de pago para tu nuevo emprendimiento. Asegura alianzas tempranas y depositos de clientes sin intermediarios.",
+    "whoCanUse.businesses": "Negocios y Empresas",
+    "whoCanUse.businessesDesc": "Gestiona adquisiciones de alto valor, pagos a proveedores y acuerdos multi-parte a escala con total transparencia.",
+    "whoCanUse.marketplaces": "Marketplaces y Plataformas",
+    "whoCanUse.marketplacesDesc": "Integra escrow programable en tu plataforma. Protege compradores y vendedores con liberaciones automaticas de fondos.",
+    "whoCanUse.agencies": "Agencias de Viajes y Servicios",
+    "whoCanUse.agenciesDesc": "Asegura paquetes de viaje, contratos de eventos y acuerdos de servicios con liberaciones de pago condicionales.",
+    "whoCanUse.developers": "Desarrolladores e Integradores",
+    "whoCanUse.developersDesc": "Usa la API de Thalos para construir flujos de escrow personalizados en cualquier aplicacion sobre la red Stellar.",
+
+    // Vision & Mission
+    "vision.tag": "[Vision y Mision]",
+    "vision.title": "Construyendo la Capa de Confianza para el Comercio Global",
+    "vision.vision": "Nuestra Vision",
+    "vision.visionText": "Un mundo donde cada transaccion, sin importar su complejidad, se ejecuta con confianza, transparencia y certeza programable, sin depender de intermediarios.",
+    "vision.mission": "Nuestra Mision",
+    "vision.missionText": "Construir la infraestructura descentralizada de escrow y confianza lider sobre Stellar, empoderando a individuos, emprendedores y empresas para realizar transacciones seguras a traves de industrias y fronteras.",
+    "vision.techTitle": "Stack Tecnologico Principal",
+    "vision.techDesc": "Cada capa de Thalos esta disenada para trabajar en conjunto, creando una infraestructura de confianza completa para pagos programables.",
+    "vision.T": "Infraestructura de Confianza",
+    "vision.TDesc": "La capa fundamental que permite transacciones sin confianza entre partes que nunca se han conocido.",
+    "vision.h": "Capa de Liquidacion Hibrida",
+    "vision.hDesc": "Combinando seguridad on-chain con velocidad off-chain para una liquidacion optima.",
+    "vision.a": "Motor de Acuerdos",
+    "vision.aDesc": "Logica de contratos inteligentes que define, ejecuta y hace cumplir acuerdos multi-parte.",
+    "vision.l": "Fondos Bloqueados",
+    "vision.lDesc": "Bloqueo seguro de fondos on-chain con mecanismos de liberacion condicional.",
+    "vision.o": "Logica On-chain",
+    "vision.oDesc": "Logica de transacciones transparente, auditable e inmutable sobre Stellar.",
+    "vision.s": "Basado en Stellar",
+    "vision.sDesc": "Construido nativamente sobre Stellar para liquidaciones en 5 segundos y comisiones casi nulas.",
+    "vision.trustlessWork": "Trustless Work",
+    "vision.trustlessWorkDesc": "Impulsado por el protocolo de escrow Trustless Work para gestion de fondos descentralizada y no custodial.",
+
+    // THALOS vertical words
+    "thalos.T": "Confianza",
+    "thalos.h": "Honor",
+    "thalos.a": "Acuerdo",
+    "thalos.l": "Logica",
+    "thalos.o": "Apertura",
+    "thalos.s": "Seguridad",
+
+    // Team
+    "team.title": "El Equipo",
+    "team.desc": "Las personas construyendo la capa de confianza para el comercio global.",
+    "team.leandro": "Leandro Masotti",
+    "team.leandroRole": "Desarrollador Full Stack",
+    "team.diego": "Diego Raul",
+    "team.diegoRole": "Desarrollador Full Stack",
+    "team.manuel": "Manuel Jimenez G",
+    "team.manuelRole": "Producto",
+
+    // Get Involved
+    "getInvolved.title": "Participa",
+    "getInvolved.desc": "Estamos construyendo infraestructura para el futuro de los acuerdos digitales y el trabajo con confianza minimizada. Si te interesa colaborar, dar feedback o establecer alianzas:",
+    "getInvolved.email": "Escribenos",
+    "getInvolved.repo": "Ver Repositorio",
+
+    // Theme
+    "theme.light": "Claro",
+    "theme.dark": "Oscuro",
+    "dashPage.analytics": "Estadisticas",
+
+    // Dashboard page keys
+    "dashPage.dashboard": "Panel",
+    "dashPage.agreements": "Acuerdos",
+    "dashPage.newAgreement": "Nuevo Acuerdo",
+    "dashPage.wallets": "Mis Billeteras",
+    "dashPage.active": "Activos",
+    "dashPage.totalVolume": "Volumen Total",
+    "dashPage.yieldEarned": "Rendimiento Ganado",
+    "dashPage.completed": "Completados",
+    "dashPage.monthlyAgreements": "Acuerdos Mensuales",
+    "dashPage.volume": "Volumen (USDC)",
+    "dashPage.recentAgreements": "Acuerdos Recientes",
+    "dashPage.viewAll": "Ver Todos",
+    "dashPage.totalBalance": "Balance Total",
+    "dashPage.backToAgreements": "Volver a Acuerdos",
+    "dashPage.milestones": "hitos",
+    "dashPage.releaseActions": "Acciones de Liberacion",
+    "dashPage.approveAgreement": "Aprobar Acuerdo",
+    "dashPage.releaseAllFunds": "Liberar Todos los Fondos",
+    "dashPage.releaseAllApproved": "Liberar Todos los Aprobados",
+    "dashPage.approveReleaseAll": "Aprobar y Liberar Todo",
+    "dashPage.allReleased": "Todos los Fondos Liberados",
+    "dashPage.allReleasedDesc": "Este acuerdo ha sido completado y todos los fondos enviados al receptor.",
+    "dashPage.approve": "Aprobar",
+    "dashPage.releaseFunds": "Liberar Fondos",
+    "dashPage.released": "Liberado",
+    "dashPage.approvedReady": "Aprobado - Listo para liberar",
+    "dashPage.pendingApproval": "Pendiente de aprobacion",
+    "dashPage.releasePerMilestone": "Liberar fondos por hito a medida que se aprueba cada uno.",
+    "dashPage.releaseAllAtOnce": "Liberar todos los fondos de una vez cuando todos los hitos esten aprobados.",
+    "dashPage.releaseUponCompletion": "Liberar todos los fondos juntos al completarse todo.",
+    "dashPage.releaseStrategy": "Estrategia de liberacion:",
+    "dashPage.receiverWallet": "Billetera receptora:",
+    "dashPage.signOut": "Cerrar Sesion",
+    "dashPage.personal": "Personal",
+    "dashPage.enterprise": "Empresa",
+    "dashPage.connectWallet": "Conectar Nueva Billetera",
+    "dashPage.copyAddress": "Copiar Direccion",
+    "dashPage.viewExplorer": "Ver en Explorador",
   },
 }
+
+type Theme = "dark" | "light"
 
 interface LanguageContextType {
   lang: Lang
   setLang: (lang: Lang) => void
   t: (key: string) => string
+  theme: Theme
+  setTheme: (theme: Theme) => void
+  toggleTheme: () => void
 }
 
 const LanguageContext = createContext<LanguageContextType>({
   lang: "en",
   setLang: () => {},
   t: (key) => key,
+  theme: "dark",
+  setTheme: () => {},
+  toggleTheme: () => {},
 })
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [lang, setLangState] = useState<Lang>("en")
+  const [theme, setThemeState] = useState<Theme>("dark")
 
   useEffect(() => {
     const saved = localStorage.getItem("thalos-lang") as Lang | null
     if (saved && (saved === "en" || saved === "es")) setLangState(saved)
+    const savedTheme = localStorage.getItem("thalos-theme") as Theme | null
+    if (savedTheme && (savedTheme === "dark" || savedTheme === "light")) {
+      setThemeState(savedTheme)
+      document.documentElement.classList.remove("dark", "light")
+      document.documentElement.classList.add(savedTheme)
+    }
   }, [])
 
   const setLang = useCallback((l: Lang) => {
@@ -296,12 +621,23 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem("thalos-lang", l)
   }, [])
 
+  const setTheme = useCallback((th: Theme) => {
+    setThemeState(th)
+    localStorage.setItem("thalos-theme", th)
+    document.documentElement.classList.remove("dark", "light")
+    document.documentElement.classList.add(th)
+  }, [])
+
+  const toggleTheme = useCallback(() => {
+    setTheme(theme === "dark" ? "light" : "dark")
+  }, [theme, setTheme])
+
   const t = useCallback((key: string) => {
     return translations[lang][key] || translations.en[key] || key
   }, [lang])
 
   return (
-    <LanguageContext.Provider value={{ lang, setLang, t }}>
+    <LanguageContext.Provider value={{ lang, setLang, t, theme, setTheme, toggleTheme }}>
       {children}
     </LanguageContext.Provider>
   )
@@ -317,7 +653,7 @@ export function LanguageToggle({ className }: { className?: string }) {
   return (
     <button
       onClick={() => setLang(lang === "en" ? "es" : "en")}
-      className={`flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-bold text-muted-foreground transition-all duration-300 hover:bg-white/10 hover:text-foreground hover:border-white/20 ${className || ""}`}
+      className={`flex items-center gap-1.5 rounded-full border border-border/40 bg-secondary/50 px-3 py-1.5 text-xs font-bold text-muted-foreground transition-all duration-300 hover:bg-secondary hover:text-foreground hover:border-border ${className || ""}`}
       aria-label={lang === "en" ? "Cambiar a Espanol" : "Switch to English"}
       title={lang === "en" ? "Cambiar a Espanol" : "Switch to English"}
     >
@@ -327,6 +663,25 @@ export function LanguageToggle({ className }: { className?: string }) {
         <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
       </svg>
       {lang === "en" ? "ES" : "EN"}
+    </button>
+  )
+}
+
+/** Sun/Moon theme toggle */
+export function ThemeToggle({ className }: { className?: string }) {
+  const { theme, toggleTheme } = useLanguage()
+  return (
+    <button
+      onClick={toggleTheme}
+      className={`flex items-center gap-1.5 rounded-full border border-border/40 bg-secondary/50 px-3 py-1.5 text-xs font-bold text-muted-foreground transition-all duration-300 hover:bg-secondary hover:text-foreground hover:border-border ${className || ""}`}
+      aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+      title={theme === "dark" ? "Light mode" : "Dark mode"}
+    >
+      {theme === "dark" ? (
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      ) : (
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      )}
     </button>
   )
 }

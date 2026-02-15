@@ -88,7 +88,7 @@ export function DashboardSection() {
           <h2 className="mb-4 text-4xl font-bold tracking-tight text-foreground md:text-5xl text-balance">
             {t("dash.title")}
           </h2>
-          <p className="mx-auto max-w-2xl text-base font-medium text-white/55 leading-relaxed text-pretty">
+          <p className="mx-auto max-w-2xl text-base font-medium text-muted-foreground leading-relaxed text-pretty">
             {t("dash.desc")}
           </p>
         </div>
