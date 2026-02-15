@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { useState, useEffect, useRef } from "react"
 import { cn } from "@/lib/utils"
 import { SignInPanel } from "@/components/sign-in-panel"
-import { useLanguage, LanguageToggle } from "@/lib/i18n"
+import { useLanguage, LanguageToggle, ThemeToggle } from "@/lib/i18n"
 
 const useCaseCategories: { label: string; items: string[] }[] = [
   { label: "Digital Economy", items: ["Freelancers", "Agencies", "Developers", "Creators"] },
@@ -168,6 +168,7 @@ export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }
               {t("nav.signIn")}
             </Button>
             <LanguageToggle />
+            <ThemeToggle />
           </div>
 
           {/* Mobile hamburger */}
@@ -204,6 +205,7 @@ export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }
                   {t("nav.signIn")}
                 </Button>
                 <LanguageToggle />
+                <ThemeToggle />
               </div>
             </div>
           </div>

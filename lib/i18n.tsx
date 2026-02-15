@@ -195,6 +195,11 @@ const translations: Record<Lang, Record<string, string>> = {
     "whoCanUse.developers": "Developers & Integrators",
     "whoCanUse.developersDesc": "Use the Thalos API to build custom escrow workflows into any application on the Stellar network.",
 
+    // Theme
+    "theme.light": "Light",
+    "theme.dark": "Dark",
+    "dashPage.analytics": "Analytics",
+
     // Dashboard page keys
     "dashPage.dashboard": "Dashboard",
     "dashPage.agreements": "Agreements",
@@ -425,6 +430,11 @@ const translations: Record<Lang, Record<string, string>> = {
     "whoCanUse.developers": "Desarrolladores e Integradores",
     "whoCanUse.developersDesc": "Usa la API de Thalos para construir flujos de escrow personalizados en cualquier aplicacion sobre la red Stellar.",
 
+    // Theme
+    "theme.light": "Claro",
+    "theme.dark": "Oscuro",
+    "dashPage.analytics": "Estadisticas",
+
     // Dashboard page keys
     "dashPage.dashboard": "Panel",
     "dashPage.agreements": "Acuerdos",
@@ -467,24 +477,39 @@ const translations: Record<Lang, Record<string, string>> = {
   },
 }
 
+type Theme = "dark" | "light"
+
 interface LanguageContextType {
   lang: Lang
   setLang: (lang: Lang) => void
   t: (key: string) => string
+  theme: Theme
+  setTheme: (theme: Theme) => void
+  toggleTheme: () => void
 }
 
 const LanguageContext = createContext<LanguageContextType>({
   lang: "en",
   setLang: () => {},
   t: (key) => key,
+  theme: "dark",
+  setTheme: () => {},
+  toggleTheme: () => {},
 })
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [lang, setLangState] = useState<Lang>("en")
+  const [theme, setThemeState] = useState<Theme>("dark")
 
   useEffect(() => {
     const saved = localStorage.getItem("thalos-lang") as Lang | null
     if (saved && (saved === "en" || saved === "es")) setLangState(saved)
+    const savedTheme = localStorage.getItem("thalos-theme") as Theme | null
+    if (savedTheme && (savedTheme === "dark" || savedTheme === "light")) {
+      setThemeState(savedTheme)
+      document.documentElement.classList.remove("dark", "light")
+      document.documentElement.classList.add(savedTheme)
+    }
   }, [])
 
   const setLang = useCallback((l: Lang) => {
@@ -492,12 +517,23 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem("thalos-lang", l)
   }, [])
 
+  const setTheme = useCallback((th: Theme) => {
+    setThemeState(th)
+    localStorage.setItem("thalos-theme", th)
+    document.documentElement.classList.remove("dark", "light")
+    document.documentElement.classList.add(th)
+  }, [])
+
+  const toggleTheme = useCallback(() => {
+    setTheme(theme === "dark" ? "light" : "dark")
+  }, [theme, setTheme])
+
   const t = useCallback((key: string) => {
     return translations[lang][key] || translations.en[key] || key
   }, [lang])
 
   return (
-    <LanguageContext.Provider value={{ lang, setLang, t }}>
+    <LanguageContext.Provider value={{ lang, setLang, t, theme, setTheme, toggleTheme }}>
       {children}
     </LanguageContext.Provider>
   )
@@ -513,7 +549,7 @@ export function LanguageToggle({ className }: { className?: string }) {
   return (
     <button
       onClick={() => setLang(lang === "en" ? "es" : "en")}
-      className={`flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-bold text-muted-foreground transition-all duration-300 hover:bg-white/10 hover:text-foreground hover:border-white/20 ${className || ""}`}
+      className={`flex items-center gap-1.5 rounded-full border border-border/40 bg-secondary/50 px-3 py-1.5 text-xs font-bold text-muted-foreground transition-all duration-300 hover:bg-secondary hover:text-foreground hover:border-border ${className || ""}`}
       aria-label={lang === "en" ? "Cambiar a Espanol" : "Switch to English"}
       title={lang === "en" ? "Cambiar a Espanol" : "Switch to English"}
     >
@@ -523,6 +559,25 @@ export function LanguageToggle({ className }: { className?: string }) {
         <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
       </svg>
       {lang === "en" ? "ES" : "EN"}
+    </button>
+  )
+}
+
+/** Sun/Moon theme toggle */
+export function ThemeToggle({ className }: { className?: string }) {
+  const { theme, toggleTheme } = useLanguage()
+  return (
+    <button
+      onClick={toggleTheme}
+      className={`flex items-center gap-1.5 rounded-full border border-border/40 bg-secondary/50 px-3 py-1.5 text-xs font-bold text-muted-foreground transition-all duration-300 hover:bg-secondary hover:text-foreground hover:border-border ${className || ""}`}
+      aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+      title={theme === "dark" ? "Light mode" : "Dark mode"}
+    >
+      {theme === "dark" ? (
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      ) : (
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      )}
     </button>
   )
 }
