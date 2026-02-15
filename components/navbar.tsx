@@ -116,8 +116,8 @@ export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={cn("transition-transform duration-200", useCaseOpen && "rotate-180")}><path d="M6 9l6 6 6-6" /></svg>
               </button>
               {useCaseOpen && (
-                <div className="absolute top-full left-1/2 z-50 mt-3 -translate-x-1/2 w-64 rounded-xl border border-white/10 bg-[#111113]/95 p-2 backdrop-blur-xl shadow-[0_12px_40px_rgba(0,0,0,0.5)]">
-                  <div className="max-h-[460px] overflow-y-auto scrollbar-hide">
+                <div className="absolute top-full left-1/2 z-50 mt-3 -translate-x-1/2 w-64 rounded-xl border border-white/10 bg-[#111113]/98 p-2 backdrop-blur-xl shadow-[0_12px_40px_rgba(0,0,0,0.5)]" style={{ scrollbarWidth: "none" }}>
+                  <div className="max-h-[460px] overflow-y-auto" style={{ scrollbarWidth: "none" }}>
                     {useCaseCategories.map((cat) => (
                       <div key={cat.label}>
                         <button

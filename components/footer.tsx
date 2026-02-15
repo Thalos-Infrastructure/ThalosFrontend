@@ -46,7 +46,8 @@ export function Footer() {
               <ul className="flex flex-col gap-2.5">
                 <li><a href="https://www.trustlesswork.com/" target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-white/50 transition-colors hover:text-white">Trustless Work</a></li>
                 <li><a href="https://stellar.org/" target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-white/50 transition-colors hover:text-white">Stellar Network</a></li>
-                <li><Link href="/about" className="text-sm font-medium text-white/50 transition-colors hover:text-white">Vision & Team</Link></li>
+                <li><Link href="/about" className="text-sm font-medium text-white/50 transition-colors hover:text-white">{t("footer.visionTeam")}</Link></li>
+                <li><a href="https://thalos.gitbook.io/thalos-docs" target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-white/50 transition-colors hover:text-white">{t("footer.documentation")}</a></li>
               </ul>
             </div>
             <div>

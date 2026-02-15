@@ -3,6 +3,7 @@
 import { cn } from "@/lib/utils"
 import { useSectionReveal } from "@/hooks/use-section-reveal"
 import { useTypewriter } from "@/hooks/use-typewriter"
+import { useLanguage } from "@/lib/i18n"
 
 const useCases = [
   {
@@ -104,8 +105,9 @@ function UseCaseCard({ uc }: { uc: typeof useCases[number] }) {
 }
 
 export function UseCases() {
+  const { t } = useLanguage()
   const { ref, isVisible } = useSectionReveal()
-  const { displayed: twText, isTyping: twActive } = useTypewriter("[Who Benefits]", isVisible, { typeSpeed: 120, deleteSpeed: 60, pauseBeforeDelete: 2500, pauseBeforeType: 800 })
+  const { displayed: twText, isTyping: twActive } = useTypewriter(t("useCases.tag"), isVisible, { typeSpeed: 120, deleteSpeed: 60, pauseBeforeDelete: 2500, pauseBeforeType: 800 })
 
   return (
     <section id="use-cases" className="relative py-28 overflow-hidden" ref={ref}>
@@ -117,11 +119,8 @@ export function UseCases() {
             <span className={cn("ml-0.5 inline-block h-4 w-0.5 bg-[#f0b400] align-middle", twActive ? "animate-pulse" : "opacity-0")} />
           </p>
           <h2 className="mb-4 text-4xl font-bold tracking-tight text-foreground md:text-6xl text-balance">
-            Use Cases
+            {t("useCases.title")}
           </h2>
-          <p className="mx-auto max-w-3xl text-base font-medium text-white/55 leading-relaxed text-pretty">
-            Anywhere there is counterparty risk, payment uncertainty, milestone delivery, high-value exchange, or cross-border friction — Thalos can apply.
-          </p>
         </div>
 
         {/* Infinite marquee */}

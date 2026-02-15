@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import { useEffect, useState, useRef } from "react"
 import { useLanguage } from "@/lib/i18n"
 
+/* ── Typewriter for [Escrows] ── */
 function TypewriterEscrows() {
   const word = "[Escrows]"
   const [displayText, setDisplayText] = useState("")
@@ -12,13 +13,9 @@ function TypewriterEscrows() {
 
   useEffect(() => {
     let timer: NodeJS.Timeout
-
     if (phase === "typing") {
       if (indexRef.current < word.length) {
-        timer = setTimeout(() => {
-          indexRef.current++
-          setDisplayText(word.substring(0, indexRef.current))
-        }, 180)
+        timer = setTimeout(() => { indexRef.current++; setDisplayText(word.substring(0, indexRef.current)) }, 180)
       } else {
         timer = setTimeout(() => setPhase("pause"), 3500)
       }
@@ -26,27 +23,57 @@ function TypewriterEscrows() {
       timer = setTimeout(() => setPhase("deleting"), 100)
     } else if (phase === "deleting") {
       if (indexRef.current > 0) {
-        timer = setTimeout(() => {
-          indexRef.current--
-          setDisplayText(word.substring(0, indexRef.current))
-        }, 90)
+        timer = setTimeout(() => { indexRef.current--; setDisplayText(word.substring(0, indexRef.current)) }, 90)
       } else {
         timer = setTimeout(() => setPhase("wait"), 1000)
       }
     } else if (phase === "wait") {
       timer = setTimeout(() => setPhase("typing"), 100)
     }
-
     return () => clearTimeout(timer)
   }, [displayText, phase])
 
   return (
-    <span className="text-[#f0b400] inline-block min-w-[280px] md:min-w-[400px] text-left">
+    <span className="text-[#f0b400] inline-block min-w-[200px] md:min-w-[340px] text-left">
       {displayText}
-      <span
-        className="ml-0.5 inline-block h-[0.85em] w-[3px] bg-[#f0b400] align-middle"
-        style={{ animation: "typewriter-cursor 0.8s ease-in-out infinite" }}
-      />
+      <span className="ml-0.5 inline-block h-[0.85em] w-[3px] bg-[#f0b400] align-middle" style={{ animation: "typewriter-cursor 0.8s ease-in-out infinite" }} />
+    </span>
+  )
+}
+
+/* ── Typewriter for [One Platform, Many Solutions] ── */
+function TypewriterPlatform() {
+  const word = "[One Platform, Many Solutions]"
+  const [displayText, setDisplayText] = useState("")
+  const [phase, setPhase] = useState<"typing" | "pause" | "deleting" | "wait">("typing")
+  const indexRef = useRef(0)
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout
+    if (phase === "typing") {
+      if (indexRef.current < word.length) {
+        timer = setTimeout(() => { indexRef.current++; setDisplayText(word.substring(0, indexRef.current)) }, 100)
+      } else {
+        timer = setTimeout(() => setPhase("pause"), 4000)
+      }
+    } else if (phase === "pause") {
+      timer = setTimeout(() => setPhase("deleting"), 100)
+    } else if (phase === "deleting") {
+      if (indexRef.current > 0) {
+        timer = setTimeout(() => { indexRef.current--; setDisplayText(word.substring(0, indexRef.current)) }, 50)
+      } else {
+        timer = setTimeout(() => setPhase("wait"), 800)
+      }
+    } else if (phase === "wait") {
+      timer = setTimeout(() => setPhase("typing"), 100)
+    }
+    return () => clearTimeout(timer)
+  }, [displayText, phase])
+
+  return (
+    <span className="text-[#f0b400] font-bold text-xl md:text-2xl">
+      {displayText}
+      <span className="ml-0.5 inline-block h-[0.85em] w-[3px] bg-[#f0b400] align-middle" style={{ animation: "typewriter-cursor 0.8s ease-in-out infinite" }} />
     </span>
   )
 }
@@ -59,42 +86,60 @@ interface HeroSectionProps {
 export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
   const { t } = useLanguage()
   const [introReady, setIntroReady] = useState(false)
-  const [showSection2, setShowSection2] = useState(false)
+  const [section2Progress, setSection2Progress] = useState(0)
   const section2Ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const t1 = setTimeout(() => {
-      setIntroReady(true)
-      onIntroComplete?.()
-    }, 3000)
+    const t1 = setTimeout(() => { setIntroReady(true); onIntroComplete?.() }, 3000)
     return () => clearTimeout(t1)
   }, [onIntroComplete])
 
+  /* Scroll-driven reveal for section 2 */
   useEffect(() => {
-    if (!section2Ref.current) return
-    const obs = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) setShowSection2(true) },
-      { threshold: 0.15 }
-    )
-    obs.observe(section2Ref.current)
-    return () => obs.disconnect()
+    function onScroll() {
+      if (!section2Ref.current) return
+      const rect = section2Ref.current.getBoundingClientRect()
+      const vh = window.innerHeight
+      // progress: 0 when top is at bottom of viewport, 1 when top is at 30% from top
+      const raw = 1 - (rect.top - vh * 0.3) / (vh * 0.7)
+      setSection2Progress(Math.max(0, Math.min(1, raw)))
+    }
+    window.addEventListener("scroll", onScroll, { passive: true })
+    onScroll()
+    return () => window.removeEventListener("scroll", onScroll)
   }, [])
 
   return (
-    <section id="hero" className="relative overflow-hidden">
-      {/* Subtle accent line */}
+    <section id="hero" className="relative">
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#f0b400]/20 to-transparent" aria-hidden="true" />
 
-      {/* === SECTION 1: Main hero with vertical THALOS === */}
-      <div className="relative z-10 flex min-h-screen items-center px-6 lg:px-16">
-        <div className="mx-auto flex w-full max-w-7xl items-center gap-8 lg:gap-16">
+      {/* Vertical "thalos" spanning both sections -- right side, absolutely positioned */}
+      <div className="pointer-events-none absolute right-4 top-0 bottom-0 z-20 hidden select-none md:flex md:flex-col md:items-center md:justify-center lg:right-8 xl:right-12" aria-hidden="true">
+        {"thalos".split("").map((letter, i) => (
+          <span
+            key={i}
+            className="animate-fade-in-up block font-black lowercase leading-[0.78] text-white/90"
+            style={{
+              animationDelay: `${i * 120}ms`,
+              animationFillMode: "both",
+              fontSize: "clamp(6rem, 14vh, 12rem)",
+              textShadow: "0 2px 40px rgba(255,255,255,0.05)",
+            }}
+          >
+            {letter}
+          </span>
+        ))}
+      </div>
 
-          {/* Vertical THALOS */}
-          <div className="hidden md:flex flex-col items-center select-none">
-            {"THALOS".split("").map((letter, i) => (
+      {/* === SECTION 1: Main hero === */}
+      <div className="relative z-10 flex min-h-[100dvh] items-center px-6 lg:px-16 xl:px-20 py-32">
+        <div className="mx-auto w-full max-w-7xl">
+          {/* Mobile THALOS horizontal */}
+          <div className="flex md:hidden justify-center mb-10 gap-1">
+            {"thalos".split("").map((letter, i) => (
               <span
                 key={i}
-                className="animate-fade-in-up text-7xl lg:text-8xl xl:text-9xl font-black tracking-tighter text-[#f0b400] leading-[0.85] drop-shadow-[0_2px_8px_rgba(240,180,0,0.3)]"
+                className="animate-fade-in-up text-6xl font-black lowercase text-white/90"
                 style={{ animationDelay: `${i * 120}ms`, animationFillMode: "both" }}
               >
                 {letter}
@@ -102,92 +147,70 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
             ))}
           </div>
 
-          {/* Content right of THALOS */}
-          <div className="flex-1">
-            {/* Mobile THALOS */}
-            <div className="flex md:hidden justify-center mb-6">
-              {"THALOS".split("").map((letter, i) => (
-                <span
-                  key={i}
-                  className="animate-fade-in-up text-5xl font-black tracking-tight text-[#f0b400] drop-shadow-[0_2px_8px_rgba(240,180,0,0.3)]"
-                  style={{ animationDelay: `${i * 120}ms`, animationFillMode: "both" }}
-                >
-                  {letter}
-                </span>
-              ))}
-            </div>
-
-            <h1 className="animate-fade-in-up animation-delay-200 text-4xl font-bold tracking-tight text-white md:text-6xl lg:text-7xl text-balance">
+          <div className="max-w-3xl">
+            <h1 className="animate-fade-in-up animation-delay-200 text-4xl font-bold tracking-tight text-white md:text-5xl lg:text-6xl xl:text-7xl text-balance">
               Secure Payments
             </h1>
-            <p className="mt-2 animate-fade-in-up animation-delay-400 text-4xl font-bold tracking-tight text-white md:text-6xl lg:text-7xl">
+            <p className="mt-3 animate-fade-in-up animation-delay-400 text-4xl font-bold tracking-tight text-white md:text-5xl lg:text-6xl xl:text-7xl">
               with <TypewriterEscrows />
             </p>
 
-            <div className="mt-8 max-w-xl animate-fade-in-up animation-delay-600">
-              <p className="text-lg font-medium leading-relaxed text-white/75 text-pretty">
+            <div className="mt-16 max-w-2xl animate-fade-in-up animation-delay-600 text-center">
+              <p className="text-lg md:text-xl font-medium leading-relaxed text-white/65 text-pretty">
                 <span className="text-[#f0b400] font-bold">{"<We are>"}</span>{" "}
-                a decentralized escrow and trust infrastructure built on Stellar that enables secure, programmable, milestone-based payments between individuals, entrepreneurs, and businesses across multiple industries without relying on traditional intermediaries.
+                {t("hero.weAre")}
               </p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* === SECTION 2: Light-toned info panel with ocean collage bg === */}
-      <div
-        ref={section2Ref}
-        className="relative z-10 min-h-screen"
-      >
-        {/* Background: ocean images collage with white/light tone */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute inset-0 grid grid-cols-3 grid-rows-2 gap-1 opacity-25">
-            <div className="col-span-1 row-span-2 bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1505142468610-359e7d316be0?w=1280&q=80&auto=format&fit=crop')" }} />
-            <div className="col-span-1 row-span-1 bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=1280&q=80&auto=format&fit=crop')" }} />
-            <div className="col-span-1 row-span-1 bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1280&q=80&auto=format&fit=crop')" }} />
-            <div className="col-span-2 row-span-1 bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1476673160081-cf065607f449?w=1280&q=80&auto=format&fit=crop')" }} />
-          </div>
-          <div className="absolute inset-0 bg-gradient-to-b from-white/[0.06] via-white/[0.04] to-background/80" />
-          <div className="absolute inset-0 bg-background/70" />
+      {/* === SECTION 2: Trust layer - scroll reveal with white bg === */}
+      <div ref={section2Ref} className="relative z-10 min-h-[100dvh] overflow-hidden">
+        {/* White/light bg with collage showing through */}
+        <div
+          className="absolute inset-0 transition-opacity duration-700"
+          style={{ opacity: section2Progress }}
+        >
+          <div className="absolute inset-0 bg-white/[0.06] backdrop-blur-sm" />
+          <div className="absolute inset-0 border-y border-white/10" />
         </div>
 
-        {/* Divider line */}
-        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
-
         {/* Content */}
-        <div className="relative z-10 flex min-h-screen flex-col items-center justify-center px-6 lg:px-16 py-24">
+        <div className="relative z-10 flex min-h-[100dvh] flex-col items-center justify-center px-6 lg:px-16 py-24">
           <div
-            className="max-w-4xl transition-all duration-[1400ms] ease-out"
+            className="mx-auto max-w-3xl transition-all duration-[1200ms] ease-out"
             style={{
-              opacity: showSection2 ? 1 : 0,
-              transform: showSection2 ? "translateY(0)" : "translateY(50px)",
+              opacity: section2Progress,
+              transform: `translateY(${(1 - section2Progress) * 60}px)`,
             }}
           >
-            <p className="mb-8 text-sm font-bold uppercase tracking-[0.2em] text-[#f0b400]">The Trust Layer</p>
+            <p className="mb-10 text-sm font-bold uppercase tracking-[0.2em] text-[#f0b400] text-center">
+              {t("hero.trustLayer")}
+            </p>
 
-            <div className="space-y-6 text-lg font-medium leading-relaxed text-white/70 text-pretty">
+            <div className="space-y-8 text-lg font-medium leading-relaxed text-white/60 text-left max-w-2xl mx-auto">
               <p>
-                Thalos solves the trust problem in digital and high-value transactions by locking funds on-chain until predefined conditions are met. It combines smart-contract-based escrow, wallet-based identity, and transparent agreement tracking to reduce fraud, disputes, payment delays, and counterparty risk.
-              </p>
-              <p>
-                Unlike traditional platforms that extract high fees, impose custodial control, or limit flexibility, Thalos is <span className="text-white font-semibold">non-custodial, transparent, and programmable</span>, making it adaptable to freelance services, commerce, real estate, agriculture, event management, enterprise procurement, and many other sectors.
+                {t("hero.trust1")}
               </p>
               <p>
-                If you want to start a business and you are unsure how to securely receive payments from new clients or partners, Thalos provides a reliable integration layer that ensures funds are protected, conditions are enforced, and transactions are executed transparently.
+                {t("hero.trust2a")} <span className="text-white font-semibold">{t("hero.trust2highlight")}</span>{t("hero.trust2b")}
               </p>
-              <p className="text-[#f0b400] font-bold text-xl">
-                Thalos is not just a payment tool; it is programmable trust infrastructure.
+              <p>
+                {t("hero.trust3")}
               </p>
+              <div className="pt-6 text-center">
+                <TypewriterPlatform />
+              </div>
             </div>
           </div>
 
           {/* Buttons */}
           <div
-            className="mt-16 flex flex-col items-center gap-4 sm:flex-row transition-all duration-1000"
+            className="mt-16 flex flex-col items-center gap-4 sm:flex-row transition-all duration-[1200ms] ease-out"
             style={{
-              opacity: showSection2 ? 1 : 0,
-              transform: showSection2 ? "translateY(0)" : "translateY(30px)",
-              transitionDelay: "400ms",
+              opacity: Math.max(0, section2Progress - 0.3) / 0.7,
+              transform: `translateY(${Math.max(0, (1 - section2Progress) * 30)}px)`,
             }}
           >
             <Button
