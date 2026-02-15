@@ -17,6 +17,7 @@ export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }
   const navLinks = [
     { label: t("nav.howItWorks"), section: "how-it-works" },
     { label: t("nav.solutions"), section: "profiles" },
+    { label: "Use Cases", section: "use-cases" },
     { label: t("nav.buildFlow"), section: "builder" },
   ]
 

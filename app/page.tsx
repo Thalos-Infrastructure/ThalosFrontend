@@ -6,6 +6,7 @@ import { Navbar } from "@/components/navbar"
 import { HeroSection } from "@/components/hero-section"
 import { HowItWorks } from "@/components/how-it-works"
 import { ProfileSelection } from "@/components/profile-selection"
+import { UseCases } from "@/components/use-cases"
 import { PlatformBuilder } from "@/components/platform-builder"
 import { DashboardSection } from "@/components/dashboard-section"
 import { Footer } from "@/components/footer"
@@ -105,6 +106,10 @@ export default function Home() {
 
           <div ref={setRef("profiles")} className="mt-24">
             <ProfileSelection onNavigate={handleNavigate} />
+          </div>
+
+          <div ref={setRef("use-cases")} className="mt-24">
+            <UseCases />
           </div>
 
           <div ref={setRef("builder")} className="mt-24">

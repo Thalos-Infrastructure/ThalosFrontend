@@ -116,7 +116,7 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
             >
               <p className="text-lg font-medium leading-relaxed text-white/80 text-pretty">
                 <span className="text-[#f0b400] font-bold">{"<We are>"}</span>{" "}
-                a decentralized escrow and trust infrastructure built on Stellar that enables secure, milestone-based payments between freelancers, creators, and businesses without relying on traditional intermediaries.
+                a decentralized escrow and trust infrastructure built on Stellar that enables secure, programmable, milestone-based payments between individuals, entrepreneurs, and businesses across multiple industries without relying on traditional intermediaries.
               </p>
             </div>
           </div>
