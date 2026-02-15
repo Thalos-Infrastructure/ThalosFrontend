@@ -76,7 +76,7 @@ const marqueeItems = [...useCases, ...useCases]
 
 function UseCaseCard({ uc }: { uc: typeof useCases[number] }) {
   return (
-    <div className="w-[340px] shrink-0 rounded-2xl border border-white/10 bg-card/50 p-6 backdrop-blur-sm shadow-[0_8px_32px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.06)] md:w-[380px]">
+    <div className="w-[340px] shrink-0 rounded-2xl border border-border/20 bg-card/50 p-6 backdrop-blur-sm shadow-[0_8px_32px_rgba(0,0,0,0.1)] md:w-[380px]">
       {/* Title */}
       <div className="mb-4 flex items-center gap-3">
         <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: uc.color }} />
@@ -87,18 +87,18 @@ function UseCaseCard({ uc }: { uc: typeof useCases[number] }) {
       <div className="flex flex-col gap-3 mb-4">
         <div>
           <p className="text-xs font-bold mb-1" style={{ color: uc.color }}>{uc.buyerLabel}</p>
-          <p className="text-sm leading-relaxed text-white/65 italic">{'"'}{uc.buyer}{'"'}</p>
+          <p className="text-sm leading-relaxed text-muted-foreground italic">{'"'}{uc.buyer}{'"'}</p>
         </div>
         <div>
-          <p className="text-xs font-bold text-white/45 mb-1">{uc.sellerLabel}</p>
-          <p className="text-sm leading-relaxed text-white/65 italic">{'"'}{uc.seller}{'"'}</p>
+          <p className="text-xs font-bold text-muted-foreground/60 mb-1">{uc.sellerLabel}</p>
+          <p className="text-sm leading-relaxed text-muted-foreground italic">{'"'}{uc.seller}{'"'}</p>
         </div>
       </div>
 
       {/* Result */}
-      <div className="rounded-xl border border-white/5 bg-white/[0.03] px-4 py-3">
+      <div className="rounded-xl border border-border/10 bg-secondary/30 px-4 py-3">
         <p className="text-[10px] font-bold uppercase tracking-wider text-[#f0b400] mb-1">Result</p>
-        <p className="text-xs font-medium leading-relaxed text-white/55">{uc.result}</p>
+        <p className="text-xs font-medium leading-relaxed text-muted-foreground">{uc.result}</p>
       </div>
     </div>
   )
@@ -121,6 +121,9 @@ export function UseCases() {
           <h2 className="mb-4 text-4xl font-bold tracking-tight text-foreground md:text-6xl text-balance">
             {t("useCases.title")}
           </h2>
+          <p className="mx-auto max-w-3xl text-base font-medium text-muted-foreground leading-relaxed text-pretty">
+            {t("useCases.desc")}
+          </p>
         </div>
 
         {/* Infinite marquee */}

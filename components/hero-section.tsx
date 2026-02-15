@@ -83,7 +83,7 @@ interface HeroSectionProps {
   onIntroComplete?: () => void
 }
 
-const LETTERS = "thalos".split("")
+const LETTERS = "Thalos".split("")
 
 export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
   const { t } = useLanguage()
@@ -97,18 +97,20 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
     return () => clearTimeout(t1)
   }, [onIntroComplete])
 
-  /* Per-letter fade on scroll: each letter has its own threshold */
+  /* Per-letter fade on scroll: each letter has its own threshold - smooth & fast */
   const onScroll = useCallback(() => {
     const scrollY = window.scrollY
     const vh = window.innerHeight
 
-    // Each letter starts fading at a staggered position
+    // Tighter stagger for faster, more fluid cascade effect
     const newOpacities = LETTERS.map((_, i) => {
-      const fadeStart = vh * 0.15 + i * vh * 0.12
-      const fadeEnd = fadeStart + vh * 0.35
+      const fadeStart = vh * 0.08 + i * vh * 0.08
+      const fadeEnd = fadeStart + vh * 0.22
       if (scrollY < fadeStart) return 1
       if (scrollY > fadeEnd) return 0
-      return 1 - (scrollY - fadeStart) / (fadeEnd - fadeStart)
+      // Smooth ease-out curve for fluid feel
+      const raw = 1 - (scrollY - fadeStart) / (fadeEnd - fadeStart)
+      return raw * raw
     })
     setLetterOpacities(newOpacities)
 
@@ -137,12 +139,12 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
         {LETTERS.map((letter, i) => (
           <span
             key={i}
-            className="block font-black lowercase leading-[0.72] text-white"
+            className="block font-black leading-[0.72] text-foreground"
             style={{
               opacity: letterOpacities[i],
-              transition: "opacity 250ms cubic-bezier(0.4, 0, 0.2, 1)",
-              fontSize: "clamp(9rem, 17.5vh, 20rem)",
-              letterSpacing: "-0.05em",
+              transition: "opacity 120ms cubic-bezier(0.25, 0.1, 0.25, 1)",
+              fontSize: "clamp(10rem, 19vh, 24rem)",
+              letterSpacing: "-0.04em",
             }}
           >
             {letter}
@@ -154,12 +156,12 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
       <div className="relative z-10 flex min-h-[100dvh] items-center px-6 lg:px-16 xl:px-20 py-32">
         <div className="mx-auto w-full max-w-7xl">
           {/* Mobile THALOS horizontal */}
-          <div className="flex md:hidden justify-center mb-10 gap-1">
+          <div className="flex md:hidden justify-center mb-10 gap-0.5">
             {LETTERS.map((letter, i) => (
               <span
                 key={i}
-                className="animate-fade-in-up text-7xl font-black lowercase text-white/90"
-                style={{ animationDelay: `${i * 120}ms`, animationFillMode: "both" }}
+                className="animate-fade-in-up text-7xl font-black text-foreground/90"
+                style={{ animationDelay: `${i * 100}ms`, animationFillMode: "both" }}
               >
                 {letter}
               </span>
@@ -167,15 +169,15 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
           </div>
 
           <div className="max-w-3xl mx-auto text-center">
-            <h1 className="animate-fade-in-up animation-delay-200 text-4xl font-bold tracking-tight text-white md:text-5xl lg:text-6xl xl:text-7xl text-balance">
+            <h1 className="animate-fade-in-up animation-delay-200 text-4xl font-bold tracking-tight text-foreground md:text-5xl lg:text-6xl xl:text-7xl text-balance">
               Secure Payments
             </h1>
-            <p className="mt-3 animate-fade-in-up animation-delay-400 text-4xl font-bold tracking-tight text-white md:text-5xl lg:text-6xl xl:text-7xl">
+            <p className="mt-3 animate-fade-in-up animation-delay-400 text-4xl font-bold tracking-tight text-foreground md:text-5xl lg:text-6xl xl:text-7xl">
               with <TypewriterEscrows />
             </p>
 
             <div className="mt-16 max-w-2xl mx-auto animate-fade-in-up animation-delay-600">
-              <p className="text-lg md:text-xl font-medium leading-relaxed text-white/65 text-pretty">
+              <p className="text-lg md:text-xl font-medium leading-relaxed text-muted-foreground text-pretty">
                 <span className="text-[#f0b400] font-bold">{"<We are>"}</span>{" "}
                 {t("hero.weAre")}
               </p>
@@ -209,10 +211,10 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
               {t("hero.trustLayer")}
             </p>
 
-            <div className="space-y-8 text-lg font-medium leading-relaxed text-white/70 text-left max-w-2xl mx-auto">
+            <div className="space-y-8 text-lg font-medium leading-relaxed text-muted-foreground text-left max-w-2xl mx-auto">
               <p>{t("hero.trust1")}</p>
               <p>
-                {t("hero.trust2a")} <span className="text-white font-semibold">{t("hero.trust2highlight")}</span>{t("hero.trust2b")}
+                {t("hero.trust2a")} <span className="text-foreground font-semibold">{t("hero.trust2highlight")}</span>{t("hero.trust2b")}
               </p>
               <p>{t("hero.trust3")}</p>
               <div className="pt-6 text-center">
@@ -234,7 +236,7 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
               variant="outline"
               size="lg"
               onClick={() => onNavigate("how-it-works")}
-              className="h-14 rounded-full border-white/30 bg-white/5 px-12 text-base font-bold text-white shadow-[0_6px_0_rgba(255,255,255,0.08),0_8px_24px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.15)] hover:bg-white/10 hover:shadow-[0_4px_0_rgba(255,255,255,0.08),0_6px_20px_rgba(0,0,0,0.4)] hover:translate-y-[2px] active:shadow-[0_1px_0_rgba(255,255,255,0.08),0_2px_8px_rgba(0,0,0,0.3)] active:translate-y-[4px] transition-all duration-200"
+              className="h-14 rounded-full border-border/40 bg-secondary/50 px-12 text-base font-bold text-foreground shadow-[0_6px_0_rgba(0,0,0,0.08),0_8px_24px_rgba(0,0,0,0.15)] hover:bg-secondary hover:shadow-[0_4px_0_rgba(0,0,0,0.08),0_6px_20px_rgba(0,0,0,0.15)] hover:translate-y-[2px] active:shadow-[0_1px_0_rgba(0,0,0,0.08),0_2px_8px_rgba(0,0,0,0.1)] active:translate-y-[4px] transition-all duration-200"
             >
               {t("hero.cta2")}
             </Button>

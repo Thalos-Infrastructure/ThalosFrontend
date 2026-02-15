@@ -41,16 +41,9 @@ const translations: Record<Lang, Record<string, string>> = {
 
     // Where Thalos Applies
     "profiles.tag": "[Where Thalos Applies]",
-    "profiles.title": "Industries We Serve",
-    "profiles.desc": "From freelancers securing project payments to enterprises managing multi-party procurement, Thalos provides the trust infrastructure for every transaction that matters.",
-    "profiles.commerce": "Commerce & Trade",
-    "profiles.realEstate": "Real Estate",
-    "profiles.freelance": "Freelance & Digital",
-    "profiles.tourism": "Tourism & Events",
-    "profiles.enterprise": "Enterprise",
+    "profiles.desc": "Anywhere there is counterparty risk, payment uncertainty, milestone delivery, high-value exchange, or cross-border friction — Thalos can apply.",
 
     // Profiles
-    "profiles.title": "One Platform, Many Solutions",
     "profiles.personal": "Personal",
     "profiles.personalDesc": "Protect your freelance payments, rental deposits, and peer-to-peer transactions with simple escrow agreements.",
     "profiles.business": "Enterprise",
@@ -68,6 +61,7 @@ const translations: Record<Lang, Record<string, string>> = {
     // Use Cases
     "useCases.tag": "[Use Cases]",
     "useCases.title": "One Platform, Many Solutions",
+    "useCases.desc": "From freelancers securing project payments to enterprises managing multi-party procurement, Thalos provides the trust infrastructure for every transaction that matters.",
 
     // Platform Builder
     "builder.tag": "[Platform Builder]",
@@ -130,7 +124,7 @@ const translations: Record<Lang, Record<string, string>> = {
     "footer.emailUs": "Email Us",
     "footer.followOnX": "Follow on X",
     "footer.rights": "All rights reserved.",
-    "footer.visionTeam": "Vision & Team",
+    "footer.visionTeam": "Vision & Mission",
     "footer.documentation": "Documentation",
 
     // Sign In
@@ -200,6 +194,30 @@ const translations: Record<Lang, Record<string, string>> = {
     "whoCanUse.agenciesDesc": "Secure travel packages, event contracts, and service agreements with conditional payment releases tied to deliverables.",
     "whoCanUse.developers": "Developers & Integrators",
     "whoCanUse.developersDesc": "Use the Thalos API to build custom escrow workflows into any application on the Stellar network.",
+
+    // Vision & Mission
+    "vision.tag": "[Vision & Mission]",
+    "vision.title": "Building the Trust Layer for Global Commerce",
+    "vision.vision": "Our Vision",
+    "vision.visionText": "A world where every transaction, no matter how complex, is executed with trust, transparency, and programmable certainty, without relying on intermediaries.",
+    "vision.mission": "Our Mission",
+    "vision.missionText": "To build the leading decentralized escrow and trust infrastructure on Stellar, empowering individuals, entrepreneurs, and businesses to transact securely across industries and borders.",
+    "vision.techTitle": "Core Technology Stack",
+    "vision.techDesc": "Each layer of Thalos is designed to work together, creating a complete trust infrastructure for programmable payments.",
+    "vision.T": "Trust Infrastructure",
+    "vision.TDesc": "The foundational layer that enables trustless transactions between parties who have never met.",
+    "vision.h": "Hybrid Settlement Layer",
+    "vision.hDesc": "Combining on-chain security with off-chain speed for optimal settlement.",
+    "vision.a": "Agreement Engine",
+    "vision.aDesc": "Smart contract logic that defines, enforces, and executes multi-party agreements.",
+    "vision.l": "Locked Funds",
+    "vision.lDesc": "Secure on-chain fund locking with conditional release mechanisms.",
+    "vision.o": "On-chain Logic",
+    "vision.oDesc": "Transparent, auditable, and immutable transaction logic on Stellar.",
+    "vision.s": "Stellar-based",
+    "vision.sDesc": "Built natively on Stellar for 5-second settlements and near-zero fees.",
+    "vision.trustlessWork": "Trustless Work",
+    "vision.trustlessWorkDesc": "Powered by Trustless Work escrow protocol for decentralized, non-custodial fund management.",
 
     // Theme
     "theme.light": "Light",
@@ -282,13 +300,7 @@ const translations: Record<Lang, Record<string, string>> = {
 
     // Where Thalos Applies
     "profiles.tag": "[Donde Aplica Thalos]",
-    "profiles.title": "Industrias que Servimos",
-    "profiles.desc": "Desde freelancers asegurando pagos de proyectos hasta empresas gestionando adquisiciones multi-parte, Thalos provee la infraestructura de confianza para cada transaccion que importa.",
-    "profiles.commerce": "Comercio",
-    "profiles.realEstate": "Bienes Raices",
-    "profiles.freelance": "Freelance y Digital",
-    "profiles.tourism": "Turismo y Eventos",
-    "profiles.enterprise": "Empresarial",
+    "profiles.desc": "Donde exista riesgo de contraparte, incertidumbre en pagos, entrega por hitos, intercambios de alto valor o friccion transfronteriza — Thalos puede aplicarse.",
 
     // Profiles
     "profiles.personal": "Personal",
@@ -308,6 +320,7 @@ const translations: Record<Lang, Record<string, string>> = {
     // Use Cases
     "useCases.tag": "[Casos de Uso]",
     "useCases.title": "Una Plataforma, Muchas Soluciones",
+    "useCases.desc": "Desde freelancers asegurando pagos de proyectos hasta empresas gestionando adquisiciones multi-parte, Thalos provee la infraestructura de confianza para cada transaccion que importa.",
 
     // Platform Builder
     "builder.tag": "[Constructor de Plataforma]",
@@ -370,7 +383,7 @@ const translations: Record<Lang, Record<string, string>> = {
     "footer.emailUs": "Escribenos",
     "footer.followOnX": "Siguenos en X",
     "footer.rights": "Todos los derechos reservados.",
-    "footer.visionTeam": "Vision y Equipo",
+    "footer.visionTeam": "Vision y Mision",
     "footer.documentation": "Documentacion",
 
     // Sign In
@@ -440,6 +453,30 @@ const translations: Record<Lang, Record<string, string>> = {
     "whoCanUse.agenciesDesc": "Asegura paquetes de viaje, contratos de eventos y acuerdos de servicios con liberaciones de pago condicionales.",
     "whoCanUse.developers": "Desarrolladores e Integradores",
     "whoCanUse.developersDesc": "Usa la API de Thalos para construir flujos de escrow personalizados en cualquier aplicacion sobre la red Stellar.",
+
+    // Vision & Mission
+    "vision.tag": "[Vision y Mision]",
+    "vision.title": "Construyendo la Capa de Confianza para el Comercio Global",
+    "vision.vision": "Nuestra Vision",
+    "vision.visionText": "Un mundo donde cada transaccion, sin importar su complejidad, se ejecuta con confianza, transparencia y certeza programable, sin depender de intermediarios.",
+    "vision.mission": "Nuestra Mision",
+    "vision.missionText": "Construir la infraestructura descentralizada de escrow y confianza lider sobre Stellar, empoderando a individuos, emprendedores y empresas para realizar transacciones seguras a traves de industrias y fronteras.",
+    "vision.techTitle": "Stack Tecnologico Principal",
+    "vision.techDesc": "Cada capa de Thalos esta disenada para trabajar en conjunto, creando una infraestructura de confianza completa para pagos programables.",
+    "vision.T": "Infraestructura de Confianza",
+    "vision.TDesc": "La capa fundamental que permite transacciones sin confianza entre partes que nunca se han conocido.",
+    "vision.h": "Capa de Liquidacion Hibrida",
+    "vision.hDesc": "Combinando seguridad on-chain con velocidad off-chain para una liquidacion optima.",
+    "vision.a": "Motor de Acuerdos",
+    "vision.aDesc": "Logica de contratos inteligentes que define, ejecuta y hace cumplir acuerdos multi-parte.",
+    "vision.l": "Fondos Bloqueados",
+    "vision.lDesc": "Bloqueo seguro de fondos on-chain con mecanismos de liberacion condicional.",
+    "vision.o": "Logica On-chain",
+    "vision.oDesc": "Logica de transacciones transparente, auditable e inmutable sobre Stellar.",
+    "vision.s": "Basado en Stellar",
+    "vision.sDesc": "Construido nativamente sobre Stellar para liquidaciones en 5 segundos y comisiones casi nulas.",
+    "vision.trustlessWork": "Trustless Work",
+    "vision.trustlessWorkDesc": "Impulsado por el protocolo de escrow Trustless Work para gestion de fondos descentralizada y no custodial.",
 
     // Theme
     "theme.light": "Claro",

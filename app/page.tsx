@@ -8,7 +8,6 @@ import { HeroSection } from "@/components/hero-section"
 import { HowItWorks } from "@/components/how-it-works"
 import { ProfileSelection } from "@/components/profile-selection"
 import { UseCases } from "@/components/use-cases"
-import { WhoCanUse } from "@/components/who-can-use"
 import { DashboardSection } from "@/components/dashboard-section"
 import { FAQ } from "@/components/faq"
 import { Footer } from "@/components/footer"
@@ -98,10 +97,10 @@ export default function Home() {
               ].map((stat) => (
                 <div
                   key={stat.label}
-                  className="section-reveal rounded-2xl border border-white/10 bg-card/50 p-6 backdrop-blur-sm shadow-[0_6px_0_rgba(0,0,0,0.15),0_8px_24px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.08)] transition-all duration-400 hover:border-[#b0c4de]/25"
+                  className="section-reveal rounded-2xl border border-border/20 bg-card/50 p-6 backdrop-blur-sm shadow-[0_6px_0_rgba(0,0,0,0.08),0_8px_24px_rgba(0,0,0,0.12)] transition-all duration-400 hover:border-[#f0b400]/20"
                 >
                   <p className="text-sm font-semibold text-[#f0b400]">{stat.label}</p>
-                  <p className="mt-1 font-semibold text-white">{stat.value}</p>
+                  <p className="mt-1 font-semibold text-foreground">{stat.value}</p>
                 </div>
               ))}
             </div>
@@ -117,10 +116,6 @@ export default function Home() {
 
           <div ref={setRef("use-cases")} className="mt-24">
             <UseCases />
-          </div>
-
-          <div ref={setRef("who-can-use")} className="mt-24">
-            <WhoCanUse />
           </div>
 
           <div ref={setRef("dashboard")} className="mt-24">
