@@ -288,8 +288,8 @@ export default function PersonalDashboardPage() {
                 </div>
               )}
             </div>
-            <ThemeToggle />
             <LanguageToggle />
+            <ThemeToggle />
           </div>
         </nav>
       </header>

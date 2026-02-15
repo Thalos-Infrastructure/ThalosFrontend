@@ -285,8 +285,8 @@ export default function BusinessDashboardPage() {
                 </div>
               )}
             </div>
-            <ThemeToggle />
             <LanguageToggle />
+            <ThemeToggle />
           </div>
         </nav>
       </header>

@@ -85,11 +85,11 @@ interface HeroSectionProps {
 
 const LETTERS_DATA = [
   { letter: "T", word: "Trust" },
-  { letter: "h", word: "Hybrid" },
+  { letter: "h", word: "Honor" },
   { letter: "a", word: "Agreement" },
-  { letter: "l", word: "Locked" },
-  { letter: "o", word: "On-chain" },
-  { letter: "s", word: "Stellar" },
+  { letter: "l", word: "Logic" },
+  { letter: "o", word: "Openness" },
+  { letter: "s", word: "Security" },
 ]
 
 export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {

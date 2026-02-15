@@ -219,6 +219,24 @@ const translations: Record<Lang, Record<string, string>> = {
     "vision.trustlessWork": "Trustless Work",
     "vision.trustlessWorkDesc": "Powered by Trustless Work escrow protocol for decentralized, non-custodial fund management.",
 
+    // THALOS vertical words (vision page)
+    "thalos.T": "Trust",
+    "thalos.h": "Honor",
+    "thalos.a": "Agreement",
+    "thalos.l": "Logic",
+    "thalos.o": "Openness",
+    "thalos.s": "Security",
+
+    // Team
+    "team.title": "The Team",
+    "team.desc": "The people building the trust layer for global commerce.",
+    "team.manuel": "Manuel Jimenez",
+    "team.manuelRole": "Founder & CEO",
+    "team.manuelBio": "Building the infrastructure for programmable trust. Passionate about financial inclusion and decentralized commerce across Latin America and beyond.",
+    "team.member2": "Gabriel Arango",
+    "team.member2Role": "Co-Founder & CTO",
+    "team.member2Bio": "Full-stack architect focused on Stellar integration and smart contract design. Turning complex escrow logic into elegant, reliable systems.",
+
     // Theme
     "theme.light": "Light",
     "theme.dark": "Dark",
@@ -477,6 +495,24 @@ const translations: Record<Lang, Record<string, string>> = {
     "vision.sDesc": "Construido nativamente sobre Stellar para liquidaciones en 5 segundos y comisiones casi nulas.",
     "vision.trustlessWork": "Trustless Work",
     "vision.trustlessWorkDesc": "Impulsado por el protocolo de escrow Trustless Work para gestion de fondos descentralizada y no custodial.",
+
+    // THALOS vertical words
+    "thalos.T": "Confianza",
+    "thalos.h": "Honor",
+    "thalos.a": "Acuerdo",
+    "thalos.l": "Logica",
+    "thalos.o": "Apertura",
+    "thalos.s": "Seguridad",
+
+    // Team
+    "team.title": "El Equipo",
+    "team.desc": "Las personas construyendo la capa de confianza para el comercio global.",
+    "team.manuel": "Manuel Jimenez",
+    "team.manuelRole": "Fundador y CEO",
+    "team.manuelBio": "Construyendo la infraestructura para confianza programable. Apasionado por la inclusion financiera y el comercio descentralizado en Latinoamerica y mas alla.",
+    "team.member2": "Gabriel Arango",
+    "team.member2Role": "Co-Fundador y CTO",
+    "team.member2Bio": "Arquitecto full-stack enfocado en integracion Stellar y diseno de contratos inteligentes. Convirtiendo logica compleja de escrow en sistemas elegantes y confiables.",
 
     // Theme
     "theme.light": "Claro",
