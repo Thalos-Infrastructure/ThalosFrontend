@@ -41,7 +41,13 @@ const translations: Record<Lang, Record<string, string>> = {
 
     // Where Thalos Applies
     "profiles.tag": "[Where Thalos Applies]",
-    "profiles.desc": "Anywhere there is counterparty risk, payment uncertainty, milestone delivery, high-value exchange, or cross-border friction — Thalos can apply.",
+    "profiles.title": "Industries We Serve",
+    "profiles.desc": "From freelancers securing project payments to enterprises managing multi-party procurement, Thalos provides the trust infrastructure for every transaction that matters.",
+    "profiles.commerce": "Commerce & Trade",
+    "profiles.realEstate": "Real Estate",
+    "profiles.freelance": "Freelance & Digital",
+    "profiles.tourism": "Tourism & Events",
+    "profiles.enterprise": "Enterprise",
 
     // Profiles
     "profiles.title": "One Platform, Many Solutions",
@@ -276,10 +282,15 @@ const translations: Record<Lang, Record<string, string>> = {
 
     // Where Thalos Applies
     "profiles.tag": "[Donde Aplica Thalos]",
-    "profiles.desc": "Donde haya riesgo de contraparte, incertidumbre de pago, entrega por hitos, intercambio de alto valor o friccion transfronteriza — Thalos puede aplicarse.",
+    "profiles.title": "Industrias que Servimos",
+    "profiles.desc": "Desde freelancers asegurando pagos de proyectos hasta empresas gestionando adquisiciones multi-parte, Thalos provee la infraestructura de confianza para cada transaccion que importa.",
+    "profiles.commerce": "Comercio",
+    "profiles.realEstate": "Bienes Raices",
+    "profiles.freelance": "Freelance y Digital",
+    "profiles.tourism": "Turismo y Eventos",
+    "profiles.enterprise": "Empresarial",
 
     // Profiles
-    "profiles.title": "Una Plataforma, Muchas Soluciones",
     "profiles.personal": "Personal",
     "profiles.personalDesc": "Protege tus pagos freelance, depositos de alquiler y transacciones entre pares con acuerdos de escrow simples.",
     "profiles.business": "Empresa",

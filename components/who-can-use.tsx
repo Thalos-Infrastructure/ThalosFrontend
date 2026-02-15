@@ -31,7 +31,7 @@ export function WhoCanUse() {
           <h2 className="mb-4 text-4xl font-bold tracking-tight text-foreground md:text-5xl text-balance">
             {t("whoCanUse.title")}
           </h2>
-          <p className="mx-auto max-w-3xl text-base font-medium text-white/55 leading-relaxed text-pretty">
+          <p className="mx-auto max-w-3xl text-base font-medium text-muted-foreground leading-relaxed text-pretty">
             {t("whoCanUse.desc")}
           </p>
         </div>
@@ -50,7 +50,7 @@ export function WhoCanUse() {
               <h3 className="mb-2 text-base font-bold text-foreground">
                 {t(`whoCanUse.${persona.key}`)}
               </h3>
-              <p className="text-sm font-medium text-white/45 leading-relaxed">
+              <p className="text-sm font-medium text-muted-foreground leading-relaxed">
                 {t(`whoCanUse.${persona.key}Desc`)}
               </p>
             </div>
