@@ -230,12 +230,18 @@ const translations: Record<Lang, Record<string, string>> = {
     // Team
     "team.title": "The Team",
     "team.desc": "The people building the trust layer for global commerce.",
-    "team.manuel": "Manuel Jimenez",
-    "team.manuelRole": "Founder & CEO",
-    "team.manuelBio": "Building the infrastructure for programmable trust. Passionate about financial inclusion and decentralized commerce across Latin America and beyond.",
-    "team.member2": "Gabriel Arango",
-    "team.member2Role": "Co-Founder & CTO",
-    "team.member2Bio": "Full-stack architect focused on Stellar integration and smart contract design. Turning complex escrow logic into elegant, reliable systems.",
+    "team.leandro": "Leandro Masotti",
+    "team.leandroRole": "Full Stack Developer",
+    "team.diego": "Diego Raul",
+    "team.diegoRole": "Full Stack Developer",
+    "team.manuel": "Manuel Jimenez G",
+    "team.manuelRole": "Product",
+
+    // Get Involved
+    "getInvolved.title": "Get Involved",
+    "getInvolved.desc": "We are building infrastructure for the future of digital agreements and trust-minimized work. If you are interested in collaboration, feedback, or partnerships:",
+    "getInvolved.email": "Email Us",
+    "getInvolved.repo": "View Repository",
 
     // Theme
     "theme.light": "Light",
@@ -507,12 +513,18 @@ const translations: Record<Lang, Record<string, string>> = {
     // Team
     "team.title": "El Equipo",
     "team.desc": "Las personas construyendo la capa de confianza para el comercio global.",
-    "team.manuel": "Manuel Jimenez",
-    "team.manuelRole": "Fundador y CEO",
-    "team.manuelBio": "Construyendo la infraestructura para confianza programable. Apasionado por la inclusion financiera y el comercio descentralizado en Latinoamerica y mas alla.",
-    "team.member2": "Gabriel Arango",
-    "team.member2Role": "Co-Fundador y CTO",
-    "team.member2Bio": "Arquitecto full-stack enfocado en integracion Stellar y diseno de contratos inteligentes. Convirtiendo logica compleja de escrow en sistemas elegantes y confiables.",
+    "team.leandro": "Leandro Masotti",
+    "team.leandroRole": "Desarrollador Full Stack",
+    "team.diego": "Diego Raul",
+    "team.diegoRole": "Desarrollador Full Stack",
+    "team.manuel": "Manuel Jimenez G",
+    "team.manuelRole": "Producto",
+
+    // Get Involved
+    "getInvolved.title": "Participa",
+    "getInvolved.desc": "Estamos construyendo infraestructura para el futuro de los acuerdos digitales y el trabajo con confianza minimizada. Si te interesa colaborar, dar feedback o establecer alianzas:",
+    "getInvolved.email": "Escribenos",
+    "getInvolved.repo": "Ver Repositorio",
 
     // Theme
     "theme.light": "Claro",

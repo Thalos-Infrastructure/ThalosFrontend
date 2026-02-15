@@ -30,20 +30,22 @@ const TECH_STACK = [
 /* ── Team ── */
 const TEAM = [
   {
-    nameKey: "team.manuel",
-    roleKey: "team.manuelRole",
-    bioKey: "team.manuelBio",
-    image: "/manuel.jpg",
-    github: "https://github.com/manueljg1999",
-    x: "https://x.com/Manuel_JG99",
+    nameKey: "team.leandro",
+    roleKey: "team.leandroRole",
+    github: "https://github.com/leandromasotti",
+    ghUser: "leandromasotti",
   },
   {
-    nameKey: "team.member2",
-    roleKey: "team.member2Role",
-    bioKey: "team.member2Bio",
-    image: "/gabriel.jpg",
-    github: "https://github.com/gabrielarango",
-    x: "",
+    nameKey: "team.diego",
+    roleKey: "team.diegoRole",
+    github: "https://github.com/Kalchaqui",
+    ghUser: "Kalchaqui",
+  },
+  {
+    nameKey: "team.manuel",
+    roleKey: "team.manuelRole",
+    github: "https://github.com/ManuelJG1999",
+    ghUser: "ManuelJG1999",
   },
 ]
 
@@ -216,7 +218,7 @@ export default function AboutPage() {
             </RevealBlock>
             <RevealBlock delay={200}>
               <p className="text-lg font-medium leading-relaxed text-muted-foreground max-w-2xl text-pretty">
-                Thalos is a programmable trust infrastructure built on Stellar, designed to eliminate counterparty risk from every transaction that matters.
+                {t("vision.visionText")}
               </p>
             </RevealBlock>
           </div>
@@ -331,7 +333,7 @@ export default function AboutPage() {
         <div className="mx-6 mb-24 h-px bg-gradient-to-r from-border/20 via-border/10 to-transparent lg:mx-16 max-w-3xl" />
 
         {/* ═══════ TEAM ═══════ */}
-        <section className="px-6 pb-32 lg:px-16">
+        <section className="px-6 pb-24 lg:px-16">
           <div className="max-w-3xl">
             <RevealBlock>
               <p className="mb-3 text-sm font-bold uppercase tracking-[0.2em] text-[#f0b400]">
@@ -342,57 +344,72 @@ export default function AboutPage() {
               </p>
             </RevealBlock>
 
-            <div className="grid gap-8 sm:grid-cols-2">
+            <div className="grid gap-6 sm:grid-cols-3">
               {TEAM.map((member, idx) => (
-                <RevealBlock key={member.nameKey} delay={idx * 120}>
-                  <div className="group rounded-2xl border border-border/15 bg-card/40 p-6 backdrop-blur-sm transition-all duration-300 hover:border-[#f0b400]/15 hover:bg-card/60">
-                    {/* Avatar */}
-                    <div className="mb-5 flex items-center gap-4">
-                      <div className="relative h-16 w-16 overflow-hidden rounded-full border-2 border-border/20">
-                        <Image
-                          src={member.image}
-                          alt={t(member.nameKey)}
-                          fill
-                          className="object-cover"
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement
-                            target.style.display = "none"
-                          }}
-                        />
-                        <div className="absolute inset-0 flex items-center justify-center bg-secondary text-2xl font-bold text-muted-foreground">
-                          {t(member.nameKey).charAt(0)}
-                        </div>
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-bold text-foreground">{t(member.nameKey)}</h3>
-                        <p className="text-sm font-semibold text-[#f0b400]">{t(member.roleKey)}</p>
-                      </div>
+                <RevealBlock key={member.nameKey} delay={idx * 100}>
+                  <a
+                    href={member.github}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group flex flex-col items-center rounded-2xl border border-border/15 bg-card/40 p-6 backdrop-blur-sm transition-all duration-300 hover:border-[#f0b400]/20 hover:bg-card/60"
+                  >
+                    {/* GitHub Avatar */}
+                    <div className="relative mb-4 h-20 w-20 overflow-hidden rounded-full border-2 border-border/20 transition-all duration-300 group-hover:border-[#f0b400]/30">
+                      <Image
+                        src={`https://github.com/${member.ghUser}.png`}
+                        alt={t(member.nameKey)}
+                        fill
+                        className="object-cover"
+                      />
                     </div>
-
-                    {/* Bio */}
-                    <p className="mb-5 text-sm font-medium leading-relaxed text-muted-foreground">
-                      {t(member.bioKey)}
-                    </p>
-
-                    {/* Social links */}
-                    <div className="flex items-center gap-3">
-                      {member.github && (
-                        <a href={member.github} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground">
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
-                          GitHub
-                        </a>
-                      )}
-                      {member.x && (
-                        <a href={member.x} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground">
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-                          X
-                        </a>
-                      )}
+                    <h3 className="text-base font-bold text-foreground text-center">{t(member.nameKey)}</h3>
+                    <p className="mt-1 text-sm font-semibold text-[#f0b400] text-center">{t(member.roleKey)}</p>
+                    {/* GitHub link */}
+                    <div className="mt-3 flex items-center gap-1.5 text-xs font-medium text-muted-foreground transition-colors group-hover:text-foreground">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                      {member.ghUser}
                     </div>
-                  </div>
+                  </a>
                 </RevealBlock>
               ))}
             </div>
+          </div>
+        </section>
+
+        {/* ═══════ SEPARATOR ═══════ */}
+        <div className="mx-6 mb-24 h-px bg-gradient-to-r from-border/20 via-border/10 to-transparent lg:mx-16 max-w-3xl" />
+
+        {/* ═══════ GET INVOLVED ═══════ */}
+        <section className="px-6 pb-24 lg:px-16">
+          <div className="max-w-3xl">
+            <RevealBlock>
+              <p className="mb-3 text-sm font-bold uppercase tracking-[0.2em] text-[#f0b400]">
+                {t("getInvolved.title")}
+              </p>
+              <p className="mb-8 text-lg font-medium text-muted-foreground leading-relaxed">
+                {t("getInvolved.desc")}
+              </p>
+            </RevealBlock>
+            <RevealBlock delay={80}>
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
+                <a
+                  href="mailto:thalosinfrastructure@gmail.com"
+                  className="inline-flex items-center gap-2 rounded-full border border-[#f0b400]/20 bg-[#f0b400]/5 px-6 py-3 text-sm font-bold text-[#f0b400] transition-all duration-300 hover:bg-[#f0b400]/10 hover:border-[#f0b400]/30"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                  {t("getInvolved.email")}
+                </a>
+                <a
+                  href="https://github.com/Thalos-Infrastructure"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-full border border-border/20 bg-secondary/30 px-6 py-3 text-sm font-bold text-foreground transition-all duration-300 hover:bg-secondary/60 hover:border-border/40"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                  {t("getInvolved.repo")}
+                </a>
+              </div>
+            </RevealBlock>
           </div>
         </section>
 
@@ -415,7 +432,7 @@ export default function AboutPage() {
 
         {/* ═══════ FOOTER ═══════ */}
         <footer className="border-t border-border/10">
-          <div className="mx-auto max-w-7xl px-6 py-8 flex items-center justify-between">
+          <div className="mx-auto max-w-7xl px-6 py-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
               <Image src="/thalos-icon.png" alt="Thalos" width={32} height={32} className="h-8 w-8 object-contain" />
               <span className="text-xs text-muted-foreground">&copy; {new Date().getFullYear()} Thalos Infrastructure</span>
@@ -426,6 +443,9 @@ export default function AboutPage() {
               </a>
               <a href="https://x.com/Thalos_infra" target="_blank" rel="noopener noreferrer" className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">
                 X / Twitter
+              </a>
+              <a href="mailto:thalosinfrastructure@gmail.com" className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">
+                Email
               </a>
             </div>
           </div>
