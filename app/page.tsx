@@ -47,7 +47,7 @@ export default function Home() {
   }, [])
 
   // Overlay opacity: starts at 0.40 (slightly visible), goes to 0.94 at footer
-  const overlayOpacity = 0.50 + scrollDarken * 0.45
+  const overlayOpacity = 0.35 + scrollDarken * 0.50
 
   if (loading) return <ThalosLoader />
 
@@ -55,7 +55,7 @@ export default function Home() {
     <div className="relative min-h-screen bg-background text-foreground">
       {/* Ocean collage background */}
       <div className="pointer-events-none fixed inset-0 z-0" aria-hidden="true">
-        <div className="absolute inset-0 grid grid-cols-3 grid-rows-2 gap-0 opacity-30">
+        <div className="absolute inset-0 grid grid-cols-3 grid-rows-2 gap-0 opacity-40">
           <div className="col-span-2 row-span-1 bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1505142468610-359e7d316be0?w=1920&q=85&auto=format&fit=crop')" }} />
           <div className="col-span-1 row-span-2 bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=1920&q=85&auto=format&fit=crop')" }} />
           <div className="col-span-1 row-span-1 bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1920&q=85&auto=format&fit=crop')" }} />

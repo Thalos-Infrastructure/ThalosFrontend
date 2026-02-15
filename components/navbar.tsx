@@ -26,6 +26,7 @@ export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }
   const [showSignIn, setShowSignIn] = useState(false)
   const [visible, setVisible] = useState(true)
   const [useCaseOpen, setUseCaseOpen] = useState(false)
+  const [expandedCat, setExpandedCat] = useState<string | null>(null)
   const lastScrollY = useRef(0)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
@@ -115,26 +116,29 @@ export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={cn("transition-transform duration-200", useCaseOpen && "rotate-180")}><path d="M6 9l6 6 6-6" /></svg>
               </button>
               {useCaseOpen && (
-                <div className="absolute top-full left-1/2 z-50 mt-3 -translate-x-1/2 w-[420px] rounded-xl border border-white/10 bg-[#111113]/95 p-4 backdrop-blur-xl shadow-[0_12px_40px_rgba(0,0,0,0.5)]">
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-3 max-h-[420px] overflow-y-auto scrollbar-hide">
+                <div className="absolute top-full left-1/2 z-50 mt-3 -translate-x-1/2 w-64 rounded-xl border border-white/10 bg-[#111113]/95 p-2 backdrop-blur-xl shadow-[0_12px_40px_rgba(0,0,0,0.5)]">
+                  <div className="max-h-[460px] overflow-y-auto scrollbar-hide">
                     {useCaseCategories.map((cat) => (
                       <div key={cat.label}>
                         <button
-                          onClick={() => { onNavigate("use-cases"); setUseCaseOpen(false) }}
-                          className="mb-1 text-xs font-bold uppercase tracking-wider text-[#f0b400]/80 hover:text-[#f0b400] transition-colors"
+                          onClick={() => setExpandedCat(expandedCat === cat.label ? null : cat.label)}
+                          className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-xs font-bold uppercase tracking-wider text-[#f0b400]/80 transition-colors hover:bg-white/5 hover:text-[#f0b400]"
                         >
                           {cat.label}
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={cn("transition-transform duration-200", expandedCat === cat.label && "rotate-180")}><path d="M6 9l6 6 6-6" /></svg>
                         </button>
-                        <div className="flex flex-col">
-                          {cat.items.map((item) => (
-                            <button
-                              key={item}
-                              onClick={() => { onNavigate("use-cases"); setUseCaseOpen(false) }}
-                              className="rounded-md px-2 py-1 text-left text-xs font-medium text-white/50 transition-colors hover:bg-white/8 hover:text-white"
-                            >
-                              {item}
-                            </button>
-                          ))}
+                        <div className={cn("overflow-hidden transition-all duration-300", expandedCat === cat.label ? "max-h-40 opacity-100" : "max-h-0 opacity-0")}>
+                          <div className="flex flex-col pb-1 pl-2">
+                            {cat.items.map((item) => (
+                              <button
+                                key={item}
+                                onClick={() => { onNavigate("use-cases"); setUseCaseOpen(false); setExpandedCat(null) }}
+                                className="rounded-md px-3 py-1.5 text-left text-xs font-medium text-white/50 transition-colors hover:bg-white/8 hover:text-white"
+                              >
+                                {item}
+                              </button>
+                            ))}
+                          </div>
                         </div>
                       </div>
                     ))}
