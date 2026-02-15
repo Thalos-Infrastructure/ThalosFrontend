@@ -7,10 +7,17 @@ import { cn } from "@/lib/utils"
 import { SignInPanel } from "@/components/sign-in-panel"
 import { useLanguage, LanguageToggle } from "@/lib/i18n"
 
-const useCaseCategories = [
-  "Digital Economy", "Commerce & Trade", "Real Estate", "Automotive",
-  "Events & Services", "Education", "Agriculture", "Construction",
-  "Tourism & Hospitality", "Enterprise Procurement",
+const useCaseCategories: { label: string; items: string[] }[] = [
+  { label: "Digital Economy", items: ["Freelancers", "Agencies", "Developers", "Creators"] },
+  { label: "Commerce & Trade", items: ["Import/Export", "Wholesale", "Marketplaces"] },
+  { label: "Real Estate", items: ["Property Sales", "Rental Agreements", "Leasing"] },
+  { label: "Automotive", items: ["Dealerships", "Peer-to-Peer Sales", "Rentals"] },
+  { label: "Events & Services", items: ["Event Planners", "Weddings", "Catering"] },
+  { label: "Education", items: ["Online Academies", "Coaching", "Tutors"] },
+  { label: "Agriculture", items: ["Crop Pre-Sales", "Equipment Leasing"] },
+  { label: "Construction", items: ["Contractor Agreements", "Subcontractors"] },
+  { label: "Tourism", items: ["Travel Agencies", "Vacation Rentals", "Tours"] },
+  { label: "Enterprise", items: ["Vendor Agreements", "B2B Services"] },
 ]
 
 export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }) {
@@ -25,7 +32,6 @@ export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }
   const navLinks = [
     { label: t("nav.howItWorks"), section: "how-it-works" },
     { label: t("nav.solutions"), section: "profiles" },
-    { label: t("nav.buildFlow"), section: "builder" },
   ]
 
   // Close dropdown on outside click
@@ -109,16 +115,30 @@ export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={cn("transition-transform duration-200", useCaseOpen && "rotate-180")}><path d="M6 9l6 6 6-6" /></svg>
               </button>
               {useCaseOpen && (
-                <div className="absolute top-full left-1/2 z-50 mt-3 -translate-x-1/2 w-56 rounded-xl border border-white/10 bg-[#111113]/95 p-2 backdrop-blur-xl shadow-[0_12px_40px_rgba(0,0,0,0.5)]">
-                  {useCaseCategories.map((cat) => (
-                    <button
-                      key={cat}
-                      onClick={() => { onNavigate("use-cases"); setUseCaseOpen(false) }}
-                      className="flex w-full items-center rounded-lg px-3 py-2 text-sm font-medium text-white/60 transition-colors hover:bg-white/10 hover:text-white"
-                    >
-                      {cat}
-                    </button>
-                  ))}
+                <div className="absolute top-full left-1/2 z-50 mt-3 -translate-x-1/2 w-[420px] rounded-xl border border-white/10 bg-[#111113]/95 p-4 backdrop-blur-xl shadow-[0_12px_40px_rgba(0,0,0,0.5)]">
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-3 max-h-[420px] overflow-y-auto scrollbar-hide">
+                    {useCaseCategories.map((cat) => (
+                      <div key={cat.label}>
+                        <button
+                          onClick={() => { onNavigate("use-cases"); setUseCaseOpen(false) }}
+                          className="mb-1 text-xs font-bold uppercase tracking-wider text-[#f0b400]/80 hover:text-[#f0b400] transition-colors"
+                        >
+                          {cat.label}
+                        </button>
+                        <div className="flex flex-col">
+                          {cat.items.map((item) => (
+                            <button
+                              key={item}
+                              onClick={() => { onNavigate("use-cases"); setUseCaseOpen(false) }}
+                              className="rounded-md px-2 py-1 text-left text-xs font-medium text-white/50 transition-colors hover:bg-white/8 hover:text-white"
+                            >
+                              {item}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>

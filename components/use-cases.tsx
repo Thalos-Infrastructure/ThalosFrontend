@@ -105,7 +105,7 @@ function UseCaseCard({ uc }: { uc: typeof useCases[number] }) {
 
 export function UseCases() {
   const { ref, isVisible } = useSectionReveal()
-  const { displayed: twText, isTyping: twActive } = useTypewriter("[Use Cases]", isVisible, { typeSpeed: 120, deleteSpeed: 60, pauseBeforeDelete: 2500, pauseBeforeType: 800 })
+  const { displayed: twText, isTyping: twActive } = useTypewriter("[Who Benefits]", isVisible, { typeSpeed: 120, deleteSpeed: 60, pauseBeforeDelete: 2500, pauseBeforeType: 800 })
 
   return (
     <section id="use-cases" className="relative py-28 overflow-hidden" ref={ref}>
@@ -117,10 +117,10 @@ export function UseCases() {
             <span className={cn("ml-0.5 inline-block h-4 w-0.5 bg-[#f0b400] align-middle", twActive ? "animate-pulse" : "opacity-0")} />
           </p>
           <h2 className="mb-4 text-4xl font-bold tracking-tight text-foreground md:text-6xl text-balance">
-            Real-World Scenarios
+            Use Cases
           </h2>
-          <p className="mx-auto max-w-2xl text-base font-medium text-white/55 leading-relaxed text-pretty">
-            A programmable trust layer for structured payments. Anywhere two parties need conditional value exchange — Thalos fits.
+          <p className="mx-auto max-w-3xl text-base font-medium text-white/55 leading-relaxed text-pretty">
+            Anywhere there is counterparty risk, payment uncertainty, milestone delivery, high-value exchange, or cross-border friction — Thalos can apply.
           </p>
         </div>
 

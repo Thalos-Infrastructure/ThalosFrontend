@@ -7,8 +7,8 @@ import { HeroSection } from "@/components/hero-section"
 import { HowItWorks } from "@/components/how-it-works"
 import { ProfileSelection } from "@/components/profile-selection"
 import { UseCases } from "@/components/use-cases"
-import { PlatformBuilder } from "@/components/platform-builder"
 import { DashboardSection } from "@/components/dashboard-section"
+import { FAQ } from "@/components/faq"
 import { Footer } from "@/components/footer"
 import { BottomBar } from "@/components/bottom-bar"
 
@@ -47,18 +47,22 @@ export default function Home() {
   }, [])
 
   // Overlay opacity: starts at 0.40 (slightly visible), goes to 0.94 at footer
-  const overlayOpacity = 0.40 + scrollDarken * 0.54
+  const overlayOpacity = 0.50 + scrollDarken * 0.45
 
   if (loading) return <ThalosLoader />
 
   return (
     <div className="relative min-h-screen bg-background text-foreground">
-      {/* Ocean background -- full, continuous, no cuts */}
-      <div
-        className="pointer-events-none fixed inset-0 z-0 bg-cover bg-center bg-no-repeat opacity-80"
-        style={{ backgroundImage: "url('/ocean-bg.png')" }}
-        aria-hidden="true"
-      />
+      {/* Ocean collage background */}
+      <div className="pointer-events-none fixed inset-0 z-0" aria-hidden="true">
+        <div className="absolute inset-0 grid grid-cols-3 grid-rows-2 gap-0 opacity-30">
+          <div className="col-span-2 row-span-1 bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1505142468610-359e7d316be0?w=1920&q=85&auto=format&fit=crop')" }} />
+          <div className="col-span-1 row-span-2 bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=1920&q=85&auto=format&fit=crop')" }} />
+          <div className="col-span-1 row-span-1 bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1920&q=85&auto=format&fit=crop')" }} />
+          <div className="col-span-1 row-span-1 bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1476673160081-cf065607f449?w=1920&q=85&auto=format&fit=crop')" }} />
+        </div>
+        <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-background/60 to-background/90" />
+      </div>
       {/* Dynamic darkening overlay based on scroll -- seamless transition */}
       <div
         className="pointer-events-none fixed inset-0 z-0 bg-background"
@@ -112,12 +116,12 @@ export default function Home() {
             <UseCases />
           </div>
 
-          <div ref={setRef("builder")} className="mt-24">
-            <PlatformBuilder />
-          </div>
-
           <div ref={setRef("dashboard")} className="mt-24">
             <DashboardSection />
+          </div>
+
+          <div className="mt-24">
+            <FAQ />
           </div>
 
           <div className="mt-20 pb-24">
