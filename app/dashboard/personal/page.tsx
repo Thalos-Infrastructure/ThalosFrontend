@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback, useId, useRef } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
+import { createAgreement, sendTransaction, AgreementPayload } from "@/services/trustlessworkService"
 import { cn } from "@/lib/utils"
 import { ThalosLoader } from "@/components/thalos-loader"
 import { LanguageToggle, ThemeToggle, useLanguage } from "@/lib/i18n"
@@ -158,6 +159,8 @@ export default function PersonalDashboardPage() {
   /* ── Wizard State ── */
   const [step, setStep] = useState(0)
   const [submitted, setSubmitted] = useState(false)
+  const [creating, setCreating] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [escrowType, setEscrowType] = useState<"single" | "multi">("single")
   const [useCase, setUseCase] = useState<string | null>(null)
   const [customUseCase, setCustomUseCase] = useState("")
@@ -202,17 +205,31 @@ export default function PersonalDashboardPage() {
     dragItem.current = null; dragOverItem.current = null
   }
 
-  const generateJSON = () => ({
+  const generateAgreementPayload = (): AgreementPayload => ({
     engagementId: `THALOS-P-${Date.now().toString(36).toUpperCase()}`,
-    title, description, amount: totalAmount.toString(), platformFee: "1", signer: selectedWallet,
+    title,
+    description,
+    amount: totalAmount.toString(),
+    platformFee: platformFee.toString(),
+    signer: selectedWallet,
     serviceType: escrowType === "single" ? "single-release" : "multi-release",
-    roles: { approver: selectedWallet, serviceProvider: selectedWallet, releaseSigner: signerWallet, platformAddress: PLATFORM_ADDRESS, disputeResolver: DISPUTE_RESOLVER, receiver: selectedWallet },
-    milestones: escrowType === "single" ? [{ description: milestones[0]?.description || "Full delivery", amount: totalAmount.toString(), status: "pending" }] : milestones.map((m) => ({ description: m.description || "Milestone", amount: m.amount || "0", status: "pending" })),
-    trustline: TRUSTLINE_USDC, notifications: { notifyEmail, signerEmail },
+    roles: {
+      approver: selectedWallet,
+      serviceProvider: selectedWallet,
+      releaseSigner: signerWallet,
+      platformAddress: PLATFORM_ADDRESS,
+      disputeResolver: DISPUTE_RESOLVER,
+      receiver: selectedWallet,
+    },
+    milestones: escrowType === "single"
+      ? [{ description: milestones[0]?.description || "Full delivery", amount: totalAmount.toString(), status: "pending" }]
+      : milestones.map((m) => ({ description: m.description || "Milestone", amount: m.amount || "0", status: "pending" })),
+    trustline: TRUSTLINE_USDC,
+    notifications: { notifyEmail, signerEmail },
   })
 
   const [copiedJson, setCopiedJson] = useState(false)
-  const copyJson = () => { navigator.clipboard.writeText(JSON.stringify(generateJSON(), null, 2)); setCopiedJson(true); setTimeout(() => setCopiedJson(false), 2000) }
+  const copyJson = () => { navigator.clipboard.writeText(JSON.stringify(generateAgreementPayload(), null, 2)); setCopiedJson(true); setTimeout(() => setCopiedJson(false), 2000) }
 
   const canProceed = () => {
     if (step === 0) return true
@@ -849,7 +866,40 @@ export default function PersonalDashboardPage() {
                     {step < wizardSteps.length - 1 ? (
                       <Button onClick={() => setStep(step + 1)} disabled={!canProceed()} className="rounded-full bg-[#f0b400] px-8 text-sm font-semibold text-background hover:bg-[#d4a000] disabled:opacity-20 shadow-[0_4px_16px_rgba(240,180,0,0.25)]">Continue</Button>
                     ) : (
-                      <Button onClick={() => setSubmitted(true)} disabled={!signerEmail.trim()} className="rounded-full bg-[#f0b400] px-8 text-sm font-semibold text-background hover:bg-[#d4a000] disabled:opacity-20 shadow-[0_4px_16px_rgba(240,180,0,0.25)]">Create & Notify Signer</Button>
+                     <>
+                     <Button
+                          onClick={async () => {
+                            setCreating(true);
+                            setError(null);
+                            try {
+                              // 1. Agreement creation
+                              const payload = generateAgreementPayload();
+                              const agreementRes = await createAgreement(payload);
+                              if (!agreementRes.success) throw new Error(agreementRes.error || "Agreement creation failed");
+                              // 2. Get XDR from the response
+                              const xdr = agreementRes.data?.unsignedTransaction;
+                              if (!xdr) throw new Error("No XDR returned from agreement API");
+                              // 3. Sign the transaction (using Freighter)
+                              const { signTransaction } = await import("@stellar/freighter-api");
+                              const signedXdr = await signTransaction(xdr, { networkPassphrase: "Test SDF Network ; September 2015" });
+                              if (!signedXdr) throw new Error("Transaction signing failed");
+                              // 4. Send the signed transaction to the API for submission
+                              const sendRes = await sendTransaction(signedXdr.signedTxXdr);
+                              if (!sendRes.success) throw new Error(sendRes.error || "Transaction send failed");
+                              setSubmitted(true);
+                            } catch (e: any) {
+                              setError(e.message || "Unknown error");
+                            } finally {
+                              setCreating(false);
+                            }
+                          }}
+                          disabled={!signerEmail.trim() || creating}
+                          className="rounded-full bg-[#f0b400] px-8 text-sm font-semibold text-background hover:bg-[#d4a000] disabled:opacity-20 shadow-[0_4px_16px_rgba(240,180,0,0.25)]"
+                        >
+                          {creating ? "Creating..." : "Create & Notify Signer"}
+                        </Button>
+                        {error && <div className="mt-2 text-sm text-red-400">{error}</div>}
+                      </>
                     )}
                   </div>
                 </div>
