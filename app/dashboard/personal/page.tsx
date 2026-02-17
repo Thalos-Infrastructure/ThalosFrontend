@@ -71,10 +71,6 @@ function FormSelect({ label, value, onChange, options, info, required = false }:
 }
 
 /* ── Constants ── */
-const PLATFORM_ADDRESS = "GBXGQJWVLWOYHFLVTKWV5FGHA3LNYY2JQKM7OAVRWPLXS"
-const DISPUTE_RESOLVER = "GBXGQJWVLWOYHFLVTKWV5FGHA3LNYY2JQKM7OAVDISPUTE"
-const TRUSTLINE_USDC = { symbol: "USDC", address: "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5" }
-
 const connectedWallets = [
   { value: "GBXGQJWVLWOYHFLVTKWV5FGHA3PERSONAL01", label: "Main Wallet", short: "G...AL01", balance: "12,450.00" },
   { value: "GBXGQJWVLWOYHFLVTKWV5FGHA3PERSONAL02", label: "Secondary Wallet", short: "G...AL02", balance: "3,200.50" },
@@ -205,8 +201,7 @@ export default function PersonalDashboardPage() {
     dragItem.current = null; dragOverItem.current = null
   }
 
-  const generateAgreementPayload = (): AgreementPayload => ({
-    engagementId: `THALOS-P-${Date.now().toString(36).toUpperCase()}`,
+  const generateAgreementPayload = (): AgreementPayload => ({    
     title,
     description,
     amount: totalAmount.toString(),
@@ -217,14 +212,11 @@ export default function PersonalDashboardPage() {
       approver: selectedWallet,
       serviceProvider: selectedWallet,
       releaseSigner: signerWallet,
-      platformAddress: PLATFORM_ADDRESS,
-      disputeResolver: DISPUTE_RESOLVER,
       receiver: selectedWallet,
     },
     milestones: escrowType === "single"
       ? [{ description: milestones[0]?.description || "Full delivery", amount: totalAmount.toString(), status: "pending" }]
       : milestones.map((m) => ({ description: m.description || "Milestone", amount: m.amount || "0", status: "pending" })),
-    trustline: TRUSTLINE_USDC,
     notifications: { notifyEmail, signerEmail },
   })
 
