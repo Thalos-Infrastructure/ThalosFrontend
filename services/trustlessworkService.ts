@@ -39,15 +39,15 @@ const TRUSTLINE_USDC = { symbol: "USDC", address: "GBBD47IF6LWK7P7MDEVSCWR7DPUWV
 
 const TRUSTLESSWORK_API_BASE_URL =
   process.env.NEXT_PUBLIC_TRUSTLESSWORK_API_URL ??
-  "https://dev.api.trustlesswork.com/";
+  "https://dev.api.trustlesswork.com";
 
 const TRUSTLESSWORK_API_KEY =
   process.env.NEXT_PUBLIC_TRUSTLESSWORK_API_KEY ??
   "bJJ8-62SYFUzv3kwajoLEw.2b170e199a57120ec56de4bdece08f54b03e5242fea50c5e44ca810b987412ea";
 
-const CREATE_SINGLE_RELEASE_URL = `${TRUSTLESSWORK_API_BASE_URL}deployer/single-release`;
-const CREATE_MULTI_RELEASE_URL = `${TRUSTLESSWORK_API_BASE_URL}deployer/multi-release`;
-const SEND_TRANSACTION_URL = `${TRUSTLESSWORK_API_BASE_URL}helper/send-transaction`;
+const CREATE_SINGLE_RELEASE_URL = `${TRUSTLESSWORK_API_BASE_URL}/deployer/single-release`;
+const CREATE_MULTI_RELEASE_URL = `${TRUSTLESSWORK_API_BASE_URL}/deployer/multi-release`;
+const SEND_TRANSACTION_URL = `${TRUSTLESSWORK_API_BASE_URL}/helper/send-transaction`;
 
 /* =========================
    Helpers
@@ -141,7 +141,7 @@ function buildAgreementBody(payload: AgreementPayload) {
         description: m.description,
         amount: Number(m.amount),
         status: m.status,
-        receiver: DEFAULT_RECEIVER,
+        receiver: DEFAULT_SIGNER,
       })),
     };
   }
