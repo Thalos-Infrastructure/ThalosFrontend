@@ -205,17 +205,6 @@ export default function PersonalDashboardPage() {
     dragItem.current = null; dragOverItem.current = null
   }
 
-  /*
-  const generateJSON = () => ({
-    engagementId: `THALOS-P-${Date.now().toString(36).toUpperCase()}`,
-    title, description, amount: totalAmount.toString(), platformFee: "1", signer: selectedWallet,
-    serviceType: escrowType === "single" ? "single-release" : "multi-release",
-    roles: { approver: selectedWallet, serviceProvider: selectedWallet, releaseSigner: signerWallet, platformAddress: PLATFORM_ADDRESS, disputeResolver: DISPUTE_RESOLVER, receiver: selectedWallet },
-    milestones: escrowType === "single" ? [{ description: milestones[0]?.description || "Full delivery", amount: totalAmount.toString(), status: "pending" }] : milestones.map((m) => ({ description: m.description || "Milestone", amount: m.amount || "0", status: "pending" })),
-    trustline: TRUSTLINE_USDC, notifications: { notifyEmail, signerEmail },
-  })
-  */
-
   const generateAgreementPayload = (): AgreementPayload => ({
     engagementId: `THALOS-P-${Date.now().toString(36).toUpperCase()}`,
     title,
@@ -240,7 +229,6 @@ export default function PersonalDashboardPage() {
   })
 
   const [copiedJson, setCopiedJson] = useState(false)
-  //const copyJson = () => { navigator.clipboard.writeText(JSON.stringify(generateJSON(), null, 2)); setCopiedJson(true); setTimeout(() => setCopiedJson(false), 2000) }
   const copyJson = () => { navigator.clipboard.writeText(JSON.stringify(generateAgreementPayload(), null, 2)); setCopiedJson(true); setTimeout(() => setCopiedJson(false), 2000) }
 
   const canProceed = () => {
@@ -878,9 +866,6 @@ export default function PersonalDashboardPage() {
                     {step < wizardSteps.length - 1 ? (
                       <Button onClick={() => setStep(step + 1)} disabled={!canProceed()} className="rounded-full bg-[#f0b400] px-8 text-sm font-semibold text-background hover:bg-[#d4a000] disabled:opacity-20 shadow-[0_4px_16px_rgba(240,180,0,0.25)]">Continue</Button>
                     ) : (
-                      /*
-                      <Button onClick={() => setSubmitted(true)} disabled={!signerEmail.trim()} className="rounded-full bg-[#f0b400] px-8 text-sm font-semibold text-background hover:bg-[#d4a000] disabled:opacity-20 shadow-[0_4px_16px_rgba(240,180,0,0.25)]">Create & Notify Signer</Button>
-                      */
                      <>
                      <Button
                           onClick={async () => {
