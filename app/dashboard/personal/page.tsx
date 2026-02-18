@@ -88,6 +88,37 @@ const initialAgreements: Agreement[] = [
   { id: "AGR-004", title: "Coaching Sessions", status: "in_progress", type: "Multi Release", counterparty: "G...CCH1", amount: "900", date: "2026-02-01", releaseStrategy: "all-at-once", milestones: [{ description: "Session 1", amount: "300", status: "approved" }, { description: "Session 2", amount: "300", status: "approved" }, { description: "Session 3", amount: "300", status: "pending" }], receiver: "GBXGQJWVLWOYHFLVTKWV5FGHA3CCH1" },
 ]
 
+// Mix between real escrows fetched from the backend and some hardcoded ones for demo purposes
+import { getEscrowsBySigner } from "@/services/trustlessworkService";
+import { useStellarWallet } from "@/lib/stellar-wallet"
+
+function mapEscrowToAgreement(escrow) {
+  const isMulti = escrow.type === "multi-release";
+  let amount = "";
+  if (isMulti) {
+    amount = (escrow.milestones || [])
+      .reduce((sum, m) => sum + (typeof m.amount === "number" ? m.amount : 0), 0)
+      .toString();
+  } else {
+    amount = escrow.amount ? escrow.amount.toString() : "";
+  }
+  return {
+    id: escrow.contractId,
+    title: escrow.title,
+    status: escrow.flags?.released ? "released" : escrow.flags?.disputed ? "disputed" : escrow.isActive ? "in_progress" : "funded",
+    type: isMulti ? "Multi Release" : "Single Release",
+    counterparty: escrow.roles.serviceProvider?.slice(0, 8) + "...",
+    amount,
+    date: new Date(escrow.createdAt?._seconds * 1000).toISOString().split("T")[0],
+    milestones: (escrow.milestones || []).map(m => ({
+      description: m.description,
+      amount: m.amount ? m.amount.toString() : "",
+      status: m.flags?.released ? "released" : m.flags?.approved ? "approved" : m.status || "pending"
+    })),
+    receiver: escrow.roles.receiver || escrow.roles.serviceProvider,
+  };
+}
+
 const statusConfig: Record<string, { label: string; color: string }> = {
   funded: { label: "Funded", color: "bg-blue-500/10 text-blue-400 border-blue-500/20" },
   in_progress: { label: "In Progress", color: "bg-[#f0b400]/10 text-[#f0b400] border-[#f0b400]/20" },
@@ -137,6 +168,19 @@ export default function PersonalDashboardPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
   const [agreements, setAgreements] = useState<Agreement[]>(initialAgreements)
+  const { address } = useStellarWallet();
+  
+  useEffect(() => {
+    if (!address) return;
+    async function fetchEscrows() {
+      const res = await getEscrowsBySigner({ signer: address });
+      if (res.success && Array.isArray(res.data)) {
+        const realAgreements = res.data.map(mapEscrowToAgreement);
+        setAgreements(prev => [...prev, ...realAgreements]);
+      }
+    }
+    fetchEscrows();
+  }, [address]);
   const [viewingAgreement, setViewingAgreement] = useState<string | null>(null)
 
   const approveMilestone = (agrId: string, msIdx: number) => {
@@ -172,6 +216,7 @@ export default function PersonalDashboardPage() {
 
   const dragItem = useRef<number | null>(null)
   const dragOverItem = useRef<number | null>(null)
+  const { loggedWallet } = useStellarWallet();
 
   useEffect(() => {
     if (useCase && !guidePrefilled) {
