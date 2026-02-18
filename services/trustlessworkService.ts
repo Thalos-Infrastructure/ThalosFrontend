@@ -32,11 +32,6 @@ export interface AgreementResponse<T = unknown> {
 /* =========================
    Config
 ========================= */
-
-const PLATFORM_ADDRESS = process.env.NEXT_PUBLIC_PLATFORM_ADDRESS ?? "GBTTKTSBLHGMRY3T65JXT423MHQZXTD26TTHQEY5HNF2KWFFDKKVHVPD";
-const DISPUTE_RESOLVER = process.env.NEXT_PUBLIC_DISPUTE_RESOLVER ?? "GB6MP3L6UGIDY6O6MXNLSKHLXT2T2TCMPZIZGUTOGYKOLHW7EORWMFCK";
-const TRUSTLINE_USDC = { symbol: "USDC", address: "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5" }
-
 const TRUSTLESSWORK_API_BASE_URL =
   process.env.NEXT_PUBLIC_TRUSTLESSWORK_API_URL ??
   "https://dev.api.trustlesswork.com";
@@ -48,6 +43,13 @@ const TRUSTLESSWORK_API_KEY =
 const CREATE_SINGLE_RELEASE_URL = `${TRUSTLESSWORK_API_BASE_URL}/deployer/single-release`;
 const CREATE_MULTI_RELEASE_URL = `${TRUSTLESSWORK_API_BASE_URL}/deployer/multi-release`;
 const SEND_TRANSACTION_URL = `${TRUSTLESSWORK_API_BASE_URL}/helper/send-transaction`;
+
+const TRUSTLINE_USDC = { symbol: "USDC", address: "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5" }
+
+const DEFAULT_SIGNER = process.env.NEXT_PUBLIC_DEFAULT_SIGNER ?? "GBTTKTSBLHGMRY3T65JXT423MHQZXTD26TTHQEY5HNF2KWFFDKKVHVPD";
+const DEFAULT_APPROVER = process.env.NEXT_PUBLIC_DEFAULT_APPROVER ?? "GB6MP3L6UGIDY6O6MXNLSKHLXT2T2TCMPZIZGUTOGYKOLHW7EORWMFCK";
+const PLATFORM_ADDRESS = process.env.NEXT_PUBLIC_PLATFORM_ADDRESS ?? "GBTTKTSBLHGMRY3T65JXT423MHQZXTD26TTHQEY5HNF2KWFFDKKVHVPD";
+const DISPUTE_RESOLVER = process.env.NEXT_PUBLIC_DISPUTE_RESOLVER ?? "GB6MP3L6UGIDY6O6MXNLSKHLXT2T2TCMPZIZGUTOGYKOLHW7EORWMFCK";
 
 /* =========================
    Helpers
@@ -82,9 +84,6 @@ async function safeFetch<T>(
     };
   }
 }
-
-const DEFAULT_SIGNER = process.env.NEXT_PUBLIC_DEFAULT_SIGNER ?? "GBTTKTSBLHGMRY3T65JXT423MHQZXTD26TTHQEY5HNF2KWFFDKKVHVPD";
-const DEFAULT_APPROVER = process.env.NEXT_PUBLIC_DEFAULT_APPROVER ?? "GB6MP3L6UGIDY6O6MXNLSKHLXT2T2TCMPZIZGUTOGYKOLHW7EORWMFCK";
 
 function generateEngagementId(type: "MULTIRELEASE" | "SINGLERELEASE") {
   return `THALOS-v2-${type}-${Date.now().toString(36).toUpperCase()}`;
@@ -173,4 +172,99 @@ export async function sendTransaction(
   signedXdr: string
 ): Promise<AgreementResponse> {
   return safeFetch(SEND_TRANSACTION_URL, { signedXdr });
+}
+
+
+// =========================
+// Escrows by Signer
+// =========================
+
+export interface EscrowRole {
+  approver: string;
+  serviceProvider: string;
+  platformAddress: string;
+  releaseSigner: string;
+  disputeResolver: string;
+  receiver?: string;
+  observers?: string[];
+}
+
+export interface EscrowFlags {
+  disputed: boolean;
+  released: boolean;
+  resolved: boolean;
+}
+
+export interface EscrowTrustline {
+  address: string;
+  contractId: string;
+  symbol: string;
+}
+
+export interface EscrowMilestone {
+  description: string;
+  status: string;
+  evidence: string;
+  approved?: boolean;
+  amount?: number;
+  flags?: EscrowFlags;
+  receiver?: string;
+}
+
+export interface EscrowInconsistencies {
+  inconsistencyFound: boolean;
+  message: string;
+  differences: string[];
+}
+
+export interface Escrow {
+  contractId: string;
+  contractBaseId: string;
+  signer: string;
+  type: string;
+  engagementId: string;
+  title: string;
+  description: string;
+  amount?: number;
+  platformFee: number;
+  roles: EscrowRole;
+  flags?: EscrowFlags;
+  trustline: EscrowTrustline;
+  milestones: EscrowMilestone[];
+  isActive: boolean;
+  createdAt: { _seconds: number; _nanoseconds: number };
+  updatedAt: { _seconds: number; _nanoseconds: number };
+  balance: number;
+  inconsistencies: EscrowInconsistencies;
+}
+
+export async function getEscrowsBySigner({
+  signer,
+  page = 1,
+  validateOnChain = true,
+  pageSize = 10,
+}: {
+  signer: string;
+  page?: number;
+  validateOnChain?: boolean;
+  pageSize?: number;
+}): Promise<AgreementResponse<Escrow[]>> {
+  const url = `${TRUSTLESSWORK_API_BASE_URL}/helper/get-escrows-by-signer?signer=${encodeURIComponent(signer)}&page=${page}&validateOnChain=${validateOnChain}&pageSize=${pageSize}`;
+  try {
+    const response = await fetch(url, {
+      method: "GET",
+      headers: buildHeaders(),
+    });
+    if (!response.ok) {
+      return { success: false, error: `HTTP ${response.status}` };
+    }
+    const data = (await response.json()) as Escrow[];
+    console.log('Retrieved escrows:', data);
+    return { success: true, data };
+  } catch (error: unknown) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
 }
