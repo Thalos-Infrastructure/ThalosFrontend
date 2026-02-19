@@ -12,6 +12,9 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area,
 } from "recharts"
 
+const STELLAR_EXPLORER_BASE_URL = process.env.NEXT_PUBLIC_STELLAR_EXPLORER_URL || "https://stellar.expert/explorer/testnet/contract/";
+const TRUSTLINE_USDC = { symbol: "USDC", address: "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5" }
+
 /* ── Use-Case Presets ── */
 const useCases = [
   { id: "freelancer", label: "Freelancer Service", icon: "user", suggestedTitle: "Freelancer Service Agreement", suggestedDesc: "Describe the scope of work, deliverables, and timeline for this freelancer engagement." },
@@ -216,8 +219,7 @@ export default function PersonalDashboardPage() {
 
   const dragItem = useRef<number | null>(null)
   const dragOverItem = useRef<number | null>(null)
-  const { loggedWallet } = useStellarWallet();
-
+  
   useEffect(() => {
     if (useCase && !guidePrefilled) {
       if (useCase === "other") {
@@ -251,13 +253,13 @@ export default function PersonalDashboardPage() {
     description,
     amount: totalAmount.toString(),
     platformFee: platformFee.toString(),
-    signer: selectedWallet,
+    signer: address,
     serviceType: escrowType === "single" ? "single-release" : "multi-release",
     roles: {
-      approver: selectedWallet,
-      serviceProvider: selectedWallet,
+      approver: signerWallet,
+      serviceProvider: address,
       releaseSigner: signerWallet,
-      receiver: selectedWallet,
+      receiver: address,
     },
     milestones: escrowType === "single"
       ? [{ description: milestones[0]?.description || "Full delivery", amount: totalAmount.toString(), status: "pending" }]
@@ -558,7 +560,14 @@ export default function PersonalDashboardPage() {
                         <span className={cn("rounded-full border px-3 py-1 text-xs font-semibold", st.color)}>{st.label}</span>
                       </div>
                       <div className="flex flex-wrap items-center gap-3 text-xs text-white/35">
-                        <span className="font-mono">{agr.id}</span>
+                        <Link
+                          href={`${STELLAR_EXPLORER_BASE_URL}${agr.id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="font-mono text-blue-400 hover:underline"
+                        >
+                          {agr.id}
+                        </Link>
                         <span className="text-white/15">|</span>
                         <span>{agr.type}</span>
                         <span className="text-white/15">|</span>
@@ -594,45 +603,45 @@ export default function PersonalDashboardPage() {
                   </div>
                 )}
 
-                {/* Milestones */}
-                <div className="flex flex-col gap-3 mb-6">
-                  {agr.milestones.map((ms, idx) => (
-                    <div key={`${agr.id}-ms-${idx}`} className={cn("rounded-2xl border p-5 backdrop-blur-md transition-all",
-                      ms.status === "released" ? "border-emerald-500/20 bg-emerald-500/5" : ms.status === "approved" ? "border-[#f0b400]/20 bg-[#f0b400]/5" : "border-white/[0.06] bg-[#0a0a0c]/70"
-                    )}>
-                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                        <div className="flex items-center gap-3">
-                          <span className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold",
-                            ms.status === "released" ? "bg-emerald-500/20 text-emerald-400" : ms.status === "approved" ? "bg-[#f0b400]/20 text-[#f0b400]" : "bg-white/10 text-white/40"
-                          )}>{idx + 1}</span>
-                          <div>
-                            <p className="text-sm font-semibold text-white">{ms.description}</p>
-                            <p className={cn("text-xs font-medium mt-0.5",
-                              ms.status === "released" ? "text-emerald-400" : ms.status === "approved" ? "text-[#f0b400]" : "text-white/30"
-                            )}>
-                              {ms.status === "released" ? "Released" : ms.status === "approved" ? "Approved - Ready to release" : "Pending approval"}
-                            </p>
+                {/* Milestones (only for Multi Release) */}
+                {agr.type === "Multi Release" && (
+                  <div className="flex flex-col gap-3 mb-6">
+                    {agr.milestones.map((ms, idx) => (
+                      <div key={`${agr.id}-ms-${idx}`} className={cn("rounded-2xl border p-5 backdrop-blur-md transition-all",
+                        ms.status === "released" ? "border-emerald-500/20 bg-emerald-500/5" : ms.status === "approved" ? "border-[#f0b400]/20 bg-[#f0b400]/5" : "border-white/[0.06] bg-[#0a0a0c]/70"
+                      )}>
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                          <div className="flex items-center gap-3">
+                            <span className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold",
+                              ms.status === "released" ? "bg-emerald-500/20 text-emerald-400" : ms.status === "approved" ? "bg-[#f0b400]/20 text-[#f0b400]" : "bg-white/10 text-white/40"
+                            )}>{idx + 1}</span>
+                            <div>
+                              <p className="text-sm font-semibold text-white">{ms.description}</p>
+                              <p className={cn("text-xs font-medium mt-0.5",
+                                ms.status === "released" ? "text-emerald-400" : ms.status === "approved" ? "text-[#f0b400]" : "text-white/30"
+                              )}>
+                                {ms.status === "released" ? "Released" : ms.status === "approved" ? "Approved - Ready to release" : "Pending approval"}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <p className="text-lg font-bold text-white">{"$"}{ms.amount} <span className="text-xs font-normal text-white/35">USDC</span></p>
+                            {ms.status === "pending" && !allReleased && (
+                              <Button size="sm" onClick={() => approveMilestone(agr.id, idx)}
+                                /* ...existing code... */
+                              >Approve</Button>
+                            )}
+                            {ms.status === "approved" && !allReleased && (
+                              <Button size="sm" variant="success" onClick={() => releaseMilestone(agr.id, idx)}
+                                /* ...existing code... */
+                              >Release</Button>
+                            )}
                           </div>
                         </div>
-                        <div className="flex items-center gap-3">
-                          <p className="text-lg font-bold text-white">{"$"}{ms.amount} <span className="text-xs font-normal text-white/35">USDC</span></p>
-                          {ms.status === "pending" && !allReleased && (
-                            <Button size="sm" onClick={() => approveMilestone(agr.id, idx)}
-                              className="rounded-full bg-white/10 px-4 text-xs font-semibold text-white hover:bg-white/20">
-                              Approve
-                            </Button>
-                          )}
-                          {ms.status === "approved" && agr.releaseStrategy === "per-milestone" && (
-                            <Button size="sm" onClick={() => releaseMilestone(agr.id, idx)}
-                              className="rounded-full bg-[#f0b400] px-4 text-xs font-semibold text-background hover:bg-[#d4a000] shadow-[0_2px_8px_rgba(240,180,0,0.2)]">
-                              Release Funds
-                            </Button>
-                          )}
-                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
 
                 {/* Bulk actions */}
                 {!allReleased && (
@@ -911,6 +920,7 @@ export default function PersonalDashboardPage() {
                             try {
                               // 1. Agreement creation
                               const payload = generateAgreementPayload();
+                              console.log("Agreement payload:", payload);
                               const agreementRes = await createAgreement(payload);
                               if (!agreementRes.success) throw new Error(agreementRes.error || "Agreement creation failed");
                               // 2. Get XDR from the response
