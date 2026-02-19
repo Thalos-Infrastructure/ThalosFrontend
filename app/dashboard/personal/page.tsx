@@ -4,10 +4,11 @@ import React, { useState, useEffect, useCallback, useId, useRef } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { createAgreement, sendTransaction, AgreementPayload } from "@/services/trustlessworkService"
+import { createAgreement, sendTransaction, AgreementPayload, TRUSTLINE_USDC } from "@/services/trustlessworkService"
 import { cn } from "@/lib/utils"
 import { ThalosLoader } from "@/components/thalos-loader"
 import { LanguageToggle, ThemeToggle, useLanguage } from "@/lib/i18n"
+import { useStellarWallet } from "@/lib/stellar-wallet"
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area,
 } from "recharts"
@@ -130,6 +131,7 @@ const sidebarItems = [
    ════════════════════════════════════════════════ */
 export default function PersonalDashboardPage() {
   const { t } = useLanguage()
+  const { address: walletAddress, signTransaction } = useStellarWallet()
   const [loading, setLoading] = useState(true)
   useEffect(() => { const t = setTimeout(() => setLoading(false), 1400); return () => clearTimeout(t) }, [])
 
@@ -273,9 +275,13 @@ export default function PersonalDashboardPage() {
             {/* Profile dropdown */}
             <div className="relative">
               <button onClick={() => setProfileMenuOpen(!profileMenuOpen)} className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-sm font-medium text-white/70 hover:bg-white/10 hover:text-white transition-all">
-                <div className="h-6 w-6 rounded-full bg-[#f0b400]/10 flex items-center justify-center text-[#f0b400]">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                </div>
+                {walletAddress ? (
+                  <span className="font-mono text-[11px] text-[#f0b400]">{walletAddress.slice(0, 6)}…{walletAddress.slice(-4)}</span>
+                ) : (
+                  <div className="h-6 w-6 rounded-full bg-[#f0b400]/10 flex items-center justify-center text-[#f0b400]">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  </div>
+                )}
                 <span className="hidden sm:inline">Personal</span>
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
               </button>
@@ -317,7 +323,7 @@ export default function PersonalDashboardPage() {
               </div>
               <div>
                 <p className="text-sm font-semibold text-white">Personal Account</p>
-                <p className="text-xs text-white/40">G...AL01</p>
+                <p className="text-xs font-mono text-white/40">{walletAddress ? `${walletAddress.slice(0, 6)}…${walletAddress.slice(-4)}` : "G...AL01"}</p>
               </div>
             </div>
           </div>
@@ -871,12 +877,11 @@ export default function PersonalDashboardPage() {
                               // 2. Get XDR from the response
                               const xdr = agreementRes.data?.unsignedTransaction;
                               if (!xdr) throw new Error("No XDR returned from agreement API");
-                              // 3. Sign the transaction (using Freighter)
-                              const { signTransaction } = await import("@stellar/freighter-api");
-                              const signedXdr = await signTransaction(xdr, { networkPassphrase: "Test SDF Network ; September 2015" });
-                              if (!signedXdr) throw new Error("Transaction signing failed");
+                              // 3. Sign the transaction (connected wallet: Freighter, Albedo, xBull, etc.)
+                              const signedResult = await signTransaction(xdr, "Test SDF Network ; September 2015");
+                              if (!signedResult?.signedTxXdr) throw new Error("Transaction signing failed");
                               // 4. Send the signed transaction to the API for submission
-                              const sendRes = await sendTransaction(signedXdr.signedTxXdr);
+                              const sendRes = await sendTransaction(signedResult.signedTxXdr);
                               if (!sendRes.success) throw new Error(sendRes.error || "Transaction send failed");
                               setSubmitted(true);
                             } catch (e: any) {
