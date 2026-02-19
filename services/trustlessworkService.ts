@@ -1,8 +1,12 @@
+// ======================================================
 // services/trustlessworkService.ts
+// ======================================================
 
-/* =========================
-   Types
-========================= */
+/* =====================================================
+   TYPES
+===================================================== */
+
+export type ServiceType = "single-release" | "multi-release";
 
 export interface AgreementPayload {
   title: string;
@@ -10,7 +14,7 @@ export interface AgreementPayload {
   amount: string;
   platformFee: string;
   signer: string;
-  serviceType: string;
+  serviceType: ServiceType;
   roles: Record<string, string>;
   milestones: Array<{
     description: string;
@@ -29,155 +33,7 @@ export interface AgreementResponse<T = unknown> {
   error?: string;
 }
 
-/* =========================
-   Config
-========================= */
-const TRUSTLESSWORK_API_BASE_URL =
-  process.env.NEXT_PUBLIC_TRUSTLESSWORK_API_URL ??
-  "https://dev.api.trustlesswork.com";
-
-const TRUSTLESSWORK_API_KEY =
-  process.env.NEXT_PUBLIC_TRUSTLESSWORK_API_KEY ??
-  "bJJ8-62SYFUzv3kwajoLEw.2b170e199a57120ec56de4bdece08f54b03e5242fea50c5e44ca810b987412ea";
-
-const CREATE_SINGLE_RELEASE_URL = `${TRUSTLESSWORK_API_BASE_URL}/deployer/single-release`;
-const CREATE_MULTI_RELEASE_URL = `${TRUSTLESSWORK_API_BASE_URL}/deployer/multi-release`;
-const SEND_TRANSACTION_URL = `${TRUSTLESSWORK_API_BASE_URL}/helper/send-transaction`;
-
-const TRUSTLINE_USDC = { symbol: "USDC", address: "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5" }
-
-const DEFAULT_SIGNER = process.env.NEXT_PUBLIC_DEFAULT_SIGNER ?? "GBTTKTSBLHGMRY3T65JXT423MHQZXTD26TTHQEY5HNF2KWFFDKKVHVPD";
-const DEFAULT_APPROVER = process.env.NEXT_PUBLIC_DEFAULT_APPROVER ?? "GB6MP3L6UGIDY6O6MXNLSKHLXT2T2TCMPZIZGUTOGYKOLHW7EORWMFCK";
-const PLATFORM_ADDRESS = process.env.NEXT_PUBLIC_PLATFORM_ADDRESS ?? "GBTTKTSBLHGMRY3T65JXT423MHQZXTD26TTHQEY5HNF2KWFFDKKVHVPD";
-const DISPUTE_RESOLVER = process.env.NEXT_PUBLIC_DISPUTE_RESOLVER ?? "GB6MP3L6UGIDY6O6MXNLSKHLXT2T2TCMPZIZGUTOGYKOLHW7EORWMFCK";
-
-/* =========================
-   Helpers
-========================= */
-
-const buildHeaders = (): HeadersInit => ({
-  "Content-Type": "application/json",
-  ...(TRUSTLESSWORK_API_KEY && { "x-api-key": TRUSTLESSWORK_API_KEY }),
-});
-
-async function safeFetch<T>(
-  url: string,
-  body: unknown
-): Promise<AgreementResponse<T>> {
-  try {
-    const response = await fetch(url, {
-      method: "POST",
-      headers: buildHeaders(),
-      body: JSON.stringify(body),
-    });
-
-    if (!response.ok) {
-      return { success: false, error: `HTTP ${response.status}` };
-    }
-
-    const data = (await response.json()) as T;
-    return { success: true, data };
-  } catch (error: unknown) {
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Unknown error",
-    };
-  }
-}
-
-function generateEngagementId(type: "MULTIRELEASE" | "SINGLERELEASE") {
-  return `THALOS-v2-${type}-${Date.now().toString(36).toUpperCase()}`;
-}
-
-type ServiceType = "multi-release" | "single-release";
-
-function buildRoles(serviceType: ServiceType) {
-  const baseRoles = {
-    approver: DEFAULT_APPROVER,
-    serviceProvider: DEFAULT_SIGNER,
-    platformAddress: PLATFORM_ADDRESS,
-    releaseSigner: DEFAULT_SIGNER,
-    disputeResolver: DISPUTE_RESOLVER,
-  };
-
-  if (serviceType === "single-release") {
-    return {
-      ...baseRoles,
-      receiver: DEFAULT_SIGNER,
-    };
-  }
-
-  return baseRoles;
-}
-
-function buildBaseAgreement(payload: AgreementPayload,
-  serviceType: ServiceType,
-  engagementType: "MULTIRELEASE" | "SINGLERELEASE") {
-  return {
-    signer: DEFAULT_SIGNER,
-    engagementId: generateEngagementId(engagementType),
-    title: payload.title,
-    description: payload.description,
-    roles: buildRoles(serviceType),
-    platformFee: Number(payload.platformFee),
-    trustline: TRUSTLINE_USDC,
-  };
-}
-
-function buildAgreementBody(payload: AgreementPayload) {
-  const isMultiRelease = payload.serviceType === "multi-release";
-
-  const base = buildBaseAgreement(
-    payload,
-    payload.serviceType as ServiceType,
-    isMultiRelease ? "MULTIRELEASE" : "SINGLERELEASE"
-  );
-
-  if (isMultiRelease) {
-    return {
-      ...base,
-      milestones: payload.milestones.map((m) => ({
-        description: m.description,
-        amount: Number(m.amount),
-        status: m.status,
-        receiver: DEFAULT_SIGNER,
-      })),
-    };
-  }
-
-  return {
-    ...base,
-    amount: Number(payload.amount),
-    milestones: payload.milestones.map((m) => ({
-      description: m.description,
-    })),
-  };
-}
-
-/* =========================
-   Public API
-========================= */
-
-
-export async function createAgreement(
-  payload: AgreementPayload
-): Promise<AgreementResponse> {
-  console.log("Creating agreement with payload:", payload);
-  const body = buildAgreementBody(payload);
-  const url = payload.serviceType === "multi-release" ? CREATE_MULTI_RELEASE_URL : CREATE_SINGLE_RELEASE_URL;
-  return safeFetch(url, body);
-}
-
-export async function sendTransaction(
-  signedXdr: string
-): Promise<AgreementResponse> {
-  return safeFetch(SEND_TRANSACTION_URL, { signedXdr });
-}
-
-
-// =========================
-// Escrows by Signer
-// =========================
+/* ---------------- Escrow Types ---------------- */
 
 export interface EscrowRole {
   approver: string;
@@ -238,33 +94,219 @@ export interface Escrow {
   inconsistencies: EscrowInconsistencies;
 }
 
-export async function getEscrowsBySigner({
-  signer,
-  page = 1,
-  validateOnChain = true,
-  pageSize = 10,
-}: {
-  signer: string;
-  page?: number;
-  validateOnChain?: boolean;
-  pageSize?: number;
-}): Promise<AgreementResponse<Escrow[]>> {
-  const url = `${TRUSTLESSWORK_API_BASE_URL}/helper/get-escrows-by-signer?signer=${encodeURIComponent(signer)}&page=${page}&validateOnChain=${validateOnChain}&pageSize=${pageSize}`;
+/* =====================================================
+   CONFIG
+===================================================== */
+
+const BASE_URL =
+  process.env.NEXT_PUBLIC_TRUSTLESSWORK_API_URL ??
+  "https://dev.api.trustlesswork.com";
+
+const API_KEY =
+  process.env.NEXT_PUBLIC_TRUSTLESSWORK_API_KEY ??
+  "bJJ8-62SYFUzv3kwajoLEw.2b170e199a57120ec56de4bdece08f54b03e5242fea50c5e44ca810b987412ea";
+
+const PLATFORM_ADDRESS =
+  process.env.NEXT_PUBLIC_PLATFORM_ADDRESS ?? "GBTTKTSBLHGMRY3T65JXT423MHQZXTD26TTHQEY5HNF2KWFFDKKVHVPD";
+
+const DISPUTE_RESOLVER =
+  process.env.NEXT_PUBLIC_DISPUTE_RESOLVER ?? "GB6MP3L6UGIDY6O6MXNLSKHLXT2T2TCMPZIZGUTOGYKOLHW7EORWMFCK";
+
+const TRUSTLINE_USDC = {
+  symbol: "USDC",
+  address: "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5",
+};
+
+/* =====================================================
+   ENDPOINT BUILDER
+===================================================== */
+
+const endpoints = {
+  deployer: {
+    single: `${BASE_URL}/deployer/single-release`,
+    multi: `${BASE_URL}/deployer/multi-release`,
+  },
+  escrow: {
+    fund: (type: ServiceType) =>
+      `${BASE_URL}/escrow/${type}/fund-escrow`,
+    release: (type: ServiceType) =>
+      type === "single-release"
+        ? `${BASE_URL}/escrow/${type}/release-funds`
+        : `${BASE_URL}/escrow/${type}/release-milestone-funds`,
+    approve: (type: ServiceType) =>
+      `${BASE_URL}/escrow/${type}/approve-milestone`,
+  },
+  helper: {
+    sendTransaction: `${BASE_URL}/helper/send-transaction`,
+    getEscrowsBySigner: `${BASE_URL}/helper/get-escrows-by-signer`,
+  },
+};
+
+/* =====================================================
+   HTTP LAYER
+===================================================== */
+
+const buildHeaders = (): HeadersInit => ({
+  "Content-Type": "application/json",
+  ...(API_KEY && { "x-api-key": API_KEY }),
+});
+
+async function safeFetch<T>(
+  url: string,
+  options: RequestInit
+): Promise<AgreementResponse<T>> {
   try {
     const response = await fetch(url, {
-      method: "GET",
       headers: buildHeaders(),
+      ...options,
     });
+
     if (!response.ok) {
       return { success: false, error: `HTTP ${response.status}` };
     }
-    const data = (await response.json()) as Escrow[];
-    console.log('Retrieved escrows:', data);
+
+    const data = (await response.json()) as T;
     return { success: true, data };
-  } catch (error: unknown) {
+  } catch (error) {
     return {
       success: false,
       error: error instanceof Error ? error.message : "Unknown error",
     };
   }
+}
+
+/* =====================================================
+   INTERNAL BUILDERS
+===================================================== */
+
+function generateEngagementId(type: "MULTIRELEASE" | "SINGLERELEASE") {
+  return `THALOS-v2-${type}-${Date.now().toString(36).toUpperCase()}`;
+}
+
+function buildRoles(serviceType: ServiceType, roles: Record<string, string>) {
+  const base = {
+    approver: roles.approver,
+    serviceProvider: roles.serviceProvider,
+    platformAddress: PLATFORM_ADDRESS,
+    releaseSigner: roles.releaseSigner,
+    disputeResolver: DISPUTE_RESOLVER,
+  };
+
+  return serviceType === "single-release"
+    ? { ...base, receiver: roles.receiver }
+    : base;
+}
+
+function buildAgreementBody(payload: AgreementPayload) {
+  const isMulti = payload.serviceType === "multi-release";
+
+  const base = {
+    signer: payload.signer,
+    engagementId: generateEngagementId(
+      isMulti ? "MULTIRELEASE" : "SINGLERELEASE"
+    ),
+    title: payload.title,
+    description: payload.description,
+    roles: buildRoles(payload.serviceType, payload.roles),
+    platformFee: Number(payload.platformFee),
+    trustline: TRUSTLINE_USDC,
+  };
+
+  if (isMulti) {
+    return {
+      ...base,
+      milestones: payload.milestones.map((m) => ({
+        description: m.description,
+        amount: Number(m.amount),
+        status: m.status,
+        receiver: payload.signer,
+      })),
+    };
+  }
+
+  return {
+    ...base,
+    amount: Number(payload.amount),
+    milestones: payload.milestones.map((m) => ({
+      description: m.description,
+    })),
+  };
+}
+
+/* =====================================================
+   PUBLIC API
+===================================================== */
+
+export async function createAgreement(
+  payload: AgreementPayload
+): Promise<AgreementResponse> {
+  const body = buildAgreementBody(payload);
+
+  const url =
+    payload.serviceType === "multi-release"
+      ? endpoints.deployer.multi
+      : endpoints.deployer.single;
+
+  return safeFetch(url, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+export async function fundEscrow(
+  contractId: string,
+  signer: string,
+  amount: number,
+  type: ServiceType
+) {
+  return safeFetch(endpoints.escrow.fund(type), {
+    method: "POST",
+    body: JSON.stringify({ contractId, signer, amount }),
+  });
+}
+
+export async function releaseFunds(
+  contractId: string,
+  releaseSigner: string,
+  type: ServiceType,
+  milestoneIndex?: string
+) {
+  return safeFetch(endpoints.escrow.release(type), {
+    method: "POST",
+    body: JSON.stringify({ contractId, releaseSigner, milestoneIndex }),
+  });
+}
+
+export async function approveMilestone(
+  contractId: string,
+  milestoneIndex: string,
+  approver: string,
+  type: ServiceType
+) {
+  return safeFetch(endpoints.escrow.approve(type), {
+    method: "POST",
+    body: JSON.stringify({ contractId, milestoneIndex, approver }),
+  });
+}
+
+export async function sendTransaction(signedXdr: string) {
+  return safeFetch(endpoints.helper.sendTransaction, {
+    method: "POST",
+    body: JSON.stringify({ signedXdr }),
+  });
+}
+
+export async function getEscrowsBySigner(
+  signer: string,
+  page = 1,
+  validateOnChain = true,
+  pageSize = 10
+): Promise<AgreementResponse<Escrow[]>> {
+  const url = `${endpoints.helper.getEscrowsBySigner}?signer=${encodeURIComponent(
+    signer
+  )}&page=${page}&validateOnChain=${validateOnChain}&pageSize=${pageSize}`;
+
+  return safeFetch<Escrow[]>(url, {
+    method: "GET",
+  });
 }
