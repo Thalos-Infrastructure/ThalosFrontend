@@ -163,6 +163,8 @@ const sidebarItems = [
    PAGE
    ════════════════════════════════════════════════ */
 export default function PersonalDashboardPage() {
+    // Prevent duplicate fetches in Strict Mode or double mount
+    const fetchedEscrowsRef = React.useRef<string | null>(null);
   const { t } = useLanguage()
   const [loading, setLoading] = useState(true)
   useEffect(() => { const t = setTimeout(() => setLoading(false), 1400); return () => clearTimeout(t) }, [])
@@ -175,8 +177,11 @@ export default function PersonalDashboardPage() {
   
   useEffect(() => {
     if (!address) return;
+    // Only fetch if we haven't already for this address
+    if (fetchedEscrowsRef.current === address) return;
+    fetchedEscrowsRef.current = address;
     async function fetchEscrows() {
-      const res = await getEscrowsBySigner({ signer: address });
+      const res = await getEscrowsBySigner(address);
       if (res.success && Array.isArray(res.data)) {
         const realAgreements = res.data.map(mapEscrowToAgreement);
         setAgreements(prev => [...prev, ...realAgreements]);
