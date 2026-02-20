@@ -4,7 +4,6 @@ import React, { useState, useEffect, useCallback, useId, useRef } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { createAgreement, sendTransaction, AgreementPayload, TRUSTLINE_USDC } from "@/services/trustlessworkService"
 import { cn } from "@/lib/utils"
 import { ThalosLoader } from "@/components/thalos-loader"
 import { LanguageToggle, ThemeToggle, useLanguage } from "@/lib/i18n"
@@ -12,8 +11,8 @@ import { useStellarWallet } from "@/lib/stellar-wallet"
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area,
 } from "recharts"
-
-const STELLAR_EXPLORER_BASE_URL = process.env.NEXT_PUBLIC_STELLAR_EXPLORER_URL || "https://stellar.expert/explorer/testnet/contract/";
+import { createAgreement, sendTransaction, AgreementPayload } from "@/services/trustlessworkService"
+import { STELLAR_EXPLORER_BASE_URL, TRUSTLINE_USDC } from "@/lib/config";
 
 /* ── Use-Case Presets ── */
 const useCases = [
@@ -93,7 +92,6 @@ const initialAgreements: Agreement[] = [
 
 // Mix between real escrows fetched from the backend and some hardcoded ones for demo purposes
 import { getEscrowsBySigner } from "@/services/trustlessworkService";
-import { convertSegmentPathToStaticExportFilename } from "next/dist/shared/lib/segment-cache/segment-value-encoding"
 
 function mapEscrowToAgreement(escrow) {
   const isMulti = escrow.type === "multi-release";
@@ -924,62 +922,17 @@ export default function PersonalDashboardPage() {
                      <>
                      <Button
                           onClick={async () => {
-                            setCreating(true);
-                            setError(null);
-                            try {
-                              // 1. Agreement creation
-                              const payload = generateAgreementPayload();
-                              console.log("Agreement payload:", payload);
-                              const agreementRes = await createAgreement(payload);
-                              if (!agreementRes.success) throw new Error(agreementRes.error || "Agreement creation failed");
-                              // 2. Get XDR from the response
-                              const xdr = agreementRes.data?.unsignedTransaction;
-                              if (!xdr) throw new Error("No XDR returned from agreement API");
-                              // 3. Ensure wallet is connected before signing
-                              let currentAddress = walletAddress;
-                              if (!currentAddress) {
-                                console.log("No wallet connected. Opening wallet modal...");
-                                await new Promise((resolve, reject) => {
-                                  openWalletModal((addr) => {
-                                    if (addr) {
-                                      currentAddress = addr;
-                                      console.log("Wallet connected:", addr);
-                                      resolve(addr);
-                                    } else {
-                                      reject(new Error("Wallet connection cancelled or failed"));
-                                    }
-                                  });
-                                });
-                              }
-                              if (!currentAddress) throw new Error("Wallet connection required to sign transaction");
-                              // 4. Sign the transaction (connected wallet: Freighter, Albedo, xBull, etc.)
-                              try {
-                                const { signTransaction } = await import("@stellar/freighter-api");
-                                const signedResult = await signTransaction(xdr, { networkPassphrase: "Test SDF Network ; September 2015" });
-                                // TODO: VERIFY WHY THE SIGNING IS NOT WORKING WHEN PASSED THE ADDRESS (MAYBE FREIGHTER BUG OR CONFIG ISSUE).
-                                // It is working using await import("@stellar/freighter-api"); but it is not the expectation.
-                                //const signedResult = await signTransaction(xdr, { networkPassphrase: "Test SDF Network ; September 2015", address: currentAddress });
-                                console.log("Signed transaction result:", signedResult);
-                                if (!signedResult?.signedTxXdr) {
-                                  if (signedResult?.error) {
-                                    throw new Error("Freighter error: " + signedResult.error);
-                                  }
-                                  throw new Error("Transaction signing failed (no XDR returned)");
-                                }
-                                // 5. Send the signed transaction to the API for submission
-                                const sendRes = await sendTransaction(signedResult.signedTxXdr);
-                                if (!sendRes.success) throw new Error(sendRes.error || "Transaction send failed");
-                                setSubmitted(true);
-                              } catch (signErr) {
-                                console.error("Error signing with Freighter:", signErr);
-                                setError(signErr.message || JSON.stringify(signErr));
-                                return;
-                              }
-                            } catch (e: any) {
-                              setError(e.message || "Unknown error");
-                            } finally {
-                              setCreating(false);
-                            }
+                            const payload = generateAgreementPayload();
+                            const { createAndSignAgreement } = await import("@/lib/agreementActions");
+                            await createAndSignAgreement({
+                              payload,
+                              walletAddress,
+                              openWalletModal,
+                              signTransaction,
+                              setCreating,
+                              setError,
+                              setSubmitted,
+                            });
                           }}
                           disabled={!signerEmail.trim() || creating}
                           className="rounded-full bg-[#f0b400] px-8 text-sm font-semibold text-background hover:bg-[#d4a000] disabled:opacity-20 shadow-[0_4px_16px_rgba(240,180,0,0.25)]"
