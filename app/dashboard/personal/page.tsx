@@ -93,7 +93,7 @@ const initialAgreements: Agreement[] = [
 
 // Mix between real escrows fetched from the backend and some hardcoded ones for demo purposes
 import { getEscrowsBySigner } from "@/services/trustlessworkService";
-import { useStellarWallet } from "@/lib/stellar-wallet"
+import { convertSegmentPathToStaticExportFilename } from "next/dist/shared/lib/segment-cache/segment-value-encoding"
 
 function mapEscrowToAgreement(escrow) {
   const isMulti = escrow.type === "multi-release";
@@ -163,32 +163,32 @@ const sidebarItems = [
    PAGE
    ════════════════════════════════════════════════ */
 export default function PersonalDashboardPage() {
-    // Prevent duplicate fetches in Strict Mode or double mount
-    const fetchedEscrowsRef = React.useRef<string | null>(null);
-  const { t } = useLanguage()
-  const { address: walletAddress, signTransaction } = useStellarWallet()
-  const [loading, setLoading] = useState(true)
-  useEffect(() => { const t = setTimeout(() => setLoading(false), 1400); return () => clearTimeout(t) }, [])
+  // Prevent duplicate fetches in Strict Mode or double mount
+  const fetchedEscrowsRef = React.useRef<string | null>(null);
+  const { t } = useLanguage();
+  const { address: walletAddress, signTransaction } = useStellarWallet();
+  const [loading, setLoading] = useState(true);
+  useEffect(() => { const t = setTimeout(() => setLoading(false), 1400); return () => clearTimeout(t); }, []);
 
-  const [activeSection, setActiveSection] = useState("agreements")
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [profileMenuOpen, setProfileMenuOpen] = useState(false)
-  const [agreements, setAgreements] = useState<Agreement[]>(initialAgreements)
-    
+  const [activeSection, setActiveSection] = useState("agreements");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const [agreements, setAgreements] = useState<Agreement[]>(initialAgreements);
+
   useEffect(() => {
-    if (!address) return;
+    if (!walletAddress) return;
     // Only fetch if we haven't already for this address
-    if (fetchedEscrowsRef.current === address) return;
-    fetchedEscrowsRef.current = address;
+    if (fetchedEscrowsRef.current === walletAddress) return;
+    fetchedEscrowsRef.current = walletAddress;
     async function fetchEscrows() {
-      const res = await getEscrowsBySigner(address);
+      const res = await getEscrowsBySigner(walletAddress);
       if (res.success && Array.isArray(res.data)) {
         const realAgreements = res.data.map(mapEscrowToAgreement);
         setAgreements(prev => [...prev, ...realAgreements]);
       }
     }
     fetchEscrows();
-  }, [address]);
+  }, [walletAddress]);
   const [viewingAgreement, setViewingAgreement] = useState<string | null>(null)
 
   const approveMilestone = (agrId: string, msIdx: number) => {
@@ -258,13 +258,13 @@ export default function PersonalDashboardPage() {
     description,
     amount: totalAmount.toString(),
     platformFee: platformFee.toString(),
-    signer: address,
+    signer: walletAddress,
     serviceType: escrowType === "single" ? "single-release" : "multi-release",
     roles: {
       approver: signerWallet,
-      serviceProvider: address,
+      serviceProvider: walletAddress,
       releaseSigner: signerWallet,
-      receiver: address,
+      receiver: walletAddress,
     },
     milestones: escrowType === "single"
       ? [{ description: milestones[0]?.description || "Full delivery", amount: totalAmount.toString(), status: "pending" }]
@@ -935,19 +935,46 @@ export default function PersonalDashboardPage() {
                               // 2. Get XDR from the response
                               const xdr = agreementRes.data?.unsignedTransaction;
                               if (!xdr) throw new Error("No XDR returned from agreement API");
-                              // 3. Sign the transaction (using Freighter)
-                              /*const { signTransaction } = await import("@stellar/freighter-api");
-                              const signedXdr = await signTransaction(xdr, { networkPassphrase: "Test SDF Network ; September 2015" });
-                              if (!signedXdr) throw new Error("Transaction signing failed");
-                              */
-                              // 3. Sign the transaction (connected wallet: Freighter, Albedo, xBull, etc.)
-                              const signedResult = await signTransaction(xdr, "Test SDF Network ; September 2015");
-                              if (!signedResult?.signedTxXdr) throw new Error("Transaction signing failed");
-                              // 4. Send the signed transaction to the API for submission
-                              // const sendRes = await sendTransaction(signedXdr.signedTxXdr);
-                              const sendRes = await sendTransaction(signedResult.signedTxXdr);
-                              if (!sendRes.success) throw new Error(sendRes.error || "Transaction send failed");
-                              setSubmitted(true);
+                              // 3. Ensure wallet is connected before signing
+                              let currentAddress = walletAddress;
+                              if (!currentAddress) {
+                                console.log("No wallet connected. Opening wallet modal...");
+                                await new Promise((resolve, reject) => {
+                                  openWalletModal((addr) => {
+                                    if (addr) {
+                                      currentAddress = addr;
+                                      console.log("Wallet connected:", addr);
+                                      resolve(addr);
+                                    } else {
+                                      reject(new Error("Wallet connection cancelled or failed"));
+                                    }
+                                  });
+                                });
+                              }
+                              if (!currentAddress) throw new Error("Wallet connection required to sign transaction");
+                              // 4. Sign the transaction (connected wallet: Freighter, Albedo, xBull, etc.)
+                              try {
+                                const { signTransaction } = await import("@stellar/freighter-api");
+                                const signedResult = await signTransaction(xdr, { networkPassphrase: "Test SDF Network ; September 2015" });
+                                // TODO: VERIFY WHY THE SIGNING IS NOT WORKING WHEN PASSED THE ADDRESS (MAYBE FREIGHTER BUG OR CONFIG ISSUE).
+                                // It is working using await import("@stellar/freighter-api"); but it is not the expectation.
+                                //const signedResult = await signTransaction(xdr, { networkPassphrase: "Test SDF Network ; September 2015", address: currentAddress });
+                                console.log("Signed transaction result:", signedResult);
+                                if (!signedResult?.signedTxXdr) {
+                                  if (signedResult?.error) {
+                                    throw new Error("Freighter error: " + signedResult.error);
+                                  }
+                                  throw new Error("Transaction signing failed (no XDR returned)");
+                                }
+                                // 5. Send the signed transaction to the API for submission
+                                const sendRes = await sendTransaction(signedResult.signedTxXdr);
+                                if (!sendRes.success) throw new Error(sendRes.error || "Transaction send failed");
+                                setSubmitted(true);
+                              } catch (signErr) {
+                                console.error("Error signing with Freighter:", signErr);
+                                setError(signErr.message || JSON.stringify(signErr));
+                                return;
+                              }
                             } catch (e: any) {
                               setError(e.message || "Unknown error");
                             } finally {
