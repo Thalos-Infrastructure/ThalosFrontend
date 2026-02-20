@@ -14,16 +14,15 @@ interface SignInPanelProps { open: boolean; onClose: () => void }
 export function SignInPanel({ open, onClose }: SignInPanelProps) {
   const { t } = useLanguage()
   const router = useRouter()
-  const { address, isConnecting, walletError, connect } = useStellarWallet()
+  const { address, isConnecting, walletError, openWalletModal } = useStellarWallet()
   const [profileType, setProfileType] = useState<"personal" | "business">("personal")
   const dashboardHref = profileType === "personal" ? "/dashboard/personal" : "/dashboard/business"
 
-  const handleFreighterConnect = async () => {
-    const ok = await connect()
-    if (ok) {
+  const handleLoginWithWallet = () => {
+    openWalletModal(() => {
       onClose()
       router.push(dashboardHref)
-    }
+    })
   }
 
   useEffect(() => {
@@ -107,27 +106,16 @@ export function SignInPanel({ open, onClose }: SignInPanelProps) {
 
           <Button
             variant="outline"
-            onClick={handleFreighterConnect}
+            onClick={handleLoginWithWallet}
             disabled={isConnecting}
-            className="h-11 w-full gap-3 rounded-xl border-[#f0b400]/25 bg-[#f0b400]/5 text-sm text-foreground font-semibold hover:bg-[#f0b400]/10 hover:border-[#f0b400]/40 hover:text-white transition-all"
+            className="h-11 w-full gap-3 rounded-xl border-border/40 bg-muted/50 text-sm text-foreground font-semibold hover:bg-muted hover:border-border transition-all"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg>
-            {isConnecting ? t("signin.walletConnecting") : t("signin.freighter")}
+            {isConnecting ? t("signin.walletConnecting") : t("signin.loginWithWallet")}
           </Button>
-          <p className="text-[10px] text-white/30 px-1">{t("signin.freighterDesc")}</p>
           {walletError && (
-            <p className="text-xs text-red-400/90" role="alert">{t("signin.walletError")}</p>
+            <p className="mt-2 text-xs text-red-400/90" role="alert">{walletError}</p>
           )}
-          {address && (
-            <p className="text-xs text-emerald-400/90">Connected: {address.slice(0, 6)}…{address.slice(-4)}</p>
-          )}
-
-          <Link href={dashboardHref} onClick={onClose}>
-            <Button variant="outline" className="h-11 w-full gap-3 rounded-xl border-border/30 bg-secondary/30 text-sm text-foreground font-semibold hover:bg-secondary hover:text-foreground transition-all">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg>
-              {t("signin.wallet")}
-            </Button>
-          </Link>
 
           <div className="mt-7 flex items-center justify-between border-t border-border/20 pt-4">
             <Link href="/admin" onClick={onClose}>
