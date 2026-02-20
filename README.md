@@ -28,3 +28,11 @@ Continue building your app on:
 2. Deploy your chats from the v0 interface
 3. Changes are automatically pushed to this repository
 4. Vercel deploys the latest version from this repository
+
+## Sign in & wallet connection
+
+**Sign in:** Choose your account type (Personal or Enterprise), then use **Login with Wallet** to connect. A modal (Stellar Wallets Kit) opens so you can pick a supported Stellar wallet (e.g. Freighter, xBull, LOBSTR, Ledger, WalletConnect). After connecting, you’re taken to your profile.
+
+**Profile & wallet:** Your connected wallet is shown in your profile and is the one used for all escrow actions: it funds the escrow when you’re the payer, or receives released funds when you’re the payee, depending on your role in each agreement.
+
+**Escrows & Trustlesswork:** Thalos uses the [Trustlesswork](https://docs.trustlesswork.com/) APIs to create and manage escrow agreements on Stellar. Your wallet signs transactions (e.g. locking funds, releasing at milestones); the app talks to Trustlesswork for agreement lifecycle, escrow blocks, and on-chain execution.
