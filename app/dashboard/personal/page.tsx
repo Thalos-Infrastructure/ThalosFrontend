@@ -12,7 +12,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area,
 } from "recharts"
 import { createAgreement, sendTransaction, AgreementPayload } from "@/services/trustlessworkService"
-import { STELLAR_EXPLORER_BASE_URL, TRUSTLINE_USDC } from "@/lib/config";
+import { STELLAR_EXPLORER_BASE_URL, TRUSTLINE_USDC, SHOW_MOCKED_AGREEMENTS } from "@/lib/config";
 
 /* ── Use-Case Presets ── */
 const useCases = [
@@ -83,12 +83,12 @@ const wizardSteps = ["Escrow Type", "Use Case", "Agreement Info", "Payment & Wal
 interface Milestone { description: string; amount: string; status: "pending" | "approved" | "released" }
 interface Agreement { id: string; title: string; status: string; type: "Single Release" | "Multi Release"; counterparty: string; amount: string; date: string; releaseStrategy?: "per-milestone" | "all-at-once" | "upon-completion"; milestones: Milestone[]; receiver: string }
 
-const initialAgreements: Agreement[] = [
+const initialAgreements: Agreement[] = SHOW_MOCKED_AGREEMENTS ? [
   { id: "AGR-001", title: "Website Redesign", status: "funded", type: "Single Release", counterparty: "G...FRE3", amount: "2,500", date: "2026-01-15", milestones: [{ description: "Full delivery", amount: "2,500", status: "pending" }], receiver: "GBXGQJWVLWOYHFLVTKWV5FGHA3PERSONAL02" },
   { id: "AGR-002", title: "Moving Service", status: "in_progress", type: "Multi Release", counterparty: "G...MOV7", amount: "1,800", date: "2026-01-20", releaseStrategy: "per-milestone", milestones: [{ description: "Packing & Loading", amount: "600", status: "released" }, { description: "Transport", amount: "600", status: "approved" }, { description: "Unloading & Setup", amount: "600", status: "pending" }], receiver: "GBXGQJWVLWOYHFLVTKWV5FGHA3MOV7" },
   { id: "AGR-003", title: "Online Course Bundle", status: "released", type: "Multi Release", counterparty: "G...EDU4", amount: "1,200", date: "2025-12-10", releaseStrategy: "upon-completion", milestones: [{ description: "Module 1 - Basics", amount: "400", status: "released" }, { description: "Module 2 - Advanced", amount: "400", status: "released" }, { description: "Final Assessment", amount: "400", status: "released" }], receiver: "GBXGQJWVLWOYHFLVTKWV5FGHA3EDU4" },
   { id: "AGR-004", title: "Coaching Sessions", status: "in_progress", type: "Multi Release", counterparty: "G...CCH1", amount: "900", date: "2026-02-01", releaseStrategy: "all-at-once", milestones: [{ description: "Session 1", amount: "300", status: "approved" }, { description: "Session 2", amount: "300", status: "approved" }, { description: "Session 3", amount: "300", status: "pending" }], receiver: "GBXGQJWVLWOYHFLVTKWV5FGHA3CCH1" },
-]
+] : [];
 
 // Mix between real escrows fetched from the backend and some hardcoded ones for demo purposes
 import { getEscrowsBySigner } from "@/services/trustlessworkService";
@@ -172,6 +172,8 @@ export default function PersonalDashboardPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [agreements, setAgreements] = useState<Agreement[]>(initialAgreements);
+  const [approverEscrows, setApproverEscrows] = useState<Agreement[]>([]);
+  const [approverLoading, setApproverLoading] = useState(false);
 
   useEffect(() => {
     if (!walletAddress) return;
@@ -186,6 +188,19 @@ export default function PersonalDashboardPage() {
       }
     }
     fetchEscrows();
+    // Fetch escrows where user is approver
+    async function fetchApproverEscrows() {
+      setApproverLoading(true);
+      const { getEscrowsByRole } = await import("@/services/trustlessworkService");
+      const res = await getEscrowsByRole({ role: "approver", roleAddress: walletAddress });
+      if (res.success && Array.isArray(res.data)) {
+        setApproverEscrows(res.data.map(mapEscrowToAgreement));
+      } else {
+        setApproverEscrows([]);
+      }
+      setApproverLoading(false);
+    }
+    fetchApproverEscrows();
   }, [walletAddress]);
   const [viewingAgreement, setViewingAgreement] = useState<string | null>(null)
 
@@ -535,6 +550,39 @@ export default function PersonalDashboardPage() {
                     </button>
                   )
                 })}
+              </div>
+              {/* Nueva sección: Agreements que requieren mi atención (como aprobador) */}
+              <div className="mt-12">
+                <h2 className="text-xl font-semibold text-white mb-4">Agreements that required my attencion</h2>
+                {approverLoading ? (
+                  <div className="text-white/40 text-sm">Loading escrows...</div>
+                ) : approverEscrows.length === 0 ? (
+                  <div className="text-white/40 text-sm">No tienes escrows como aprobador</div>
+                ) : (
+                  <div className="flex flex-col gap-4">
+                    {approverEscrows.map((agr) => {
+                      const allReleased = agr.milestones.every(m => m.status === "released")
+                      const effectiveStatus = allReleased ? "released" : agr.status
+                      const st = statusConfig[effectiveStatus] || statusConfig.funded
+                      return (
+                        <div key={agr.id} className="rounded-2xl border border-white/[0.06] bg-[#0a0a0c]/70 p-5 backdrop-blur-md">
+                          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between w-full">
+                            <div>
+                              <p className="text-base font-semibold text-white">{agr.title}</p>
+                              <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-white/35">
+                                <span>{agr.id}</span><span className="text-white/15">|</span><span>{agr.amount} USDC</span><span className="text-white/15">|</span><span>{agr.status}</span><span className="text-white/15">|</span><span>{agr.date}</span>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-4">
+                              <span className={cn("rounded-full border px-3 py-1 text-xs font-semibold", st.color)}>{st.label}</span>
+                              <p className="text-lg font-bold text-white">{"$"}{agr.amount} <span className="text-xs font-normal text-white/35">USDC</span></p>
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
               </div>
             </div>
           )}
