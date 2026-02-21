@@ -164,7 +164,7 @@ export default function PersonalDashboardPage() {
   // Prevent duplicate fetches in Strict Mode or double mount
   const fetchedEscrowsRef = React.useRef<string | null>(null);
   const { t } = useLanguage();
-  const { address: walletAddress, signTransaction } = useStellarWallet();
+  const { address: walletAddress, signTransaction, openWalletModal } = useStellarWallet();
   const [loading, setLoading] = useState(true);
   useEffect(() => { const t = setTimeout(() => setLoading(false), 1400); return () => clearTimeout(t); }, []);
 
