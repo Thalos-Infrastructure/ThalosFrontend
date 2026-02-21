@@ -43,10 +43,16 @@ export async function createAndSignAgreement({
     }
     if (!currentAddress) throw new Error("Wallet connection required to sign transaction");
     // 3. sign transaction with connected wallet
+    const { signTransaction } = await import("@stellar/freighter-api");
+    const signedResult = await signTransaction(xdr, { networkPassphrase: "Test SDF Network ; September 2015" });
+    // TODO: VERIFY WHY THE SIGNING IS NOT WORKING WHEN PASSED THE ADDRESS (MAYBE FREIGHTER BUG OR CONFIG ISSUE).
+    // It is working using await import("@stellar/freighter-api"); but it is not the expectation.
+    /*                            
     const signedResult = await signTransaction(xdr, {
       networkPassphrase: "Test SDF Network ; September 2015",
       address: currentAddress,
     });
+    */
     if (!signedResult?.signedTxXdr) {
       if (signedResult?.error) {
         throw new Error("Freighter error: " + signedResult.error);
