@@ -307,3 +307,36 @@ export async function getEscrowsBySigner(
     method: "GET",
   });
 }
+
+/**
+ * Get escrows by role and advanced filters.
+ * @param params All possible filters for the endpoint.
+ */
+export async function getEscrowsByRole(params: {
+  signer?: string;
+  role?: string;
+  roleAddress?: string;
+  status?: string;
+  type?: string;
+  engagementId?: string;
+  title?: string;
+  startDate?: string;
+  minAmount?: number;
+  maxAmount?: number;
+  orderBy?: string;
+  orderDirection?: "asc" | "desc";
+  page?: number;
+  pageSize?: number;
+  contractID?: string;
+  endDate?: string;
+}) {
+  const url = new URL(`${BASE_URL}/helper/get-escrows-by-role`);
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== "") {
+      url.searchParams.append(key, String(value));
+    }
+  });
+  return safeFetch<Escrow[]>(url.toString(), {
+    method: "GET",
+  });
+}
