@@ -132,6 +132,8 @@ const endpoints = {
         : `${BASE_URL}/escrow/${type}/release-milestone-funds`,
     approve: (type: ServiceType) =>
       `${BASE_URL}/escrow/${type}/approve-milestone`,
+    changeMilestoneStatus: (type: ServiceType) =>
+      `${BASE_URL}/escrow/${type}/change-milestone-status`,
   },
   helper: {
     sendTransaction: `${BASE_URL}/helper/send-transaction`,
@@ -286,6 +288,20 @@ export async function approveMilestone(
   });
 }
 
+export async function changeMilestoneStatus(
+  contractId: string,
+  milestoneIndex: string,
+  newEvidence: string,
+  newStatus: string,
+  serviceProvider: string,
+  type: ServiceType
+) {
+  return safeFetch(endpoints.escrow.changeMilestoneStatus(type), {
+    method: "POST",
+    body: JSON.stringify({ contractId, milestoneIndex, newEvidence, newStatus, serviceProvider }),
+  });
+}
+
 export async function sendTransaction(signedXdr: string) {
   return safeFetch(endpoints.helper.sendTransaction, {
     method: "POST",
@@ -297,7 +313,7 @@ export async function getEscrowsBySigner(
   signer: string,
   page = 1,
   validateOnChain = true,
-  pageSize = 10
+  pageSize = 5
 ): Promise<AgreementResponse<Escrow[]>> {
   const url = `${endpoints.helper.getEscrowsBySigner}?signer=${encodeURIComponent(
     signer
