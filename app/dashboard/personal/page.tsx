@@ -1,4 +1,54 @@
-"use client"
+"use client";
+import { ApproverAgreementDetail } from "./ApproverAgreementDetail";
+
+// Componente para renderizar cada escrow a aprobar con su botón Funds y feedback
+function ApproverEscrowRow({ agr, walletAddress, openWalletModal, signTransaction }) {
+  const [funding, setFunding] = React.useState(false);
+  const [fundError, setFundError] = React.useState(null as string | null);
+  const [fundSuccess, setFundSuccess] = React.useState(false);
+  const allReleased = agr.milestones.every((m) => m.status === "released");
+  const effectiveStatus = allReleased ? "released" : agr.status;
+  const st = statusConfig[effectiveStatus] || statusConfig.funded;
+  // Deshabilitar si amount >= balance
+  const amountNum = Number(agr.amount);
+  const balanceNum = Number(agr.balance);
+  console.log("Comparing amount and balance for disabling fund button:", { amountNum, balanceNum });
+  const disableFund = funding || fundSuccess || (balanceNum >= amountNum);
+  console.log("Funding state:", { funding, fundSuccess });
+  console.log("Fund button disabled:", disableFund);
+  return (
+    <div className="rounded-2xl border border-white/[0.06] bg-[#0a0a0c]/70 p-5 backdrop-blur-md">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between w-full">
+        <div>
+          <p className="text-base font-semibold text-white">{agr.title}</p>
+          <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-white/35">
+            <span>{agr.id}</span><span className="text-white/15">|</span><span>{agr.amount} USDC</span><span className="text-white/15">|</span><span>{agr.status}</span><span className="text-white/15">|</span><span>{agr.date}</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-4">
+          <span className={cn("rounded-full border px-3 py-1 text-xs font-semibold", st.color)}>{st.label}</span>
+          <p className="text-lg font-bold text-white">{"$"}{agr.amount} <span className="text-xs font-normal text-white/35">USDC</span></p>
+          <Button size="sm" onClick={() => fundAndSignEscrow({
+            contractId: agr.id,
+            amount: agr.amount,
+            walletAddress,
+            openWalletModal,
+            signTransaction,
+            setFunding,
+            setError: setFundError,
+            setSuccess: setFundSuccess,
+          })} disabled={disableFund}>
+            {funding ? "Funding..." : fundSuccess ? "Funded!" : "Funds"}
+          </Button>
+        </div>
+      </div>
+      {fundError && <div className="text-red-400 text-xs mt-2">{fundError}</div>}
+      {fundSuccess && <div className="text-emerald-400 text-xs mt-2">Escrow funded and transaction signed!</div>}
+    </div>
+  );
+}
+
+import { fundAndSignEscrow } from "@/lib/agreementActions";
 
 import React, { useState, useEffect, useCallback, useId, useRef } from "react"
 import Image from "next/image"
@@ -11,7 +61,7 @@ import { useStellarWallet } from "@/lib/stellar-wallet"
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area,
 } from "recharts"
-import { createAgreement, sendTransaction, AgreementPayload } from "@/services/trustlessworkService"
+import { createAgreement, sendTransaction, AgreementPayload, approveMilestone } from "@/services/trustlessworkService"
 import { STELLAR_EXPLORER_BASE_URL, TRUSTLINE_USDC, SHOW_MOCKED_AGREEMENTS } from "@/lib/config";
 
 /* ── Use-Case Presets ── */
@@ -103,20 +153,41 @@ function mapEscrowToAgreement(escrow) {
   } else {
     amount = escrow.amount ? escrow.amount.toString() : "";
   }
+
+  // Determinar estado del contrato
+  const milestones = (escrow.milestones || []);
+  const allApproved = milestones.length > 0 && milestones.every(m => m.approved === true);
+  const allUnapproved = milestones.length > 0 && milestones.every(m => m.approved === false);
+  const anyUnapproved = milestones.some(m => m.approved === false);
+  const balanceNum = Number(escrow.balance);
+  const amountNum = Number(amount);
+  let status = "funded";
+  if (escrow.flags?.released) {
+    status = "released";
+  } else if (anyUnapproved && balanceNum < amountNum) {
+    status = "pending";
+  } else if (allUnapproved && balanceNum >= amountNum) {
+    status = "funded";
+  }
+
   return {
     id: escrow.contractId,
     title: escrow.title,
-    status: escrow.flags?.released ? "released" : escrow.flags?.disputed ? "disputed" : escrow.isActive ? "in_progress" : "funded",
+    status,
     type: isMulti ? "Multi Release" : "Single Release",
     counterparty: escrow.roles.serviceProvider?.slice(0, 8) + "...",
     amount,
     date: new Date(escrow.createdAt?._seconds * 1000).toISOString().split("T")[0],
-    milestones: (escrow.milestones || []).map(m => ({
+    milestones: milestones.map(m => ({      
+      approved: m.approved,
       description: m.description,
       amount: m.amount ? m.amount.toString() : "",
       status: m.flags?.released ? "released" : m.flags?.approved ? "approved" : m.status || "pending"
     })),
     receiver: escrow.roles.receiver || escrow.roles.serviceProvider,
+    balance: escrow.balance,
+    serviceProvider: escrow.roles.serviceProvider,
+    released: escrow.flags.released,
   };
 }
 
@@ -553,35 +624,25 @@ export default function PersonalDashboardPage() {
               </div>
               {/* Nueva sección: Agreements que requieren mi atención (como aprobador) */}
               <div className="mt-12">
-                <h2 className="text-xl font-semibold text-white mb-4">Agreements that required my attencion</h2>
+                <h2 className="text-xl font-semibold text-white mb-4">Agreements that required my attention</h2>
                 {approverLoading ? (
                   <div className="text-white/40 text-sm">Loading escrows...</div>
                 ) : approverEscrows.length === 0 ? (
                   <div className="text-white/40 text-sm">No tienes escrows como aprobador</div>
                 ) : (
                   <div className="flex flex-col gap-4">
-                    {approverEscrows.map((agr) => {
-                      const allReleased = agr.milestones.every(m => m.status === "released")
-                      const effectiveStatus = allReleased ? "released" : agr.status
-                      const st = statusConfig[effectiveStatus] || statusConfig.funded
-                      return (
-                        <div key={agr.id} className="rounded-2xl border border-white/[0.06] bg-[#0a0a0c]/70 p-5 backdrop-blur-md">
-                          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between w-full">
-                            <div>
-                              <p className="text-base font-semibold text-white">{agr.title}</p>
-                              <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-white/35">
-                                <span>{agr.id}</span><span className="text-white/15">|</span><span>{agr.amount} USDC</span><span className="text-white/15">|</span><span>{agr.status}</span><span className="text-white/15">|</span><span>{agr.date}</span>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-4">
-                              <span className={cn("rounded-full border px-3 py-1 text-xs font-semibold", st.color)}>{st.label}</span>
-                              <p className="text-lg font-bold text-white">{"$"}{agr.amount} <span className="text-xs font-normal text-white/35">USDC</span></p>
-                            </div>
-                          </div>
-                        </div>
-                      )
-                    })}
+                    {approverEscrows.map((agr) => (
+                      <ApproverAgreementDetail
+                        key={agr.id}
+                        agr={agr}
+                        walletAddress={walletAddress}
+                      />
+                    ))}
                   </div>
+
+
+                // --- Place this at the end of the file, after export default ---
+
                 )}
               </div>
             </div>
