@@ -1,4 +1,4 @@
-import { createAgreement, sendTransaction, AgreementPayload } from "@/services/trustlessworkService";
+import { createAgreement, sendTransaction, AgreementPayload, fundEscrow } from "@/services/trustlessworkService";
 
 export interface CreateAndSignAgreementParams {
   payload: AgreementPayload;
@@ -67,5 +67,67 @@ export async function createAndSignAgreement({
     setError(e.message || "Unknown error");
   } finally {
     setCreating(false);
+  }
+}
+
+export interface FundAndSignEscrowParams {
+  contractId: string;
+  amount: string;
+  walletAddress: string | null;
+  openWalletModal: (onConnected?: (address: string) => void) => Promise<void>;
+  signTransaction: (xdr: string, opts: { networkPassphrase: string; address: string }) => Promise<any>;
+  setFunding: (v: boolean) => void;
+  setError: (msg: string | null) => void;
+  setSuccess: (v: boolean) => void;
+}
+
+export async function fundAndSignEscrow({
+  contractId,
+  amount,
+  walletAddress,
+  openWalletModal,
+  signTransaction,
+  setFunding,
+  setError,
+  setSuccess,
+}: FundAndSignEscrowParams) {
+  setFunding(true);
+  setError(null);
+  setSuccess(false);
+  try {
+    let currentAddress = walletAddress;
+    if (!currentAddress) {
+      await new Promise((resolve, reject) => {
+        openWalletModal((addr) => {
+          if (addr) {
+            currentAddress = addr;
+            resolve(addr);
+          } else {
+            reject(new Error("Wallet connection cancelled or failed"));
+          }
+        });
+      });
+    }
+    if (!currentAddress) throw new Error("Wallet connection required");
+    // 1. Llamar fundEscrow para obtener XDR
+    const fundRes = await fundEscrow(contractId, currentAddress, Number(amount), "single-release");
+    if (!fundRes.success) throw new Error(fundRes.error || "Fund escrow failed");
+    const xdr = fundRes.data?.unsignedTransaction;
+    if (!xdr) throw new Error("No XDR returned from fundEscrow");
+    // 2. Firmar transacción
+    const { signTransaction: freighterSign } = await import("@stellar/freighter-api");
+    const signedResult = await freighterSign(xdr, { networkPassphrase: "Test SDF Network ; September 2015" });
+    if (!signedResult?.signedTxXdr) {
+      if (signedResult?.error) throw new Error("Freighter error: " + signedResult.error);
+      throw new Error("Transaction signing failed (no XDR returned)");
+    }
+    // 3. Enviar transacción firmada
+    const sendRes = await sendTransaction(signedResult.signedTxXdr);
+    if (!sendRes.success) throw new Error(sendRes.error || "Transaction send failed");
+    setSuccess(true);
+  } catch (e: any) {
+    setError(e.message || "Unknown error");
+  } finally {
+    setFunding(false);
   }
 }
