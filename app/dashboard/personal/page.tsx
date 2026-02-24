@@ -187,7 +187,7 @@ function mapEscrowToAgreement(escrow) {
     receiver: escrow.roles.receiver || escrow.roles.serviceProvider,
     balance: escrow.balance,
     serviceProvider: escrow.roles.serviceProvider,
-    released: escrow.flags.released,
+    released: escrow.flags?.released ?? false,
   };
 }
 
