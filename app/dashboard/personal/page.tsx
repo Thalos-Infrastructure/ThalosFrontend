@@ -712,16 +712,16 @@ export default function PersonalDashboardPage() {
                     <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg>
                   </div>
                   <div>
-                    <h2 className="text-2xl font-bold text-white">Agreement Created</h2>
-                    <p className="mt-2 text-sm text-white/40">Your secure payment has been set up. A notification has been sent to the Release Signer.</p>
+                    <h2 className="text-2xl font-bold text-white">{t("wizard.agreementCreated")}</h2>
+                    <p className="mt-2 text-sm text-white/40">{t("wizard.agreementCreatedDesc")}</p>
                   </div>
                   <div className="flex flex-col items-center gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] p-6">
-                    <p className="text-xs font-medium uppercase tracking-wider text-white/40">Scan to access on mobile</p>
+                    <p className="text-xs font-medium uppercase tracking-wider text-white/40">{t("wizard.scanQR")}</p>
                     <Image src={qrUrl} alt="QR Code" width={160} height={160} className="rounded-lg" unoptimized />
                   </div>
                   <div className="flex gap-3">
-                    <Button variant="outline" onClick={copyJson} className="rounded-full border-white/10 bg-white/5 text-sm text-white/60 hover:bg-white/10 hover:text-white">{copiedJson ? "Copied" : "Copy Details"}</Button>
-                    <Button onClick={() => { resetWizard(); setActiveSection("agreements") }} className="rounded-full bg-[#f0b400] text-background font-semibold hover:bg-[#d4a000] shadow-[0_4px_16px_rgba(240,180,0,0.25)]">View Agreements</Button>
+                    <Button variant="outline" onClick={copyJson} className="rounded-full border-white/10 bg-white/5 text-sm text-white/60 hover:bg-white/10 hover:text-white">{copiedJson ? t("wizard.copied") : t("wizard.copyDetails")}</Button>
+                    <Button onClick={() => { resetWizard(); setActiveSection("agreements") }} className="rounded-full bg-[#f0b400] text-background font-semibold hover:bg-[#d4a000] shadow-[0_4px_16px_rgba(240,180,0,0.25)]">{t("wizard.viewAgreements")}</Button>
                   </div>
                 </div>
               ) : (
@@ -763,14 +763,14 @@ export default function PersonalDashboardPage() {
                           </button>
                         ))}
                       </div>
-                      {useCase === "other" && <FormInput label="Describe your use case" value={customUseCase} onChange={(v) => { setCustomUseCase(v); setGuidePrefilled(false) }} placeholder="e.g. Equipment purchase, consulting fee..." required />}
+                      {useCase === "other" && <FormInput label={t("wizard.describeUseCase")} value={customUseCase} onChange={(v) => { setCustomUseCase(v); setGuidePrefilled(false) }} placeholder={t("wizard.useCasePlaceholder")} required />}
                     </div>
                   )}
 
                   {/* Step 2: Agreement Info */}
                   {step === 2 && (
                     <div className="flex flex-col gap-5">
-                      <div><h3 className="text-lg font-semibold text-white sm:text-xl">Agreement Information</h3><p className="mt-1 text-sm text-white/35">{useCase && useCase !== "other" ? "We pre-filled some suggestions. Feel free to edit." : "Describe what this agreement is about."}</p></div>
+                      <div><h3 className="text-lg font-semibold text-white sm:text-xl">{t("wizard.agreementInfo")}</h3><p className="mt-1 text-sm text-white/35">{useCase && useCase !== "other" ? t("wizard.preFilled") : t("wizard.describeAgreement")}</p></div>
                       {useCase && useCase !== "other" && (
                         <div className="flex items-start gap-3 rounded-xl border border-[#f0b400]/20 bg-[#f0b400]/5 p-4">
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f0b400" strokeWidth="1.5" className="mt-0.5 shrink-0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
@@ -845,11 +845,11 @@ export default function PersonalDashboardPage() {
 
                   {/* Navigation */}
                   <div className="mt-8 flex items-center justify-between border-t border-white/[0.04] pt-6">
-                    <Button variant="ghost" onClick={() => setStep(Math.max(0, step - 1))} disabled={step === 0} className="rounded-full text-sm text-white/40 hover:text-white disabled:opacity-20">Back</Button>
+                    <Button variant="ghost" onClick={() => setStep(Math.max(0, step - 1))} disabled={step === 0} className="rounded-full text-sm text-white/40 hover:text-white disabled:opacity-20">{t("wizard.back")}</Button>
                     {step < wizardStepKeys.length - 1 ? (
-                      <Button onClick={() => setStep(step + 1)} disabled={!canProceed()} className="rounded-full bg-[#f0b400] px-8 text-sm font-semibold text-background hover:bg-[#d4a000] disabled:opacity-20 shadow-[0_4px_16px_rgba(240,180,0,0.25)]">Continue</Button>
+                      <Button onClick={() => setStep(step + 1)} disabled={!canProceed()} className="rounded-full bg-[#f0b400] px-8 text-sm font-semibold text-background hover:bg-[#d4a000] disabled:opacity-20 shadow-[0_4px_16px_rgba(240,180,0,0.25)]">{t("wizard.continue")}</Button>
                     ) : (
-                      <Button onClick={() => setSubmitted(true)} disabled={!signerEmail.trim()} className="rounded-full bg-[#f0b400] px-8 text-sm font-semibold text-background hover:bg-[#d4a000] disabled:opacity-20 shadow-[0_4px_16px_rgba(240,180,0,0.25)]">Create & Notify Signer</Button>
+                      <Button onClick={() => setSubmitted(true)} disabled={!signerEmail.trim()} className="rounded-full bg-[#f0b400] px-8 text-sm font-semibold text-background hover:bg-[#d4a000] disabled:opacity-20 shadow-[0_4px_16px_rgba(240,180,0,0.25)]">{t("wizard.createNotify")}</Button>
                     )}
                   </div>
                 </div>

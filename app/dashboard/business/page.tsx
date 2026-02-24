@@ -13,12 +13,12 @@ import {
 
 /* ── Enterprise Use-Cases ── */
 const useCases = [
-  { id: "car-rental", label: "Car Rental Company", icon: "car", suggestedTitle: "Vehicle Rental Agreement", suggestedDesc: "Describe the fleet vehicle, rental duration, mileage limits, insurance terms, and return conditions." },
-  { id: "travel", label: "Travel Agency Package", icon: "plane", suggestedTitle: "Travel Package Agreement", suggestedDesc: "Describe the travel package details, destinations, dates, inclusions, cancellation policy, and payment schedule." },
-  { id: "dealership", label: "Car Dealership Sale", icon: "tag", suggestedTitle: "Vehicle Purchase Agreement", suggestedDesc: "Describe the vehicle make/model/year, VIN, agreed price, financing terms, and delivery conditions." },
-  { id: "rental-platform", label: "Short-Term Rental Platform", icon: "home", suggestedTitle: "Short-Term Rental Agreement", suggestedDesc: "Describe the property, booking dates, house rules, deposit amount, and checkout procedures." },
-  { id: "event", label: "Event Management Contract", icon: "calendar", suggestedTitle: "Event Management Agreement", suggestedDesc: "Describe the event type, venue, date, services included, setup requirements, and payment milestones." },
-  { id: "other", label: "Other", icon: "plus", suggestedTitle: "", suggestedDesc: "" },
+  { id: "car-rental", labelKey: "useCase.carRental", icon: "car", suggestedTitle: "Vehicle Rental Agreement", suggestedDesc: "Describe the fleet vehicle, rental duration, mileage limits, insurance terms, and return conditions." },
+  { id: "travel", labelKey: "useCase.travel", icon: "plane", suggestedTitle: "Travel Package Agreement", suggestedDesc: "Describe the travel package details, destinations, dates, inclusions, cancellation policy, and payment schedule." },
+  { id: "dealership", labelKey: "useCase.dealership", icon: "tag", suggestedTitle: "Vehicle Purchase Agreement", suggestedDesc: "Describe the vehicle make/model/year, VIN, agreed price, financing terms, and delivery conditions." },
+  { id: "rental-platform", labelKey: "useCase.rentalPlatform", icon: "home", suggestedTitle: "Short-Term Rental Agreement", suggestedDesc: "Describe the property, booking dates, house rules, deposit amount, and checkout procedures." },
+  { id: "event", labelKey: "useCase.event", icon: "calendar", suggestedTitle: "Event Management Agreement", suggestedDesc: "Describe the event type, venue, date, services included, setup requirements, and payment milestones." },
+  { id: "other", labelKey: "useCase.other", icon: "plus", suggestedTitle: "", suggestedDesc: "" },
 ]
 
 /* ── Form Components ── */
@@ -75,12 +75,12 @@ const DISPUTE_RESOLVER = "GBXGQJWVLWOYHFLVTKWV5FGHA3LNYY2JQKM7OAVDISPUTE"
 const TRUSTLINE_USDC = { symbol: "USDC", address: "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5" }
 
 const connectedWallets = [
-  { value: "GBXGQJWVLWOYHFLVTKWV5FGHA3ENTERPRISE01", label: "Corporate Wallet", short: "G...SE01", balance: "245,000.00" },
-  { value: "GBXGQJWVLWOYHFLVTKWV5FGHA3ENTERPRISE02", label: "Operations Wallet", short: "G...SE02", balance: "88,500.50" },
-  { value: "GBXGQJWVLWOYHFLVTKWV5FGHA3ENTERPRISE03", label: "Treasury Wallet", short: "G...SE03", balance: "512,200.00" },
+  { value: "GBXGQJWVLWOYHFLVTKWV5FGHA3ENTERPRISE01", labelKey: "wallet.corporate", short: "G...SE01", balance: "245,000.00" },
+  { value: "GBXGQJWVLWOYHFLVTKWV5FGHA3ENTERPRISE02", labelKey: "wallet.operations", short: "G...SE02", balance: "88,500.50" },
+  { value: "GBXGQJWVLWOYHFLVTKWV5FGHA3ENTERPRISE03", labelKey: "wallet.treasury", short: "G...SE03", balance: "512,200.00" },
 ]
 
-const wizardSteps = ["Escrow Type", "Use Case", "Agreement Info", "Payment & Wallets", "Review & Send"]
+const wizardStepKeys = ["wizard.escrowType", "wizard.useCase", "wizard.agreementInfo", "wizard.paymentWallets", "wizard.reviewSend"]
 
 interface Milestone { description: string; amount: string; status: "pending" | "approved" | "released" }
 interface Agreement { id: string; title: string; status: string; type: "Single Release" | "Multi Release"; counterparty: string; amount: string; date: string; releaseStrategy?: "per-milestone" | "all-at-once" | "upon-completion"; milestones: Milestone[]; receiver: string }
@@ -92,11 +92,11 @@ const initialAgreements: Agreement[] = [
   { id: "ENT-004", title: "Property Management Fee", status: "in_progress", type: "Multi Release", counterparty: "G...RNT9", amount: "6,500", date: "2025-12-05", releaseStrategy: "all-at-once", milestones: [{ description: "Q1 management fee", amount: "1,625", status: "approved" }, { description: "Q2 management fee", amount: "1,625", status: "approved" }, { description: "Q3 management fee", amount: "1,625", status: "approved" }, { description: "Q4 management fee", amount: "1,625", status: "pending" }], receiver: "GBXGQJWVLWOYHFLVTKWV5FGHA3RNT9" },
 ]
 
-const statusConfig: Record<string, { label: string; color: string }> = {
-  funded: { label: "Funded", color: "bg-blue-500/10 text-blue-400 border-blue-500/20" },
-  in_progress: { label: "In Progress", color: "bg-[#f0b400]/10 text-[#f0b400] border-[#f0b400]/20" },
-  awaiting: { label: "Awaiting Approval", color: "bg-orange-500/10 text-orange-400 border-orange-500/20" },
-  released: { label: "Released", color: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" },
+const statusConfig: Record<string, { labelKey: string; color: string }> = {
+  funded: { labelKey: "status.funded", color: "bg-blue-500/10 text-blue-400 border-blue-500/20" },
+  in_progress: { labelKey: "status.inProgress", color: "bg-[#f0b400]/10 text-[#f0b400] border-[#f0b400]/20" },
+  awaiting: { labelKey: "status.awaitingApproval", color: "bg-orange-500/10 text-orange-400 border-orange-500/20" },
+  released: { labelKey: "status.released", color: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" },
 }
 
 const monthlyData = [
@@ -121,10 +121,10 @@ function UseCaseIcon({ icon }: { icon: string }) {
 
 /* Sidebar nav items */
 const sidebarItems = [
-  { id: "create", label: "New Agreement", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg> },
-  { id: "agreements", label: "Agreements", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> },
-  { id: "wallets", label: "Wallets", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg> },
-  { id: "analytics", label: "Analytics", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg> },
+  { id: "create", labelKey: "dashPage.newAgreement", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg> },
+  { id: "agreements", labelKey: "dashPage.agreements", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> },
+  { id: "wallets", labelKey: "dashPage.wallets", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg> },
+  { id: "analytics", labelKey: "dashPage.analytics", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg> },
 ]
 
 /* ════════════════════════════════════════════════
@@ -408,7 +408,7 @@ export default function BusinessDashboardPage() {
                           <p className="text-xs text-white/30">{agr.type} -- {agr.counterparty}</p>
                         </div>
                         <div className="flex items-center gap-3">
-                          <span className={cn("rounded-full border px-2.5 py-0.5 text-xs font-semibold", st.color)}>{st.label}</span>
+                          <span className={cn("rounded-full border px-2.5 py-0.5 text-xs font-semibold", st.color)}>{t(st.labelKey)}</span>
                           <p className="text-sm font-bold text-white">{"$"}{agr.amount}</p>
                         </div>
                       </button>
@@ -444,7 +444,7 @@ export default function BusinessDashboardPage() {
                           </div>
                         </div>
                         <div className="flex items-center gap-4">
-                          <span className={cn("rounded-full border px-3 py-1 text-xs font-semibold", st.color)}>{st.label}</span>
+                          <span className={cn("rounded-full border px-3 py-1 text-xs font-semibold", st.color)}>{t(st.labelKey)}</span>
                           <p className="text-lg font-bold text-white">{"$"}{agr.amount} <span className="text-xs font-normal text-white/35">USDC</span></p>
                         </div>
                       </div>
@@ -487,7 +487,7 @@ export default function BusinessDashboardPage() {
                     <div>
                       <div className="flex items-center gap-3 mb-2">
                         <h1 className="text-2xl font-bold text-white">{agr.title}</h1>
-                        <span className={cn("rounded-full border px-3 py-1 text-xs font-semibold", st.color)}>{st.label}</span>
+                        <span className={cn("rounded-full border px-3 py-1 text-xs font-semibold", st.color)}>{t(st.labelKey)}</span>
                       </div>
                       <div className="flex flex-wrap items-center gap-3 text-xs text-white/35">
                         <span className="font-mono">{agr.id}</span>
@@ -539,7 +539,7 @@ export default function BusinessDashboardPage() {
                             <p className={cn("text-xs font-medium mt-0.5",
                               ms.status === "released" ? "text-emerald-400" : ms.status === "approved" ? "text-[#3b82f6]" : "text-white/30"
                             )}>
-                              {ms.status === "released" ? "Released" : ms.status === "approved" ? "Approved - Ready to release" : "Pending approval"}
+                              {ms.status === "released" ? t("status.released") : ms.status === "approved" ? t("status.approvedReady") : t("status.pendingApproval")}
                             </p>
                           </div>
                         </div>
@@ -620,7 +620,7 @@ export default function BusinessDashboardPage() {
                           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg>
                         </div>
                         <div>
-                          <p className="text-base font-semibold text-white">{w.label}</p>
+                          <p className="text-base font-semibold text-white">{t(w.labelKey)}</p>
                           <p className="text-xs text-white/35 font-mono">{w.short}</p>
                         </div>
                       </div>
@@ -654,20 +654,20 @@ export default function BusinessDashboardPage() {
               {!submitted && (
                 <div className="mb-8">
                   <div className="mb-3 flex items-center justify-between">
-                    {wizardSteps.map((s, i) => (
-                      <button key={s} onClick={() => i <= step && setStep(i)}
+                    {wizardStepKeys.map((key, i) => (
+                      <button key={key} onClick={() => i <= step && setStep(i)}
                         className={cn("flex items-center gap-1.5 text-xs font-semibold transition-all sm:text-sm",
                           i === step ? "text-[#f0b400]" : i < step ? "text-[#f0b400]/60 cursor-pointer" : "text-muted-foreground/40")}>
                         <span className={cn("flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold transition-all sm:h-7 sm:w-7 sm:text-xs",
                           i === step ? "bg-[#f0b400] text-background" : i < step ? "bg-[#f0b400]/15 text-[#f0b400]" : "bg-secondary/40 text-muted-foreground/40")}>
                           {i < step ? <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg> : i + 1}
                         </span>
-                        <span className="hidden md:inline">{s}</span>
+                        <span className="hidden md:inline">{t(key)}</span>
                       </button>
                     ))}
                   </div>
                   <div className="h-1 w-full overflow-hidden rounded-full bg-secondary/30">
-                    <div className="h-full bg-[#f0b400] transition-all duration-500 ease-out" style={{ width: `${(step / (wizardSteps.length - 1)) * 100}%` }} />
+                    <div className="h-full bg-[#f0b400] transition-all duration-500 ease-out" style={{ width: `${(step / (wizardStepKeys.length - 1)) * 100}%` }} />
                   </div>
                 </div>
               )}
@@ -678,16 +678,16 @@ export default function BusinessDashboardPage() {
                     <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg>
                   </div>
                   <div>
-                    <h2 className="text-2xl font-bold text-white">Agreement Created</h2>
-                    <p className="mt-2 text-sm text-white/40">Your enterprise escrow has been submitted. The Release Signer has been notified.</p>
+                    <h2 className="text-2xl font-bold text-white">{t("wizard.agreementCreated")}</h2>
+                    <p className="mt-2 text-sm text-white/40">{t("wizard.agreementCreatedDesc")}</p>
                   </div>
                   <div className="flex flex-col items-center gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] p-6">
-                    <p className="text-xs font-medium uppercase tracking-wider text-white/40">Scan to access on mobile</p>
+                    <p className="text-xs font-medium uppercase tracking-wider text-white/40">{t("wizard.scanQR")}</p>
                     <Image src={qrUrl} alt="QR Code" width={160} height={160} className="rounded-lg" unoptimized />
                   </div>
                   <div className="flex gap-3">
-                    <Button variant="outline" onClick={copyJson} className="rounded-full border-white/10 bg-white/5 text-sm text-white/60 hover:bg-white/10 hover:text-white">{copiedJson ? "Copied" : "Copy Details"}</Button>
-                    <Button onClick={() => { resetWizard(); setActiveSection("agreements") }} className="rounded-full bg-[#f0b400] text-background font-semibold hover:bg-[#d4a000] shadow-[0_4px_16px_rgba(240,180,0,0.25)]">View Agreements</Button>
+                    <Button variant="outline" onClick={copyJson} className="rounded-full border-white/10 bg-white/5 text-sm text-white/60 hover:bg-white/10 hover:text-white">{copiedJson ? t("wizard.copied") : t("wizard.copyDetails")}</Button>
+                    <Button onClick={() => { resetWizard(); setActiveSection("agreements") }} className="rounded-full bg-[#f0b400] text-background font-semibold hover:bg-[#d4a000] shadow-[0_4px_16px_rgba(240,180,0,0.25)]">{t("wizard.viewAgreements")}</Button>
                   </div>
                 </div>
               ) : (
@@ -695,11 +695,11 @@ export default function BusinessDashboardPage() {
 
                   {step === 0 && (
                     <div className="flex flex-col gap-6">
-                      <div><h3 className="text-lg font-semibold text-white sm:text-xl">How should the payment work?</h3><p className="mt-1 text-sm text-white/35">Choose how funds will be released.</p></div>
+                      <div><h3 className="text-lg font-semibold text-white sm:text-xl">{t("wizard.howPayment")}</h3><p className="mt-1 text-sm text-white/35">{t("wizard.chooseFunds")}</p></div>
                       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                         {([
-                          { id: "single" as const, label: "One-time Payment", desc: "Funds released all at once upon completion.", icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><path d="M16 8l-8 8M8 8h8v8"/></svg> },
-                          { id: "multi" as const, label: "Milestone-based", desc: "Funds released in stages as work progresses.", icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg> },
+                          { id: "single" as const, label: t("wizard.oneTimePayment"), desc: t("wizard.oneTimeDesc"), icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><path d="M16 8l-8 8M8 8h8v8"/></svg> },
+                          { id: "multi" as const, label: t("wizard.milestoneBased"), desc: t("wizard.milestoneDesc"), icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg> },
                         ]).map((opt) => (
                           <button key={opt.id} onClick={() => { setEscrowType(opt.id); if (opt.id === "single") setMilestones([{ description: "Full delivery", amount: "" }]) }}
                             className={cn("flex flex-col gap-3 rounded-xl border p-6 text-left transition-all",
@@ -714,47 +714,47 @@ export default function BusinessDashboardPage() {
 
                   {step === 1 && (
                     <div className="flex flex-col gap-6">
-                      <div><h3 className="text-lg font-semibold text-white sm:text-xl">What is this agreement for?</h3><p className="mt-1 text-sm text-white/35">Select the business category or choose Other.</p></div>
+                      <div><h3 className="text-lg font-semibold text-white sm:text-xl">{t("wizard.whatAgreement")}</h3><p className="mt-1 text-sm text-white/35">{t("wizard.selectCategory")}</p></div>
                       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                         {useCases.map((uc) => (
                           <button key={uc.id} onClick={() => { setUseCase(uc.id); setGuidePrefilled(false) }}
                             className={cn("flex items-center gap-3 rounded-xl border p-4 text-left transition-all",
                               useCase === uc.id ? "border-[#f0b400]/40 bg-[#f0b400]/5" : "border-white/[0.06] bg-white/[0.02] hover:border-white/15")}>
                             <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-lg", useCase === uc.id ? "bg-[#f0b400]/10 text-[#f0b400]" : "bg-white/5 text-white/40")}><UseCaseIcon icon={uc.icon} /></div>
-                            <span className="text-sm font-medium text-white">{uc.label}</span>
+                            <span className="text-sm font-medium text-white">{t(uc.labelKey)}</span>
                           </button>
                         ))}
                       </div>
-                      {useCase === "other" && <FormInput label="Describe your use case" value={customUseCase} onChange={(v) => { setCustomUseCase(v); setGuidePrefilled(false) }} placeholder="e.g. Vendor contract, licensing deal..." required />}
+                      {useCase === "other" && <FormInput label={t("wizard.describeUseCase")} value={customUseCase} onChange={(v) => { setCustomUseCase(v); setGuidePrefilled(false) }} placeholder={t("wizard.useCasePlaceholder")} required />}
                     </div>
                   )}
 
                   {step === 2 && (
                     <div className="flex flex-col gap-5">
-                      <div><h3 className="text-lg font-semibold text-white sm:text-xl">Agreement Information</h3><p className="mt-1 text-sm text-white/35">{useCase && useCase !== "other" ? "We pre-filled suggestions. Feel free to edit." : "Describe this agreement."}</p></div>
+                      <div><h3 className="text-lg font-semibold text-white sm:text-xl">{t("wizard.agreementInfo")}</h3><p className="mt-1 text-sm text-white/35">{useCase && useCase !== "other" ? t("wizard.preFilled") : t("wizard.describeAgreement")}</p></div>
                       {useCase && useCase !== "other" && (
                         <div className="flex items-start gap-3 rounded-xl border border-[#f0b400]/20 bg-[#f0b400]/5 p-4">
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f0b400" strokeWidth="1.5" className="mt-0.5 shrink-0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                          <p className="text-xs text-[#f0b400]/80">Based on <span className="font-semibold">{useCases.find((u) => u.id === useCase)?.label}</span></p>
+                          <p className="text-xs text-[#f0b400]/80">{t("wizard.basedOn")} <span className="font-semibold">{t(useCases.find((u) => u.id === useCase)?.labelKey || "")}</span></p>
                         </div>
                       )}
-                      <FormInput label="Title" value={title} onChange={setTitle} placeholder="e.g. Fleet Vehicle Purchase Q2" required />
-                      <FormTextarea label="Description" value={description} onChange={setDescription} placeholder="Scope of the enterprise agreement..." rows={4} />
+                      <FormInput label={t("wizard.titleLabel")} value={title} onChange={setTitle} placeholder={t("wizard.titlePlaceholder")} required />
+                      <FormTextarea label={t("wizard.descLabel")} value={description} onChange={setDescription} placeholder={t("wizard.agreementDesc")} rows={4} />
                     </div>
                   )}
 
                   {step === 3 && (
                     <div className="flex flex-col gap-6">
-                      <div><h3 className="text-lg font-semibold text-white sm:text-xl">Payment Details</h3><p className="mt-1 text-sm text-white/35">Select wallet and counterparty info.</p></div>
-                      <FormSelect label="Your Wallet" value={selectedWallet} onChange={setSelectedWallet} options={connectedWallets.map(w => ({ value: w.value, label: `${w.label} (${w.short})` }))} info="Your connected wallet" required />
-                      <FormInput label="Release Signer Wallet" value={signerWallet} onChange={setSignerWallet} placeholder="G...SIGNER" info="Who releases the funds" required />
+                      <div><h3 className="text-lg font-semibold text-white sm:text-xl">{t("wizard.paymentDetails")}</h3><p className="mt-1 text-sm text-white/35">{t("wizard.selectWalletInfo")}</p></div>
+                      <FormSelect label={t("wizard.yourWallet")} value={selectedWallet} onChange={setSelectedWallet} options={connectedWallets.map(w => ({ value: w.value, label: `${t(w.labelKey)} (${w.short})` }))} info={t("wizard.connectedWallet")} required />
+                      <FormInput label={t("wizard.releaseSignerWallet")} value={signerWallet} onChange={setSignerWallet} placeholder="G...SIGNER" info={t("wizard.whoReleases")} required />
                       {escrowType === "single" ? (
-                        <FormInput label="Amount" value={milestones[0]?.amount || ""} onChange={(v) => updateMilestone(0, "amount", v)} placeholder="50000" type="number" info="USDC" required />
+                        <FormInput label={t("wizard.amount")} value={milestones[0]?.amount || ""} onChange={(v) => updateMilestone(0, "amount", v)} placeholder="50000" type="number" info="USDC" required />
                       ) : (
                         <div className="flex flex-col gap-3">
                           <div className="flex items-center justify-between">
-                            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Payment Stages</p>
-                            <button onClick={addMilestone} className="text-xs font-semibold text-[#f0b400] hover:underline">+ Add Stage</button>
+                            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{t("wizard.paymentStages")}</p>
+                            <button onClick={addMilestone} className="text-xs font-semibold text-[#f0b400] hover:underline">{t("wizard.addStage")}</button>
                           </div>
                           {milestones.map((m, i) => (
                             <div key={i} draggable onDragStart={() => handleDragStart(i)} onDragEnter={() => handleDragEnter(i)} onDragEnd={handleDragEnd} onDragOver={(e) => e.preventDefault()}
@@ -763,12 +763,12 @@ export default function BusinessDashboardPage() {
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0 text-white/20"><circle cx="9" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="19" r="1"/></svg>
                                 <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#f0b400]/10 text-xs font-bold text-[#f0b400]">{i + 1}</span>
                               </div>
-                              <input value={m.description} onChange={(e) => updateMilestone(i, "description", e.target.value)} placeholder="Stage description..." className="flex-1 bg-transparent text-sm text-white placeholder:text-white/20 focus:outline-none" />
-                              <input value={m.amount} onChange={(e) => updateMilestone(i, "amount", e.target.value)} placeholder="Amount" type="number" className="w-28 rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-2 text-sm text-white placeholder:text-white/15 focus:border-[#f0b400]/40 focus:outline-none" />
+                              <input value={m.description} onChange={(e) => updateMilestone(i, "description", e.target.value)} placeholder={t("wizard.stageDesc")} className="flex-1 bg-transparent text-sm text-white placeholder:text-white/20 focus:outline-none" />
+                              <input value={m.amount} onChange={(e) => updateMilestone(i, "amount", e.target.value)} placeholder={t("wizard.amount")} type="number" className="w-28 rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-2 text-sm text-white placeholder:text-white/15 focus:border-[#f0b400]/40 focus:outline-none" />
                               {milestones.length > 1 && <button onClick={() => removeMilestone(i)} className="text-white/20 hover:text-red-400"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg></button>}
                             </div>
                           ))}
-                          <div className="flex items-center justify-between rounded-xl bg-white/[0.03] px-4 py-3"><span className="text-xs text-white/30">Total</span><span className="text-sm font-bold text-white">{totalAmount.toFixed(2)} USDC</span></div>
+                          <div className="flex items-center justify-between rounded-xl bg-white/[0.03] px-4 py-3"><span className="text-xs text-white/30">{t("wizard.total")}</span><span className="text-sm font-bold text-white">{totalAmount.toFixed(2)} USDC</span></div>
                         </div>
                       )}
                     </div>
@@ -776,38 +776,38 @@ export default function BusinessDashboardPage() {
 
                   {step === 4 && (
                     <div className="flex flex-col gap-5">
-                      <div><h3 className="text-lg font-semibold text-white sm:text-xl">Review & Send</h3><p className="mt-1 text-sm text-white/35">Confirm and notify the Release Signer.</p></div>
+                      <div><h3 className="text-lg font-semibold text-white sm:text-xl">{t("wizard.reviewAndSend")}</h3><p className="mt-1 text-sm text-white/35">{t("wizard.confirmDetails")}</p></div>
                       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                         <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5">
-                          <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-white/25">Agreement</p>
-                          <p className="text-sm font-semibold text-white">{title || "Untitled"}</p>
-                          <p className="mt-1 text-xs text-white/35 line-clamp-2">{description || "No description"}</p>
+                          <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-white/25">{t("wizard.agreement")}</p>
+                          <p className="text-sm font-semibold text-white">{title || t("wizard.untitled")}</p>
+                          <p className="mt-1 text-xs text-white/35 line-clamp-2">{description || t("wizard.noDescription")}</p>
                         </div>
                         <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5">
-                          <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-white/25">Protected Funds</p>
+                          <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-white/25">{t("wizard.protectedFunds")}</p>
                           <p className="text-3xl font-bold text-[#f0b400]">{totalAmount.toFixed(2)} <span className="text-sm font-normal text-white/35">USDC</span></p>
-                          <p className="mt-2 text-xs text-white/30">Platform fee: {platformFee} USDC (1%)</p>
+                          <p className="mt-2 text-xs text-white/30">{t("wizard.platformFeeLabel")} {platformFee} USDC (1%)</p>
                         </div>
                       </div>
                       <div className="rounded-xl border border-[#f0b400]/15 bg-[#f0b400]/5 p-5">
                         <div className="mb-4 flex items-center gap-2">
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f0b400" strokeWidth="1.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-                          <p className="text-sm font-semibold text-[#f0b400]">Email Notifications</p>
+                          <p className="text-sm font-semibold text-[#f0b400]">{t("wizard.emailNotifications")}</p>
                         </div>
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                          <FormInput label="Release Signer Email" value={signerEmail} onChange={setSignerEmail} placeholder="signer@email.com" required />
-                          <FormInput label="Your Email (optional)" value={notifyEmail} onChange={setNotifyEmail} placeholder="you@email.com" info="Receive a copy" />
+                          <FormInput label={t("wizard.releaseSignerEmail")} value={signerEmail} onChange={setSignerEmail} placeholder="signer@email.com" required />
+                          <FormInput label={t("wizard.yourEmailOptional")} value={notifyEmail} onChange={setNotifyEmail} placeholder="you@email.com" info={t("wizard.receiveCopy")} />
                         </div>
                       </div>
                     </div>
                   )}
 
                   <div className="mt-8 flex items-center justify-between border-t border-white/[0.04] pt-6">
-                    <Button variant="ghost" onClick={() => setStep(Math.max(0, step - 1))} disabled={step === 0} className="rounded-full text-sm text-white/40 hover:text-white disabled:opacity-20">Back</Button>
-                    {step < wizardSteps.length - 1 ? (
-                      <Button onClick={() => setStep(step + 1)} disabled={!canProceed()} className="rounded-full bg-[#f0b400] px-8 text-sm font-semibold text-background hover:bg-[#d4a000] disabled:opacity-20 shadow-[0_4px_16px_rgba(240,180,0,0.25)]">Continue</Button>
+                    <Button variant="ghost" onClick={() => setStep(Math.max(0, step - 1))} disabled={step === 0} className="rounded-full text-sm text-white/40 hover:text-white disabled:opacity-20">{t("wizard.back")}</Button>
+                    {step < wizardStepKeys.length - 1 ? (
+                      <Button onClick={() => setStep(step + 1)} disabled={!canProceed()} className="rounded-full bg-[#f0b400] px-8 text-sm font-semibold text-background hover:bg-[#d4a000] disabled:opacity-20 shadow-[0_4px_16px_rgba(240,180,0,0.25)]">{t("wizard.continue")}</Button>
                     ) : (
-                      <Button onClick={() => setSubmitted(true)} disabled={!signerEmail.trim()} className="rounded-full bg-[#f0b400] px-8 text-sm font-semibold text-background hover:bg-[#d4a000] disabled:opacity-20 shadow-[0_4px_16px_rgba(240,180,0,0.25)]">Create & Notify Signer</Button>
+                      <Button onClick={() => setSubmitted(true)} disabled={!signerEmail.trim()} className="rounded-full bg-[#f0b400] px-8 text-sm font-semibold text-background hover:bg-[#d4a000] disabled:opacity-20 shadow-[0_4px_16px_rgba(240,180,0,0.25)]">{t("wizard.createNotify")}</Button>
                     )}
                   </div>
                 </div>

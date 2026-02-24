@@ -278,22 +278,7 @@ export default function AboutPage() {
                 </RevealBlock>
               ))}
 
-              {/* Trustless Work */}
-              <RevealBlock delay={TECH_STACK.length * 60}>
-                <div className="mt-4 flex items-start gap-5 rounded-xl border border-[#f0b400]/10 bg-[#f0b400]/[0.03] py-5 px-4 md:gap-8">
-                  <div className="shrink-0 flex h-14 w-14 items-center justify-center">
-                    <Image src="/trustless-logo.png" alt="Trustless Work" width={48} height={48} className="h-10 w-10 object-contain opacity-80" />
-                  </div>
-                  <div className="flex-1 min-w-0 pt-1">
-                    <h3 className="text-xl font-bold text-foreground md:text-2xl leading-tight">
-                      {t("vision.trustlessWork")}
-                    </h3>
-                    <p className="mt-2 text-base font-medium leading-relaxed text-muted-foreground">
-                      {t("vision.trustlessWorkDesc")}
-                    </p>
-                  </div>
-                </div>
-              </RevealBlock>
+
             </div>
           </div>
         </section>
@@ -387,12 +372,12 @@ export default function AboutPage() {
           <RevealBlock>
             <div className="flex items-center justify-center gap-8 mx-auto max-w-4xl">
               <a href="https://stellar.org/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 transition-opacity hover:opacity-80">
-                <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">Built on</span>
+                <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">{t("partners.builtOn")}</span>
                 <Image src="/stellar-full.png" alt="Stellar" width={24} height={24} className="h-5 w-5 shrink-0 object-contain opacity-50" />
               </a>
               <div className="h-4 w-px bg-border/30" aria-hidden="true" />
               <a href="https://www.trustlesswork.com/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 transition-opacity hover:opacity-80">
-                <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">Escrows by</span>
+                <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">{t("partners.escrowsBy")}</span>
                 <Image src="/trustless-logo.png" alt="Trustless Work" width={20} height={20} className="h-4 w-auto object-contain opacity-50" />
               </a>
             </div>
