@@ -1,6 +1,7 @@
 "use client"
 
 import React, { createContext, useContext, useState, useCallback, useEffect } from "react"
+import { getKit, clearKit } from "@/lib/stellar-wallet-kit"
 
 const STELLAR_WALLET_KEY = "thalos_stellar_address"
 
@@ -8,9 +9,10 @@ type StellarWalletContextValue = {
   address: string | null
   isConnecting: boolean
   walletError: string | null
-  connect: () => Promise<boolean>
+  /** Abre el modal "Connect Wallet" del Stellar Wallets Kit (xBull, Ledger, Freighter, LOBSTR, etc.) */
+  openWalletModal: (onConnected?: (address: string) => void) => Promise<void>
   disconnect: () => void
-  isFreighterAvailable: boolean | null
+  signTransaction: (xdr: string, networkPassphrase: string) => Promise<{ signedTxXdr: string } | null>
 }
 
 const StellarWalletContext = createContext<StellarWalletContextValue | null>(null)
@@ -19,7 +21,6 @@ export function StellarWalletProvider({ children }: { children: React.ReactNode 
   const [address, setAddress] = useState<string | null>(null)
   const [isConnecting, setIsConnecting] = useState(false)
   const [walletError, setWalletError] = useState<string | null>(null)
-  const [isFreighterAvailable, setIsFreighterAvailable] = useState<boolean | null>(null)
 
   useEffect(() => {
     if (typeof window === "undefined") return
@@ -27,53 +28,82 @@ export function StellarWalletProvider({ children }: { children: React.ReactNode 
     if (stored) setAddress(stored)
   }, [])
 
-  useEffect(() => {
-    if (typeof window === "undefined") return
-    import("@stellar/freighter-api")
-      .then(({ isConnected }) => isConnected())
-      .then((res) => setIsFreighterAvailable(Boolean(res?.isConnected)))
-      .catch(() => setIsFreighterAvailable(false))
-  }, [])
+  const openWalletModal = useCallback(
+    async (onConnected?: (address: string) => void) => {
+      setIsConnecting(true)
+      setWalletError(null)
+      try {
+        clearKit();
+        const kit = await getKit();
+        if (!kit) {
+          setWalletError("Stellar Wallets Kit no disponible.");
+          return;
+        }
+        await kit.openModal({
+          modalTitle: "Connect Wallet",
+          onWalletSelected: async (option) => {
+            try {
+              kit.setWallet(option.id);
+              const { address: addr } = await kit.getAddress();
+              setAddress(addr);
+              if (typeof window !== "undefined") sessionStorage.setItem(STELLAR_WALLET_KEY, addr);
+              onConnected?.(addr);
+            } catch (e) {
+              const msg = e instanceof Error ? e.message : "No se pudo obtener la dirección.";
+              setWalletError(msg);
+            } finally {
+              setIsConnecting(false);
+            }
+          },
+          onClosed: () => {
+            setIsConnecting(false);
+          },
+        });
+      } catch (e) {
+        const message = e instanceof Error ? e.message : "Error al abrir el modal de billeteras.";
+        setWalletError(message);
+      } finally {
+        setIsConnecting(false);
+      }
+    },
+    []
+  );
 
-  const connect = useCallback(async () => {
-    setIsConnecting(true)
-    setWalletError(null)
+  const disconnect = useCallback(async () => {
     try {
-      const { requestAccess } = await import("@stellar/freighter-api")
-      const result = await requestAccess()
-      if (result.error) {
-        setWalletError(typeof result.error === "string" ? result.error : result.error.message ?? "Access denied")
-        return false
-      }
-      if (result.address) {
-        setAddress(result.address)
-        if (typeof window !== "undefined") sessionStorage.setItem(STELLAR_WALLET_KEY, result.address)
-        return true
-      }
-      setWalletError("Could not get wallet address")
-      return false
-    } catch (e) {
-      const message = e instanceof Error ? e.message : "Freighter is not installed or not unlocked"
-      setWalletError(message)
-      return false
-    } finally {
-      setIsConnecting(false)
+      const kit = await getKit()
+      if (kit) await kit.disconnect()
+    } catch {
+      // ignore
     }
-  }, [])
-
-  const disconnect = useCallback(() => {
+    clearKit()
     setAddress(null)
     setWalletError(null)
     if (typeof window !== "undefined") sessionStorage.removeItem(STELLAR_WALLET_KEY)
   }, [])
 
+  const signTransaction = useCallback(
+    async (xdr: string, networkPassphrase: string): Promise<{ signedTxXdr: string } | null> => {
+      if (!address) return null
+      try {
+        const kit = await getKit()
+        if (!kit) return null
+        const result = await kit.signTransaction(xdr, { networkPassphrase, address })
+        return result?.signedTxXdr ? { signedTxXdr: result.signedTxXdr } : null
+      } catch {
+        return null
+      }
+    },
+    [address]
+  )
+
   const value: StellarWalletContextValue = {
     address,
     isConnecting,
     walletError,
-    connect,
+    openWalletModal,
     disconnect,
-    isFreighterAvailable,
+    signTransaction,
   }
 
   return (

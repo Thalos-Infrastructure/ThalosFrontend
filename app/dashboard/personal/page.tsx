@@ -1,4 +1,6 @@
-"use client"
+"use client";
+import { ApproverAgreementDetail } from "./ApproverAgreementDetail";
+
 
 import React, { useState, useEffect, useCallback, useId, useRef } from "react"
 import Image from "next/image"
@@ -7,9 +9,12 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { ThalosLoader } from "@/components/thalos-loader"
 import { LanguageToggle, ThemeToggle, useLanguage } from "@/lib/i18n"
+import { useStellarWallet } from "@/lib/stellar-wallet"
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area,
 } from "recharts"
+import { createAgreement, sendTransaction, AgreementPayload, approveMilestone } from "@/services/trustlessworkService"
+import { STELLAR_EXPLORER_BASE_URL, TRUSTLINE_USDC, SHOW_MOCKED_AGREEMENTS } from "@/lib/config";
 
 /* ── Use-Case Presets ── */
 const useCases = [
@@ -70,10 +75,6 @@ function FormSelect({ label, value, onChange, options, info, required = false }:
 }
 
 /* ── Constants ── */
-const PLATFORM_ADDRESS = "GBXGQJWVLWOYHFLVTKWV5FGHA3LNYY2JQKM7OAVRWPLXS"
-const DISPUTE_RESOLVER = "GBXGQJWVLWOYHFLVTKWV5FGHA3LNYY2JQKM7OAVDISPUTE"
-const TRUSTLINE_USDC = { symbol: "USDC", address: "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5" }
-
 const connectedWallets = [
   { value: "GBXGQJWVLWOYHFLVTKWV5FGHA3PERSONAL01", labelKey: "wallet.main", short: "G...AL01", balance: "12,450.00" },
   { value: "GBXGQJWVLWOYHFLVTKWV5FGHA3PERSONAL02", labelKey: "wallet.secondary", short: "G...AL02", balance: "3,200.50" },
@@ -84,12 +85,63 @@ const wizardStepKeys = ["wizard.escrowType", "wizard.useCase", "wizard.agreement
 interface Milestone { description: string; amount: string; status: "pending" | "approved" | "released" }
 interface Agreement { id: string; title: string; status: string; type: "Single Release" | "Multi Release"; counterparty: string; amount: string; date: string; releaseStrategy?: "per-milestone" | "all-at-once" | "upon-completion"; milestones: Milestone[]; receiver: string }
 
-const initialAgreements: Agreement[] = [
+const initialAgreements: Agreement[] = SHOW_MOCKED_AGREEMENTS ? [
   { id: "AGR-001", title: "Website Redesign", status: "funded", type: "Single Release", counterparty: "G...FRE3", amount: "2,500", date: "2026-01-15", milestones: [{ description: "Full delivery", amount: "2,500", status: "pending" }], receiver: "GBXGQJWVLWOYHFLVTKWV5FGHA3PERSONAL02" },
   { id: "AGR-002", title: "Moving Service", status: "in_progress", type: "Multi Release", counterparty: "G...MOV7", amount: "1,800", date: "2026-01-20", releaseStrategy: "per-milestone", milestones: [{ description: "Packing & Loading", amount: "600", status: "released" }, { description: "Transport", amount: "600", status: "approved" }, { description: "Unloading & Setup", amount: "600", status: "pending" }], receiver: "GBXGQJWVLWOYHFLVTKWV5FGHA3MOV7" },
   { id: "AGR-003", title: "Online Course Bundle", status: "released", type: "Multi Release", counterparty: "G...EDU4", amount: "1,200", date: "2025-12-10", releaseStrategy: "upon-completion", milestones: [{ description: "Module 1 - Basics", amount: "400", status: "released" }, { description: "Module 2 - Advanced", amount: "400", status: "released" }, { description: "Final Assessment", amount: "400", status: "released" }], receiver: "GBXGQJWVLWOYHFLVTKWV5FGHA3EDU4" },
   { id: "AGR-004", title: "Coaching Sessions", status: "in_progress", type: "Multi Release", counterparty: "G...CCH1", amount: "900", date: "2026-02-01", releaseStrategy: "all-at-once", milestones: [{ description: "Session 1", amount: "300", status: "approved" }, { description: "Session 2", amount: "300", status: "approved" }, { description: "Session 3", amount: "300", status: "pending" }], receiver: "GBXGQJWVLWOYHFLVTKWV5FGHA3CCH1" },
-]
+] : [];
+
+// Mix between real escrows fetched from the backend and some hardcoded ones for demo purposes
+import { getEscrowsBySigner } from "@/services/trustlessworkService";
+
+function mapEscrowToAgreement(escrow) {
+  const isMulti = escrow.type === "multi-release";
+  let amount = "";
+  if (isMulti) {
+    amount = (escrow.milestones || [])
+      .reduce((sum, m) => sum + (typeof m.amount === "number" ? m.amount : 0), 0)
+      .toString();
+  } else {
+    amount = escrow.amount ? escrow.amount.toString() : "";
+  }
+
+  // Determinar estado del contrato
+  const milestones = (escrow.milestones || []);
+  const allApproved = milestones.length > 0 && milestones.every(m => m.approved === true);
+  const allUnapproved = milestones.length > 0 && milestones.every(m => m.approved === false);
+  const anyUnapproved = milestones.some(m => m.approved === false);
+  const balanceNum = Number(escrow.balance);
+  const amountNum = Number(amount);
+  let status = "funded";
+  if (escrow.flags?.released) {
+    status = "released";
+  } else if (anyUnapproved && balanceNum < amountNum) {
+    status = "pending";
+  } else if (allUnapproved && balanceNum >= amountNum) {
+    status = "funded";
+  }
+
+  return {
+    id: escrow.contractId,
+    title: escrow.title,
+    status,
+    type: isMulti ? "Multi Release" : "Single Release",
+    counterparty: escrow.roles.serviceProvider?.slice(0, 8) + "...",
+    amount,
+    date: new Date(escrow.createdAt?._seconds * 1000).toISOString().split("T")[0],
+    milestones: milestones.map(m => ({      
+      approved: m.approved,
+      description: m.description,
+      amount: m.amount ? m.amount.toString() : "",
+      status: m.flags?.released ? "released" : m.flags?.approved ? "approved" : m.status || "pending"
+    })),
+    receiver: escrow.roles.receiver || escrow.roles.serviceProvider,
+    balance: escrow.balance,
+    serviceProvider: escrow.roles.serviceProvider,
+    released: escrow.flags?.released ?? false,
+  };
+}
 
 const statusConfig: Record<string, { labelKey: string; color: string }> = {
   funded: { labelKey: "status.funded", color: "bg-blue-500/10 text-blue-400 border-blue-500/20" },
@@ -132,14 +184,47 @@ const sidebarItems = [
    PAGE
    ════════════════════════════════════════════════ */
 export default function PersonalDashboardPage() {
-  const { t } = useLanguage()
-  const [loading, setLoading] = useState(true)
-  useEffect(() => { const t = setTimeout(() => setLoading(false), 1400); return () => clearTimeout(t) }, [])
+  // Prevent duplicate fetches in Strict Mode or double mount
+  const fetchedEscrowsRef = React.useRef<string | null>(null);
+  const { t } = useLanguage();
+  const { address: walletAddress, signTransaction, openWalletModal } = useStellarWallet();
+  const [loading, setLoading] = useState(true);
+  useEffect(() => { const t = setTimeout(() => setLoading(false), 1400); return () => clearTimeout(t); }, []);
 
-  const [activeSection, setActiveSection] = useState("agreements")
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [profileMenuOpen, setProfileMenuOpen] = useState(false)
-  const [agreements, setAgreements] = useState<Agreement[]>(initialAgreements)
+  const [activeSection, setActiveSection] = useState("agreements");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const [agreements, setAgreements] = useState<Agreement[]>(initialAgreements);
+  const [approverEscrows, setApproverEscrows] = useState<Agreement[]>([]);
+  const [approverLoading, setApproverLoading] = useState(false);
+
+  useEffect(() => {
+    if (!walletAddress) return;
+    // Only fetch if we haven't already for this address
+    if (fetchedEscrowsRef.current === walletAddress) return;
+    fetchedEscrowsRef.current = walletAddress;
+    async function fetchEscrows() {
+      const res = await getEscrowsBySigner(walletAddress);
+      if (res.success && Array.isArray(res.data)) {
+        const realAgreements = res.data.map(mapEscrowToAgreement);
+        setAgreements(prev => [...prev, ...realAgreements]);
+      }
+    }
+    fetchEscrows();
+    // Fetch escrows where user is approver
+    async function fetchApproverEscrows() {
+      setApproverLoading(true);
+      const { getEscrowsByRole } = await import("@/services/trustlessworkService");
+      const res = await getEscrowsByRole({ role: "approver", roleAddress: walletAddress });
+      if (res.success && Array.isArray(res.data)) {
+        setApproverEscrows(res.data.map(mapEscrowToAgreement));
+      } else {
+        setApproverEscrows([]);
+      }
+      setApproverLoading(false);
+    }
+    fetchApproverEscrows();
+  }, [walletAddress]);
   const [viewingAgreement, setViewingAgreement] = useState<string | null>(null)
 
   const approveMilestone = (agrId: string, msIdx: number) => {
@@ -158,6 +243,8 @@ export default function PersonalDashboardPage() {
   /* ── Wizard State ── */
   const [step, setStep] = useState(0)
   const [submitted, setSubmitted] = useState(false)
+  const [creating, setCreating] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [escrowType, setEscrowType] = useState<"single" | "multi">("single")
   const [useCase, setUseCase] = useState<string | null>(null)
   const [customUseCase, setCustomUseCase] = useState("")
@@ -173,7 +260,7 @@ export default function PersonalDashboardPage() {
 
   const dragItem = useRef<number | null>(null)
   const dragOverItem = useRef<number | null>(null)
-
+  
   useEffect(() => {
     if (useCase && !guidePrefilled) {
       if (useCase === "other") {
@@ -202,17 +289,27 @@ export default function PersonalDashboardPage() {
     dragItem.current = null; dragOverItem.current = null
   }
 
-  const generateJSON = () => ({
-    engagementId: `THALOS-P-${Date.now().toString(36).toUpperCase()}`,
-    title, description, amount: totalAmount.toString(), platformFee: "1", signer: selectedWallet,
+  const generateAgreementPayload = (): AgreementPayload => ({    
+    title,
+    description,
+    amount: totalAmount.toString(),
+    platformFee: platformFee.toString(),
+    signer: walletAddress,
     serviceType: escrowType === "single" ? "single-release" : "multi-release",
-    roles: { approver: selectedWallet, serviceProvider: selectedWallet, releaseSigner: signerWallet, platformAddress: PLATFORM_ADDRESS, disputeResolver: DISPUTE_RESOLVER, receiver: selectedWallet },
-    milestones: escrowType === "single" ? [{ description: milestones[0]?.description || "Full delivery", amount: totalAmount.toString(), status: "pending" }] : milestones.map((m) => ({ description: m.description || "Milestone", amount: m.amount || "0", status: "pending" })),
-    trustline: TRUSTLINE_USDC, notifications: { notifyEmail, signerEmail },
+    roles: {
+      approver: signerWallet,
+      serviceProvider: walletAddress,
+      releaseSigner: signerWallet,
+      receiver: walletAddress,
+    },
+    milestones: escrowType === "single"
+      ? [{ description: milestones[0]?.description || "Full delivery", amount: totalAmount.toString(), status: "pending" }]
+      : milestones.map((m) => ({ description: m.description || "Milestone", amount: m.amount || "0", status: "pending" })),
+    notifications: { notifyEmail, signerEmail },
   })
 
   const [copiedJson, setCopiedJson] = useState(false)
-  const copyJson = () => { navigator.clipboard.writeText(JSON.stringify(generateJSON(), null, 2)); setCopiedJson(true); setTimeout(() => setCopiedJson(false), 2000) }
+  const copyJson = () => { navigator.clipboard.writeText(JSON.stringify(generateAgreementPayload(), null, 2)); setCopiedJson(true); setTimeout(() => setCopiedJson(false), 2000) }
 
   const canProceed = () => {
     if (step === 0) return true
@@ -264,9 +361,13 @@ export default function PersonalDashboardPage() {
             {/* Profile dropdown */}
             <div className="relative">
               <button onClick={() => setProfileMenuOpen(!profileMenuOpen)} className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-sm font-medium text-white/70 hover:bg-white/10 hover:text-white transition-all">
-                <div className="h-6 w-6 rounded-full bg-[#f0b400]/10 flex items-center justify-center text-[#f0b400]">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                </div>
+                {walletAddress ? (
+                  <span className="font-mono text-[11px] text-[#f0b400]">{walletAddress.slice(0, 6)}…{walletAddress.slice(-4)}</span>
+                ) : (
+                  <div className="h-6 w-6 rounded-full bg-[#f0b400]/10 flex items-center justify-center text-[#f0b400]">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  </div>
+                )}
                 <span className="hidden sm:inline">Personal</span>
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
               </button>
@@ -308,7 +409,7 @@ export default function PersonalDashboardPage() {
               </div>
               <div>
                 <p className="text-sm font-semibold text-white">Personal Account</p>
-                <p className="text-xs text-white/40">G...AL01</p>
+                <p className="text-xs font-mono text-white/40">{walletAddress ? `${walletAddress.slice(0, 6)}…${walletAddress.slice(-4)}` : "G...AL01"}</p>
               </div>
             </div>
           </div>
@@ -473,6 +574,29 @@ export default function PersonalDashboardPage() {
                   )
                 })}
               </div>
+              {/* Section: Agreements that require my attention */}
+              <div className="mt-12">
+                <h2 className="text-xl font-semibold text-white mb-4">Agreements Pending Your Action</h2>
+                {approverLoading ? (
+                  <div className="text-white/40 text-sm">Loading escrows...</div>
+                ) : approverEscrows.length === 0 ? (
+                  <div className="text-white/40 text-sm">No escrows require your attention</div>
+                ) : (
+                  <div className="flex flex-col gap-4">
+                    {approverEscrows.map((agr) => (
+                      <ApproverAgreementDetail
+                        key={agr.id}
+                        agr={agr}
+                        walletAddress={walletAddress}
+                      />
+                    ))}
+                  </div>
+
+
+                // --- Place this at the end of the file, after export default ---
+
+                )}
+              </div>
             </div>
           )}
 
@@ -504,7 +628,14 @@ export default function PersonalDashboardPage() {
                         <span className={cn("rounded-full border px-3 py-1 text-xs font-semibold", st.color)}>{t(st.labelKey)}</span>
                       </div>
                       <div className="flex flex-wrap items-center gap-3 text-xs text-white/35">
-                        <span className="font-mono">{agr.id}</span>
+                        <Link
+                          href={`${STELLAR_EXPLORER_BASE_URL}${agr.id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="font-mono text-blue-400 hover:underline"
+                        >
+                          {agr.id}
+                        </Link>
                         <span className="text-white/15">|</span>
                         <span>{agr.type}</span>
                         <span className="text-white/15">|</span>
@@ -540,45 +671,45 @@ export default function PersonalDashboardPage() {
                   </div>
                 )}
 
-                {/* Milestones */}
-                <div className="flex flex-col gap-3 mb-6">
-                  {agr.milestones.map((ms, idx) => (
-                    <div key={`${agr.id}-ms-${idx}`} className={cn("rounded-2xl border p-5 backdrop-blur-md transition-all",
-                      ms.status === "released" ? "border-emerald-500/20 bg-emerald-500/5" : ms.status === "approved" ? "border-[#f0b400]/20 bg-[#f0b400]/5" : "border-white/[0.06] bg-[#0a0a0c]/70"
-                    )}>
-                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                        <div className="flex items-center gap-3">
-                          <span className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold",
-                            ms.status === "released" ? "bg-emerald-500/20 text-emerald-400" : ms.status === "approved" ? "bg-[#f0b400]/20 text-[#f0b400]" : "bg-white/10 text-white/40"
-                          )}>{idx + 1}</span>
-                          <div>
-                            <p className="text-sm font-semibold text-white">{ms.description}</p>
-                            <p className={cn("text-xs font-medium mt-0.5",
-                              ms.status === "released" ? "text-emerald-400" : ms.status === "approved" ? "text-[#f0b400]" : "text-white/30"
-                            )}>
-                              {ms.status === "released" ? "Released" : ms.status === "approved" ? "Approved - Ready to release" : "Pending approval"}
-                            </p>
+                {/* Milestones (only for Multi Release) */}
+                {agr.type === "Multi Release" && (
+                  <div className="flex flex-col gap-3 mb-6">
+                    {agr.milestones.map((ms, idx) => (
+                      <div key={`${agr.id}-ms-${idx}`} className={cn("rounded-2xl border p-5 backdrop-blur-md transition-all",
+                        ms.status === "released" ? "border-emerald-500/20 bg-emerald-500/5" : ms.status === "approved" ? "border-[#f0b400]/20 bg-[#f0b400]/5" : "border-white/[0.06] bg-[#0a0a0c]/70"
+                      )}>
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                          <div className="flex items-center gap-3">
+                            <span className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold",
+                              ms.status === "released" ? "bg-emerald-500/20 text-emerald-400" : ms.status === "approved" ? "bg-[#f0b400]/20 text-[#f0b400]" : "bg-white/10 text-white/40"
+                            )}>{idx + 1}</span>
+                            <div>
+                              <p className="text-sm font-semibold text-white">{ms.description}</p>
+                              <p className={cn("text-xs font-medium mt-0.5",
+                                ms.status === "released" ? "text-emerald-400" : ms.status === "approved" ? "text-[#f0b400]" : "text-white/30"
+                              )}>
+                                {ms.status === "released" ? "Released" : ms.status === "approved" ? "Approved - Ready to release" : "Pending approval"}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <p className="text-lg font-bold text-white">{"$"}{ms.amount} <span className="text-xs font-normal text-white/35">USDC</span></p>
+                            {ms.status === "pending" && !allReleased && (
+                              <Button size="sm" onClick={() => approveMilestone(agr.id, idx)}
+                                /* ...existing code... */
+                              >Approve</Button>
+                            )}
+                            {ms.status === "approved" && !allReleased && (
+                              <Button size="sm" variant="success" onClick={() => releaseMilestone(agr.id, idx)}
+                                /* ...existing code... */
+                              >Release</Button>
+                            )}
                           </div>
                         </div>
-                        <div className="flex items-center gap-3">
-                          <p className="text-lg font-bold text-white">{"$"}{ms.amount} <span className="text-xs font-normal text-white/35">USDC</span></p>
-                          {ms.status === "pending" && !allReleased && (
-                            <Button size="sm" onClick={() => approveMilestone(agr.id, idx)}
-                              className="rounded-full bg-white/10 px-4 text-xs font-semibold text-white hover:bg-white/20">
-                              Approve
-                            </Button>
-                          )}
-                          {ms.status === "approved" && agr.releaseStrategy === "per-milestone" && (
-                            <Button size="sm" onClick={() => releaseMilestone(agr.id, idx)}
-                              className="rounded-full bg-[#f0b400] px-4 text-xs font-semibold text-background hover:bg-[#d4a000] shadow-[0_2px_8px_rgba(240,180,0,0.2)]">
-                              Release Funds
-                            </Button>
-                          )}
-                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
 
                 {/* Bulk actions */}
                 {!allReleased && (
@@ -849,7 +980,28 @@ export default function PersonalDashboardPage() {
                     {step < wizardStepKeys.length - 1 ? (
                       <Button onClick={() => setStep(step + 1)} disabled={!canProceed()} className="rounded-full bg-[#f0b400] px-8 text-sm font-semibold text-background hover:bg-[#d4a000] disabled:opacity-20 shadow-[0_4px_16px_rgba(240,180,0,0.25)]">{t("wizard.continue")}</Button>
                     ) : (
-                      <Button onClick={() => setSubmitted(true)} disabled={!signerEmail.trim()} className="rounded-full bg-[#f0b400] px-8 text-sm font-semibold text-background hover:bg-[#d4a000] disabled:opacity-20 shadow-[0_4px_16px_rgba(240,180,0,0.25)]">{t("wizard.createNotify")}</Button>
+                     <>
+                     <Button
+                          onClick={async () => {
+                            const payload = generateAgreementPayload();
+                            const { createAndSignAgreement } = await import("@/lib/agreementActions");
+                            await createAndSignAgreement({
+                              payload,
+                              walletAddress,
+                              openWalletModal,
+                              signTransaction,
+                              setCreating,
+                              setError,
+                              setSubmitted,
+                            });
+                          }}
+                          disabled={!signerEmail.trim() || creating}
+                          className="rounded-full bg-[#f0b400] px-8 text-sm font-semibold text-background hover:bg-[#d4a000] disabled:opacity-20 shadow-[0_4px_16px_rgba(240,180,0,0.25)]"
+                        >
+                          {creating ? "Creating..." : "Create & Notify Signer"}
+                        </Button>
+                        {error && <div className="mt-2 text-sm text-red-400">{error}</div>}
+                      </>
                     )}
                   </div>
                 </div>
