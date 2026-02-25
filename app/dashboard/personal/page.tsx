@@ -143,12 +143,7 @@ function mapEscrowToAgreement(escrow) {
   };
 }
 
-const statusConfig: Record<string, { labelKey: string; color: string }> = {
-  funded: { labelKey: "status.funded", color: "bg-blue-500/10 text-blue-400 border-blue-500/20" },
-  in_progress: { labelKey: "status.inProgress", color: "bg-[#f0b400]/10 text-[#f0b400] border-[#f0b400]/20" },
-  awaiting: { labelKey: "status.awaitingApproval", color: "bg-orange-500/10 text-orange-400 border-orange-500/20" },
-  released: { labelKey: "status.released", color: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" },
-}
+import { statusConfig } from "./statusConfig";
 
 /* ── Chart Data ── */
 const monthlyData = [
@@ -345,7 +340,7 @@ export default function PersonalDashboardPage() {
       </div>
 
       {/* Header */}
-      <header className="sticky top-0 z-40 border-b border-white/[0.06] bg-transparent backdrop-blur-xl">
+      <header className="sticky top-0 z-40 border-b border-white/6 bg-transparent backdrop-blur-xl">
         <nav className="flex h-16 items-center justify-between px-4 lg:px-6">
           <div className="flex items-center gap-3">
             {/* Mobile sidebar toggle */}
@@ -381,7 +376,7 @@ export default function PersonalDashboardPage() {
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg>
                     My Wallets
                   </button>
-                  <div className="my-1 h-px bg-white/[0.06]" />
+                  <div className="my-1 h-px bg-white/6" />
                   <Link href="/" className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-white/70 hover:bg-white/8 hover:text-white transition-colors">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
                     Sign Out
@@ -398,11 +393,11 @@ export default function PersonalDashboardPage() {
       <div className="relative z-10 flex min-h-[calc(100vh-64px)]">
         {/* Sidebar */}
         <aside className={cn(
-          "fixed inset-y-16 left-0 z-30 w-64 border-r border-white/[0.06] bg-background/80 backdrop-blur-xl transition-transform duration-300 lg:sticky lg:top-16 lg:translate-x-0 lg:h-[calc(100vh-64px)]",
+          "fixed inset-y-16 left-0 z-30 w-64 border-r border-white/6 bg-background/80 backdrop-blur-xl transition-transform duration-300 lg:sticky lg:top-16 lg:translate-x-0 lg:h-[calc(100vh-64px)]",
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}>
           {/* User card */}
-          <div className="border-b border-white/[0.06] p-5">
+          <div className="border-b border-white/6 p-5">
             <div className="flex items-center gap-3">
               <div className="h-10 w-10 rounded-full bg-[#f0b400]/10 flex items-center justify-center text-[#f0b400]">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -427,7 +422,7 @@ export default function PersonalDashboardPage() {
           </nav>
 
           {/* Balance card */}
-          <div className="mt-auto border-t border-white/[0.06] p-4">
+          <div className="mt-auto border-t border-white/6 p-4">
             <div className="rounded-xl bg-[#f0b400]/5 border border-[#f0b400]/10 p-4">
               <p className="text-[10px] font-bold uppercase tracking-widest text-[#f0b400]/60">{t("dashPage.totalBalance")}</p>
               <p className="mt-1 text-xl font-bold text-[#f0b400]">15,650.50 <span className="text-xs font-normal text-white/40">USDC</span></p>
@@ -576,7 +571,7 @@ export default function PersonalDashboardPage() {
               </div>
               {/* Section: Agreements that require my attention */}
               <div className="mt-12">
-                <h2 className="text-xl font-semibold text-white mb-4">Agreements Pending Your Action</h2>
+                <h2 className="text-xl font-semibold text-white mb-4">Agreements pending your action</h2>
                 {approverLoading ? (
                   <div className="text-white/40 text-sm">Loading escrows...</div>
                 ) : approverEscrows.length === 0 ? (
