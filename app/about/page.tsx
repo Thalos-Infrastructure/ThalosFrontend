@@ -169,12 +169,12 @@ export default function AboutPage() {
         </nav>
       </header>
 
-      {/* Main content - offset right on desktop to avoid THALOS overlap */}
-      <main className="relative z-10 pt-24 md:pl-[120px] lg:pl-[160px] xl:pl-[200px]">
+      {/* Main content - centered */}
+      <main className="relative z-10 pt-24">
 
         {/* ═══════ HERO ═══════ */}
-        <section className="flex min-h-[50vh] items-center px-6 py-20 lg:px-16">
-          <div className="max-w-3xl">
+        <section className="flex min-h-[50vh] items-center justify-center px-6 py-20 lg:px-16">
+          <div className="mx-auto max-w-4xl text-center">
             <RevealBlock>
               <p className="mb-4 text-sm font-bold uppercase tracking-[0.2em] text-[#f0b400]">
                 {t("vision.tag")}
@@ -186,7 +186,7 @@ export default function AboutPage() {
               </h1>
             </RevealBlock>
             <RevealBlock delay={200}>
-              <p className="text-lg font-medium leading-relaxed text-muted-foreground max-w-2xl text-pretty">
+              <p className="text-lg font-medium leading-relaxed text-muted-foreground mx-auto max-w-2xl text-pretty">
                 {t("vision.visionText")}
               </p>
             </RevealBlock>
@@ -195,9 +195,9 @@ export default function AboutPage() {
 
         {/* ═══════ VISION ═══════ */}
         <section className="px-6 pb-24 lg:px-16">
-          <div className="max-w-3xl">
+          <div className="mx-auto max-w-4xl text-center">
             <RevealBlock>
-              <div className="flex items-center gap-3 mb-6">
+              <div className="flex items-center justify-center gap-3 mb-6">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#f0b400]/10">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f0b400" strokeWidth="1.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                 </div>
@@ -211,7 +211,7 @@ export default function AboutPage() {
             </RevealBlock>
             <RevealBlock delay={160}>
               <p className="mt-6 text-base font-medium leading-relaxed text-muted-foreground/80">
-                We envision a financial system where trust is not a prerequisite but a product of the system itself. Where a freelancer in Buenos Aires can work with a client in Berlin with the same certainty as a handshake between neighbors. Where every peso, dollar, and euro locked in an agreement works for everyone involved until the moment it is released.
+                {t("vision.visionExtended")}
               </p>
             </RevealBlock>
           </div>
@@ -219,9 +219,9 @@ export default function AboutPage() {
 
         {/* ═══════ MISSION ═══════ */}
         <section className="px-6 pb-24 lg:px-16">
-          <div className="max-w-3xl">
+          <div className="mx-auto max-w-4xl text-center">
             <RevealBlock>
-              <div className="flex items-center gap-3 mb-6">
+              <div className="flex items-center justify-center gap-3 mb-6">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#f0b400]/10">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f0b400" strokeWidth="1.5"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
                 </div>
@@ -235,23 +235,23 @@ export default function AboutPage() {
             </RevealBlock>
             <RevealBlock delay={160}>
               <p className="mt-6 text-base font-medium leading-relaxed text-muted-foreground/80">
-                Thalos is more than a payment platform. It is a trust infrastructure designed for the real world, where agreements are complex, parties are global, and the cost of broken promises is high. We build on Stellar because speed, low cost, and accessibility matter. We integrate Trustless Work because non-custodial escrow should be the standard, not the exception.
+                {t("vision.missionExtended")}
               </p>
             </RevealBlock>
           </div>
         </section>
 
         {/* ═══════ SEPARATOR ═══════ */}
-        <div className="mx-6 mb-24 h-px bg-gradient-to-r from-[#f0b400]/20 via-[#f0b400]/10 to-transparent lg:mx-16 max-w-3xl" />
+        <div className="mx-auto mb-24 h-px max-w-4xl bg-gradient-to-r from-transparent via-[#f0b400]/15 to-transparent" />
 
         {/* ═══════ CORE TECHNOLOGY STACK ═══════ */}
         <section className="px-6 pb-24 lg:px-16">
-          <div className="max-w-3xl">
+          <div className="mx-auto max-w-4xl">
             <RevealBlock>
-              <p className="mb-3 text-sm font-bold uppercase tracking-[0.2em] text-[#f0b400]">
+              <p className="mb-3 text-sm font-bold uppercase tracking-[0.2em] text-[#f0b400] text-center">
                 {t("vision.techTitle")}
               </p>
-              <p className="mb-12 text-base font-medium text-muted-foreground leading-relaxed">
+              <p className="mb-12 text-base font-medium text-muted-foreground leading-relaxed text-center">
                 {t("vision.techDesc")}
               </p>
             </RevealBlock>
@@ -278,37 +278,22 @@ export default function AboutPage() {
                 </RevealBlock>
               ))}
 
-              {/* Trustless Work */}
-              <RevealBlock delay={TECH_STACK.length * 60}>
-                <div className="mt-4 flex items-start gap-5 rounded-xl border border-[#f0b400]/10 bg-[#f0b400]/[0.03] py-5 px-4 md:gap-8">
-                  <div className="shrink-0 flex h-14 w-14 items-center justify-center">
-                    <Image src="/trustless-logo.png" alt="Trustless Work" width={48} height={48} className="h-10 w-10 object-contain opacity-80" />
-                  </div>
-                  <div className="flex-1 min-w-0 pt-1">
-                    <h3 className="text-xl font-bold text-foreground md:text-2xl leading-tight">
-                      {t("vision.trustlessWork")}
-                    </h3>
-                    <p className="mt-2 text-base font-medium leading-relaxed text-muted-foreground">
-                      {t("vision.trustlessWorkDesc")}
-                    </p>
-                  </div>
-                </div>
-              </RevealBlock>
+
             </div>
           </div>
         </section>
 
         {/* ═══════ SEPARATOR ═══════ */}
-        <div className="mx-6 mb-24 h-px bg-gradient-to-r from-border/20 via-border/10 to-transparent lg:mx-16 max-w-3xl" />
+        <div className="mx-auto mb-24 h-px max-w-4xl bg-gradient-to-r from-transparent via-border/15 to-transparent" />
 
         {/* ═══════ TEAM ═══════ */}
         <section className="px-6 pb-24 lg:px-16">
-          <div className="max-w-3xl">
+          <div className="mx-auto max-w-4xl">
             <RevealBlock>
-              <p className="mb-3 text-sm font-bold uppercase tracking-[0.2em] text-[#f0b400]">
+              <p className="mb-3 text-sm font-bold uppercase tracking-[0.2em] text-[#f0b400] text-center">
                 {t("team.title")}
               </p>
-              <p className="mb-12 text-base font-medium text-muted-foreground leading-relaxed">
+              <p className="mb-12 text-base font-medium text-muted-foreground leading-relaxed text-center">
                 {t("team.desc")}
               </p>
             </RevealBlock>
@@ -346,11 +331,11 @@ export default function AboutPage() {
         </section>
 
         {/* ═══════ SEPARATOR ═══════ */}
-        <div className="mx-6 mb-24 h-px bg-gradient-to-r from-border/20 via-border/10 to-transparent lg:mx-16 max-w-3xl" />
+        <div className="mx-auto mb-24 h-px max-w-4xl bg-gradient-to-r from-transparent via-border/15 to-transparent" />
 
         {/* ═══════ GET INVOLVED ═══════ */}
         <section className="px-6 pb-24 lg:px-16">
-          <div className="max-w-3xl">
+          <div className="mx-auto max-w-4xl text-center">
             <RevealBlock>
               <p className="mb-3 text-sm font-bold uppercase tracking-[0.2em] text-[#f0b400]">
                 {t("getInvolved.title")}
@@ -360,7 +345,7 @@ export default function AboutPage() {
               </p>
             </RevealBlock>
             <RevealBlock delay={80}>
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-center sm:gap-6">
                 <a
                   href="mailto:thalosinfrastructure@gmail.com"
                   className="inline-flex items-center gap-2 rounded-full border border-[#f0b400]/20 bg-[#f0b400]/5 px-6 py-3 text-sm font-bold text-[#f0b400] transition-all duration-300 hover:bg-[#f0b400]/10 hover:border-[#f0b400]/30"
@@ -385,14 +370,14 @@ export default function AboutPage() {
         {/* ═══════ PARTNERS ═══════ */}
         <section className="px-6 pb-16 lg:px-16">
           <RevealBlock>
-            <div className="flex items-center gap-8 max-w-3xl">
+            <div className="flex items-center justify-center gap-8 mx-auto max-w-4xl">
               <a href="https://stellar.org/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 transition-opacity hover:opacity-80">
-                <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">Built on</span>
+                <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">{t("partners.builtOn")}</span>
                 <Image src="/stellar-full.png" alt="Stellar" width={24} height={24} className="h-5 w-5 shrink-0 object-contain opacity-50" />
               </a>
               <div className="h-4 w-px bg-border/30" aria-hidden="true" />
               <a href="https://www.trustlesswork.com/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 transition-opacity hover:opacity-80">
-                <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">Escrows by</span>
+                <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">{t("partners.escrowsBy")}</span>
                 <Image src="/trustless-logo.png" alt="Trustless Work" width={20} height={20} className="h-4 w-auto object-contain opacity-50" />
               </a>
             </div>
