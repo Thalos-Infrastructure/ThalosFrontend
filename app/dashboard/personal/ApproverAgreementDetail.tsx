@@ -22,7 +22,8 @@ interface ApproverAgreementDetailProps {
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { statusConfig } from "./page";
+import { statusConfig } from "./statusConfig";
+import { useLanguage } from "@/lib/i18n";
 import { fundAndSignEscrow } from "@/lib/agreementActions";
 
 export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreementDetailProps) {
@@ -40,6 +41,7 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
   const amountNum = Number(agr.amount);
   const balanceNum = Number(agr.balance);
   const disableFund = funding || fundSuccess || (balanceNum >= amountNum);
+  const { t } = useLanguage();
   async function handleApprove(idx: number) {
     setLoadingMs(idx);
     setErrorMs(null);
@@ -113,7 +115,12 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
           </div>
         </div>
         <div className="flex items-center gap-4">
-          <span className={cn("rounded-full border px-3 py-1 text-xs font-semibold", statusConfig[agr.status]?.color)}>{statusConfig[agr.status]?.label}</span>
+          {(() => {
+            const st = statusConfig[agr.status] || statusConfig.funded;
+            return (
+              <span className={cn("rounded-full border px-3 py-1 text-xs font-semibold", st.color)}>{t(st.labelKey) ?? "Desconocido"}</span>
+            );
+          })()}
           <p className="text-lg font-bold text-white flex items-center gap-2">
             {"$"}
               {agr.milestones.length === 1 ? agr.amount : agr.milestones.reduce((acc, ms) => acc + Number(ms.amount), 0)} 
