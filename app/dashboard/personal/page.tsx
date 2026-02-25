@@ -1,54 +1,6 @@
 "use client";
 import { ApproverAgreementDetail } from "./ApproverAgreementDetail";
 
-// Componente para renderizar cada escrow a aprobar con su botón Funds y feedback
-function ApproverEscrowRow({ agr, walletAddress, openWalletModal, signTransaction }) {
-  const [funding, setFunding] = React.useState(false);
-  const [fundError, setFundError] = React.useState(null as string | null);
-  const [fundSuccess, setFundSuccess] = React.useState(false);
-  const allReleased = agr.milestones.every((m) => m.status === "released");
-  const effectiveStatus = allReleased ? "released" : agr.status;
-  const st = statusConfig[effectiveStatus] || statusConfig.funded;
-  // Deshabilitar si amount >= balance
-  const amountNum = Number(agr.amount);
-  const balanceNum = Number(agr.balance);
-  console.log("Comparing amount and balance for disabling fund button:", { amountNum, balanceNum });
-  const disableFund = funding || fundSuccess || (balanceNum >= amountNum);
-  console.log("Funding state:", { funding, fundSuccess });
-  console.log("Fund button disabled:", disableFund);
-  return (
-    <div className="rounded-2xl border border-white/[0.06] bg-[#0a0a0c]/70 p-5 backdrop-blur-md">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between w-full">
-        <div>
-          <p className="text-base font-semibold text-white">{agr.title}</p>
-          <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-white/35">
-            <span>{agr.id}</span><span className="text-white/15">|</span><span>{agr.amount} USDC</span><span className="text-white/15">|</span><span>{agr.status}</span><span className="text-white/15">|</span><span>{agr.date}</span>
-          </div>
-        </div>
-        <div className="flex items-center gap-4">
-          <span className={cn("rounded-full border px-3 py-1 text-xs font-semibold", st.color)}>{st.label}</span>
-          <p className="text-lg font-bold text-white">{"$"}{agr.amount} <span className="text-xs font-normal text-white/35">USDC</span></p>
-          <Button size="sm" onClick={() => fundAndSignEscrow({
-            contractId: agr.id,
-            amount: agr.amount,
-            walletAddress,
-            openWalletModal,
-            signTransaction,
-            setFunding,
-            setError: setFundError,
-            setSuccess: setFundSuccess,
-          })} disabled={disableFund}>
-            {funding ? "Funding..." : fundSuccess ? "Funded!" : "Funds"}
-          </Button>
-        </div>
-      </div>
-      {fundError && <div className="text-red-400 text-xs mt-2">{fundError}</div>}
-      {fundSuccess && <div className="text-emerald-400 text-xs mt-2">Escrow funded and transaction signed!</div>}
-    </div>
-  );
-}
-
-import { fundAndSignEscrow } from "@/lib/agreementActions";
 
 import React, { useState, useEffect, useCallback, useId, useRef } from "react"
 import Image from "next/image"
@@ -191,7 +143,7 @@ function mapEscrowToAgreement(escrow) {
   };
 }
 
-const statusConfig: Record<string, { label: string; color: string }> = {
+export const statusConfig: Record<string, { label: string; color: string }> = {
   funded: { label: "Funded", color: "bg-blue-500/10 text-blue-400 border-blue-500/20" },
   in_progress: { label: "In Progress", color: "bg-[#f0b400]/10 text-[#f0b400] border-[#f0b400]/20" },
   awaiting: { label: "Awaiting Approval", color: "bg-orange-500/10 text-orange-400 border-orange-500/20" },
@@ -622,13 +574,13 @@ export default function PersonalDashboardPage() {
                   )
                 })}
               </div>
-              {/* Nueva sección: Agreements que requieren mi atención (como aprobador) */}
+              {/* Section: Agreements that require my attention */}
               <div className="mt-12">
-                <h2 className="text-xl font-semibold text-white mb-4">Agreements that required my attention</h2>
+                <h2 className="text-xl font-semibold text-white mb-4">Agreements Pending Your Action</h2>
                 {approverLoading ? (
                   <div className="text-white/40 text-sm">Loading escrows...</div>
                 ) : approverEscrows.length === 0 ? (
-                  <div className="text-white/40 text-sm">No tienes escrows como aprobador</div>
+                  <div className="text-white/40 text-sm">No escrows require your attention</div>
                 ) : (
                   <div className="flex flex-col gap-4">
                     {approverEscrows.map((agr) => (

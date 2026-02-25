@@ -33,40 +33,41 @@ export function StellarWalletProvider({ children }: { children: React.ReactNode 
       setIsConnecting(true)
       setWalletError(null)
       try {
-        const kit = await getKit()
+        clearKit();
+        const kit = await getKit();
         if (!kit) {
-          setWalletError("Stellar Wallets Kit no disponible.")
-          return
+          setWalletError("Stellar Wallets Kit no disponible.");
+          return;
         }
         await kit.openModal({
           modalTitle: "Connect Wallet",
           onWalletSelected: async (option) => {
             try {
-              kit.setWallet(option.id)
-              const { address: addr } = await kit.getAddress()
-              setAddress(addr)
-              if (typeof window !== "undefined") sessionStorage.setItem(STELLAR_WALLET_KEY, addr)
-              onConnected?.(addr)
+              kit.setWallet(option.id);
+              const { address: addr } = await kit.getAddress();
+              setAddress(addr);
+              if (typeof window !== "undefined") sessionStorage.setItem(STELLAR_WALLET_KEY, addr);
+              onConnected?.(addr);
             } catch (e) {
-              const msg = e instanceof Error ? e.message : "No se pudo obtener la dirección."
-              setWalletError(msg)
+              const msg = e instanceof Error ? e.message : "No se pudo obtener la dirección.";
+              setWalletError(msg);
             } finally {
-              setIsConnecting(false)
+              setIsConnecting(false);
             }
           },
           onClosed: () => {
-            setIsConnecting(false)
+            setIsConnecting(false);
           },
-        })
+        });
       } catch (e) {
-        const message = e instanceof Error ? e.message : "Error al abrir el modal de billeteras."
-        setWalletError(message)
+        const message = e instanceof Error ? e.message : "Error al abrir el modal de billeteras.";
+        setWalletError(message);
       } finally {
-        setIsConnecting(false)
+        setIsConnecting(false);
       }
     },
     []
-  )
+  );
 
   const disconnect = useCallback(async () => {
     try {
