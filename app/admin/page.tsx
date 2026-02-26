@@ -103,10 +103,7 @@ export default function AdminDashboardPage() {
   const [sortDir, setSortDir] = useState<"desc" | "asc">("desc")
   const [page, setPage] = useState(0)
 
-  useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 1400)
-    return () => clearTimeout(timer)
-  }, [])
+  useEffect(() => { setLoading(false) }, [])
 
   const handlePasswordSubmit = (e: React.FormEvent) => {
     e.preventDefault()

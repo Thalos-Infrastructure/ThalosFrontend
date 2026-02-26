@@ -82,7 +82,7 @@ export default function AboutPage() {
   const [letterOpacities, setLetterOpacities] = useState<number[]>([1, 1, 1, 1, 1, 1])
 
   useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 1200)
+    const timer = setTimeout(() => setLoading(false), 400)
     return () => clearTimeout(timer)
   }, [])
 
@@ -122,10 +122,10 @@ export default function AboutPage() {
       {/* Ocean collage background */}
       <div className="pointer-events-none fixed inset-0 z-0" aria-hidden="true">
         <div className="absolute inset-0 grid grid-cols-3 grid-rows-2 gap-0 opacity-35">
-          <div className="col-span-2 row-span-1 bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1505142468610-359e7d316be0?w=1920&q=85&auto=format&fit=crop')" }} />
-          <div className="col-span-1 row-span-2 bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=1920&q=85&auto=format&fit=crop')" }} />
-          <div className="col-span-1 row-span-1 bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1920&q=85&auto=format&fit=crop')" }} />
-          <div className="col-span-1 row-span-1 bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1476673160081-cf065607f449?w=1920&q=85&auto=format&fit=crop')" }} />
+          <div className="col-span-2 row-span-1 bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1505142468610-359e7d316be0?w=1280&q=60&auto=format&fit=crop')" }} />
+          <div className="col-span-1 row-span-2 bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=1280&q=60&auto=format&fit=crop')" }} />
+          <div className="col-span-1 row-span-1 bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1280&q=60&auto=format&fit=crop')" }} />
+          <div className="col-span-1 row-span-1 bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1476673160081-cf065607f449?w=1280&q=60&auto=format&fit=crop')" }} />
         </div>
         <div className="absolute inset-0 bg-gradient-to-b from-background/25 via-background/45 to-background/85" />
       </div>
@@ -157,7 +157,7 @@ export default function AboutPage() {
       </div>
 
       {/* Top nav - same style as main page navbar */}
-      <header className="fixed top-0 left-0 right-0 z-50 border-b border-border/15 bg-background/60 backdrop-blur-xl shadow-[0_2px_16px_rgba(0,0,0,0.1)]">
+      <header className="fixed top-0 left-0 right-0 z-50 border-b border-border/30 bg-background/80 backdrop-blur-xl shadow-[0_2px_16px_rgba(0,0,0,0.08)]">
         <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
           <Link href="/" className="flex items-center">
             <Image src="/thalos-icon.png" alt="Thalos" width={72} height={72} className="h-16 w-16 object-contain" priority />

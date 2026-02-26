@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect, useCallback, useId, useRef } from "react"
+import React, { useState, useEffect, useCallback, useId, useRef, useMemo } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -123,6 +123,7 @@ function UseCaseIcon({ icon }: { icon: string }) {
 const sidebarItems = [
   { id: "create", labelKey: "dashPage.newAgreement", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg> },
   { id: "agreements", labelKey: "dashPage.agreements", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> },
+  { id: "templates", labelKey: "dashPage.templates", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg> },
   { id: "wallets", labelKey: "dashPage.wallets", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg> },
   { id: "analytics", labelKey: "dashPage.analytics", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg> },
 ]
@@ -132,8 +133,7 @@ const sidebarItems = [
    ════════════════════════════════════════════════ */
 export default function BusinessDashboardPage() {
   const { t } = useLanguage()
-  const [loading, setLoading] = useState(true)
-  useEffect(() => { const t = setTimeout(() => setLoading(false), 1400); return () => clearTimeout(t) }, [])
+  const [loading, setLoading] = useState(false)
 
   const [activeSection, setActiveSection] = useState("agreements")
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -231,6 +231,96 @@ export default function BusinessDashboardPage() {
   const agreementUrl = typeof window !== "undefined" ? `${window.location.origin}/dashboard/business` : "https://thalos.app/dashboard/business"
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(agreementUrl)}&bgcolor=0a0a0a&color=f0b400&qzone=3&format=png`
 
+  /* ── Agreements filter/sort state ── */
+  const [searchQuery, setSearchQuery] = useState("")
+  const [statusFilter, setStatusFilter] = useState<"all" | "funded" | "in_progress" | "released">("all")
+  const [sortBy, setSortBy] = useState<"date" | "amount" | "title">("date")
+
+  const filteredAgreements = useMemo(() => {
+    let filtered = [...agreements]
+    if (statusFilter !== "all") {
+      filtered = filtered.filter(agr => {
+        const allReleased = agr.milestones.every(m => m.status === "released")
+        const effectiveStatus = allReleased ? "released" : agr.status
+        return effectiveStatus === statusFilter
+      })
+    }
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase()
+      filtered = filtered.filter(agr =>
+        agr.title.toLowerCase().includes(q) ||
+        agr.counterparty.toLowerCase().includes(q) ||
+        agr.id.toLowerCase().includes(q)
+      )
+    }
+    filtered.sort((a, b) => {
+      if (sortBy === "date") return b.date.localeCompare(a.date)
+      if (sortBy === "amount") return parseFloat(b.amount.replace(/,/g, "")) - parseFloat(a.amount.replace(/,/g, ""))
+      return a.title.localeCompare(b.title)
+    })
+    return filtered
+  }, [agreements, statusFilter, searchQuery, sortBy])
+
+  const statusCounts = useMemo(() => {
+    const counts = { all: agreements.length, funded: 0, in_progress: 0, released: 0 }
+    agreements.forEach(agr => {
+      const allReleased = agr.milestones.every(m => m.status === "released")
+      const s = allReleased ? "released" : agr.status
+      if (s in counts) counts[s as keyof typeof counts]++
+    })
+    return counts
+  }, [agreements])
+
+  /* ── Templates state ── */
+  interface Template { id: string; name: string; escrowType: "single" | "multi"; useCase: string; title: string; description: string; milestones: { description: string; amount: string }[] }
+  const [templates, setTemplates] = useState<Template[]>(() => {
+    if (typeof window === "undefined") return []
+    try { const stored = localStorage.getItem("thalos_biz_templates"); return stored ? JSON.parse(stored) : [] } catch { return [] }
+  })
+  const [showSaveTemplate, setShowSaveTemplate] = useState(false)
+  const [templateName, setTemplateName] = useState("")
+  const [editingTemplate, setEditingTemplate] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (typeof window !== "undefined") localStorage.setItem("thalos_biz_templates", JSON.stringify(templates))
+  }, [templates])
+
+  const saveAsTemplate = () => {
+    const tpl: Template = {
+      id: `TPL-${Date.now().toString(36).toUpperCase()}`,
+      name: templateName.trim() || title,
+      escrowType, useCase: useCase || "", title, description,
+      milestones: milestones.map(m => ({ description: m.description, amount: m.amount })),
+    }
+    if (editingTemplate) {
+      setTemplates(prev => prev.map(t => t.id === editingTemplate ? { ...tpl, id: editingTemplate } : t))
+    } else {
+      setTemplates(prev => [...prev, tpl])
+    }
+    setShowSaveTemplate(false); setTemplateName(""); setEditingTemplate(null)
+  }
+
+  const useTemplate = (tpl: Template) => {
+    resetWizard()
+    setEscrowType(tpl.escrowType)
+    setUseCase(tpl.useCase || null)
+    setTitle(tpl.title)
+    setDescription(tpl.description)
+    setMilestones(tpl.milestones.length > 0 ? tpl.milestones : [{ description: "Full delivery", amount: "" }])
+    setGuidePrefilled(true)
+    setStep(2)
+    setActiveSection("create")
+  }
+
+  const deleteTemplate = (id: string) => setTemplates(prev => prev.filter(t => t.id !== id))
+
+  const startEditTemplate = (tpl: Template) => {
+    setTemplateName(tpl.name); setEditingTemplate(tpl.id); setShowSaveTemplate(true)
+    setEscrowType(tpl.escrowType); setUseCase(tpl.useCase || null)
+    setTitle(tpl.title); setDescription(tpl.description)
+    setMilestones(tpl.milestones.length > 0 ? tpl.milestones : [{ description: "Full delivery", amount: "" }])
+  }
+
   if (loading) return <ThalosLoader />
 
   return (
@@ -315,7 +405,7 @@ export default function BusinessDashboardPage() {
                 className={cn("flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200",
                   activeSection === item.id ? "bg-[#3b82f6]/10 text-[#3b82f6]" : "text-white/50 hover:bg-white/5 hover:text-white/80"
                 )}>
-                {item.icon}{t(`dashPage.${item.id === "create" ? "newAgreement" : item.id}`)}
+                {item.icon}{t(`dashPage.${item.id === "create" ? "newAgreement" : item.id === "templates" ? "templates" : item.id}`)}
               </button>
             ))}
           </nav>
@@ -422,12 +512,61 @@ export default function BusinessDashboardPage() {
           {/* ══════ AGREEMENTS ══════ */}
           {activeSection === "agreements" && !viewingAgreement && (
             <div className="mx-auto max-w-4xl">
+              {/* Header */}
               <div className="mb-6 flex items-center justify-between">
-                <h1 className="text-2xl font-semibold text-white">Enterprise Agreements</h1>
-                <Button onClick={() => { setActiveSection("create"); resetWizard() }} className="rounded-full bg-[#f0b400] px-6 text-sm font-semibold text-background hover:bg-[#d4a000] shadow-[0_4px_16px_rgba(240,180,0,0.25)]">+ New Agreement</Button>
+                <h1 className="text-2xl font-semibold text-white">{t("dashPage.enterpriseAgreements")}</h1>
+                <Button onClick={() => { setActiveSection("create"); resetWizard() }} className="rounded-full bg-[#f0b400] px-6 text-sm font-semibold text-background hover:bg-[#d4a000] shadow-[0_4px_16px_rgba(240,180,0,0.25)]">+ {t("dashPage.newAgreement")}</Button>
               </div>
+
+              {/* Toolbar */}
+              <div className="mb-5 flex flex-col gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="relative flex-1">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/25">
+                      <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                    </svg>
+                    <input
+                      value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder={t("dashPage.searchPlaceholder")}
+                      className="h-10 w-full rounded-xl border border-white/[0.08] bg-white/[0.03] pl-10 pr-4 text-sm text-white placeholder:text-white/25 focus:border-[#3b82f6]/40 focus:outline-none focus:ring-1 focus:ring-[#3b82f6]/15 transition-all"
+                    />
+                  </div>
+                  <select value={sortBy} onChange={(e) => setSortBy(e.target.value as "date" | "amount" | "title")}
+                    className="h-10 rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 text-xs font-medium text-white/60 focus:border-[#3b82f6]/40 focus:outline-none appearance-none cursor-pointer">
+                    <option value="date">{t("dashPage.sortBy")}: {t("dashPage.sortDate")}</option>
+                    <option value="amount">{t("dashPage.sortBy")}: {t("dashPage.sortAmount")}</option>
+                    <option value="title">{t("dashPage.sortBy")}: {t("dashPage.sortTitle")}</option>
+                  </select>
+                </div>
+                <div className="flex items-center gap-1.5 overflow-x-auto">
+                  {(["all", "funded", "in_progress", "released"] as const).map((s) => {
+                    const labelMap = { all: "dashPage.all", funded: "dashPage.funded", in_progress: "dashPage.inProgress", released: "dashPage.releasedFilter" }
+                    const count = statusCounts[s]
+                    return (
+                      <button key={s} onClick={() => setStatusFilter(s)}
+                        className={cn("flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all whitespace-nowrap",
+                          statusFilter === s ? "bg-[#3b82f6]/15 text-[#3b82f6] border border-[#3b82f6]/20" : "text-white/40 hover:text-white/60 hover:bg-white/[0.04] border border-transparent"
+                        )}>
+                        {t(labelMap[s])}
+                        <span className={cn("rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none",
+                          statusFilter === s ? "bg-[#3b82f6]/20 text-[#3b82f6]" : "bg-white/[0.06] text-white/30"
+                        )}>{count}</span>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Agreements list */}
+              {filteredAgreements.length === 0 ? (
+                <div className="flex flex-col items-center justify-center rounded-2xl border border-white/[0.06] bg-[#0a0a0c]/70 py-16 px-6 text-center">
+                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" className="text-white/15 mb-4"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                  <p className="text-sm font-medium text-white/40">{t("dashPage.noResults")}</p>
+                  <p className="mt-1 text-xs text-white/20">{t("dashPage.noResultsDesc")}</p>
+                </div>
+              ) : (
               <div className="flex flex-col gap-4">
-                {agreements.map((agr) => {
+                {filteredAgreements.map((agr) => {
                   const allReleased = agr.milestones.every(m => m.status === "released")
                   const effectiveStatus = allReleased ? "released" : agr.status
                   const st = statusConfig[effectiveStatus] || statusConfig.funded
@@ -460,6 +599,7 @@ export default function BusinessDashboardPage() {
                   )
                 })}
               </div>
+              )}
             </div>
           )}
 
@@ -607,6 +747,125 @@ export default function BusinessDashboardPage() {
             )
           })()}
 
+          {/* ══════ TEMPLATES ══════ */}
+          {activeSection === "templates" && (
+            <div className="mx-auto max-w-4xl">
+              <div className="mb-2 flex items-center justify-between">
+                <div>
+                  <h1 className="text-2xl font-semibold text-white">{t("dashPage.templates")}</h1>
+                  <p className="mt-1 text-sm text-white/35">{t("dashPage.templatesSub")}</p>
+                </div>
+                <Button onClick={() => { resetWizard(); setShowSaveTemplate(true); setEditingTemplate(null); setTemplateName("") }}
+                  className="rounded-full bg-[#3b82f6] px-6 text-sm font-semibold text-white hover:bg-[#2563eb] shadow-[0_4px_16px_rgba(59,130,246,0.25)]">
+                  + {t("dashPage.newTemplate")}
+                </Button>
+              </div>
+
+              {/* Save / Edit template modal */}
+              {showSaveTemplate && (
+                <div className="mb-6 mt-4 rounded-2xl border border-[#3b82f6]/20 bg-[#3b82f6]/[0.04] p-6">
+                  <h3 className="text-lg font-semibold text-white mb-4">{editingTemplate ? t("dashPage.editTemplate") : t("dashPage.saveAsTemplate")}</h3>
+                  <div className="flex flex-col gap-4">
+                    <FormInput label={t("dashPage.templateName")} value={templateName} onChange={setTemplateName} placeholder={t("dashPage.templateNamePlaceholder")} required />
+                    <FormInput label={t("wizard.titleLabel")} value={title} onChange={setTitle} placeholder={t("wizard.titlePlaceholder")} required />
+                    <FormTextarea label={t("wizard.descLabel")} value={description} onChange={setDescription} placeholder={t("wizard.agreementDesc")} rows={3} />
+                    <div className="flex items-center gap-3">
+                      <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{t("wizard.escrowType")}</p>
+                      <div className="flex items-center gap-2">
+                        {(["single", "multi"] as const).map(et => (
+                          <button key={et} onClick={() => setEscrowType(et)}
+                            className={cn("rounded-lg px-3 py-1.5 text-xs font-semibold transition-all",
+                              escrowType === et ? "bg-[#3b82f6]/15 text-[#3b82f6] border border-[#3b82f6]/20" : "text-white/40 border border-transparent hover:bg-white/[0.04]"
+                            )}>
+                            {et === "single" ? t("wizard.oneTimePayment") : t("wizard.milestoneBased")}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    {escrowType === "multi" && (
+                      <div className="flex flex-col gap-2">
+                        <div className="flex items-center justify-between">
+                          <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{t("wizard.paymentStages")}</p>
+                          <button onClick={addMilestone} className="text-xs font-semibold text-[#3b82f6] hover:underline">{t("wizard.addStage")}</button>
+                        </div>
+                        {milestones.map((m, i) => (
+                          <div key={i} className="flex items-center gap-2">
+                            <input value={m.description} onChange={(e) => updateMilestone(i, "description", e.target.value)} placeholder={`${t("wizard.stageDesc")}`}
+                              className="flex-1 h-9 rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-[#3b82f6]/40" />
+                            <input value={m.amount} onChange={(e) => updateMilestone(i, "amount", e.target.value)} placeholder={t("wizard.amount")} type="number"
+                              className="w-28 h-9 rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-[#3b82f6]/40" />
+                            {milestones.length > 1 && (
+                              <button onClick={() => removeMilestone(i)} className="text-white/20 hover:text-red-400 transition-colors">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <div className="flex items-center gap-3 pt-2">
+                      <Button onClick={saveAsTemplate} disabled={!templateName.trim() && !title.trim()}
+                        className="rounded-full bg-[#3b82f6] px-6 text-sm font-semibold text-white hover:bg-[#2563eb] disabled:opacity-30">
+                        {t("dashPage.saveTemplate")}
+                      </Button>
+                      <Button variant="ghost" onClick={() => { setShowSaveTemplate(false); setEditingTemplate(null) }}
+                        className="rounded-full text-sm text-white/40 hover:text-white">
+                        {t("dashPage.cancel")}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Template cards */}
+              {templates.length === 0 && !showSaveTemplate ? (
+                <div className="mt-6 flex flex-col items-center justify-center rounded-2xl border border-white/[0.06] bg-[#0a0a0c]/70 py-16 px-6 text-center">
+                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" className="text-white/15 mb-4"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+                  <p className="text-sm font-medium text-white/40">{t("dashPage.noTemplates")}</p>
+                  <p className="mt-1 text-xs text-white/20">{t("dashPage.noTemplatesDesc")}</p>
+                </div>
+              ) : (
+                <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  {templates.map((tpl) => (
+                    <div key={tpl.id} className="group rounded-2xl border border-white/[0.06] bg-[#0a0a0c]/70 p-5 backdrop-blur-md transition-all hover:border-white/15">
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <p className="text-base font-semibold text-white">{tpl.name}</p>
+                          <p className="mt-0.5 text-xs text-white/30">{tpl.title}</p>
+                        </div>
+                        <span className={cn("rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase",
+                          tpl.escrowType === "single" ? "border-[#3b82f6]/20 bg-[#3b82f6]/10 text-[#3b82f6]" : "border-[#f0b400]/20 bg-[#f0b400]/10 text-[#f0b400]"
+                        )}>
+                          {tpl.escrowType === "single" ? t("wizard.oneTimePayment") : t("wizard.milestoneBased")}
+                        </span>
+                      </div>
+                      <p className="text-xs text-white/25 line-clamp-2 mb-4">{tpl.description}</p>
+                      {tpl.milestones.length > 0 && tpl.escrowType === "multi" && (
+                        <div className="mb-4 flex flex-wrap gap-1.5">
+                          {tpl.milestones.slice(0, 3).map((m, i) => (
+                            <span key={i} className="rounded-md bg-white/[0.04] px-2 py-0.5 text-[10px] text-white/35">{m.description || `Stage ${i + 1}`}</span>
+                          ))}
+                          {tpl.milestones.length > 3 && <span className="rounded-md bg-white/[0.04] px-2 py-0.5 text-[10px] text-white/35">+{tpl.milestones.length - 3}</span>}
+                        </div>
+                      )}
+                      <div className="flex items-center gap-2">
+                        <Button onClick={() => useTemplate(tpl)} className="flex-1 rounded-full bg-[#3b82f6]/10 text-xs font-semibold text-[#3b82f6] hover:bg-[#3b82f6]/20 border border-[#3b82f6]/15 h-8">
+                          {t("dashPage.useTemplate")}
+                        </Button>
+                        <button onClick={() => startEditTemplate(tpl)} className="rounded-full p-2 text-white/20 hover:text-white/60 hover:bg-white/[0.04] transition-all" title={t("dashPage.editTemplate")}>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                        </button>
+                        <button onClick={() => deleteTemplate(tpl.id)} className="rounded-full p-2 text-white/20 hover:text-red-400 hover:bg-red-400/[0.06] transition-all" title={t("dashPage.deleteTemplate")}>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* ══════ WALLETS ══════ */}
           {activeSection === "wallets" && (
             <div className="mx-auto max-w-4xl">
@@ -687,6 +946,10 @@ export default function BusinessDashboardPage() {
                   </div>
                   <div className="flex gap-3">
                     <Button variant="outline" onClick={copyJson} className="rounded-full border-white/10 bg-white/5 text-sm text-white/60 hover:bg-white/10 hover:text-white">{copiedJson ? t("wizard.copied") : t("wizard.copyDetails")}</Button>
+                    <Button variant="outline" onClick={() => { setTemplateName(title); setShowSaveTemplate(true); setEditingTemplate(null); setActiveSection("templates") }}
+                      className="rounded-full border-[#3b82f6]/20 bg-[#3b82f6]/5 text-sm text-[#3b82f6] hover:bg-[#3b82f6]/10">
+                      {t("dashPage.saveAsTemplate")}
+                    </Button>
                     <Button onClick={() => { resetWizard(); setActiveSection("agreements") }} className="rounded-full bg-[#f0b400] text-background font-semibold hover:bg-[#d4a000] shadow-[0_4px_16px_rgba(240,180,0,0.25)]">{t("wizard.viewAgreements")}</Button>
                   </div>
                 </div>
@@ -807,7 +1070,21 @@ export default function BusinessDashboardPage() {
                     {step < wizardStepKeys.length - 1 ? (
                       <Button onClick={() => setStep(step + 1)} disabled={!canProceed()} className="rounded-full bg-[#f0b400] px-8 text-sm font-semibold text-background hover:bg-[#d4a000] disabled:opacity-20 shadow-[0_4px_16px_rgba(240,180,0,0.25)]">{t("wizard.continue")}</Button>
                     ) : (
-                      <Button onClick={() => setSubmitted(true)} disabled={!signerEmail.trim()} className="rounded-full bg-[#f0b400] px-8 text-sm font-semibold text-background hover:bg-[#d4a000] disabled:opacity-20 shadow-[0_4px_16px_rgba(240,180,0,0.25)]">{t("wizard.createNotify")}</Button>
+                      <Button onClick={() => {
+    const newAgr: Agreement = {
+      id: `AGR-${Date.now().toString(36).toUpperCase()}`,
+      title: title || "Untitled",
+      status: "funded",
+      type: escrowType === "single" ? "Single Release" : "Multi Release",
+      counterparty: signerWallet.slice(0, 8) + "...",
+      amount: totalAmount.toLocaleString(),
+      date: new Date().toISOString().split("T")[0],
+      milestones: milestones.map(m => ({ description: m.description, amount: m.amount, status: "pending" as const })),
+      receiver: selectedWallet,
+    }
+    setAgreements(prev => [newAgr, ...prev])
+    setSubmitted(true)
+  }} disabled={!signerEmail.trim()} className="rounded-full bg-[#f0b400] px-8 text-sm font-semibold text-background hover:bg-[#d4a000] disabled:opacity-20 shadow-[0_4px_16px_rgba(240,180,0,0.25)]">{t("wizard.createNotify")}</Button>
                     )}
                   </div>
                 </div>

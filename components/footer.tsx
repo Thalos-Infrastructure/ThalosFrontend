@@ -3,12 +3,15 @@
 import Image from "next/image"
 import Link from "next/link"
 import { useLanguage } from "@/lib/i18n"
+import { useSectionReveal } from "@/hooks/use-section-reveal"
+import { cn } from "@/lib/utils"
 
 export function Footer() {
   const { t } = useLanguage()
+  const { ref, isVisible } = useSectionReveal(0.05)
   return (
-    <footer className="border-t border-border/15 bg-background">
-      <div className="mx-auto max-w-7xl px-6 py-12">
+    <footer className="border-t border-border/15 bg-background" ref={ref}>
+      <div className={cn("mx-auto max-w-7xl px-6 py-12 section-reveal", isVisible && "is-visible")}>
         <div className="flex flex-col gap-10 lg:flex-row lg:items-start lg:justify-between">
           {/* Left: Logo + description + partners */}
           <div className="flex max-w-md flex-col gap-5">

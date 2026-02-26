@@ -2,7 +2,7 @@
 import { ApproverAgreementDetail } from "./ApproverAgreementDetail";
 
 
-import React, { useState, useEffect, useCallback, useId, useRef } from "react"
+import React, { useState, useEffect, useCallback, useId, useRef, useMemo } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -175,6 +175,106 @@ const sidebarItems = [
   { id: "analytics", label: "Analytics", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg> },
 ]
 
+/* ── Seller Evidence Submission Component ── */
+function SellerMilestoneList({ agr, agreements, setAgreements, t }: {
+  agr: Agreement; agreements: Agreement[]; setAgreements: React.Dispatch<React.SetStateAction<Agreement[]>>; t: (k: string) => string
+}) {
+  const [evidenceInputs, setEvidenceInputs] = React.useState<Record<number, string>>({})
+  const [submittedEvidence, setSubmittedEvidence] = React.useState<Record<number, string>>({})
+  const [submitting, setSubmitting] = React.useState<number | null>(null)
+  const [expandedMs, setExpandedMs] = React.useState<number | null>(null)
+
+  const handleSubmitEvidence = async (idx: number) => {
+    const evidence = evidenceInputs[idx]?.trim()
+    if (!evidence) return
+    setSubmitting(idx)
+    // Simulate small delay for UX
+    await new Promise(r => setTimeout(r, 600))
+    setSubmittedEvidence(prev => ({ ...prev, [idx]: evidence }))
+    setEvidenceInputs(prev => ({ ...prev, [idx]: "" }))
+    // Update milestone status in parent state to reflect evidence sent
+    setAgreements(prev => prev.map(a => a.id === agr.id ? {
+      ...a,
+      milestones: a.milestones.map((m, i) => i === idx && m.status === "pending" ? { ...m, status: "approved" as const } : m)
+    } : a))
+    setSubmitting(null)
+    setExpandedMs(null)
+  }
+
+  return (
+    <>
+      {agr.milestones.map((ms, idx) => {
+        const hasEvidence = !!submittedEvidence[idx]
+        return (
+          <div key={`${agr.id}-ms-${idx}`} className={cn("rounded-2xl border p-5 backdrop-blur-md transition-all",
+            ms.status === "released" ? "border-emerald-500/20 bg-emerald-500/5" : ms.status === "approved" || hasEvidence ? "border-cyan-500/20 bg-cyan-500/5" : "border-white/[0.06] bg-[#0a0a0c]/70"
+          )}>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-3">
+                <span className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold",
+                  ms.status === "released" ? "bg-emerald-500/20 text-emerald-400" : ms.status === "approved" || hasEvidence ? "bg-cyan-500/20 text-cyan-400" : "bg-white/10 text-white/40"
+                )}>{idx + 1}</span>
+                <div>
+                  <p className="text-sm font-semibold text-white">{ms.description}</p>
+                  <p className={cn("text-xs font-medium mt-0.5",
+                    ms.status === "released" ? "text-emerald-400" : ms.status === "approved" || hasEvidence ? "text-cyan-400" : "text-white/30"
+                  )}>
+                    {ms.status === "released" ? t("flow.released") : (ms.status === "approved" || hasEvidence) ? t("flow.evidenceSubmitted") : t("flow.awaitingEvidence")}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <p className="text-lg font-bold text-white">{"$"}{ms.amount} <span className="text-xs font-normal text-white/35">USDC</span></p>
+                {ms.status === "pending" && !hasEvidence && (
+                  <Button size="sm" onClick={() => setExpandedMs(expandedMs === idx ? null : idx)}
+                    className="rounded-full bg-cyan-500/15 text-xs font-semibold text-cyan-400 hover:bg-cyan-500/25 border border-cyan-500/20">
+                    {t("flow.submitEvidence")}
+                  </Button>
+                )}
+                {hasEvidence && ms.status !== "released" && (
+                  <span className="rounded-full bg-cyan-500/15 px-3 py-1 text-xs font-semibold text-cyan-400 border border-cyan-500/20">
+                    {t("flow.evidenceSubmitted")}
+                  </span>
+                )}
+              </div>
+            </div>
+            {/* Evidence input form (expanded) */}
+            {expandedMs === idx && ms.status === "pending" && !hasEvidence && (
+              <div className="mt-4 rounded-xl border border-white/[0.06] bg-[#0a0a0c]/50 p-4">
+                <label className="mb-2 block text-xs font-medium uppercase tracking-wider text-white/40">{t("flow.evidenceLink")}</label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={evidenceInputs[idx] || ""}
+                    onChange={e => setEvidenceInputs(prev => ({ ...prev, [idx]: e.target.value }))}
+                    placeholder={t("flow.evidencePlaceholder")}
+                    className="h-10 flex-1 rounded-lg border border-white/10 bg-white/5 px-3 text-sm text-white placeholder:text-white/25 focus:border-cyan-500/50 focus:outline-none focus:ring-1 focus:ring-cyan-500/20 transition-all"
+                  />
+                  <Button
+                    size="sm"
+                    onClick={() => handleSubmitEvidence(idx)}
+                    disabled={!evidenceInputs[idx]?.trim() || submitting === idx}
+                    className="rounded-lg bg-cyan-500 px-4 text-xs font-semibold text-white hover:bg-cyan-600 disabled:opacity-30"
+                  >
+                    {submitting === idx ? "..." : t("flow.submit")}
+                  </Button>
+                </div>
+              </div>
+            )}
+            {/* Show submitted evidence */}
+            {hasEvidence && (
+              <div className="mt-3 rounded-lg border border-cyan-500/10 bg-cyan-500/5 px-3 py-2">
+                <p className="text-xs text-cyan-400/60 font-medium">{t("flow.viewEvidence")}:</p>
+                <p className="text-xs text-white/60 mt-0.5 break-all">{submittedEvidence[idx]}</p>
+              </div>
+            )}
+          </div>
+        )
+      })}
+    </>
+  )
+}
+
 /* ════════════════════════════════════════════════
    PAGE
    ════════════════════════════════════════════════ */
@@ -183,8 +283,7 @@ export default function PersonalDashboardPage() {
   const fetchedEscrowsRef = React.useRef<string | null>(null);
   const { t } = useLanguage();
   const { address: walletAddress, signTransaction, openWalletModal } = useStellarWallet();
-  const [loading, setLoading] = useState(true);
-  useEffect(() => { const t = setTimeout(() => setLoading(false), 1400); return () => clearTimeout(t); }, []);
+  const [loading, setLoading] = useState(false);
 
   const [activeSection, setActiveSection] = useState("agreements");
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -192,6 +291,49 @@ export default function PersonalDashboardPage() {
   const [agreements, setAgreements] = useState<Agreement[]>(initialAgreements);
   const [approverEscrows, setApproverEscrows] = useState<Agreement[]>([]);
   const [approverLoading, setApproverLoading] = useState(false);
+
+  /* ── Agreements filter/sort state ── */
+  const [searchQuery, setSearchQuery] = useState("")
+  const [statusFilter, setStatusFilter] = useState<"all" | "funded" | "in_progress" | "released">("all")
+  const [sortBy, setSortBy] = useState<"date" | "amount" | "title">("date")
+
+  const filteredAgreements = useMemo(() => {
+    let filtered = [...agreements]
+    // Status filter
+    if (statusFilter !== "all") {
+      filtered = filtered.filter(agr => {
+        const allReleased = agr.milestones.every(m => m.status === "released")
+        const effectiveStatus = allReleased ? "released" : agr.status
+        return effectiveStatus === statusFilter
+      })
+    }
+    // Search
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase()
+      filtered = filtered.filter(agr =>
+        agr.title.toLowerCase().includes(q) ||
+        agr.counterparty.toLowerCase().includes(q) ||
+        agr.id.toLowerCase().includes(q)
+      )
+    }
+    // Sort
+    filtered.sort((a, b) => {
+      if (sortBy === "date") return b.date.localeCompare(a.date)
+      if (sortBy === "amount") return parseFloat(b.amount.replace(/,/g, "")) - parseFloat(a.amount.replace(/,/g, ""))
+      return a.title.localeCompare(b.title)
+    })
+    return filtered
+  }, [agreements, statusFilter, searchQuery, sortBy])
+
+  const statusCounts = useMemo(() => {
+    const counts = { all: agreements.length, funded: 0, in_progress: 0, released: 0 }
+    agreements.forEach(agr => {
+      const allReleased = agr.milestones.every(m => m.status === "released")
+      const s = allReleased ? "released" : agr.status
+      if (s in counts) counts[s as keyof typeof counts]++
+    })
+    return counts
+  }, [agreements])
 
   useEffect(() => {
     if (!walletAddress) return;
@@ -528,15 +670,66 @@ export default function PersonalDashboardPage() {
           {/* ══════ AGREEMENTS ══════ */}
           {activeSection === "agreements" && !viewingAgreement && (
             <div className="mx-auto max-w-4xl">
+              {/* Header */}
               <div className="mb-6 flex items-center justify-between">
-                <h1 className="text-2xl font-semibold text-white">My Agreements</h1>
+                <h1 className="text-2xl font-semibold text-white">{t("dashPage.myAgreements")}</h1>
                 <Button onClick={() => { setActiveSection("create"); resetWizard() }}
                   className="rounded-full bg-[#f0b400] px-6 text-sm font-semibold text-background hover:bg-[#d4a000] shadow-[0_4px_16px_rgba(240,180,0,0.25)]">
-                  + New Agreement
+                  + {t("dashPage.newAgreement")}
                 </Button>
               </div>
+
+              {/* Toolbar */}
+              <div className="mb-5 flex flex-col gap-3">
+                {/* Search + Sort */}
+                <div className="flex items-center gap-3">
+                  <div className="relative flex-1">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/25">
+                      <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                    </svg>
+                    <input
+                      value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder={t("dashPage.searchPlaceholder")}
+                      className="h-10 w-full rounded-xl border border-white/[0.08] bg-white/[0.03] pl-10 pr-4 text-sm text-white placeholder:text-white/25 focus:border-[#f0b400]/40 focus:outline-none focus:ring-1 focus:ring-[#f0b400]/15 transition-all"
+                    />
+                  </div>
+                  <select value={sortBy} onChange={(e) => setSortBy(e.target.value as "date" | "amount" | "title")}
+                    className="h-10 rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 text-xs font-medium text-white/60 focus:border-[#f0b400]/40 focus:outline-none appearance-none cursor-pointer">
+                    <option value="date">{t("dashPage.sortBy")}: {t("dashPage.sortDate")}</option>
+                    <option value="amount">{t("dashPage.sortBy")}: {t("dashPage.sortAmount")}</option>
+                    <option value="title">{t("dashPage.sortBy")}: {t("dashPage.sortTitle")}</option>
+                  </select>
+                </div>
+                {/* Status filter tabs */}
+                <div className="flex items-center gap-1.5 overflow-x-auto">
+                  {(["all", "funded", "in_progress", "released"] as const).map((s) => {
+                    const labelMap = { all: "dashPage.all", funded: "dashPage.funded", in_progress: "dashPage.inProgress", released: "dashPage.releasedFilter" }
+                    const count = statusCounts[s]
+                    return (
+                      <button key={s} onClick={() => setStatusFilter(s)}
+                        className={cn("flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all whitespace-nowrap",
+                          statusFilter === s ? "bg-[#f0b400]/15 text-[#f0b400] border border-[#f0b400]/20" : "text-white/40 hover:text-white/60 hover:bg-white/[0.04] border border-transparent"
+                        )}>
+                        {t(labelMap[s])}
+                        <span className={cn("rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none",
+                          statusFilter === s ? "bg-[#f0b400]/20 text-[#f0b400]" : "bg-white/[0.06] text-white/30"
+                        )}>{count}</span>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Agreements list */}
+              {filteredAgreements.length === 0 ? (
+                <div className="flex flex-col items-center justify-center rounded-2xl border border-white/[0.06] bg-[#0a0a0c]/70 py-16 px-6 text-center">
+                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" className="text-white/15 mb-4"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                  <p className="text-sm font-medium text-white/40">{t("dashPage.noResults")}</p>
+                  <p className="mt-1 text-xs text-white/20">{t("dashPage.noResultsDesc")}</p>
+                </div>
+              ) : (
               <div className="flex flex-col gap-4">
-                {agreements.map((agr) => {
+                {filteredAgreements.map((agr) => {
                   const allReleased = agr.milestones.every(m => m.status === "released")
                   const effectiveStatus = allReleased ? "released" : agr.status
                   const st = statusConfig[effectiveStatus] || statusConfig.funded
@@ -569,13 +762,14 @@ export default function PersonalDashboardPage() {
                   )
                 })}
               </div>
+              )}
               {/* Section: Agreements that require my attention */}
               <div className="mt-12">
-                <h2 className="text-xl font-semibold text-white mb-4">Agreements pending your action</h2>
+                <h2 className="text-xl font-semibold text-white mb-4">{t("dashPage.pendingAction")}</h2>
                 {approverLoading ? (
-                  <div className="text-white/40 text-sm">Loading escrows...</div>
+                  <div className="text-white/40 text-sm">{t("dashPage.loadingEscrows")}</div>
                 ) : approverEscrows.length === 0 ? (
-                  <div className="text-white/40 text-sm">No escrows require your attention</div>
+                  <div className="text-white/40 text-sm">{t("dashPage.noEscrows")}</div>
                 ) : (
                   <div className="flex flex-col gap-4">
                     {approverEscrows.map((agr) => (
@@ -666,85 +860,22 @@ export default function PersonalDashboardPage() {
                   </div>
                 )}
 
-                {/* Milestones (only for Multi Release) */}
-                {agr.type === "Multi Release" && (
-                  <div className="flex flex-col gap-3 mb-6">
-                    {agr.milestones.map((ms, idx) => (
-                      <div key={`${agr.id}-ms-${idx}`} className={cn("rounded-2xl border p-5 backdrop-blur-md transition-all",
-                        ms.status === "released" ? "border-emerald-500/20 bg-emerald-500/5" : ms.status === "approved" ? "border-[#f0b400]/20 bg-[#f0b400]/5" : "border-white/[0.06] bg-[#0a0a0c]/70"
-                      )}>
-                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                          <div className="flex items-center gap-3">
-                            <span className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold",
-                              ms.status === "released" ? "bg-emerald-500/20 text-emerald-400" : ms.status === "approved" ? "bg-[#f0b400]/20 text-[#f0b400]" : "bg-white/10 text-white/40"
-                            )}>{idx + 1}</span>
-                            <div>
-                              <p className="text-sm font-semibold text-white">{ms.description}</p>
-                              <p className={cn("text-xs font-medium mt-0.5",
-                                ms.status === "released" ? "text-emerald-400" : ms.status === "approved" ? "text-[#f0b400]" : "text-white/30"
-                              )}>
-                                {ms.status === "released" ? "Released" : ms.status === "approved" ? "Approved - Ready to release" : "Pending approval"}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-3">
-                            <p className="text-lg font-bold text-white">{"$"}{ms.amount} <span className="text-xs font-normal text-white/35">USDC</span></p>
-                            {ms.status === "pending" && !allReleased && (
-                              <Button size="sm" onClick={() => approveMilestone(agr.id, idx)}
-                                /* ...existing code... */
-                              >Approve</Button>
-                            )}
-                            {ms.status === "approved" && !allReleased && (
-                              <Button size="sm" variant="success" onClick={() => releaseMilestone(agr.id, idx)}
-                                /* ...existing code... */
-                              >Release</Button>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                {/* Seller role badge */}
+                <div className="mb-4 rounded-xl border border-[#f0b400]/15 bg-[#f0b400]/5 px-4 py-2.5 flex items-center gap-2">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f0b400" strokeWidth="1.5"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  <p className="text-xs text-[#f0b400]/80 font-semibold">{t("flow.sellerView")} {" - "} {t("flow.evidenceDesc")}</p>
+                </div>
 
-                {/* Bulk actions */}
-                {!allReleased && (
-                  <div className="rounded-2xl border border-white/[0.06] bg-[#0a0a0c]/70 p-6 backdrop-blur-md">
-                    <h3 className="mb-4 text-sm font-bold uppercase tracking-wider text-white/40">Release Actions</h3>
-                    <div className="flex flex-wrap gap-3">
-                      {agr.type === "Single Release" && agr.milestones[0]?.status === "pending" && (
-                        <Button onClick={() => { approveMilestone(agr.id, 0) }}
-                          className="rounded-full bg-white/10 px-6 text-sm font-semibold text-white hover:bg-white/20">
-                          Approve Agreement
-                        </Button>
-                      )}
-                      {agr.type === "Single Release" && agr.milestones[0]?.status === "approved" && (
-                        <Button onClick={() => { releaseMilestone(agr.id, 0) }}
-                          className="rounded-full bg-[#f0b400] px-6 text-sm font-semibold text-background hover:bg-[#d4a000] shadow-[0_4px_16px_rgba(240,180,0,0.25)]">
-                          Release All Funds
-                        </Button>
-                      )}
-                      {agr.type === "Multi Release" && hasApproved && (
-                        <Button onClick={() => releaseAllApproved(agr.id)}
-                          className="rounded-full bg-[#f0b400] px-6 text-sm font-semibold text-background hover:bg-[#d4a000] shadow-[0_4px_16px_rgba(240,180,0,0.25)]">
-                          Release All Approved
-                        </Button>
-                      )}
-                      {agr.type === "Multi Release" && !allApproved && (
-                        <Button onClick={() => approveAndReleaseAll(agr.id)}
-                          className="rounded-full bg-emerald-600 px-6 text-sm font-semibold text-white hover:bg-emerald-700 shadow-[0_4px_16px_rgba(16,185,129,0.2)]">
-                          Approve & Release All
-                        </Button>
-                      )}
-                    </div>
-                    <p className="mt-3 text-xs text-white/25">Receiver wallet: <span className="font-mono">{agr.receiver.substring(0, 8)}...{agr.receiver.substring(agr.receiver.length - 6)}</span></p>
-                  </div>
-                )}
+                {/* Milestones */}
+                <div className="flex flex-col gap-3 mb-6">
+                  <SellerMilestoneList agr={agr} agreements={agreements} setAgreements={setAgreements} t={t} />
+                </div>
 
                 {allReleased && (
                   <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-6 text-center">
                     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2" className="mx-auto mb-3"><polyline points="20 6 9 17 4 12"/></svg>
-                    <p className="text-lg font-bold text-emerald-400">All Funds Released</p>
-                    <p className="mt-1 text-sm text-white/40">This agreement has been fully completed and all funds sent to the receiver.</p>
+                    <p className="text-lg font-bold text-emerald-400">{t("flow.allFundsReleased")}</p>
+                    <p className="mt-1 text-sm text-white/40">{t("flow.allFundsReleasedDesc")}</p>
                   </div>
                 )}
               </div>
@@ -988,6 +1119,20 @@ export default function PersonalDashboardPage() {
                               setCreating,
                               setError,
                               setSubmitted,
+                              onSuccess: () => {
+                                const newAgr: Agreement = {
+                                  id: `AGR-${Date.now().toString(36).toUpperCase()}`,
+                                  title: payload.title,
+                                  status: "funded",
+                                  type: payload.serviceType === "single-release" ? "Single Release" : "Multi Release",
+                                  counterparty: payload.roles.approver?.slice(0, 8) + "...",
+                                  amount: totalAmount.toLocaleString(),
+                                  date: new Date().toISOString().split("T")[0],
+                                  milestones: payload.milestones.map(m => ({ description: m.description, amount: m.amount, status: "pending" as const })),
+                                  receiver: payload.roles.receiver || walletAddress || "",
+                                }
+                                setAgreements(prev => [newAgr, ...prev])
+                              },
                             });
                           }}
                           disabled={!signerEmail.trim() || creating}

@@ -71,9 +71,9 @@ export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }
       <header
         className={cn(
           "fixed top-0 left-0 right-0 z-50 transition-transform duration-500",
-          "border-b border-white/[0.04]",
-          "bg-background/60 backdrop-blur-xl",
-          "shadow-[0_2px_16px_rgba(0,0,0,0.3)]",
+          "border-b border-border/30",
+          "bg-background/80 backdrop-blur-xl",
+          "shadow-[0_2px_16px_rgba(0,0,0,0.08)]",
           visible ? "translate-y-0" : "-translate-y-full"
         )}
       >
@@ -185,7 +185,7 @@ export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }
 
         {/* Mobile menu */}
         {mobileOpen && (
-          <div className="bg-background/80 backdrop-blur-2xl md:hidden">
+          <div className="bg-background/95 backdrop-blur-2xl md:hidden">
             <div className="flex flex-col gap-1 p-4">
               {navLinks.map((item) => (
                 <button

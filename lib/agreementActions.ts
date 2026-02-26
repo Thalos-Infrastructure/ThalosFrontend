@@ -8,6 +8,7 @@ export interface CreateAndSignAgreementParams {
   setCreating: (v: boolean) => void;
   setError: (msg: string | null) => void;
   setSubmitted: (v: boolean) => void;
+  onSuccess?: () => void;
 }
 
 export interface FundAndSignEscrowParams {
@@ -29,6 +30,7 @@ export async function createAndSignAgreement({
   setCreating,
   setError,
   setSubmitted,
+  onSuccess,
 }: CreateAndSignAgreementParams) {
   setCreating(true);
   setError(null);
@@ -37,6 +39,8 @@ export async function createAndSignAgreement({
     const response = await createAgreement(payload);
     await processTransaction(response, "Agreement creation failed", walletAddress, openWalletModal);
     setSubmitted(true);
+    // 2. notify caller so they can add the agreement to state immediately
+    onSuccess?.();
   } catch (e: any) {
     setError(e.message || "Unknown error");
   } finally {
