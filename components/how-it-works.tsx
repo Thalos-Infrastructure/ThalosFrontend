@@ -175,7 +175,7 @@ export function HowItWorks() {
           </p>
         </div>
 
-        <div className="mb-10 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center sm:justify-center">
+        <div className="section-reveal-child mb-10 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center sm:justify-center" style={{ transitionDelay: isVisible ? "120ms" : "0ms" }}>
           {useCases.map((uc) => (
             <button
               key={uc.id}
@@ -192,7 +192,7 @@ export function HowItWorks() {
           ))}
         </div>
 
-        <div className="rounded-2xl border border-border/20 bg-card/40 p-6 backdrop-blur-sm shadow-[0_8px_40px_rgba(0,0,0,0.3),0_1px_3px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.06)] md:p-10">
+        <div className="section-reveal-child rounded-2xl border border-border/20 bg-card/40 p-6 backdrop-blur-sm shadow-[0_8px_40px_rgba(0,0,0,0.3),0_1px_3px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.06)] md:p-10" style={{ transitionDelay: isVisible ? "200ms" : "0ms" }}>
           <div className="mb-4 text-center">
             <p className="text-sm font-medium text-muted-foreground">{current.description}</p>
           </div>

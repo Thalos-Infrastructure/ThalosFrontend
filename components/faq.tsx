@@ -65,13 +65,18 @@ export function FAQ() {
 
         <div className="rounded-2xl border border-border/20 bg-card/30 px-6 backdrop-blur-sm shadow-[0_8px_32px_rgba(0,0,0,0.08)]">
           {faqs.map((faq, i) => (
-            <FAQItem
+            <div
               key={i}
-              q={faq.q}
-              a={faq.a}
-              open={openIndex === i}
-              toggle={() => setOpenIndex(openIndex === i ? null : i)}
-            />
+              className="section-reveal-child"
+              style={{ transitionDelay: isVisible ? `${i * 80}ms` : "0ms" }}
+            >
+              <FAQItem
+                q={faq.q}
+                a={faq.a}
+                open={openIndex === i}
+                toggle={() => setOpenIndex(openIndex === i ? null : i)}
+              />
+            </div>
           ))}
         </div>
       </div>
