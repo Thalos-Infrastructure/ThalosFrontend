@@ -157,7 +157,7 @@ export default function AboutPage() {
       </div>
 
       {/* Top nav - same style as main page navbar */}
-      <header data-dark-always className="fixed top-0 left-0 right-0 z-50 border-b border-white/[0.04] bg-[#0a0a0c]/90 backdrop-blur-xl shadow-[0_2px_16px_rgba(0,0,0,0.3)]">
+      <header data-dark-always className="fixed top-0 left-0 right-0 z-50 border-b border-white/[0.04] bg-[#0a0a0c]/95 backdrop-blur-xl shadow-[0_2px_16px_rgba(0,0,0,0.3)]">
         <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
           <Link href="/" className="flex items-center">
             <Image src="/thalos-icon.png" alt="Thalos" width={72} height={72} className="h-16 w-16 object-contain" priority />

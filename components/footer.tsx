@@ -24,12 +24,12 @@ export function Footer() {
             {/* Partners */}
             <div className="flex items-center gap-5">
               <a href="https://stellar.org/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 transition-opacity hover:opacity-80">
-                <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">Built on</span>
+                <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/70">Built on</span>
                 <Image src="/stellar-full.png" alt="Stellar" width={24} height={24} className="h-5 w-5 shrink-0 object-contain opacity-50" />
               </a>
               <div className="h-3.5 w-px bg-border/30" aria-hidden="true" />
               <a href="https://www.trustlesswork.com/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 transition-opacity hover:opacity-80">
-                <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">Escrows by</span>
+                <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/70">Escrows by</span>
                 <Image src="/trustless-logo.png" alt="Trustless Work" width={20} height={20} className="h-4 w-auto object-contain opacity-50" />
               </a>
             </div>
@@ -65,7 +65,7 @@ export function Footer() {
         </div>
 
         {/* Copyright */}
-        <p className="mt-10 text-center text-xs text-muted-foreground/40">&copy; {new Date().getFullYear()} Thalos Infrastructure. {t("footer.rights")}</p>
+        <p className="mt-10 text-center text-xs text-muted-foreground/60">&copy; {new Date().getFullYear()} Thalos Infrastructure. {t("footer.rights")}</p>
       </div>
     </footer>
   )

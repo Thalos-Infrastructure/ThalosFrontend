@@ -73,7 +73,7 @@ export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }
         className={cn(
           "fixed top-0 left-0 right-0 z-50 transition-transform duration-500",
           "border-b border-white/[0.04]",
-          "bg-[#0a0a0c]/90 backdrop-blur-xl",
+          "bg-[#0a0a0c]/95 backdrop-blur-xl",
           "shadow-[0_2px_16px_rgba(0,0,0,0.3)]",
           visible ? "translate-y-0" : "-translate-y-full"
         )}
