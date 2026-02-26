@@ -2,7 +2,7 @@
 import { ApproverAgreementDetail } from "./ApproverAgreementDetail";
 
 
-import React, { useState, useEffect, useCallback, useId, useRef } from "react"
+import React, { useState, useEffect, useCallback, useId, useRef, useMemo } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -192,6 +192,49 @@ export default function PersonalDashboardPage() {
   const [agreements, setAgreements] = useState<Agreement[]>(initialAgreements);
   const [approverEscrows, setApproverEscrows] = useState<Agreement[]>([]);
   const [approverLoading, setApproverLoading] = useState(false);
+
+  /* ── Agreements filter/sort state ── */
+  const [searchQuery, setSearchQuery] = useState("")
+  const [statusFilter, setStatusFilter] = useState<"all" | "funded" | "in_progress" | "released">("all")
+  const [sortBy, setSortBy] = useState<"date" | "amount" | "title">("date")
+
+  const filteredAgreements = useMemo(() => {
+    let filtered = [...agreements]
+    // Status filter
+    if (statusFilter !== "all") {
+      filtered = filtered.filter(agr => {
+        const allReleased = agr.milestones.every(m => m.status === "released")
+        const effectiveStatus = allReleased ? "released" : agr.status
+        return effectiveStatus === statusFilter
+      })
+    }
+    // Search
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase()
+      filtered = filtered.filter(agr =>
+        agr.title.toLowerCase().includes(q) ||
+        agr.counterparty.toLowerCase().includes(q) ||
+        agr.id.toLowerCase().includes(q)
+      )
+    }
+    // Sort
+    filtered.sort((a, b) => {
+      if (sortBy === "date") return b.date.localeCompare(a.date)
+      if (sortBy === "amount") return parseFloat(b.amount.replace(/,/g, "")) - parseFloat(a.amount.replace(/,/g, ""))
+      return a.title.localeCompare(b.title)
+    })
+    return filtered
+  }, [agreements, statusFilter, searchQuery, sortBy])
+
+  const statusCounts = useMemo(() => {
+    const counts = { all: agreements.length, funded: 0, in_progress: 0, released: 0 }
+    agreements.forEach(agr => {
+      const allReleased = agr.milestones.every(m => m.status === "released")
+      const s = allReleased ? "released" : agr.status
+      if (s in counts) counts[s as keyof typeof counts]++
+    })
+    return counts
+  }, [agreements])
 
   useEffect(() => {
     if (!walletAddress) return;
@@ -528,15 +571,66 @@ export default function PersonalDashboardPage() {
           {/* ══════ AGREEMENTS ══════ */}
           {activeSection === "agreements" && !viewingAgreement && (
             <div className="mx-auto max-w-4xl">
+              {/* Header */}
               <div className="mb-6 flex items-center justify-between">
-                <h1 className="text-2xl font-semibold text-white">My Agreements</h1>
+                <h1 className="text-2xl font-semibold text-white">{t("dashPage.myAgreements")}</h1>
                 <Button onClick={() => { setActiveSection("create"); resetWizard() }}
                   className="rounded-full bg-[#f0b400] px-6 text-sm font-semibold text-background hover:bg-[#d4a000] shadow-[0_4px_16px_rgba(240,180,0,0.25)]">
-                  + New Agreement
+                  + {t("dashPage.newAgreement")}
                 </Button>
               </div>
+
+              {/* Toolbar */}
+              <div className="mb-5 flex flex-col gap-3">
+                {/* Search + Sort */}
+                <div className="flex items-center gap-3">
+                  <div className="relative flex-1">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/25">
+                      <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                    </svg>
+                    <input
+                      value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder={t("dashPage.searchPlaceholder")}
+                      className="h-10 w-full rounded-xl border border-white/[0.08] bg-white/[0.03] pl-10 pr-4 text-sm text-white placeholder:text-white/25 focus:border-[#f0b400]/40 focus:outline-none focus:ring-1 focus:ring-[#f0b400]/15 transition-all"
+                    />
+                  </div>
+                  <select value={sortBy} onChange={(e) => setSortBy(e.target.value as "date" | "amount" | "title")}
+                    className="h-10 rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 text-xs font-medium text-white/60 focus:border-[#f0b400]/40 focus:outline-none appearance-none cursor-pointer">
+                    <option value="date">{t("dashPage.sortBy")}: {t("dashPage.sortDate")}</option>
+                    <option value="amount">{t("dashPage.sortBy")}: {t("dashPage.sortAmount")}</option>
+                    <option value="title">{t("dashPage.sortBy")}: {t("dashPage.sortTitle")}</option>
+                  </select>
+                </div>
+                {/* Status filter tabs */}
+                <div className="flex items-center gap-1.5 overflow-x-auto">
+                  {(["all", "funded", "in_progress", "released"] as const).map((s) => {
+                    const labelMap = { all: "dashPage.all", funded: "dashPage.funded", in_progress: "dashPage.inProgress", released: "dashPage.releasedFilter" }
+                    const count = statusCounts[s]
+                    return (
+                      <button key={s} onClick={() => setStatusFilter(s)}
+                        className={cn("flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all whitespace-nowrap",
+                          statusFilter === s ? "bg-[#f0b400]/15 text-[#f0b400] border border-[#f0b400]/20" : "text-white/40 hover:text-white/60 hover:bg-white/[0.04] border border-transparent"
+                        )}>
+                        {t(labelMap[s])}
+                        <span className={cn("rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none",
+                          statusFilter === s ? "bg-[#f0b400]/20 text-[#f0b400]" : "bg-white/[0.06] text-white/30"
+                        )}>{count}</span>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Agreements list */}
+              {filteredAgreements.length === 0 ? (
+                <div className="flex flex-col items-center justify-center rounded-2xl border border-white/[0.06] bg-[#0a0a0c]/70 py-16 px-6 text-center">
+                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" className="text-white/15 mb-4"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                  <p className="text-sm font-medium text-white/40">{t("dashPage.noResults")}</p>
+                  <p className="mt-1 text-xs text-white/20">{t("dashPage.noResultsDesc")}</p>
+                </div>
+              ) : (
               <div className="flex flex-col gap-4">
-                {agreements.map((agr) => {
+                {filteredAgreements.map((agr) => {
                   const allReleased = agr.milestones.every(m => m.status === "released")
                   const effectiveStatus = allReleased ? "released" : agr.status
                   const st = statusConfig[effectiveStatus] || statusConfig.funded
@@ -569,13 +663,14 @@ export default function PersonalDashboardPage() {
                   )
                 })}
               </div>
+              )}
               {/* Section: Agreements that require my attention */}
               <div className="mt-12">
-                <h2 className="text-xl font-semibold text-white mb-4">Agreements pending your action</h2>
+                <h2 className="text-xl font-semibold text-white mb-4">{t("dashPage.pendingAction")}</h2>
                 {approverLoading ? (
-                  <div className="text-white/40 text-sm">Loading escrows...</div>
+                  <div className="text-white/40 text-sm">{t("dashPage.loadingEscrows")}</div>
                 ) : approverEscrows.length === 0 ? (
-                  <div className="text-white/40 text-sm">No escrows require your attention</div>
+                  <div className="text-white/40 text-sm">{t("dashPage.noEscrows")}</div>
                 ) : (
                   <div className="flex flex-col gap-4">
                     {approverEscrows.map((agr) => (
