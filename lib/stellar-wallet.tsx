@@ -35,6 +35,7 @@ export function StellarWalletProvider({ children }: { children: React.ReactNode 
       try {
         clearKit();
         const kit = await getKit();
+        console.log("[v0] Stellar Wallets Kit loaded:", !!kit)
         if (!kit) {
           setWalletError("Stellar Wallets Kit no disponible.");
           return;
@@ -42,13 +43,16 @@ export function StellarWalletProvider({ children }: { children: React.ReactNode 
         await kit.openModal({
           modalTitle: "Connect Wallet",
           onWalletSelected: async (option) => {
+            console.log("[v0] Wallet selected:", option.id)
             try {
               kit.setWallet(option.id);
               const { address: addr } = await kit.getAddress();
+              console.log("[v0] Got wallet address:", addr?.slice(0, 8))
               setAddress(addr);
               if (typeof window !== "undefined") sessionStorage.setItem(STELLAR_WALLET_KEY, addr);
               onConnected?.(addr);
             } catch (e) {
+              console.log("[v0] Wallet address error:", e)
               const msg = e instanceof Error ? e.message : "No se pudo obtener la dirección.";
               setWalletError(msg);
             } finally {
@@ -60,6 +64,7 @@ export function StellarWalletProvider({ children }: { children: React.ReactNode 
           },
         });
       } catch (e) {
+        console.log("[v0] Wallet modal error:", e)
         const message = e instanceof Error ? e.message : "Error al abrir el modal de billeteras.";
         setWalletError(message);
       } finally {

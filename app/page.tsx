@@ -6,7 +6,7 @@ import { useLanguage } from "@/lib/i18n"
 import { ThalosLoader } from "@/components/thalos-loader"
 import { Navbar } from "@/components/navbar"
 import { HeroSection } from "@/components/hero-section"
-import { ScrollReveal } from "@/components/scroll-reveal"
+
 
 // Lazy load below-the-fold sections for faster initial paint
 const HowItWorks = dynamic(() => import("@/components/how-it-works").then(m => ({ default: m.HowItWorks })), { ssr: false })
@@ -24,9 +24,9 @@ export default function Home() {
   const [introComplete, setIntroComplete] = useState(false)
   const [scrollDarken, setScrollDarken] = useState(0)
 
-  // Page loading with brand logo display
+  // Brief brand flash then render
   useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 800)
+    const timer = setTimeout(() => setLoading(false), 400)
     return () => clearTimeout(timer)
   }, [])
 
@@ -91,45 +91,27 @@ export default function Home() {
             transform: introComplete ? "translateY(0)" : "translateY(40px)",
           }}
         >
-          {/* Stat cards */}
-          <section className="relative z-10 px-6 py-12 lg:px-16">
-            <div className="mx-auto grid w-full max-w-7xl grid-cols-1 gap-6 md:grid-cols-3">
-              {[
-                { label: t("stat.protectedFunds"), value: t("stat.protectedFundsValue") },
-                { label: t("stat.fastSettlement"), value: t("stat.fastSettlementValue") },
-                { label: t("stat.programmable"), value: t("stat.programmableValue") },
-              ].map((stat, idx) => (
-                <ScrollReveal key={stat.label} delay={idx * 120} variant="up">
-                  <div className="rounded-2xl border border-border/20 bg-card/50 p-6 backdrop-blur-sm shadow-[0_6px_0_rgba(0,0,0,0.08),0_8px_24px_rgba(0,0,0,0.12)] transition-all duration-400 hover:border-[#f0b400]/20">
-                    <p className="text-sm font-semibold text-[#f0b400]">{stat.label}</p>
-                    <p className="mt-1 font-semibold text-foreground">{stat.value}</p>
-                  </div>
-                </ScrollReveal>
-              ))}
-            </div>
-          </section>
-
-          <div ref={setRef("how-it-works")} className="mt-16">
+          <div ref={setRef("how-it-works")} className="mt-12">
             <HowItWorks />
           </div>
 
-          <div ref={setRef("profiles")} className="mt-24">
+          <div ref={setRef("profiles")} className="mt-16">
             <ProfileSelection onNavigate={handleNavigate} />
           </div>
 
-          <div ref={setRef("use-cases")} className="mt-24">
+          <div ref={setRef("use-cases")} className="mt-16">
             <UseCases />
           </div>
 
-          <div ref={setRef("dashboard")} className="mt-24">
+          <div ref={setRef("dashboard")} className="mt-16">
             <DashboardSection />
           </div>
 
-          <div className="mt-24">
+          <div className="mt-16">
             <FAQ />
           </div>
 
-          <div className="mt-20 pb-24">
+          <div className="mt-14 pb-24">
             <Footer />
           </div>
         </div>

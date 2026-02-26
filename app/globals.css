@@ -41,39 +41,39 @@
   color-scheme: dark;
 }
 
-/* Light theme - warm ivory/cream with good contrast */
+/* Light theme - warm sand/stone with visible contrast */
 .light {
-  --background: oklch(0.97 0.006 80);
-  --foreground: oklch(0.18 0.02 250);
-  --card: oklch(0.985 0.004 80);
-  --card-foreground: oklch(0.18 0.02 250);
-  --popover: oklch(0.985 0.004 80);
-  --popover-foreground: oklch(0.18 0.02 250);
+  --background: oklch(0.93 0.01 75);
+  --foreground: oklch(0.15 0.02 250);
+  --card: oklch(0.95 0.008 75);
+  --card-foreground: oklch(0.15 0.02 250);
+  --popover: oklch(0.95 0.008 75);
+  --popover-foreground: oklch(0.15 0.02 250);
   --primary: oklch(0.55 0.16 85);
   --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0.94 0.008 80);
-  --secondary-foreground: oklch(0.25 0.015 250);
-  --muted: oklch(0.935 0.008 80);
-  --muted-foreground: oklch(0.40 0.015 250);
+  --secondary: oklch(0.90 0.012 75);
+  --secondary-foreground: oklch(0.22 0.015 250);
+  --muted: oklch(0.88 0.012 75);
+  --muted-foreground: oklch(0.38 0.02 250);
   --accent: oklch(0.50 0.16 260);
   --accent-foreground: oklch(1 0 0);
   --destructive: oklch(0.55 0.22 27);
   --destructive-foreground: oklch(1 0 0);
-  --border: oklch(0.88 0.01 80);
-  --input: oklch(0.93 0.006 80);
+  --border: oklch(0.83 0.015 75);
+  --input: oklch(0.89 0.01 75);
   --ring: oklch(0.55 0.14 85);
   --chart-1: oklch(0.55 0.14 85);
   --chart-2: oklch(0.48 0.10 185);
   --chart-3: oklch(0.40 0.06 227);
   --chart-4: oklch(0.55 0.16 84);
   --chart-5: oklch(0.50 0.15 70);
-  --sidebar: oklch(0.955 0.006 80);
-  --sidebar-foreground: oklch(0.18 0.02 250);
+  --sidebar: oklch(0.91 0.01 75);
+  --sidebar-foreground: oklch(0.15 0.02 250);
   --sidebar-primary: oklch(0.55 0.14 85);
   --sidebar-primary-foreground: oklch(1 0 0);
-  --sidebar-accent: oklch(0.935 0.008 80);
-  --sidebar-accent-foreground: oklch(0.18 0.02 250);
-  --sidebar-border: oklch(0.88 0.01 80);
+  --sidebar-accent: oklch(0.88 0.012 75);
+  --sidebar-accent-foreground: oklch(0.15 0.02 250);
+  --sidebar-border: oklch(0.83 0.015 75);
   --sidebar-ring: oklch(0.55 0.14 85);
   color-scheme: light;
 }
@@ -81,14 +81,18 @@
 /* Light theme global overrides - comprehensive approach */
 .light {
   /* ---- TEXT ---- */
-  /* All white text variants become dark */
+  /* All white text becomes dark */
   [class*="text-white"] { color: var(--foreground) !important; }
   /* Lower opacity white text becomes muted */
   [class*="text-white\\/5"], [class*="text-white\\/4"], [class*="text-white\\/3"], [class*="text-white\\/2"], [class*="text-white\\/1"] { color: var(--muted-foreground) !important; }
+  /* Preserve white text inside always-dark sections (navbar, bottom bar) */
+  [data-dark-always] [class*="text-white"] { color: white !important; }
+  [data-dark-always] [class*="text-white\\/"] { color: rgba(255,255,255,var(--tw-text-opacity, 0.6)) !important; }
 
   /* ---- BACKGROUNDS ---- */
-  /* Hardcoded dark hex backgrounds to card */
-  [style*="#0a0a0c"], [style*="#0c0c0e"], [style*="#0e0e10"], [style*="#111113"] { background-color: var(--card) !important; }
+  /* Hardcoded dark hex backgrounds to card (except fixed navbars which stay dark) */
+  :not(header):not(header *):not([class*="bg-\\[\\#0a0a0c\\]"])[style*="#0a0a0c"],
+  [style*="#0c0c0e"], [style*="#0e0e10"], [style*="#111113"] { background-color: var(--card) !important; }
   /* White-alpha backgrounds become subtle secondary fills */
   [class*="bg-white\\/"] { background-color: var(--secondary) !important; }
 
@@ -122,10 +126,10 @@
   /* Dividers using bg-white */
   [class*="bg-white\\/8"], [class*="bg-white\\/15"] { background-color: var(--border) !important; }
   /* Bottom bar and menu popup glass effect */
-  [class*="bg-background\\/60"] { background-color: oklch(0.96 0.005 80 / 0.88) !important; }
-  [class*="bg-background\\/85"] { background-color: oklch(0.97 0.005 80 / 0.94) !important; }
-  [class*="bg-background\\/80"] { background-color: oklch(0.97 0.005 80 / 0.90) !important; }
-  [class*="bg-background\\/75"] { background-color: oklch(0.97 0.005 80 / 0.86) !important; }
+  [class*="bg-background\\/60"] { background-color: oklch(0.92 0.01 75 / 0.90) !important; }
+  [class*="bg-background\\/85"] { background-color: oklch(0.93 0.01 75 / 0.95) !important; }
+  [class*="bg-background\\/80"] { background-color: oklch(0.93 0.01 75 / 0.92) !important; }
+  [class*="bg-background\\/75"] { background-color: oklch(0.93 0.01 75 / 0.88) !important; }
 }
 
 @theme inline {
