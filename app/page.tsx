@@ -21,10 +21,7 @@ export default function Home() {
   const [scrollDarken, setScrollDarken] = useState(0)
 
   // Page loading spinner
-  useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 1800)
-    return () => clearTimeout(timer)
-  }, [])
+  useEffect(() => { setLoading(false) }, [])
 
   // Progressive darkening based on scroll position
   useEffect(() => {

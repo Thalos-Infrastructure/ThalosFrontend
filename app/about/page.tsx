@@ -81,10 +81,7 @@ export default function AboutPage() {
   const [scrollDarken, setScrollDarken] = useState(0)
   const [letterOpacities, setLetterOpacities] = useState<number[]>([1, 1, 1, 1, 1, 1])
 
-  useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 1200)
-    return () => clearTimeout(timer)
-  }, [])
+  useEffect(() => { setLoading(false) }, [])
 
   /* Scroll-based effects: darken overlay + THALOS letter opacity + word reveals */
   const onScroll = useCallback(() => {

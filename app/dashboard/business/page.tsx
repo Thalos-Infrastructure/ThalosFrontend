@@ -133,8 +133,7 @@ const sidebarItems = [
    ════════════════════════════════════════════════ */
 export default function BusinessDashboardPage() {
   const { t } = useLanguage()
-  const [loading, setLoading] = useState(true)
-  useEffect(() => { const t = setTimeout(() => setLoading(false), 1400); return () => clearTimeout(t) }, [])
+  const [loading, setLoading] = useState(false)
 
   const [activeSection, setActiveSection] = useState("agreements")
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -1071,7 +1070,21 @@ export default function BusinessDashboardPage() {
                     {step < wizardStepKeys.length - 1 ? (
                       <Button onClick={() => setStep(step + 1)} disabled={!canProceed()} className="rounded-full bg-[#f0b400] px-8 text-sm font-semibold text-background hover:bg-[#d4a000] disabled:opacity-20 shadow-[0_4px_16px_rgba(240,180,0,0.25)]">{t("wizard.continue")}</Button>
                     ) : (
-                      <Button onClick={() => setSubmitted(true)} disabled={!signerEmail.trim()} className="rounded-full bg-[#f0b400] px-8 text-sm font-semibold text-background hover:bg-[#d4a000] disabled:opacity-20 shadow-[0_4px_16px_rgba(240,180,0,0.25)]">{t("wizard.createNotify")}</Button>
+                      <Button onClick={() => {
+    const newAgr: Agreement = {
+      id: `AGR-${Date.now().toString(36).toUpperCase()}`,
+      title: title || "Untitled",
+      status: "funded",
+      type: escrowType === "single" ? "Single Release" : "Multi Release",
+      counterparty: signerWallet.slice(0, 8) + "...",
+      amount: totalAmount.toLocaleString(),
+      date: new Date().toISOString().split("T")[0],
+      milestones: milestones.map(m => ({ description: m.description, amount: m.amount, status: "pending" as const })),
+      receiver: selectedWallet,
+    }
+    setAgreements(prev => [newAgr, ...prev])
+    setSubmitted(true)
+  }} disabled={!signerEmail.trim()} className="rounded-full bg-[#f0b400] px-8 text-sm font-semibold text-background hover:bg-[#d4a000] disabled:opacity-20 shadow-[0_4px_16px_rgba(240,180,0,0.25)]">{t("wizard.createNotify")}</Button>
                     )}
                   </div>
                 </div>
