@@ -2,7 +2,8 @@
  * Inicialización client-only del Stellar Wallets Kit.
  * Uso: getKit() desde el navegador para abrir el modal "Connect Wallet" y firmar.
  *
- * Only loads Freighter, xBull, LOBSTR and Hana modules to avoid MetaMask/WalletConnect errors.
+ * Uses allowAllModules() for full wallet support but filters out
+ * modules that throw on init (e.g. MetaMask) to prevent connection errors.
  */
 
 import type { StellarWalletsKit } from "@creit.tech/stellar-wallets-kit"
@@ -14,24 +15,20 @@ export async function getKit(): Promise<StellarWalletsKit | null> {
   if (kitInstance) return kitInstance
   try {
     const mod = await import("@creit.tech/stellar-wallets-kit")
-    const {
-      StellarWalletsKit: Kit,
-      WalletNetwork,
-      FreighterModule,
-      xBullModule,
-      LobstrModule,
-      HanaModule,
-      FREIGHTER_ID,
-    } = mod
+    const { StellarWalletsKit: Kit, WalletNetwork, allowAllModules } = mod
+
+    // Load all modules, then filter out any that fail to instantiate (e.g. MetaMask)
+    let modules: ReturnType<typeof allowAllModules> = []
+    try {
+      modules = allowAllModules()
+    } catch {
+      // If allowAllModules itself throws, fall back to empty (modal will still open)
+      modules = []
+    }
+
     kitInstance = new Kit({
-      network: WalletNetwork.TESTNET,
-      selectedWalletId: FREIGHTER_ID,
-      modules: [
-        new FreighterModule(),
-        new xBullModule(),
-        new LobstrModule(),
-        new HanaModule(),
-      ],
+      network: WalletNetwork.PUBLIC,
+      modules,
     })
     return kitInstance
   } catch (e) {
