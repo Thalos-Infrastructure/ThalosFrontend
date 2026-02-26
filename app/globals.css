@@ -41,54 +41,87 @@
   color-scheme: dark;
 }
 
-/* Light theme - dark-inspired warm tones, close to dark mode feel */
+/* Light theme - clean white with warm accents */
 .light {
-  --background: oklch(0.22 0.01 75);
-  --foreground: oklch(0.93 0.005 75);
-  --card: oklch(0.26 0.012 75);
-  --card-foreground: oklch(0.93 0.005 75);
-  --popover: oklch(0.26 0.012 75);
-  --popover-foreground: oklch(0.93 0.005 75);
-  --primary: oklch(0.80 0.17 88);
-  --primary-foreground: oklch(0.12 0 0);
-  --secondary: oklch(0.30 0.012 75);
-  --secondary-foreground: oklch(0.88 0.005 75);
-  --muted: oklch(0.30 0.012 75);
-  --muted-foreground: oklch(0.65 0.01 75);
-  --accent: oklch(0.65 0.2 260);
-  --accent-foreground: oklch(0.98 0 0);
+  --background: oklch(0.98 0.002 250);
+  --foreground: oklch(0.14 0.01 250);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.14 0.01 250);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.14 0.01 250);
+  --primary: oklch(0.52 0.16 85);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.95 0.004 250);
+  --secondary-foreground: oklch(0.22 0.01 250);
+  --muted: oklch(0.94 0.004 250);
+  --muted-foreground: oklch(0.40 0.01 250);
+  --accent: oklch(0.50 0.16 260);
+  --accent-foreground: oklch(1 0 0);
   --destructive: oklch(0.55 0.22 27);
   --destructive-foreground: oklch(1 0 0);
-  --border: oklch(0.35 0.015 75);
-  --input: oklch(0.28 0.01 75);
-  --ring: oklch(0.78 0.16 85);
-  --chart-1: oklch(0.78 0.16 85);
-  --chart-2: oklch(0.6 0.118 185);
-  --chart-3: oklch(0.40 0.07 227);
-  --chart-4: oklch(0.82 0.19 84);
-  --chart-5: oklch(0.77 0.19 70);
-  --sidebar: oklch(0.20 0.01 75);
-  --sidebar-foreground: oklch(0.93 0.005 75);
-  --sidebar-primary: oklch(0.78 0.16 85);
-  --sidebar-primary-foreground: oklch(0.12 0 0);
-  --sidebar-accent: oklch(0.30 0.012 75);
-  --sidebar-accent-foreground: oklch(0.93 0.005 75);
-  --sidebar-border: oklch(0.35 0.015 75);
-  --sidebar-ring: oklch(0.78 0.16 85);
-  color-scheme: dark;
+  --border: oklch(0.89 0.006 250);
+  --input: oklch(0.94 0.004 250);
+  --ring: oklch(0.52 0.14 85);
+  --chart-1: oklch(0.52 0.14 85);
+  --chart-2: oklch(0.48 0.10 185);
+  --chart-3: oklch(0.40 0.06 227);
+  --chart-4: oklch(0.55 0.16 84);
+  --chart-5: oklch(0.50 0.15 70);
+  --sidebar: oklch(0.97 0.002 250);
+  --sidebar-foreground: oklch(0.14 0.01 250);
+  --sidebar-primary: oklch(0.52 0.14 85);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.95 0.004 250);
+  --sidebar-accent-foreground: oklch(0.14 0.01 250);
+  --sidebar-border: oklch(0.89 0.006 250);
+  --sidebar-ring: oklch(0.52 0.14 85);
+  color-scheme: light;
 }
 
-/* Light theme overrides - since light is now dark-toned, only remap hardcoded hex values */
+/* Light theme global overrides */
 .light {
-  /* Remap hardcoded dark hex backgrounds to use the warm card token */
-  [style*="#0a0a0c"], [style*="#0c0c0e"], [style*="#0e0e10"], [style*="#111113"] {
-    background-color: var(--card) !important;
-  }
+  /* ---- TEXT ---- */
+  [class*="text-white"] { color: var(--foreground) !important; }
+  [class*="text-white\\/5"], [class*="text-white\\/4"], [class*="text-white\\/3"], [class*="text-white\\/2"], [class*="text-white\\/1"] { color: var(--muted-foreground) !important; }
+  /* Keep white text white inside always-dark elements */
+  [data-dark-always] [class*="text-white"] { color: white !important; }
+  [data-dark-always] [class*="text-white\\/"] { color: rgba(255,255,255,0.6) !important; }
 
-  /* Remap gradients that reference hardcoded dark hex to use warm bg */
+  /* ---- BACKGROUNDS ---- */
+  [style*="#0a0a0c"], [style*="#0c0c0e"], [style*="#0e0e10"], [style*="#111113"] { background-color: var(--card) !important; }
+  [class*="bg-white\\/"] { background-color: var(--secondary) !important; }
+
+  /* ---- BORDERS ---- */
+  [class*="border-white\\/"] { border-color: var(--border) !important; }
+
+  /* ---- HOVER STATES ---- */
+  [class*="hover\\:bg-white\\/"] { &:hover { background-color: var(--muted) !important; } }
+  [class*="hover\\:text-white"] { &:hover { color: var(--foreground) !important; } }
+
+  /* ---- GRADIENTS ---- */
   [class*="to-\\[\\#0a0a0c\\]"] { --tw-gradient-to: var(--background) !important; }
   [class*="from-\\[\\#0a0a0c\\]"] { --tw-gradient-from: var(--background) !important; }
   [class*="via-\\[\\#0a0a0c\\]"] { --tw-gradient-via: var(--background) !important; }
+
+  /* ---- OCEAN BACKGROUND - more visible ---- */
+  .opacity-35 { opacity: 0.28 !important; }
+  .opacity-30 { opacity: 0.20 !important; }
+  .opacity-20 { opacity: 0.12 !important; }
+
+  /* ---- CHART / DASHBOARD ---- */
+  .recharts-cartesian-grid-horizontal line,
+  .recharts-cartesian-grid-vertical line { stroke: var(--border) !important; }
+  .recharts-text { fill: var(--muted-foreground) !important; }
+
+  /* ---- MISC ---- */
+  [class*="bg-white\\/\\[0\\."] { background-color: var(--secondary) !important; }
+  [class*="bg-white\\/8"], [class*="bg-white\\/15"] { background-color: var(--border) !important; }
+
+  /* Bottom bar glass effect */
+  [class*="bg-background\\/60"] { background-color: oklch(0.97 0.002 250 / 0.88) !important; }
+  [class*="bg-background\\/85"] { background-color: oklch(0.98 0.002 250 / 0.94) !important; }
+  [class*="bg-background\\/80"] { background-color: oklch(0.98 0.002 250 / 0.90) !important; }
+  [class*="bg-background\\/75"] { background-color: oklch(0.98 0.002 250 / 0.86) !important; }
 }
 
 @theme inline {
