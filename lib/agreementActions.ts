@@ -1,4 +1,4 @@
-import { createAgreement, sendTransaction, AgreementPayload, fundEscrow, AgreementResponse } from "@/services/trustlessworkService";
+import { createAgreement, sendTransaction, AgreementPayload, fundEscrow, AgreementResponse, changeMilestoneStatus } from "@/services/trustlessworkService";
 
 export interface CreateAndSignAgreementParams {
   payload: AgreementPayload;
@@ -20,6 +20,20 @@ export interface FundAndSignEscrowParams {
   setFunding: (v: boolean) => void;
   setError: (msg: string | null) => void;
   setSuccess: (v: boolean) => void;
+}
+
+export interface ChangeMilestoneStatusParams {
+  contractId: string;
+  milestoneIndex: string;
+  newEvidence: string;
+  newStatus: string;
+  serviceProvider: string;
+  serviceType: "single-release" | "multi-release";
+  walletAddress: string | null;
+  openWalletModal: (onConnected?: (address: string) => void) => Promise<void>;
+  setSubmitting: (v: boolean) => void;
+  setError: (msg: string | null) => void;
+  onSuccess?: () => void;
 }
 
 export async function createAndSignAgreement({
@@ -62,28 +76,52 @@ export async function fundAndSignEscrow({
   setError(null);
   setSuccess(false);
   try {
-    let currentAddress = walletAddress;
-    if (!currentAddress) {
-      await new Promise((resolve, reject) => {
-        openWalletModal((addr) => {
-          if (addr) {
-            currentAddress = addr;
-            resolve(addr);
-          } else {
-            reject(new Error("Wallet connection cancelled or failed"));
-          }
-        });
-      });
-    }
-    if (!currentAddress) throw new Error("Wallet connection required");
     const serviceType = (typeof arguments[0].serviceType === "string") ? arguments[0].serviceType : "single-release";
-    const response = await fundEscrow(contractId, currentAddress, Number(amount), serviceType);
-    await processTransaction(response, "Fund escrow failed", currentAddress, openWalletModal);
+    if (!walletAddress) {
+      throw new Error("Wallet address is required to fund escrow");
+    }
+    const response = await fundEscrow(contractId, walletAddress, Number(amount), serviceType);
+    await processTransaction(response, "Fund escrow failed", walletAddress, openWalletModal);
     setSuccess(true);
   } catch (e: any) {
     setError(e.message || "Unknown error");
   } finally {
     setFunding(false);
+  }
+}
+
+export async function changeMilestoneStatusAgreement({
+  contractId,
+  milestoneIndex,
+  newEvidence,
+  newStatus,
+  serviceProvider,
+  serviceType,
+  walletAddress,
+  openWalletModal,
+  setSubmitting,
+  setError,
+  onSuccess,
+}: ChangeMilestoneStatusParams) {
+  setSubmitting(true);
+  setError(null);
+  try {
+    const response = await changeMilestoneStatus(
+      contractId,
+      milestoneIndex,
+      newEvidence,
+      newStatus,
+      serviceProvider,
+      serviceType
+    );
+    await processTransaction(response, "Change milestone status failed", walletAddress, openWalletModal);
+    setSubmitting(true);
+    // 2. notify caller so they can add the agreement to state immediately
+    onSuccess?.();
+  } catch (e: any) {
+    setError(e.message || "Unknown error");
+  } finally {
+    setSubmitting(false);
   }
 }
 
