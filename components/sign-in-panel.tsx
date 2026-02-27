@@ -42,21 +42,6 @@ export function SignInPanel({ open, onClose }: SignInPanelProps) {
         onClick={(e) => e.stopPropagation()}
         style={{ maxHeight: "90vh" }}
       >
-        {/* Left - Video */}
-        <div className="relative hidden w-[400px] shrink-0 overflow-hidden md:block">
-          <video autoPlay loop muted playsInline className="absolute inset-0 h-full w-full object-cover"
-            poster="https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&q=80&auto=format&fit=crop">
-            <source src="https://cdn.pixabay.com/video/2020/07/30/45358-445018270_large.mp4" type="video/mp4" />
-            <source src="https://cdn.pixabay.com/video/2024/02/20/201243-915266492_large.mp4" type="video/mp4" />
-          </video>
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent to-[#0a0a0c]" />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0c]/90 via-transparent to-[#0a0a0c]/50" />
-          <div className="absolute bottom-0 left-0 right-0 p-8">
-            <p className="text-lg font-bold text-white/90 leading-snug text-balance">Protected payments. Productive capital.</p>
-            <p className="mt-2 text-xs text-white/40">Escrow infrastructure on Stellar</p>
-          </div>
-        </div>
-
         {/* Right - Form */}
         <div className="relative flex flex-1 flex-col justify-center overflow-y-auto px-8 py-10 md:px-10">
           <button onClick={onClose} className="absolute top-4 right-4 flex h-8 w-8 items-center justify-center rounded-full text-white/30 hover:bg-white/8 hover:text-white transition-colors" aria-label="Close">
