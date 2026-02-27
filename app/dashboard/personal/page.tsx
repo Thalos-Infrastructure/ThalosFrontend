@@ -130,11 +130,14 @@ function mapEscrowToAgreement(escrow) {
     counterparty: escrow.roles.serviceProvider?.slice(0, 8) + "...",
     amount,
     date: new Date(escrow.createdAt?._seconds * 1000).toISOString().split("T")[0],
-    milestones: milestones.map(m => ({      
+    milestones: milestones.map(m => ({
       approved: m.approved,
       description: m.description,
-      amount: m.amount ? m.amount.toString() : "",
-      status: m.flags?.released ? "released" : m.flags?.approved ? "approved" : m.status || "pending"
+      amount: (typeof m.amount === "number" && m.amount !== undefined)
+        ? m.amount.toString()
+        : (!isMulti && escrow.amount ? escrow.amount.toString() : ""),
+      status: m.flags?.released ? "released" : m.flags?.approved ? "approved" : m.status || "pending",
+      evidence: m.evidence,
     })),
     receiver: escrow.roles.receiver || escrow.roles.serviceProvider,
     balance: escrow.balance,
@@ -184,21 +187,33 @@ function SellerMilestoneList({ agr, agreements, setAgreements, t }: {
   const [submitting, setSubmitting] = React.useState<number | null>(null)
   const [expandedMs, setExpandedMs] = React.useState<number | null>(null)
 
+  const { address: walletAddress, openWalletModal } = require("@/lib/stellar-wallet").useStellarWallet();
+  const { changeMilestoneStatusAgreement } = require("@/lib/agreementActions");
   const handleSubmitEvidence = async (idx: number) => {
-    const evidence = evidenceInputs[idx]?.trim()
-    if (!evidence) return
-    setSubmitting(idx)
-    // Simulate small delay for UX
-    await new Promise(r => setTimeout(r, 600))
-    setSubmittedEvidence(prev => ({ ...prev, [idx]: evidence }))
-    setEvidenceInputs(prev => ({ ...prev, [idx]: "" }))
-    // Update milestone status in parent state to reflect evidence sent
-    setAgreements(prev => prev.map(a => a.id === agr.id ? {
-      ...a,
-      milestones: a.milestones.map((m, i) => i === idx && m.status === "pending" ? { ...m, status: "approved" as const } : m)
-    } : a))
-    setSubmitting(null)
-    setExpandedMs(null)
+    const evidence = evidenceInputs[idx]?.trim();
+    if (!evidence) return;
+    setSubmitting(idx);
+    await changeMilestoneStatusAgreement({
+      contractId: agr.id,
+      milestoneIndex: String(idx),
+      newEvidence: evidence,
+      newStatus: "Completed",
+      serviceProvider: walletAddress,
+      serviceType: agr.type === "Multi Release" ? "multi-release" : "single-release",
+      walletAddress,
+      openWalletModal,
+      setSubmitting: (v: boolean) => v === false && setSubmitting(null),
+      setError: (msg: string | null) => msg && alert(msg),
+      onSuccess: () => {
+        setSubmittedEvidence(prev => ({ ...prev, [idx]: evidence }));
+        setEvidenceInputs(prev => ({ ...prev, [idx]: "" }));
+        setAgreements(prev => prev.map(a => a.id === agr.id ? {
+          ...a,
+          milestones: a.milestones.map((m, i) => i === idx && m.status === "pending" ? { ...m, status: "approved" as const } : m)
+        } : a));
+        setExpandedMs(null);
+      },
+    });
   }
 
   return (
@@ -207,19 +222,19 @@ function SellerMilestoneList({ agr, agreements, setAgreements, t }: {
         const hasEvidence = !!submittedEvidence[idx]
         return (
           <div key={`${agr.id}-ms-${idx}`} className={cn("rounded-2xl border p-5 backdrop-blur-md transition-all",
-            ms.status === "released" ? "border-emerald-500/20 bg-emerald-500/5" : ms.status === "approved" || hasEvidence ? "border-cyan-500/20 bg-cyan-500/5" : "border-white/[0.06] bg-[#0a0a0c]/70"
+            ms.status === "released" ? "border-emerald-500/20 bg-emerald-500/5" : ms.status === "approved" || hasEvidence || (ms.status === "Completed" && ms.evidence) ? "border-cyan-500/20 bg-cyan-500/5" : "border-white/[0.06] bg-[#0a0a0c]/70"
           )}>
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-3">
                 <span className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold",
-                  ms.status === "released" ? "bg-emerald-500/20 text-emerald-400" : ms.status === "approved" || hasEvidence ? "bg-cyan-500/20 text-cyan-400" : "bg-white/10 text-white/40"
+                  ms.status === "released" ? "bg-emerald-500/20 text-emerald-400" : ms.status === "approved" || hasEvidence || (ms.status === "Completed" && ms.evidence) ? "bg-cyan-500/20 text-cyan-400" : "bg-white/10 text-white/40"
                 )}>{idx + 1}</span>
                 <div>
                   <p className="text-sm font-semibold text-white">{ms.description}</p>
                   <p className={cn("text-xs font-medium mt-0.5",
-                    ms.status === "released" ? "text-emerald-400" : ms.status === "approved" || hasEvidence ? "text-cyan-400" : "text-white/30"
+                    ms.status === "released" ? "text-emerald-400" : ms.status === "approved" || hasEvidence || (ms.status === "Completed" && ms.evidence) ? "text-cyan-400" : "text-white/30"
                   )}>
-                    {ms.status === "released" ? t("flow.released") : (ms.status === "approved" || hasEvidence) ? t("flow.evidenceSubmitted") : t("flow.awaitingEvidence")}
+                    {ms.status === "released" ? t("flow.released") : (ms.status === "approved" || hasEvidence || (ms.status === "Completed" && ms.evidence)) ? t("flow.evidenceSubmitted") : t("flow.awaitingEvidence")}
                   </p>
                 </div>
               </div>
@@ -231,7 +246,7 @@ function SellerMilestoneList({ agr, agreements, setAgreements, t }: {
                     {t("flow.submitEvidence")}
                   </Button>
                 )}
-                {hasEvidence && ms.status !== "released" && (
+                {(hasEvidence || (ms.status === "Completed" && ms.evidence)) && ms.status !== "released" && (
                   <span className="rounded-full bg-cyan-500/15 px-3 py-1 text-xs font-semibold text-cyan-400 border border-cyan-500/20">
                     {t("flow.evidenceSubmitted")}
                   </span>
@@ -262,10 +277,10 @@ function SellerMilestoneList({ agr, agreements, setAgreements, t }: {
               </div>
             )}
             {/* Show submitted evidence */}
-            {hasEvidence && (
+            {(hasEvidence || (ms.status === "Completed" && ms.evidence)) && (
               <div className="mt-3 rounded-lg border border-cyan-500/10 bg-cyan-500/5 px-3 py-2">
                 <p className="text-xs text-cyan-400/60 font-medium">{t("flow.viewEvidence")}:</p>
-                <p className="text-xs text-white/60 mt-0.5 break-all">{submittedEvidence[idx]}</p>
+                <p className="text-xs text-white/60 mt-0.5 break-all">{hasEvidence ? submittedEvidence[idx] : ms.evidence}</p>
               </div>
             )}
           </div>

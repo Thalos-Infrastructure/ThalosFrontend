@@ -10,7 +10,7 @@ const _inter = Inter({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'Thalos - Escrow & Payments Infrastructure on Stellar',
+  title: 'Thalos - Escrow & Secure Payments on Stellar',
   description: 'Build secure payment platforms with programmable escrows, protected funds, and staged releases on Stellar.',
   generator: 'v0.app',
   icons: {
