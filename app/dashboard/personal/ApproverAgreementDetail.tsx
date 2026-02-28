@@ -35,7 +35,7 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
   const [fundSuccess, setFundSuccess] = React.useState(false);
   const [fundError, setFundError] = React.useState<string | null>(null);
   const allApproved = localMilestones.every(m => m.approved === true);
-  const allReleased = localMilestones.every(m => m.status === "released");
+  const allReleased = agr.released;
   const someApproved = localMilestones.some(m => m.approved === true || m.status === "approved");
   const completedMs = localMilestones.filter(m => m.status === "released").length;
   const progressPct = localMilestones.length > 0 ? (completedMs / localMilestones.length) * 100 : 0;
