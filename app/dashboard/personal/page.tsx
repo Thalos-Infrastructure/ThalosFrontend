@@ -425,7 +425,7 @@ export default function PersonalDashboardPage() {
   }, [useCase, guidePrefilled, customUseCase])
 
   const totalAmount = escrowType === "single" ? (parseFloat(milestones[0]?.amount) || 0) : milestones.reduce((s, m) => s + (parseFloat(m.amount) || 0), 0)
-  const platformFee = (totalAmount * 0.07).toFixed(2)
+  const platformFee = (totalAmount * 0.01).toFixed(2)
 
   const addMilestone = () => setMilestones((p) => [...p, { description: "", amount: "" }])
   const removeMilestone = (i: number) => milestones.length > 1 && setMilestones((p) => p.filter((_, idx) => idx !== i))
