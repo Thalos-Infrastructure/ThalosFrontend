@@ -1,4 +1,4 @@
-type Milestone = { description: string; amount: string; status: "pending" | "approved" | "released"; approved?: boolean };
+type Milestone = { description: string; amount: string; status: "pending" | "approved" | "released" | "Completed"; approved?: boolean };
 type Agreement = {
   id: string;
   title: string;
@@ -232,7 +232,7 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
                 </div>
                 <div className="flex items-center gap-3">
                   <p className="text-lg font-bold text-white">{"$"}{localMilestones.length === 1 && idx === 0 ? agr.amount : ms.amount} <span className="text-xs font-normal text-white/35">USDC</span></p>
-                  {isFunded && ms.status === "pending" && !allReleased && ms.approved === false && (
+                  {isFunded && (ms.status === "pending" || ms.status === "Completed") && !allReleased && ms.approved === false && (
                     <Button size="sm" onClick={() => handleApprove(idx)} disabled={loadingMs === idx}
                       className="rounded-full bg-[#f0b400]/15 text-xs font-semibold text-[#f0b400] hover:bg-[#f0b400]/25 border border-[#f0b400]/20">
                       {loadingMs === idx ? t("flow.approving") : t("flow.approveMs")}
