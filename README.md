@@ -1,8 +1,21 @@
-# Thalos Frontend
+# Thalos
 
-Escrow and payments infrastructure built on the [Stellar](https://stellar.org) network. Thalos provides programmable escrows, protected fund management, and staged release workflows powered by [Trustlesswork](https://docs.trustlesswork.com/).
+Thalos is an escrow orchestration layer built on the [Stellar](https://stellar.org) network.
+It connects transparently with the [Trustless Work](https://docs.trustlesswork.com/) protocol to offer programmable agreements and milestone-based payments -- simple and secure, designed for end users who need to protect their transactions without dealing with blockchain complexity.
 
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/manueljgs-projects/v0-thalos-prototype-design)
+---
+
+## What is Thalos
+
+Thalos is a platform that lets freelancers, businesses, and everyday users create escrow agreements in minutes. You define milestones, fund the escrow, and funds are released only when both parties agree the work is done. No intermediaries, no trust required -- the Stellar network handles settlement in seconds.
+
+**Key features:**
+
+- Programmable escrow agreements with milestone-based releases
+- Wallet-based authentication (no passwords, no accounts to manage)
+- Real-time dashboards for personal and business accounts
+- Built-in dispute resolution workflows
+- Bilingual interface (English / Spanish)
 
 ---
 
@@ -14,7 +27,7 @@ Escrow and payments infrastructure built on the [Stellar](https://stellar.org) n
 | Language | TypeScript 5 |
 | Styling | Tailwind CSS 4, shadcn/ui |
 | Blockchain | Stellar SDK, Stellar Wallets Kit, Freighter API |
-| Escrows | Trustlesswork API |
+| Escrows | Trustless Work API |
 | Charts | Recharts |
 | Deployment | Vercel |
 
@@ -47,7 +60,7 @@ npm install
 
 ### 3. Environment variables (optional)
 
-Create a `.env.local` file in the root directory. All variables are optional and have defaults:
+Create a `.env.local` file in the root directory. All variables are optional and have working defaults:
 
 ```env
 # Stellar block explorer base URL (defaults to testnet)
@@ -83,49 +96,55 @@ ThalosFrontend/
 │   └── dashboard/
 │       ├── personal/page.tsx    # Personal account dashboard
 │       └── business/page.tsx    # Business account dashboard
-├── components/                  # UI components (hero, navbar, FAQ, etc.)
+├── components/                  # UI components
 ├── hooks/                       # Custom React hooks
 ├── lib/
-│   ├── config.ts                # Global constants (explorer URL, trustlines)
+│   ├── config.ts                # Global constants
 │   ├── i18n.tsx                 # Internationalization (EN/ES)
 │   ├── stellar-wallet.tsx       # Wallet context provider
 │   ├── stellar-wallet-kit.ts    # Stellar Wallets Kit initialization
-│   ├── agreementActions.ts      # Escrow agreement CRUD via Trustlesswork
+│   ├── agreementActions.ts      # Escrow agreement operations via Trustless Work
 │   └── utils.ts                 # Utility functions
 └── public/                      # Static assets
 ```
 
 ## Wallet Connection
 
-Thalos uses the [Stellar Wallets Kit](https://github.com/nicofunke/stellar-wallets-kit) to provide a unified wallet connection modal. Supported wallets include Freighter, xBull, LOBSTR, Albedo, Rabet, and WalletConnect.
+Thalos uses the [Stellar Wallets Kit](https://github.com/nicofunke/stellar-wallets-kit) to provide a unified connection modal. Supported wallets include Freighter, xBull, LOBSTR, Albedo, Rabet, and WalletConnect.
 
 1. Click **Sign In** from the navbar.
 2. Select your account type (Personal or Enterprise).
-3. Click **Login with Wallet** -- a modal will appear with available wallets.
+3. Click **Login with Wallet** and choose your wallet from the modal.
 4. Approve the connection in your wallet extension.
 
-Your connected wallet address is used for all escrow operations: funding agreements as a payer, or receiving released funds as a payee.
+Your connected address is used for all escrow operations: funding agreements as a payer, or receiving released funds as a payee.
 
-## Escrow System
+## How Escrows Work
 
-Thalos integrates with the [Trustlesswork](https://docs.trustlesswork.com/) API to manage escrow agreements on the Stellar network. Key operations:
+Thalos orchestrates escrow agreements through the [Trustless Work](https://docs.trustlesswork.com/) protocol on Stellar. The platform handles the complexity; you just define the terms.
 
-- **Create** agreements with defined milestones and parties
-- **Fund** escrows by locking USDC into smart contracts
-- **Release** funds at milestone completion
-- **Dispute** resolution workflows
+1. **Create** -- Define an agreement with milestones, amounts, and counterparties.
+2. **Fund** -- Lock USDC into the escrow smart contract.
+3. **Release** -- Funds are released as each milestone is completed and approved.
+4. **Dispute** -- If something goes wrong, the built-in dispute flow protects both parties.
 
-All transactions are signed client-side by the connected Stellar wallet.
+All transactions are signed client-side by your Stellar wallet. Thalos never holds your keys or your funds.
 
 ## Scripts
 
 | Command | Description |
 |---|---|
-| `pnpm dev` | Start development server (webpack) |
+| `pnpm dev` | Start development server |
 | `pnpm build` | Production build |
 | `pnpm start` | Start production server |
 | `pnpm lint` | Run ESLint |
 
+## Links
+
+- [Instagram](https://www.instagram.com/thalos_platform)
+- [Trustless Work Documentation](https://docs.trustlesswork.com/)
+- [Stellar Network](https://stellar.org)
+
 ## License
 
-Proprietary. All rights reserved by Thalos Infrastructure.
+All rights reserved by Thalos.
