@@ -13,9 +13,9 @@ import {
   getBountyBySlug,
   submitToBounty,
   validateSubmission,
-  getBountyShareableLink,
   type BountyWithDetails,
 } from "@/lib/actions/bounties"
+import { getBountyShareableLink } from "@/lib/utils/bounty"
 
 /* ── Icons ── */
 const Icons = {

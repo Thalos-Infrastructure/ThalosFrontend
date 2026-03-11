@@ -14,9 +14,9 @@ import {
   getBountiesByCreator,
   getBountiesForValidator,
   getOpenBounties,
-  getBountyShareableLink,
   type Bounty,
 } from "@/lib/actions/bounties"
+import { getBountyShareableLink } from "@/lib/utils/bounty"
 
 /* ── Icons ── */
 const Icons = {

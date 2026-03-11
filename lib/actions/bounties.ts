@@ -530,10 +530,4 @@ export async function getOpenBounties(): Promise<{ bounties: Bounty[]; error: st
   }
 }
 
-/**
- * Generate shareable link for bounty
- */
-export function getBountyShareableLink(slug: string, baseUrl?: string): string {
-  const base = baseUrl || (typeof window !== "undefined" ? window.location.origin : "https://thalos.xyz")
-  return `${base}/bounty/${slug}`
-}
+// Note: getBountyShareableLink moved to lib/utils/bounty.ts (client-side utility)
