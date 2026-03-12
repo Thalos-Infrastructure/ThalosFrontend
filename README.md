@@ -51,6 +51,51 @@ cd ThalosFrontend
 
 ### 2. Install dependencies
 
+---
+
+## What is Thalos
+
+Thalos is a platform that lets freelancers, businesses, and everyday users create escrow agreements in minutes. You define milestones, fund the escrow, and funds are released only when both parties agree the work is done. No intermediaries, no trust required -- the Stellar network handles settlement in seconds.
+
+**Key features:**
+
+- Programmable escrow agreements with milestone-based releases
+- Wallet-based authentication (no passwords, no accounts to manage)
+- Real-time dashboards for personal and business accounts
+- Built-in dispute resolution workflows
+- Bilingual interface (English / Spanish)
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Framework | Next.js 16 (App Router) |
+| Language | TypeScript 5 |
+| Styling | Tailwind CSS 4, shadcn/ui |
+| Blockchain | Stellar SDK, Stellar Wallets Kit, Freighter API |
+| Escrows | Trustless Work API |
+| Charts | Recharts |
+| Deployment | Vercel |
+
+## Prerequisites
+
+- **Node.js** >= 18
+- **pnpm** (recommended) or npm
+- A Stellar wallet browser extension ([Freighter](https://www.freighter.app/), xBull, LOBSTR, etc.)
+
+## Getting Started
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/Thalos-Infrastructure/ThalosFrontend.git
+cd ThalosFrontend
+```
+
+### 2. Install dependencies
+
 ```bash
 pnpm install
 ```
