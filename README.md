@@ -1,7 +1,8 @@
 # Thalos
 
 Thalos is an escrow orchestration layer built on the [Stellar](https://stellar.org) network.
-It connects transparently with the [Trustless Work](https://docs.trustlesswork.com/) protocol to offer programmable agreements and milestone-based payments -- simple and secure, designed for end users who need to protect their transactions without dealing with blockchain complexity.
+It connects transparently with the [Trustless Work](https://docs.trustlesswork.com/) protocol to offer programmable agreements and milestone-based payments, simple and secure, designed for end users who need to protect their transactions without dealing with blockchain complexity.
+
 ---
 
 ## What is Thalos
