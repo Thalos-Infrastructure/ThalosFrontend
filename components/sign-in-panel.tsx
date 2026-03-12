@@ -22,7 +22,7 @@ export function SignInPanel({ open, onClose }: SignInPanelProps) {
     openWalletModal(() => {
       onClose()
       router.push(dashboardHref)
-    })
+    }, profileType)
   }
 
   useEffect(() => {

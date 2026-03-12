@@ -3,6 +3,54 @@
 Thalos is an escrow orchestration layer built on the [Stellar](https://stellar.org) network.
 It connects transparently with the [Trustless Work](https://docs.trustlesswork.com/) protocol to offer programmable agreements and milestone-based payments -- simple and secure, designed for end users who need to protect their transactions without dealing with blockchain complexity.
 
+[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/manueljgs-projects/v0-thalos-prototype-design)
+[![Instagram](https://img.shields.io/badge/@thalos__platform-E4405F?style=for-the-badge&logo=instagram&logoColor=white)](https://www.instagram.com/thalos_platform)
+
+---
+
+## What is Thalos
+
+Thalos is a platform that lets freelancers, businesses, and everyday users create escrow agreements in minutes. You define milestones, fund the escrow, and funds are released only when both parties agree the work is done. No intermediaries, no trust required -- the Stellar network handles settlement in seconds.
+
+**Key features:**
+
+- Programmable escrow agreements with milestone-based releases
+- Wallet-based authentication (no passwords, no accounts to manage)
+- Real-time dashboards for personal and business accounts
+- Built-in dispute resolution workflows
+- Bilingual interface (English / Spanish)
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Framework | Next.js 16 (App Router) |
+| Language | TypeScript 5 |
+| Styling | Tailwind CSS 4, shadcn/ui |
+| Blockchain | Stellar SDK, Stellar Wallets Kit, Freighter API |
+| Escrows | Trustless Work API |
+| Charts | Recharts |
+| Deployment | Vercel |
+
+## Prerequisites
+
+- **Node.js** >= 18
+- **pnpm** (recommended) or npm
+- A Stellar wallet browser extension ([Freighter](https://www.freighter.app/), xBull, LOBSTR, etc.)
+
+## Getting Started
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/Thalos-Infrastructure/ThalosFrontend.git
+cd ThalosFrontend
+```
+
+### 2. Install dependencies
+
 ---
 
 ## What is Thalos
