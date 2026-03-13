@@ -42,7 +42,7 @@ const translations: Record<Lang, Record<string, string>> = {
 
     // Where Thalos Applies
     "profiles.tag": "[Where Thalos Applies]",
-    "profiles.desc": "Anywhere there is counterparty risk, payment uncertainty, milestone delivery, high-value exchange, or cross-border friction — Thalos can apply.",
+    "profiles.desc": "Anywhere there is counterparty risk, payment uncertainty, milestone delivery, high-value exchange, or cross-border friction, Thalos can apply.",
 
     // Profiles
     "profiles.personal": "Personal",
@@ -649,7 +649,7 @@ const translations: Record<Lang, Record<string, string>> = {
 
     // Where Thalos Applies
     "profiles.tag": "[Donde Aplica Thalos]",
-    "profiles.desc": "Donde exista riesgo de contraparte, incertidumbre en pagos, entrega por hitos, intercambios de alto valor o friccion transfronteriza — Thalos puede aplicarse.",
+    "profiles.desc": "Donde exista riesgo de contraparte, incertidumbre en pagos, entrega por hitos, intercambios de alto valor o friccion transfronteriza, Thalos puede aplicarse.",
 
     // Profiles
     "profiles.personal": "Personal",

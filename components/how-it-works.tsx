@@ -175,16 +175,16 @@ export function HowItWorks() {
           </p>
         </div>
 
-        <div className="section-reveal-child mb-10 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center sm:justify-center" style={{ transitionDelay: isVisible ? "120ms" : "0ms" }}>
+        <div className="section-reveal-child mb-10 grid grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:items-center sm:justify-center sm:gap-4" style={{ transitionDelay: isVisible ? "120ms" : "0ms" }}>
           {useCases.map((uc) => (
             <button
               key={uc.id}
               onClick={() => setActiveUseCase(uc.id)}
               className={cn(
-                "rounded-full border px-5 py-2.5 text-sm font-semibold transition-all duration-400",
+                "rounded-xl border-2 px-6 py-3 text-sm font-bold tracking-wide transition-all duration-300",
                 activeUseCase === uc.id
-                  ? "border-[#f0b400]/30 bg-[#f0b400]/10 text-[#f0b400] shadow-[0_2px_10px_rgba(240,180,0,0.15),inset_0_1px_0_rgba(255,255,255,0.06)]"
-                  : "border-border/20 bg-card/30 text-muted-foreground shadow-[0_1px_4px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.04)] hover:border-[#b0c4de]/30 hover:text-[#b0c4de]"
+                  ? "border-[#f0b400] bg-[#f0b400]/20 text-[#f0b400] shadow-[0_4px_20px_rgba(240,180,0,0.25),0_0_0_1px_rgba(240,180,0,0.1)]"
+                  : "border-white/20 bg-white/5 text-white/90 shadow-[0_2px_8px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.08)] hover:border-white/40 hover:bg-white/10 hover:text-white"
               )}
             >
               {uc.label}

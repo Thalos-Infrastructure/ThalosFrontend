@@ -25,6 +25,7 @@ import { cn } from "@/lib/utils";
 import { statusConfig } from "./statusConfig";
 import { useLanguage } from "@/lib/i18n";
 import { fundAndSignEscrow } from "@/lib/agreementActions";
+import { AlertTriangle } from "lucide-react";
 
 export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreementDetailProps) {
   const [showDetail, setShowDetail] = React.useState(false);
@@ -34,6 +35,9 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
   const [funding, setFunding] = React.useState(false);
   const [fundSuccess, setFundSuccess] = React.useState(false);
   const [fundError, setFundError] = React.useState<string | null>(null);
+  const [disputingMs, setDisputingMs] = React.useState<number | null>(null);
+  const [disputedMs, setDisputedMs] = React.useState<Set<number>>(new Set());
+  const [showDisputeConfirm, setShowDisputeConfirm] = React.useState<number | null>(null);
   const allApproved = localMilestones.every(m => m.approved === true);
   const allReleased = agr.released;
   const someApproved = localMilestones.some(m => m.approved === true || m.status === "approved");
@@ -47,6 +51,33 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
 
   // Determine current step for the 3-step indicator
   const currentStep = allReleased ? 3 : (someApproved || allApproved) ? 2 : isFunded ? 1 : 0;
+
+  async function handleDispute(idx: number) {
+    setDisputingMs(idx);
+    setErrorMs(null);
+    try {
+      const { disputeMilestone, sendTransaction } = await import("@/services/trustlessworkService");
+      const res = await disputeMilestone(agr.id, idx.toString(), walletAddress);
+      if (!res.success) throw new Error(res.error || "Error raising dispute");
+      const xdr = res.data && typeof res.data === 'object' && 'unsignedTransaction' in res.data ? (res.data as any).unsignedTransaction : undefined;
+      if (xdr) {
+        const { signTransaction: freighterSign } = await import("@stellar/freighter-api");
+        const signedResult = await freighterSign(xdr, { networkPassphrase: "Test SDF Network ; September 2015" });
+        if (!signedResult?.signedTxXdr) {
+          if (signedResult?.error) throw new Error("Freighter error: " + signedResult.error);
+          throw new Error("Transaction signing failed (no XDR returned)");
+        }
+        const sendRes = await sendTransaction(signedResult.signedTxXdr);
+        if (!sendRes.success) throw new Error(sendRes.error || "Error sending transaction");
+      }
+      setDisputedMs(prev => new Set(prev).add(idx));
+      setShowDisputeConfirm(null);
+    } catch (e: any) {
+      setErrorMs(e.message || "Unknown error");
+    } finally {
+      setDisputingMs(null);
+    }
+  }
 
   async function handleApprove(idx: number) {
     setLoadingMs(idx);
@@ -232,7 +263,29 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
                 </div>
                 <div className="flex items-center gap-3">
                   <p className="text-lg font-bold text-white">{"$"}{localMilestones.length === 1 && idx === 0 ? agr.amount : ms.amount} <span className="text-xs font-normal text-white/35">USDC</span></p>
-                  {isFunded && (ms.status === "pending" || ms.status === "Completed") && !allReleased && ms.approved === false && (
+                  
+                  {/* Dispute button - appears when evidence is submitted but not yet released */}
+                  {isFunded && (ms.status === "approved" || ms.status === "Completed" || ms.approved === true) && ms.status !== "released" && !disputedMs.has(idx) && (
+                    <Button 
+                      size="sm" 
+                      onClick={() => setShowDisputeConfirm(idx)} 
+                      disabled={disputingMs === idx}
+                      className="rounded-full bg-red-500/10 text-xs font-semibold text-red-400 hover:bg-red-500/20 border border-red-500/20"
+                    >
+                      <AlertTriangle className="h-3 w-3 mr-1" />
+                      {disputingMs === idx ? "..." : t("dispute.raiseDispute")}
+                    </Button>
+                  )}
+                  
+                  {/* Disputed badge */}
+                  {disputedMs.has(idx) && (
+                    <span className="rounded-full bg-red-500/15 px-3 py-1 text-xs font-semibold text-red-400 border border-red-500/20 flex items-center gap-1">
+                      <AlertTriangle className="h-3 w-3" />
+                      {t("dispute.inDispute")}
+                    </span>
+                  )}
+                  
+                  {isFunded && (ms.status === "pending" || ms.status === "Completed") && !allReleased && ms.approved === false && !disputedMs.has(idx) && (
                     <Button size="sm" onClick={() => handleApprove(idx)} disabled={loadingMs === idx}
                       className="rounded-full bg-[#f0b400]/15 text-xs font-semibold text-[#f0b400] hover:bg-[#f0b400]/25 border border-[#f0b400]/20">
                       {loadingMs === idx ? t("flow.approving") : t("flow.approveMs")}
@@ -248,6 +301,43 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
             ))}
           </div>
           {errorMs && <div className="text-red-400 text-xs mt-2">{errorMs}</div>}
+          
+          {/* Dispute confirmation modal */}
+          {showDisputeConfirm !== null && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowDisputeConfirm(null)}>
+              <div className="w-full max-w-md rounded-2xl border border-red-500/20 bg-[#0c0c0e] p-6 shadow-[0_16px_48px_rgba(0,0,0,0.6)]" onClick={e => e.stopPropagation()}>
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-500/10">
+                    <AlertTriangle className="h-6 w-6 text-red-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-white">{t("dispute.raiseDispute")}</h3>
+                    <p className="text-xs text-white/40">{t("dispute.disputeDesc")}</p>
+                  </div>
+                </div>
+                <div className="rounded-xl border border-red-500/10 bg-red-500/5 p-4 mb-4">
+                  <p className="text-sm text-white/70">{t("dispute.confirmDispute")}</p>
+                  <p className="text-xs text-white/40 mt-2">{t("dispute.disputeWarning")}</p>
+                </div>
+                <div className="flex gap-3 justify-end">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setShowDisputeConfirm(null)}
+                    className="rounded-full border-white/10 text-white/60 hover:bg-white/5"
+                  >
+                    {t("dispute.cancel")}
+                  </Button>
+                  <Button 
+                    onClick={() => handleDispute(showDisputeConfirm)}
+                    disabled={disputingMs === showDisputeConfirm}
+                    className="rounded-full bg-red-500 text-white hover:bg-red-600 shadow-[0_4px_16px_rgba(239,68,68,0.25)]"
+                  >
+                    {disputingMs === showDisputeConfirm ? "..." : t("dispute.confirm")}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Release button */}
           {allApproved && !agr.released && !allReleased && (
