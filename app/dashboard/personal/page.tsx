@@ -496,8 +496,8 @@ export default function PersonalDashboardPage() {
         <div className="absolute inset-0 bg-background/75" />
       </div>
 
-      {/* Header */}
-      <header className="sticky top-0 z-40 border-b border-white/6 bg-transparent backdrop-blur-xl">
+      {/* Header - always dark */}
+      <header className="sticky top-0 z-40 border-b border-white/6 bg-[#0a0a0c]/95 backdrop-blur-xl" data-dark-always>
         <nav className="flex h-16 items-center justify-between px-4 lg:px-6">
           <div className="flex items-center gap-3">
             {/* Mobile sidebar toggle */}
@@ -524,7 +524,7 @@ export default function PersonalDashboardPage() {
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
               </button>
               {profileMenuOpen && (
-                <div className="absolute right-0 mt-2 w-56 rounded-xl border border-white/10 bg-[#0c0c0e] p-2 shadow-[0_16px_48px_rgba(0,0,0,0.6)]" onClick={() => setProfileMenuOpen(false)}>
+                <div className="absolute right-0 mt-2 w-56 rounded-xl border border-white/10 bg-[#0c0c0e] p-2 shadow-[0_16px_48px_rgba(0,0,0,0.6)]" data-dark-always onClick={() => setProfileMenuOpen(false)}>
                   <button onClick={() => setActiveSection("dashboard")} className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-white/70 hover:bg-white/8 hover:text-white transition-colors">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
                     Dashboard
@@ -548,11 +548,11 @@ export default function PersonalDashboardPage() {
       </header>
 
       <div className="relative z-10 flex min-h-[calc(100vh-64px)]">
-        {/* Sidebar */}
+        {/* Sidebar - always dark */}
         <aside className={cn(
-          "fixed inset-y-16 left-0 z-30 w-64 border-r border-white/6 bg-background/80 backdrop-blur-xl transition-transform duration-300 lg:sticky lg:top-16 lg:translate-x-0 lg:h-[calc(100vh-64px)]",
+          "fixed inset-y-16 left-0 z-30 w-64 border-r border-white/6 bg-[#0a0a0c]/95 backdrop-blur-xl transition-transform duration-300 lg:sticky lg:top-16 lg:translate-x-0 lg:h-[calc(100vh-64px)]",
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        )}>
+        )} data-dark-always>
           {/* User card */}
           <div className="border-b border-white/6 p-5">
             <div className="flex items-center gap-3">
@@ -590,8 +590,8 @@ export default function PersonalDashboardPage() {
         {/* Overlay for mobile sidebar */}
         {sidebarOpen && <div className="fixed inset-0 z-20 bg-black/50 lg:hidden" onClick={() => setSidebarOpen(false)} />}
 
-        {/* Main content */}
-        <main className="flex-1 overflow-y-auto p-4 lg:p-8">
+        {/* Main content - always dark style */}
+        <main className="flex-1 overflow-y-auto p-4 lg:p-8" data-dark-always>
           {/* ══════ ANALYTICS ══════ */}
           {activeSection === "analytics" && (
             <div className="mx-auto max-w-5xl">

@@ -81,15 +81,34 @@
 /* Light theme global overrides */
 .light {
   /* ---- TEXT ---- */
-  [class*="text-white"] { color: var(--foreground) !important; }
+  [class*="text-white"]:not([data-dark-always] *):not(.dark-element *) { color: var(--foreground) !important; }
   [class*="text-white\\/5"], [class*="text-white\\/4"], [class*="text-white\\/3"], [class*="text-white\\/2"], [class*="text-white\\/1"] { color: var(--muted-foreground) !important; }
+  
   /* Keep white text white inside always-dark elements */
-  [data-dark-always] [class*="text-white"] { color: white !important; }
-  [data-dark-always] [class*="text-white\\/"] { color: rgba(255,255,255,0.6) !important; }
+  [data-dark-always] [class*="text-white"],
+  .dark-element [class*="text-white"],
+  .dark-header [class*="text-white"],
+  .dark-sidebar [class*="text-white"] { color: white !important; }
+  [data-dark-always] [class*="text-white\\/"],
+  .dark-element [class*="text-white\\/"] { color: rgba(255,255,255,0.6) !important; }
 
   /* ---- BACKGROUNDS ---- */
-  [style*="#0a0a0c"], [style*="#0c0c0e"], [style*="#0e0e10"], [style*="#111113"] { background-color: var(--card) !important; }
-  [class*="bg-white\\/"] { background-color: var(--secondary) !important; }
+  /* Keep dark backgrounds on dashboard elements - do NOT override */
+  [class*="bg-\\[\\#0a0a0c\\]"],
+  [class*="bg-\\[\\#0c0c0e\\]"] {
+    background-color: inherit !important;
+  }
+  
+  /* Dashboard main content - keep dark in light mode */
+  [data-dark-always],
+  [data-dark-always] * {
+    --background: oklch(0.1 0.005 250);
+    --foreground: oklch(0.97 0 0);
+    --card: oklch(0.15 0.005 250);
+    --card-foreground: oklch(0.97 0 0);
+    --muted-foreground: oklch(0.6 0 0);
+    --border: oklch(0.25 0.01 250);
+  }
 
   /* ---- BORDERS ---- */
   [class*="border-white\\/"] { border-color: var(--border) !important; }
@@ -103,10 +122,10 @@
   [class*="from-\\[\\#0a0a0c\\]"] { --tw-gradient-from: var(--background) !important; }
   [class*="via-\\[\\#0a0a0c\\]"] { --tw-gradient-via: var(--background) !important; }
 
-  /* ---- OCEAN BACKGROUND - more visible in light mode ---- */
-  .opacity-35 { opacity: 0.45 !important; }
-  .opacity-30 { opacity: 0.38 !important; }
-  .opacity-20 { opacity: 0.30 !important; }
+  /* ---- OCEAN BACKGROUND - darker/more defined in light mode ---- */
+  .opacity-35 { opacity: 0.55 !important; filter: brightness(0.85) contrast(1.1) !important; }
+  .opacity-30 { opacity: 0.48 !important; filter: brightness(0.85) contrast(1.1) !important; }
+  .opacity-20 { opacity: 0.40 !important; filter: brightness(0.85) contrast(1.1) !important; }
 
   /* ---- CHART / DASHBOARD ---- */
   .recharts-cartesian-grid-horizontal line,
@@ -117,29 +136,92 @@
   [class*="bg-white\\/\\[0\\."] { background-color: var(--secondary) !important; }
   [class*="bg-white\\/8"], [class*="bg-white\\/15"] { background-color: var(--border) !important; }
 
-  /* Bottom bar and header - dark style even in light mode */
-  [class*="bg-background\\/60"] { background-color: oklch(0.18 0.01 250 / 0.92) !important; }
-  [class*="bg-background\\/85"] { background-color: oklch(0.15 0.01 250 / 0.95) !important; }
-  [class*="bg-background\\/80"] { background-color: oklch(0.16 0.01 250 / 0.94) !important; }
-  [class*="bg-background\\/75"] { background-color: oklch(0.17 0.01 250 / 0.93) !important; }
-  
-  /* Keep text white in bottom bar */
-  [class*="bg-background\\/60"] [class*="text-foreground"],
-  [class*="bg-background\\/85"] [class*="text-foreground"] { color: white !important; }
-  [class*="bg-background\\/60"] [class*="text-muted-foreground"],
-  [class*="bg-background\\/85"] [class*="text-muted-foreground"] { color: rgba(255,255,255,0.6) !important; }
-  
-  /* Cards and selections in light mode - better contrast */
-  [class*="bg-card\\/30"], [class*="bg-card\\/40"] { 
-    background-color: oklch(0.97 0.002 250) !important; 
-    border-color: oklch(0.85 0.006 250) !important;
+  /* ---- HEADER - Dark translucent like dark mode ---- */
+  header, [data-header], .site-header {
+    background-color: oklch(0.12 0.01 250 / 0.88) !important;
+    backdrop-filter: blur(16px) !important;
+    border-color: rgba(255,255,255,0.1) !important;
+  }
+  header *, [data-header] *, .site-header * {
+    color: white !important;
+  }
+  header [class*="text-muted"], [data-header] [class*="text-muted"] {
+    color: rgba(255,255,255,0.6) !important;
+  }
+
+  /* ---- BOTTOM BAR - Dark like dark mode ---- */
+  [class*="bg-background\\/60"],
+  [class*="bg-background\\/85"],
+  [class*="bg-background\\/80"],
+  [class*="bg-background\\/75"] { 
+    background-color: oklch(0.12 0.01 250 / 0.92) !important;
+    backdrop-filter: blur(16px) !important;
   }
   
-  /* Profile selector buttons in light mode */
-  [class*="border-border\\/20"][class*="bg-card\\/30"] {
-    background-color: oklch(0.96 0.002 250) !important;
-    border-color: oklch(0.82 0.008 250) !important;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.8) !important;
+  /* Keep text white in bottom bar */
+  [class*="bg-background\\/60"] *,
+  [class*="bg-background\\/85"] * { 
+    color: white !important; 
+  }
+  [class*="bg-background\\/60"] [class*="text-muted-foreground"],
+  [class*="bg-background\\/85"] [class*="text-muted-foreground"] { 
+    color: rgba(255,255,255,0.6) !important; 
+  }
+  
+  /* ---- POPOVER/MODAL - Dark like dark mode ---- */
+  [role="dialog"], .modal-content, [data-radix-popper-content-wrapper] > div {
+    background-color: oklch(0.15 0.005 250) !important;
+    border-color: oklch(0.25 0.01 250) !important;
+    color: white !important;
+  }
+  [role="dialog"] *, .modal-content * {
+    color: white !important;
+  }
+  [role="dialog"] [class*="text-muted"], .modal-content [class*="text-muted"] {
+    color: rgba(255,255,255,0.6) !important;
+  }
+
+  /* ---- CARDS - Shadows and better contrast ---- */
+  [class*="bg-card\\/30"], [class*="bg-card\\/40"], .card { 
+    background-color: white !important; 
+    border-color: oklch(0.88 0.006 250) !important;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.1) !important;
+  }
+  
+  /* Profile selector buttons in light mode - better shadows */
+  [class*="border-border\\/20"][class*="bg-card\\/30"],
+  [class*="border-border\\/20"][class*="bg-card\\/40"] {
+    background-color: white !important;
+    border-color: oklch(0.85 0.008 250) !important;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.1), 0 1px 3px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.9) !important;
+  }
+
+  /* ---- STELLAR LOGO - Visible in light mode ---- */
+  img[alt="Stellar"] {
+    filter: invert(0.3) brightness(0.5) !important;
+    opacity: 0.8 !important;
+  }
+  
+  /* ---- DASHBOARD SIDEBAR - Dark like dark mode ---- */
+  aside, [data-sidebar], .dashboard-sidebar {
+    background-color: oklch(0.12 0.005 250) !important;
+    border-color: oklch(0.25 0.01 250) !important;
+  }
+  aside *, [data-sidebar] *, .dashboard-sidebar * {
+    color: white !important;
+  }
+  aside [class*="text-muted"], [data-sidebar] [class*="text-muted"] {
+    color: rgba(255,255,255,0.6) !important;
+  }
+  
+  /* ---- DASHBOARD CARDS (My Wallets, Sign Out, etc) - Dark ---- */
+  .dashboard-card, [data-dashboard-card] {
+    background-color: oklch(0.15 0.005 250) !important;
+    border-color: oklch(0.25 0.01 250) !important;
+    color: white !important;
+  }
+  .dashboard-card *, [data-dashboard-card] * {
+    color: white !important;
   }
 }
 

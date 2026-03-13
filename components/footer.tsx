@@ -18,7 +18,7 @@ export function Footer() {
             <div className="flex items-start gap-4">
               <Image src="/thalos-icon.png" alt="Thalos" width={56} height={56} className="h-14 w-14 shrink-0 object-contain" />
               <p className="text-sm font-medium leading-relaxed text-muted-foreground">
-                Payments and escrow infrastructure on Stellar. Protected funds, staged payments, and productive capital while retained.
+                Payments and escrow platform on Stellar. Protected funds, staged payments, and productive capital while retained.
               </p>
             </div>
             {/* Partners */}
@@ -58,6 +58,7 @@ export function Footer() {
               <ul className="flex flex-col gap-2.5">
                 <li><a href="mailto:thalosinfrastructure@gmail.com" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">{t("footer.emailUs")}</a></li>
                 <li><a href="https://x.com/Thalos_infra" target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">{t("footer.followOnX")}</a></li>
+                <li><a href="https://www.instagram.com/thalos_platform/" target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Instagram</a></li>
                 <li><a href="https://github.com/Thalos-Infrastructure" target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">GitHub</a></li>
               </ul>
             </div>
@@ -65,7 +66,7 @@ export function Footer() {
         </div>
 
         {/* Copyright */}
-        <p className="mt-10 text-center text-xs text-muted-foreground/40">&copy; {new Date().getFullYear()} Thalos Infrastructure. {t("footer.rights")}</p>
+        <p className="mt-10 text-center text-xs text-muted-foreground/40">&copy; {new Date().getFullYear()} Thalos Platform. {t("footer.rights")}</p>
       </div>
     </footer>
   )
