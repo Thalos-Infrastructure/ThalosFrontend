@@ -21,7 +21,7 @@ const translations: Record<Lang, Record<string, string>> = {
     "hero.desc": "Thalos powers agreements with programmable escrows on the Stellar network. Funds stay protected, milestones drive releases, and idle capital earns yield.",
     "hero.cta1": "Get Started",
     "hero.cta2": "See How It Works",
-    "hero.weAre": "a decentralized escrow and trust infrastructure built on Stellar that enables secure, programmable, milestone-based payments between individuals, entrepreneurs, and businesses across multiple industries without relying on traditional intermediaries.",
+    "hero.weAre": "a decentralized escrow and trust platform built on Stellar that enables secure, programmable, milestone-based payments between individuals, entrepreneurs, and businesses across multiple industries without relying on traditional intermediaries.",
     "hero.trustLayer": "The Trust Layer",
     "hero.trust1": "Thalos solves the trust problem in digital and high-value transactions by locking funds on-chain until predefined conditions are met. It combines smart-contract-based escrow, wallet-based identity, and transparent agreement tracking to reduce fraud, disputes, payment delays, and counterparty risk.",
     "hero.trust2a": "Unlike traditional platforms that extract high fees, impose custodial control, or limit flexibility, Thalos is ",
@@ -257,6 +257,18 @@ const translations: Record<Lang, Record<string, string>> = {
     // Partners
     "partners.builtOn": "Built on",
     "partners.escrowsBy": "Escrows by",
+
+    // Auth Section
+    "auth.getStarted": "Get Started",
+    "auth.signInToBuild": "Sign In to Build",
+    "auth.chooseProfile": "Choose your profile type and start assembling your payment platform.",
+    "auth.profileType": "Profile Type",
+    "auth.personalRetail": "Personal / Retail",
+    "auth.businessEnterprise": "Business / Enterprise",
+    "auth.continueGoogle": "Continue with Google",
+    "auth.continueEmail": "Continue with Email",
+    "auth.connectStellarWallet": "Connect Stellar Wallet",
+    "auth.securelyConnect": "Securely connect your wallet to access escrow features.",
 
     // Status labels
     "status.funded": "Funded",
@@ -604,7 +616,7 @@ const translations: Record<Lang, Record<string, string>> = {
     "hero.desc": "Thalos impulsa acuerdos con escrows programables en la red Stellar. Los fondos permanecen protegidos, los hitos impulsan las liberaciones y el capital inactivo genera rendimiento.",
     "hero.cta1": "Comenzar",
     "hero.cta2": "Ver Como Funciona",
-    "hero.weAre": "una infraestructura descentralizada de escrow y confianza construida sobre Stellar que permite pagos seguros, programables y basados en hitos entre individuos, emprendedores y empresas de multiples industrias sin depender de intermediarios tradicionales.",
+    "hero.weAre": "una plataforma descentralizada de escrow y confianza construida sobre Stellar que permite pagos seguros, programables y basados en hitos entre individuos, emprendedores y empresas de multiples industrias sin depender de intermediarios tradicionales.",
     "hero.trustLayer": "La Capa de Confianza",
     "hero.trust1": "Thalos resuelve el problema de confianza en transacciones digitales y de alto valor bloqueando fondos en la cadena hasta que se cumplan condiciones predefinidas. Combina escrow basado en contratos inteligentes, identidad basada en billeteras y seguimiento transparente de acuerdos para reducir fraudes, disputas, retrasos en pagos y riesgo de contraparte.",
     "hero.trust2a": "A diferencia de las plataformas tradicionales que cobran altas comisiones, imponen control custodial o limitan la flexibilidad, Thalos es ",
@@ -842,6 +854,18 @@ const translations: Record<Lang, Record<string, string>> = {
     // Partners
     "partners.builtOn": "Construido en",
     "partners.escrowsBy": "Escrows por",
+
+    // Auth Section
+    "auth.getStarted": "Comenzar",
+    "auth.signInToBuild": "Inicia Sesion para Construir",
+    "auth.chooseProfile": "Elige tu tipo de perfil y comienza a crear tu plataforma de pagos.",
+    "auth.profileType": "Tipo de Perfil",
+    "auth.personalRetail": "Personal / Individual",
+    "auth.businessEnterprise": "Empresa / Corporativo",
+    "auth.continueGoogle": "Continuar con Google",
+    "auth.continueEmail": "Continuar con Email",
+    "auth.connectStellarWallet": "Conectar Billetera Stellar",
+    "auth.securelyConnect": "Conecta tu billetera de forma segura para acceder a las funciones de escrow.",
 
     // Status labels
     "status.funded": "Financiado",

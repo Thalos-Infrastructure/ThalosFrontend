@@ -178,7 +178,7 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
 
             <div className="mt-16 max-w-2xl mx-auto animate-fade-in-up animation-delay-600">
               <p className="text-lg md:text-xl font-medium leading-relaxed text-muted-foreground text-pretty">
-                <span className="text-[#f0b400] font-bold">{"<We are>"}</span>{" "}
+                <span className="text-[#f0b400] font-bold">{"<Somos>"}</span>{" "}
                 {t("hero.weAre")}
               </p>
             </div>

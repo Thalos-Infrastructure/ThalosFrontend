@@ -103,10 +103,10 @@
   [class*="from-\\[\\#0a0a0c\\]"] { --tw-gradient-from: var(--background) !important; }
   [class*="via-\\[\\#0a0a0c\\]"] { --tw-gradient-via: var(--background) !important; }
 
-  /* ---- OCEAN BACKGROUND - more visible ---- */
-  .opacity-35 { opacity: 0.28 !important; }
-  .opacity-30 { opacity: 0.20 !important; }
-  .opacity-20 { opacity: 0.12 !important; }
+  /* ---- OCEAN BACKGROUND - more visible in light mode ---- */
+  .opacity-35 { opacity: 0.45 !important; }
+  .opacity-30 { opacity: 0.38 !important; }
+  .opacity-20 { opacity: 0.30 !important; }
 
   /* ---- CHART / DASHBOARD ---- */
   .recharts-cartesian-grid-horizontal line,
@@ -117,11 +117,30 @@
   [class*="bg-white\\/\\[0\\."] { background-color: var(--secondary) !important; }
   [class*="bg-white\\/8"], [class*="bg-white\\/15"] { background-color: var(--border) !important; }
 
-  /* Bottom bar glass effect */
-  [class*="bg-background\\/60"] { background-color: oklch(0.97 0.002 250 / 0.88) !important; }
-  [class*="bg-background\\/85"] { background-color: oklch(0.98 0.002 250 / 0.94) !important; }
-  [class*="bg-background\\/80"] { background-color: oklch(0.98 0.002 250 / 0.90) !important; }
-  [class*="bg-background\\/75"] { background-color: oklch(0.98 0.002 250 / 0.86) !important; }
+  /* Bottom bar and header - dark style even in light mode */
+  [class*="bg-background\\/60"] { background-color: oklch(0.18 0.01 250 / 0.92) !important; }
+  [class*="bg-background\\/85"] { background-color: oklch(0.15 0.01 250 / 0.95) !important; }
+  [class*="bg-background\\/80"] { background-color: oklch(0.16 0.01 250 / 0.94) !important; }
+  [class*="bg-background\\/75"] { background-color: oklch(0.17 0.01 250 / 0.93) !important; }
+  
+  /* Keep text white in bottom bar */
+  [class*="bg-background\\/60"] [class*="text-foreground"],
+  [class*="bg-background\\/85"] [class*="text-foreground"] { color: white !important; }
+  [class*="bg-background\\/60"] [class*="text-muted-foreground"],
+  [class*="bg-background\\/85"] [class*="text-muted-foreground"] { color: rgba(255,255,255,0.6) !important; }
+  
+  /* Cards and selections in light mode - better contrast */
+  [class*="bg-card\\/30"], [class*="bg-card\\/40"] { 
+    background-color: oklch(0.97 0.002 250) !important; 
+    border-color: oklch(0.85 0.006 250) !important;
+  }
+  
+  /* Profile selector buttons in light mode */
+  [class*="border-border\\/20"][class*="bg-card\\/30"] {
+    background-color: oklch(0.96 0.002 250) !important;
+    border-color: oklch(0.82 0.008 250) !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.8) !important;
+  }
 }
 
 @theme inline {
