@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils"
 import { ThalosLoader } from "@/components/thalos-loader"
 import { LanguageToggle, ThemeToggle, useLanguage } from "@/lib/i18n"
 import { useStellarWallet } from "@/lib/stellar-wallet"
+import { Footer } from "@/components/footer"
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area,
 } from "recharts"
@@ -23,6 +24,7 @@ const useCases = [
   { id: "car-sale", labelKey: "useCase.carSale", icon: "car", suggestedTitle: "Vehicle Sale Agreement", suggestedDesc: "Describe the vehicle details, agreed price, inspection conditions, and transfer terms." },
   { id: "coaching", labelKey: "useCase.coaching", icon: "book", suggestedTitle: "Coaching / Course Agreement", suggestedDesc: "Describe the course content, schedule, completion criteria, and refund policy." },
   { id: "home-repair", labelKey: "useCase.homeRepair", icon: "tool", suggestedTitle: "Home Repair Service Agreement", suggestedDesc: "Describe the repair work, materials, timeline, and warranty terms." },
+  { id: "bounty", labelKey: "useCase.bounty", icon: "star", suggestedTitle: "Thalos Bounty", suggestedDesc: "Create a bounty for tasks that can be completed by multiple validators. Share the bounty link publicly." },
   { id: "other", labelKey: "useCase.other", icon: "plus", suggestedTitle: "", suggestedDesc: "" },
 ]
 
@@ -167,6 +169,7 @@ function UseCaseIcon({ icon, className }: { icon: string; className?: string }) 
   if (icon === "car") return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className={c}><rect x="1" y="3" width="15" height="13" rx="2"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
   if (icon === "book") return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className={c}><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
   if (icon === "tool") return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className={c}><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
+  if (icon === "star") return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className={c}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
   return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className={c}><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
 }
 
@@ -498,14 +501,14 @@ export default function PersonalDashboardPage() {
 
       {/* Header */}
       <header className="sticky top-0 z-40 border-b border-white/6 bg-[#0a0a0c]/95 backdrop-blur-xl">
-        <nav className="flex h-16 items-center justify-between px-4 lg:px-6">
-          <div className="flex items-center gap-3">
+        <nav className="flex h-20 items-center justify-between px-4 lg:px-8">
+          <div className="flex items-center gap-4">
             {/* Mobile sidebar toggle */}
-            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="lg:hidden flex h-9 w-9 items-center justify-center rounded-lg text-white/60 hover:bg-white/10 hover:text-white transition-colors" aria-label="Toggle sidebar">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="lg:hidden flex h-10 w-10 items-center justify-center rounded-lg text-white/60 hover:bg-white/10 hover:text-white transition-colors" aria-label="Toggle sidebar">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
             </button>
             <Link href="/" className="flex items-center">
-              <Image src="/thalos-icon.png" alt="Thalos" width={48} height={48} className="h-10 w-10 object-contain" priority />
+              <Image src="/thalos-icon.png" alt="Thalos" width={56} height={56} className="h-12 w-12 object-contain" priority />
             </Link>
           </div>
 
@@ -547,10 +550,10 @@ export default function PersonalDashboardPage() {
         </nav>
       </header>
 
-      <div className="relative z-10 flex min-h-[calc(100vh-64px)]">
+      <div className="relative z-10 flex min-h-[calc(100vh-80px)]">
         {/* Sidebar */}
         <aside className={cn(
-          "fixed inset-y-16 left-0 z-30 w-64 border-r border-white/6 bg-[#0a0a0c]/95 backdrop-blur-xl transition-transform duration-300 lg:sticky lg:top-16 lg:translate-x-0 lg:h-[calc(100vh-64px)]",
+          "fixed inset-y-20 left-0 z-30 w-64 border-r border-white/6 bg-[#0a0a0c]/95 backdrop-blur-xl transition-transform duration-300 lg:sticky lg:top-20 lg:translate-x-0 lg:h-[calc(100vh-80px)]",
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}>
           {/* User card */}
@@ -1165,6 +1168,9 @@ export default function PersonalDashboardPage() {
           )}
         </main>
       </div>
+      
+      {/* Footer */}
+      <Footer />
     </div>
   )
 }

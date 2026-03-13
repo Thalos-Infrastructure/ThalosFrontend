@@ -41,9 +41,9 @@
   color-scheme: dark;
 }
 
-/* Light theme - same dark background as dark mode for consistency */
+/* Light theme - light background only, everything else stays dark */
 .light {
-  --background: oklch(0.1 0.005 250);
+  --background: oklch(0.97 0.002 250);
   --foreground: oklch(0.97 0 0);
   --card: oklch(0.15 0.005 250);
   --card-foreground: oklch(0.97 0 0);
@@ -75,10 +75,8 @@
   --sidebar-accent-foreground: oklch(0.97 0 0);
   --sidebar-border: oklch(0.25 0.01 250);
   --sidebar-ring: oklch(0.78 0.16 85);
-  color-scheme: dark;
+  color-scheme: light;
 }
-
-/* Light theme now uses same colors as dark - no overrides needed */
 
 @theme inline {
   --font-sans: 'Inter', 'Inter Fallback';

@@ -526,12 +526,13 @@ const translations: Record<Lang, Record<string, string>> = {
     "wizard.engagementId": "Engagement ID",
 
     // Personal use cases
-    "useCase.freelancer": "Freelancer Service",
-    "useCase.rental": "Rental Agreement",
-    "useCase.carSale": "Peer-to-Peer Car Sale",
-    "useCase.coaching": "Online Coaching / Course",
-    "useCase.homeRepair": "Home Repair Service",
-    "useCase.other": "Other",
+"useCase.freelancer": "Freelancer Service",
+  "useCase.rental": "Rental Agreement",
+  "useCase.carSale": "Peer-to-Peer Car Sale",
+  "useCase.coaching": "Online Coaching / Course",
+  "useCase.homeRepair": "Home Repair Service",
+  "useCase.bounty": "Thalos Bounty",
+  "useCase.other": "Other",
 
     // Business use cases
     "useCase.carRental": "Car Rental Company",
@@ -1176,12 +1177,13 @@ const translations: Record<Lang, Record<string, string>> = {
     "wizard.engagementId": "ID de Compromiso",
 
     // Personal use cases
-    "useCase.freelancer": "Servicio Freelance",
-    "useCase.rental": "Contrato de Alquiler",
-    "useCase.carSale": "Venta de Auto entre Pares",
-    "useCase.coaching": "Coaching / Curso en Linea",
-    "useCase.homeRepair": "Servicio de Reparacion del Hogar",
-    "useCase.other": "Otro",
+"useCase.freelancer": "Servicio Freelance",
+  "useCase.rental": "Contrato de Alquiler",
+  "useCase.carSale": "Venta de Auto entre Pares",
+  "useCase.coaching": "Coaching / Curso en Linea",
+  "useCase.homeRepair": "Servicio de Reparacion del Hogar",
+  "useCase.bounty": "Thalos Bounty",
+  "useCase.other": "Otro",
 
     // Business use cases
     "useCase.carRental": "Empresa de Alquiler de Autos",
