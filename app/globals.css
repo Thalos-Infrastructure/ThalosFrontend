@@ -118,6 +118,14 @@
   filter: brightness(0) saturate(100%) invert(15%) sepia(20%) saturate(1000%) hue-rotate(190deg) brightness(95%) contrast(95%);
 }
 
+/* Light mode - footer text should be blue tones */
+.light footer .text-white\/60 {
+  color: #2a4060 !important;
+}
+.light footer .text-white\/30 {
+  color: #3d5a80 !important;
+}
+
 @theme inline {
   --font-sans: 'Inter', 'Inter Fallback';
   --font-mono: 'Geist Mono', 'Geist Mono Fallback';
