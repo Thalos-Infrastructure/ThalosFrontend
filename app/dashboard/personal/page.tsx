@@ -599,27 +599,20 @@ export default function PersonalDashboardPage() {
           {/* ══════ THALOS BOUNTY ══════ */}
           {activeSection === "bounty" && (
             <div className="mx-auto max-w-4xl">
-              <h1 className="mb-6 text-2xl font-semibold text-white">Thalos Bounty</h1>
-              
               <div className="rounded-2xl border border-white/10 bg-[#0c1220] p-8 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)]">
                 <div className="flex flex-col items-center text-center">
                   <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#f0b400]/10">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#f0b400" strokeWidth="1.5">
-                      <circle cx="12" cy="12" r="10"/>
-                      <path d="M12 6v12"/>
-                      <path d="M15 9.5c0-1.5-1.5-2.5-3-2.5s-3 1-3 2.5 1.5 2 3 2.5 3 1 3 2.5-1.5 2.5-3 2.5-3-1-3-2.5"/>
-                    </svg>
+                    <Image src="/thalos-icon.png" alt="Thalos" width={40} height={40} className="h-10 w-10 object-contain" />
                   </div>
-                  <h2 className="mb-2 text-xl font-semibold text-white">Thalos Bounty</h2>
                   <p className="mb-6 max-w-md text-sm text-white/60">
-                    Discover and participate in bounties. Complete tasks and milestones to earn rewards from organizations and individuals.
+                    {t("dashPage.bountyDesc")}
                   </p>
                   <div className="flex flex-wrap items-center justify-center gap-3">
                     <Button className="rounded-lg bg-[#f0b400] px-6 py-2 text-sm font-semibold text-[#0c1220] hover:bg-[#e5ab00] shadow-[0_2px_8px_rgba(240,180,0,0.25)]">
-                      Create Bounty
+                      {t("dashPage.createBounty")}
                     </Button>
                     <Button variant="outline" className="rounded-lg border-white/15 bg-white/5 px-6 py-2 text-sm font-semibold text-white hover:bg-white/10">
-                      View Bounties
+                      {t("dashPage.viewBounties")}
                     </Button>
                   </div>
                 </div>
@@ -627,21 +620,21 @@ export default function PersonalDashboardPage() {
                 <div className="mt-8 grid gap-4 md:grid-cols-3">
                   <div className="rounded-xl border border-white/10 bg-white/5 p-4 text-center">
                     <p className="text-2xl font-bold text-[#f0b400]">0</p>
-                    <p className="text-xs text-white/50">Active Bounties</p>
+                    <p className="text-xs text-white/50">{t("dashPage.activeBounties")}</p>
                   </div>
                   <div className="rounded-xl border border-white/10 bg-white/5 p-4 text-center">
                     <p className="text-2xl font-bold text-white">$0</p>
-                    <p className="text-xs text-white/50">Earned</p>
+                    <p className="text-xs text-white/50">{t("dashPage.earned")}</p>
                   </div>
                   <div className="rounded-xl border border-white/10 bg-white/5 p-4 text-center">
                     <p className="text-2xl font-bold text-white">0</p>
-                    <p className="text-xs text-white/50">Completed</p>
+                    <p className="text-xs text-white/50">{t("dashPage.completed")}</p>
                   </div>
                 </div>
               </div>
               
               <p className="mt-4 text-center text-xs text-white/40">
-                Bounty functionality coming soon. Stay tuned for updates.
+                {t("dashPage.bountyComingSoon")}
               </p>
             </div>
           )}
@@ -878,7 +871,7 @@ export default function PersonalDashboardPage() {
                 </button>
 
                 {/* Header */}
-                <div className="mb-6 rounded-2xl border border-white/[0.06] bg-[#0a0a0c]/70 p-6 backdrop-blur-md">
+                <div className="mb-6 rounded-2xl border border-white/10 bg-[#0c1220] p-6 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)]">
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                       <div className="flex items-center gap-3 mb-2">
@@ -957,7 +950,7 @@ export default function PersonalDashboardPage() {
               <h1 className="mb-6 text-2xl font-semibold text-white">My Wallets</h1>
               <div className="flex flex-col gap-4">
                 {connectedWallets.map((w) => (
-                  <div key={w.value} className="rounded-2xl border border-white/[0.06] bg-[#0a0a0c]/70 p-6 backdrop-blur-md transition-all hover:border-white/15">
+                  <div key={w.value} className="rounded-2xl border border-white/10 bg-[#0c1220] p-6 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)] transition-all hover:border-white/15">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4">
                         <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#f0b400]/10 text-[#f0b400]">
@@ -1051,7 +1044,7 @@ export default function PersonalDashboardPage() {
                   </div>
                 </div>
               ) : (
-                <div className="rounded-2xl border border-white/[0.06] bg-[#0a0a0c]/70 p-6 backdrop-blur-md sm:p-8">
+                <div className="rounded-2xl border border-white/10 bg-[#0c1220] p-8 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)]">
 
                   {/* Step 0: Escrow Type */}
                   {step === 0 && (

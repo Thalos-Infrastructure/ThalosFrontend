@@ -428,27 +428,20 @@ export default function BusinessDashboardPage() {
           {/* ══════ THALOS BOUNTY ══════ */}
           {activeSection === "bounty" && (
             <div className="mx-auto max-w-4xl">
-              <h1 className="mb-6 text-2xl font-semibold text-white">Thalos Bounty</h1>
-              
               <div className="rounded-2xl border border-white/10 bg-[#0c1220] p-8 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)]">
                 <div className="flex flex-col items-center text-center">
                   <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#f0b400]/10">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#f0b400" strokeWidth="1.5">
-                      <circle cx="12" cy="12" r="10"/>
-                      <path d="M12 6v12"/>
-                      <path d="M15 9.5c0-1.5-1.5-2.5-3-2.5s-3 1-3 2.5 1.5 2 3 2.5 3 1 3 2.5-1.5 2.5-3 2.5-3-1-3-2.5"/>
-                    </svg>
+                    <Image src="/thalos-icon.png" alt="Thalos" width={40} height={40} className="h-10 w-10 object-contain" />
                   </div>
-                  <h2 className="mb-2 text-xl font-semibold text-white">Thalos Bounty</h2>
                   <p className="mb-6 max-w-md text-sm text-white/60">
-                    Create and manage bounties for your organization. Reward contributors, developers, and community members for completing tasks and milestones.
+                    {t("dashPage.bountyDescEnterprise")}
                   </p>
                   <div className="flex flex-wrap items-center justify-center gap-3">
                     <Button className="rounded-lg bg-[#f0b400] px-6 py-2 text-sm font-semibold text-[#0c1220] hover:bg-[#e5ab00] shadow-[0_2px_8px_rgba(240,180,0,0.25)]">
-                      Create Bounty
+                      {t("dashPage.createBounty")}
                     </Button>
                     <Button variant="outline" className="rounded-lg border-white/15 bg-white/5 px-6 py-2 text-sm font-semibold text-white hover:bg-white/10">
-                      View Bounties
+                      {t("dashPage.viewBounties")}
                     </Button>
                   </div>
                 </div>
@@ -456,21 +449,21 @@ export default function BusinessDashboardPage() {
                 <div className="mt-8 grid gap-4 md:grid-cols-3">
                   <div className="rounded-xl border border-white/10 bg-white/5 p-4 text-center">
                     <p className="text-2xl font-bold text-[#f0b400]">0</p>
-                    <p className="text-xs text-white/50">Active Bounties</p>
+                    <p className="text-xs text-white/50">{t("dashPage.activeBounties")}</p>
                   </div>
                   <div className="rounded-xl border border-white/10 bg-white/5 p-4 text-center">
                     <p className="text-2xl font-bold text-white">$0</p>
-                    <p className="text-xs text-white/50">Total Rewards</p>
+                    <p className="text-xs text-white/50">{t("dashPage.totalRewards")}</p>
                   </div>
                   <div className="rounded-xl border border-white/10 bg-white/5 p-4 text-center">
                     <p className="text-2xl font-bold text-white">0</p>
-                    <p className="text-xs text-white/50">Completed</p>
+                    <p className="text-xs text-white/50">{t("dashPage.completed")}</p>
                   </div>
                 </div>
               </div>
               
               <p className="mt-4 text-center text-xs text-white/40">
-                Bounty functionality coming soon. Stay tuned for updates.
+                {t("dashPage.bountyComingSoon")}
               </p>
             </div>
           )}
@@ -487,7 +480,7 @@ export default function BusinessDashboardPage() {
                   { l: t("dashPage.yieldEarned"), v: "$24K" },
                   { l: t("dashPage.completed"), v: "48" },
                 ].map((s) => (
-                  <div key={s.l} className="rounded-xl border border-white/[0.06] bg-[#0a0a0c]/70 p-4 backdrop-blur-md">
+                  <div key={s.l} className="rounded-xl border border-white/10 bg-[#0c1220] p-4 shadow-[0_4px_16px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.05)]">
                     <p className="text-[10px] font-bold uppercase tracking-widest text-white/30">{s.l}</p>
                     <p className="mt-1 text-lg font-bold text-white">{s.v}</p>
                   </div>
@@ -495,7 +488,7 @@ export default function BusinessDashboardPage() {
               </div>
 
               <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
-                <div className="rounded-xl border border-white/[0.06] bg-[#0a0a0c]/70 p-5 backdrop-blur-md">
+                <div className="rounded-xl border border-white/10 bg-[#0c1220] p-5 shadow-[0_4px_16px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.05)]">
                   <h3 className="mb-1 text-sm font-semibold uppercase tracking-wider text-white/40">{t("dashPage.monthlyAgreements")}</h3>
                   <p className="mb-4 text-xs text-white/25">&nbsp;</p>
                   <div className="h-52">
@@ -511,7 +504,7 @@ export default function BusinessDashboardPage() {
                   </div>
                 </div>
 
-                <div className="rounded-xl border border-white/[0.06] bg-[#0a0a0c]/70 p-5 backdrop-blur-md">
+                <div className="rounded-xl border border-white/10 bg-[#0c1220] p-5 shadow-[0_4px_16px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.05)]">
                   <h3 className="mb-1 text-sm font-semibold uppercase tracking-wider text-white/40">{t("dashPage.volume")}</h3>
                   <p className="mb-4 text-xs text-white/25">&nbsp;</p>
                   <div className="h-52">
@@ -534,7 +527,7 @@ export default function BusinessDashboardPage() {
                 </div>
               </div>
 
-              <div className="rounded-xl border border-white/[0.06] bg-[#0a0a0c]/70 p-5 backdrop-blur-md">
+              <div className="rounded-xl border border-white/10 bg-[#0c1220] p-5 shadow-[0_4px_16px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.05)]">
                 <div className="mb-4 flex items-center justify-between">
                   <h3 className="text-sm font-semibold uppercase tracking-wider text-white/40">{t("dashPage.recentAgreements")}</h3>
                   <button onClick={() => setActiveSection("agreements")} className="text-xs font-semibold text-[#3b82f6] hover:underline">{t("dashPage.viewAll")}</button>
@@ -581,11 +574,11 @@ export default function BusinessDashboardPage() {
                     <input
                       value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder={t("dashPage.searchPlaceholder")}
-                      className="h-10 w-full rounded-xl border border-white/15 bg-[#0a0a0c]/50 pl-10 pr-4 text-sm text-white placeholder:text-white/25 focus:border-[#3b82f6]/40 focus:outline-none focus:ring-1 focus:ring-[#3b82f6]/15 transition-all"
+                      className="h-10 w-full rounded-xl border border-white/15 bg-[#0c1220]/80 pl-10 pr-4 text-sm text-white placeholder:text-white/25 focus:border-[#3b82f6]/40 focus:outline-none focus:ring-1 focus:ring-[#3b82f6]/15 transition-all"
                     />
                   </div>
                   <select value={sortBy} onChange={(e) => setSortBy(e.target.value as "date" | "amount" | "title")}
-                    className="h-10 rounded-xl border border-white/15 bg-[#0a0a0c]/50 px-3 text-xs font-medium text-white/60 focus:border-[#3b82f6]/40 focus:outline-none appearance-none cursor-pointer">
+                    className="h-10 rounded-xl border border-white/15 bg-[#0c1220]/80 px-3 text-xs font-medium text-white/60 focus:border-[#3b82f6]/40 focus:outline-none appearance-none cursor-pointer">
                     <option value="date">{t("dashPage.sortBy")}: {t("dashPage.sortDate")}</option>
                     <option value="amount">{t("dashPage.sortBy")}: {t("dashPage.sortAmount")}</option>
                     <option value="title">{t("dashPage.sortBy")}: {t("dashPage.sortTitle")}</option>
@@ -612,7 +605,7 @@ export default function BusinessDashboardPage() {
 
               {/* Agreements list */}
               {filteredAgreements.length === 0 ? (
-                <div className="flex flex-col items-center justify-center rounded-2xl border border-white/[0.06] bg-[#0a0a0c]/70 py-16 px-6 text-center">
+                <div className="flex flex-col items-center justify-center rounded-2xl border border-white/10 bg-[#0c1220] py-16 px-6 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)] text-center">
                   <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" className="text-white/15 mb-4"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
                   <p className="text-sm font-medium text-white/40">{t("dashPage.noResults")}</p>
                   <p className="mt-1 text-xs text-white/20">{t("dashPage.noResultsDesc")}</p>
@@ -627,7 +620,7 @@ export default function BusinessDashboardPage() {
                   const progressPct = (completedMs / agr.milestones.length) * 100
                   return (
                     <button key={agr.id} onClick={() => setViewingAgreement(agr.id)}
-                      className="flex flex-col gap-4 rounded-2xl border border-white/[0.06] bg-[#0a0a0c]/70 p-5 backdrop-blur-md transition-all hover:border-white/15 text-left w-full">
+                      className="flex flex-col gap-4 rounded-2xl border border-white/10 bg-[#0c1220] p-5 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)] transition-all hover:border-white/20 text-left w-full">
                       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between w-full">
                         <div>
                           <p className="text-base font-semibold text-white">{agr.title}</p>
@@ -675,7 +668,7 @@ export default function BusinessDashboardPage() {
                   Back to Agreements
                 </button>
 
-                <div className="mb-6 rounded-2xl border border-white/[0.06] bg-[#0a0a0c]/70 p-6 backdrop-blur-md">
+                <div className="mb-6 rounded-2xl border border-white/10 bg-[#0c1220] p-6 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)]">
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                       <div className="flex items-center gap-3 mb-2">
@@ -757,7 +750,7 @@ export default function BusinessDashboardPage() {
                 </div>
 
                 {!allReleased && (
-                  <div className="rounded-2xl border border-white/[0.06] bg-[#0a0a0c]/70 p-6 backdrop-blur-md">
+                  <div className="rounded-2xl border border-white/10 bg-[#0c1220] p-6 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)]">
                     <h3 className="mb-4 text-sm font-bold uppercase tracking-wider text-white/40">Release Actions</h3>
                     <div className="flex flex-wrap gap-3">
                       {agr.type === "Single Release" && agr.milestones[0]?.status === "pending" && (
@@ -872,7 +865,7 @@ export default function BusinessDashboardPage() {
 
               {/* Template cards */}
               {templates.length === 0 && !showSaveTemplate ? (
-                <div className="mt-6 flex flex-col items-center justify-center rounded-2xl border border-white/[0.06] bg-[#0a0a0c]/70 py-16 px-6 text-center">
+                <div className="mt-6 flex flex-col items-center justify-center rounded-2xl border border-white/10 bg-[#0c1220] py-16 px-6 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)] text-center">
                   <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" className="text-white/15 mb-4"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
                   <p className="text-sm font-medium text-white/40">{t("dashPage.noTemplates")}</p>
                   <p className="mt-1 text-xs text-white/20">{t("dashPage.noTemplatesDesc")}</p>
@@ -880,7 +873,7 @@ export default function BusinessDashboardPage() {
               ) : (
                 <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
                   {templates.map((tpl) => (
-                    <div key={tpl.id} className="group rounded-2xl border border-white/[0.06] bg-[#0a0a0c]/70 p-5 backdrop-blur-md transition-all hover:border-white/15">
+                    <div key={tpl.id} className="group rounded-2xl border border-white/10 bg-[#0c1220] p-5 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)] transition-all hover:border-white/20">
                       <div className="flex items-start justify-between mb-3">
                         <div>
                           <p className="text-base font-semibold text-white">{tpl.name}</p>
@@ -925,7 +918,7 @@ export default function BusinessDashboardPage() {
               <h1 className="mb-6 text-2xl font-semibold text-white">Enterprise Wallets</h1>
               <div className="flex flex-col gap-4">
                 {connectedWallets.map((w) => (
-                  <div key={w.value} className="rounded-2xl border border-white/[0.06] bg-[#0a0a0c]/70 p-6 backdrop-blur-md hover:border-white/15 transition-all">
+                  <div key={w.value} className="rounded-2xl border border-white/10 bg-[#0c1220] p-6 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)] hover:border-white/15 transition-all">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4">
                         <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#3b82f6]/10 text-[#3b82f6]">
@@ -985,7 +978,7 @@ export default function BusinessDashboardPage() {
               )}
 
               {submitted ? (
-                <div className="flex flex-col items-center gap-6 rounded-2xl border border-white/[0.06] bg-[#0a0a0c]/70 p-10 text-center backdrop-blur-md">
+                <div className="flex flex-col items-center gap-6 rounded-2xl border border-white/10 bg-[#0c1220] p-10 text-center shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)]">
                   <div className="flex h-20 w-20 items-center justify-center rounded-full bg-emerald-500/10">
                     <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg>
                   </div>
@@ -1007,7 +1000,7 @@ export default function BusinessDashboardPage() {
                   </div>
                 </div>
               ) : (
-                <div className="rounded-2xl border border-white/[0.06] bg-[#0a0a0c]/70 p-6 backdrop-blur-md sm:p-8">
+                <div className="rounded-2xl border border-white/10 bg-[#0c1220] p-8 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)]">
 
                   {step === 0 && (
                     <div className="flex flex-col gap-6">
