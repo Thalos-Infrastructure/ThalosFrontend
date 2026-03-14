@@ -5,9 +5,11 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useSectionReveal } from "@/hooks/use-section-reveal"
+import { useLanguage } from "@/lib/i18n"
 
 export function AuthSection() {
   const { ref, isVisible } = useSectionReveal()
+  const { t } = useLanguage()
   const [profileType, setProfileType] = useState<"personal" | "business">("personal")
 
   const dashboardHref = profileType === "personal" ? "/dashboard/personal" : "/dashboard/business"
@@ -20,24 +22,24 @@ export function AuthSection() {
       )}>
         <div className="mb-10 text-center">
           <p className="mb-3 text-sm font-bold uppercase tracking-wider text-[#f0b400]">
-            Get Started
+            {t("auth.getStarted")}
           </p>
           <h2 className="mb-4 text-3xl font-bold tracking-tight text-foreground text-balance">
-            Sign In to Build
+            {t("auth.signInToBuild")}
           </h2>
           <p className="font-medium text-muted-foreground text-pretty">
-            Choose your profile type and start assembling your payment platform.
+            {t("auth.chooseProfile")}
           </p>
         </div>
 
-        <div className="rounded-2xl border border-border/20 bg-card/40 p-8 backdrop-blur-sm shadow-[0_8px_40px_rgba(0,0,0,0.3),0_1px_3px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.06)]">
+        <div className="rounded-2xl border border-border/40 bg-card p-8 backdrop-blur-sm shadow-[0_8px_40px_rgba(0,0,0,0.15),0_1px_3px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.06)]">
           {/* Profile Type Selector */}
           <div className="mb-6">
-            <p className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">Profile Type</p>
+            <p className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">{t("auth.profileType")}</p>
             <div className="grid grid-cols-2 gap-2">
               {[
-                { id: "personal" as const, label: "Personal / Retail" },
-                { id: "business" as const, label: "Business / Enterprise" },
+                { id: "personal" as const, label: t("auth.personalRetail") },
+                { id: "business" as const, label: t("auth.businessEnterprise") },
               ].map((type) => (
                 <button
                   key={type.id}
@@ -68,7 +70,7 @@ export function AuthSection() {
                   <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
                   <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
                 </svg>
-                Continue with Google
+                {t("auth.continueGoogle")}
               </Button>
             </Link>
             <Link href={dashboardHref}>
@@ -79,7 +81,7 @@ export function AuthSection() {
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
                 </svg>
-                Continue with Email
+                {t("auth.continueEmail")}
               </Button>
             </Link>
           </div>
@@ -99,11 +101,11 @@ export function AuthSection() {
                 <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
                 <path d="M1 10h22"/>
               </svg>
-              Connect Stellar Wallet
+              {t("auth.connectStellarWallet")}
             </Button>
           </Link>
           <p className="mt-3 text-center text-xs font-medium text-muted-foreground">
-            Securely connect your wallet to access escrow features.
+            {t("auth.securelyConnect")}
           </p>
         </div>
       </div>

@@ -6,7 +6,8 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { ThalosLoader } from "@/components/thalos-loader"
-import { LanguageToggle, ThemeToggle, useLanguage } from "@/lib/i18n"
+import { LanguageToggle, useLanguage } from "@/lib/i18n"
+import { Footer } from "@/components/footer"
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area,
 } from "recharts"
@@ -327,64 +328,63 @@ export default function BusinessDashboardPage() {
     <div className="relative min-h-screen text-foreground">
       {/* Collage background */}
       <div className="fixed inset-0 z-0">
-        <div className="absolute inset-0 grid grid-cols-3 grid-rows-2 gap-0 opacity-30">
+        <div className="absolute inset-0 grid grid-cols-3 grid-rows-2 gap-0 opacity-50">
           <div className="col-span-2 row-span-1 bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1505142468610-359e7d316be0?w=1920&q=85&auto=format&fit=crop')" }} />
           <div className="col-span-1 row-span-2 bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=1920&q=85&auto=format&fit=crop')" }} />
           <div className="col-span-1 row-span-1 bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1920&q=85&auto=format&fit=crop')" }} />
           <div className="col-span-1 row-span-1 bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1476673160081-cf065607f449?w=1920&q=85&auto=format&fit=crop')" }} />
         </div>
-        <div className="absolute inset-0 bg-background/75" />
+        <div className="absolute inset-0 bg-background/55" />
       </div>
 
       {/* Header */}
-      <header className="sticky top-0 z-40 border-b border-white/[0.06] bg-transparent backdrop-blur-xl">
-        <nav className="flex h-16 items-center justify-between px-4 lg:px-6">
-          <div className="flex items-center gap-3">
-            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="lg:hidden flex h-9 w-9 items-center justify-center rounded-lg text-white/60 hover:bg-white/10 hover:text-white transition-colors" aria-label="Toggle sidebar">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      <header className="sticky top-0 z-40 bg-[#0c1220]/90 backdrop-blur-xl shadow-[0_4px_24px_rgba(0,0,0,0.3)]">
+        <nav className="mx-auto flex h-20 max-w-[1400px] items-center justify-between px-4 lg:px-8">
+          <div className="flex items-center gap-4">
+            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="lg:hidden flex h-10 w-10 items-center justify-center rounded-lg text-white/60 hover:bg-white/10 hover:text-white transition-colors" aria-label="Toggle sidebar">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
             </button>
             <Link href="/" className="flex items-center">
-              <Image src="/thalos-icon.png" alt="Thalos" width={48} height={48} className="h-10 w-10 object-contain" priority />
+              <Image src="/thalos-icon.png" alt="Thalos" width={72} height={72} className="h-16 w-16 object-contain" priority />
             </Link>
           </div>
 
           <div className="flex items-center gap-3">
             <div className="relative">
-              <button onClick={() => setProfileMenuOpen(!profileMenuOpen)} className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-sm font-medium text-white/70 hover:bg-white/10 hover:text-white transition-all">
+              <button onClick={() => setProfileMenuOpen(!profileMenuOpen)} className="flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-sm font-medium text-white/70 hover:bg-white/10 hover:text-white transition-all">
                 <div className="h-6 w-6 rounded-full bg-[#3b82f6]/10 flex items-center justify-center text-[#3b82f6]">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>
                 </div>
-                <span className="hidden sm:inline">Enterprise</span>
+                <span className="hidden sm:inline">{t("dashPage.enterprise")}</span>
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
               </button>
               {profileMenuOpen && (
-                <div className="absolute right-0 mt-2 w-56 rounded-xl border border-white/10 bg-[#0c0c0e] p-2 shadow-[0_16px_48px_rgba(0,0,0,0.6)]" onClick={() => setProfileMenuOpen(false)}>
+                <div className="absolute right-0 mt-2 w-56 rounded-xl border border-white/10 bg-[#0c1220] p-2 shadow-[0_16px_48px_rgba(0,0,0,0.6)]" onClick={() => setProfileMenuOpen(false)}>
                   <button onClick={() => setActiveSection("dashboard")} className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-white/70 hover:bg-white/8 hover:text-white transition-colors">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-                    Dashboard
+                    {t("dashPage.dashboard")}
                   </button>
                   <button onClick={() => setActiveSection("wallets")} className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-white/70 hover:bg-white/8 hover:text-white transition-colors">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg>
-                    Wallets
+                    {t("dashPage.wallets")}
                   </button>
                   <div className="my-1 h-px bg-white/[0.06]" />
                   <Link href="/" className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-white/70 hover:bg-white/8 hover:text-white transition-colors">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-                    Sign Out
+                    {t("dashPage.signOut")}
                   </Link>
                 </div>
               )}
             </div>
             <LanguageToggle />
-            <ThemeToggle />
           </div>
         </nav>
       </header>
 
-      <div className="relative z-10 flex min-h-[calc(100vh-64px)]">
+      <div className="relative z-10 flex min-h-[calc(100vh-80px)]">
         {/* Sidebar */}
         <aside className={cn(
-          "fixed inset-y-16 left-0 z-30 w-64 border-r border-white/[0.06] bg-background/80 backdrop-blur-xl transition-transform duration-300 lg:sticky lg:top-16 lg:translate-x-0 lg:h-[calc(100vh-64px)]",
+          "fixed inset-y-20 left-0 z-30 w-64 bg-[#0c1220]/40 backdrop-blur-2xl transition-transform duration-300 lg:sticky lg:top-20 lg:translate-x-0 lg:h-[calc(100vh-80px)]",
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}>
           <div className="border-b border-white/[0.06] p-5">
@@ -393,7 +393,7 @@ export default function BusinessDashboardPage() {
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>
               </div>
               <div>
-                <p className="text-sm font-semibold text-white">Enterprise Account</p>
+                <p className="text-sm font-semibold text-white">{t("dashPage.enterpriseAccount")}</p>
                 <p className="text-xs text-white/40">G...SE01</p>
               </div>
             </div>
@@ -528,11 +528,11 @@ export default function BusinessDashboardPage() {
                     <input
                       value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder={t("dashPage.searchPlaceholder")}
-                      className="h-10 w-full rounded-xl border border-white/[0.08] bg-white/[0.03] pl-10 pr-4 text-sm text-white placeholder:text-white/25 focus:border-[#3b82f6]/40 focus:outline-none focus:ring-1 focus:ring-[#3b82f6]/15 transition-all"
+                      className="h-10 w-full rounded-xl border border-white/15 bg-[#0a0a0c]/50 pl-10 pr-4 text-sm text-white placeholder:text-white/25 focus:border-[#3b82f6]/40 focus:outline-none focus:ring-1 focus:ring-[#3b82f6]/15 transition-all"
                     />
                   </div>
                   <select value={sortBy} onChange={(e) => setSortBy(e.target.value as "date" | "amount" | "title")}
-                    className="h-10 rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 text-xs font-medium text-white/60 focus:border-[#3b82f6]/40 focus:outline-none appearance-none cursor-pointer">
+                    className="h-10 rounded-xl border border-white/15 bg-[#0a0a0c]/50 px-3 text-xs font-medium text-white/60 focus:border-[#3b82f6]/40 focus:outline-none appearance-none cursor-pointer">
                     <option value="date">{t("dashPage.sortBy")}: {t("dashPage.sortDate")}</option>
                     <option value="amount">{t("dashPage.sortBy")}: {t("dashPage.sortAmount")}</option>
                     <option value="title">{t("dashPage.sortBy")}: {t("dashPage.sortTitle")}</option>
@@ -1093,6 +1093,9 @@ export default function BusinessDashboardPage() {
           )}
         </main>
       </div>
+      
+      {/* Footer */}
+      <Footer />
     </div>
   )
 }

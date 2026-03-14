@@ -134,6 +134,7 @@ const endpoints = {
       `${BASE_URL}/escrow/${type}/approve-milestone`,
     changeMilestoneStatus: (type: ServiceType) =>
       `${BASE_URL}/escrow/${type}/change-milestone-status`,
+    disputeMilestone: `${BASE_URL}/escrow/multi-release/dispute-milestone`,
   },
   helper: {
     sendTransaction: `${BASE_URL}/helper/send-transaction`,
@@ -306,6 +307,22 @@ export async function sendTransaction(signedXdr: string) {
   return safeFetch(endpoints.helper.sendTransaction, {
     method: "POST",
     body: JSON.stringify({ signedXdr }),
+  });
+}
+
+/**
+ * Raise a dispute on a milestone.
+ * Can only be called by the approver or service provider (not the dispute resolver).
+ * Returns an unsigned XDR that needs to be signed and submitted.
+ */
+export async function disputeMilestone(
+  contractId: string,
+  milestoneIndex: string,
+  signer: string
+) {
+  return safeFetch<{ unsignedTransaction: string }>(endpoints.escrow.disputeMilestone, {
+    method: "POST",
+    body: JSON.stringify({ contractId, milestoneIndex, signer }),
   });
 }
 

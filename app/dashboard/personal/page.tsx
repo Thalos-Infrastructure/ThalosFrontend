@@ -8,8 +8,9 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { ThalosLoader } from "@/components/thalos-loader"
-import { LanguageToggle, ThemeToggle, useLanguage } from "@/lib/i18n"
+import { LanguageToggle, useLanguage } from "@/lib/i18n"
 import { useStellarWallet } from "@/lib/stellar-wallet"
+import { Footer } from "@/components/footer"
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area,
 } from "recharts"
@@ -23,6 +24,7 @@ const useCases = [
   { id: "car-sale", labelKey: "useCase.carSale", icon: "car", suggestedTitle: "Vehicle Sale Agreement", suggestedDesc: "Describe the vehicle details, agreed price, inspection conditions, and transfer terms." },
   { id: "coaching", labelKey: "useCase.coaching", icon: "book", suggestedTitle: "Coaching / Course Agreement", suggestedDesc: "Describe the course content, schedule, completion criteria, and refund policy." },
   { id: "home-repair", labelKey: "useCase.homeRepair", icon: "tool", suggestedTitle: "Home Repair Service Agreement", suggestedDesc: "Describe the repair work, materials, timeline, and warranty terms." },
+  { id: "bounty", labelKey: "useCase.bounty", icon: "star", suggestedTitle: "Thalos Bounty", suggestedDesc: "Create a bounty for tasks that can be completed by multiple validators. Share the bounty link publicly." },
   { id: "other", labelKey: "useCase.other", icon: "plus", suggestedTitle: "", suggestedDesc: "" },
 ]
 
@@ -167,6 +169,7 @@ function UseCaseIcon({ icon, className }: { icon: string; className?: string }) 
   if (icon === "car") return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className={c}><rect x="1" y="3" width="15" height="13" rx="2"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
   if (icon === "book") return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className={c}><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
   if (icon === "tool") return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className={c}><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
+  if (icon === "star") return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className={c}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
   return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className={c}><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
 }
 
@@ -263,7 +266,7 @@ function SellerMilestoneList({ agr, agreements, setAgreements, t }: {
                     value={evidenceInputs[idx] || ""}
                     onChange={e => setEvidenceInputs(prev => ({ ...prev, [idx]: e.target.value }))}
                     placeholder={t("flow.evidencePlaceholder")}
-                    className="h-10 flex-1 rounded-lg border border-white/10 bg-white/5 px-3 text-sm text-white placeholder:text-white/25 focus:border-cyan-500/50 focus:outline-none focus:ring-1 focus:ring-cyan-500/20 transition-all"
+                    className="h-10 flex-1 rounded-lg border border-white/15 bg-[#0a0a0c]/50 px-3 text-sm text-white placeholder:text-white/25 focus:border-cyan-500/50 focus:outline-none focus:ring-1 focus:ring-cyan-500/20 transition-all"
                   />
                   <Button
                     size="sm"
@@ -487,32 +490,32 @@ export default function PersonalDashboardPage() {
     <div className="relative min-h-screen text-foreground">
       {/* Collage background */}
       <div className="fixed inset-0 z-0">
-        <div className="absolute inset-0 grid grid-cols-3 grid-rows-2 gap-0 opacity-30">
+        <div className="absolute inset-0 grid grid-cols-3 grid-rows-2 gap-0 opacity-50">
           <div className="col-span-2 row-span-1 bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1505142468610-359e7d316be0?w=1920&q=85&auto=format&fit=crop')" }} />
           <div className="col-span-1 row-span-2 bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=1920&q=85&auto=format&fit=crop')" }} />
           <div className="col-span-1 row-span-1 bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1920&q=85&auto=format&fit=crop')" }} />
           <div className="col-span-1 row-span-1 bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1476673160081-cf065607f449?w=1920&q=85&auto=format&fit=crop')" }} />
         </div>
-        <div className="absolute inset-0 bg-background/75" />
+        <div className="absolute inset-0 bg-background/55" />
       </div>
 
       {/* Header */}
-      <header className="sticky top-0 z-40 border-b border-white/6 bg-transparent backdrop-blur-xl">
-        <nav className="flex h-16 items-center justify-between px-4 lg:px-6">
-          <div className="flex items-center gap-3">
+      <header className="sticky top-0 z-40 bg-[#0c1220]/90 backdrop-blur-xl shadow-[0_4px_24px_rgba(0,0,0,0.3)]">
+        <nav className="mx-auto flex h-20 max-w-[1400px] items-center justify-between px-4 lg:px-8">
+          <div className="flex items-center gap-4">
             {/* Mobile sidebar toggle */}
-            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="lg:hidden flex h-9 w-9 items-center justify-center rounded-lg text-white/60 hover:bg-white/10 hover:text-white transition-colors" aria-label="Toggle sidebar">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="lg:hidden flex h-10 w-10 items-center justify-center rounded-lg text-white/60 hover:bg-white/10 hover:text-white transition-colors" aria-label="Toggle sidebar">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
             </button>
             <Link href="/" className="flex items-center">
-              <Image src="/thalos-icon.png" alt="Thalos" width={48} height={48} className="h-10 w-10 object-contain" priority />
+              <Image src="/thalos-icon.png" alt="Thalos" width={72} height={72} className="h-16 w-16 object-contain" priority />
             </Link>
           </div>
 
           <div className="flex items-center gap-3">
             {/* Profile dropdown */}
             <div className="relative">
-              <button onClick={() => setProfileMenuOpen(!profileMenuOpen)} className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-sm font-medium text-white/70 hover:bg-white/10 hover:text-white transition-all">
+              <button onClick={() => setProfileMenuOpen(!profileMenuOpen)} className="flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-sm font-medium text-white/70 hover:bg-white/10 hover:text-white transition-all">
                 {walletAddress ? (
                   <span className="font-mono text-[11px] text-[#f0b400]">{walletAddress.slice(0, 6)}…{walletAddress.slice(-4)}</span>
                 ) : (
@@ -520,37 +523,36 @@ export default function PersonalDashboardPage() {
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                   </div>
                 )}
-                <span className="hidden sm:inline">Personal</span>
+                <span className="hidden sm:inline">{t("dashPage.personal")}</span>
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
               </button>
               {profileMenuOpen && (
-                <div className="absolute right-0 mt-2 w-56 rounded-xl border border-white/10 bg-[#0c0c0e] p-2 shadow-[0_16px_48px_rgba(0,0,0,0.6)]" onClick={() => setProfileMenuOpen(false)}>
+                <div className="absolute right-0 mt-2 w-56 rounded-xl border border-white/10 bg-[#0c1220] p-2 shadow-[0_16px_48px_rgba(0,0,0,0.6)]" onClick={() => setProfileMenuOpen(false)}>
                   <button onClick={() => setActiveSection("dashboard")} className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-white/70 hover:bg-white/8 hover:text-white transition-colors">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-                    Dashboard
+                    {t("dashPage.dashboard")}
                   </button>
                   <button onClick={() => setActiveSection("wallets")} className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-white/70 hover:bg-white/8 hover:text-white transition-colors">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg>
-                    My Wallets
+                    {t("dashPage.wallets")}
                   </button>
                   <div className="my-1 h-px bg-white/6" />
                   <Link href="/" className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-white/70 hover:bg-white/8 hover:text-white transition-colors">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-                    Sign Out
+                    {t("dashPage.signOut")}
                   </Link>
                 </div>
               )}
             </div>
             <LanguageToggle />
-            <ThemeToggle />
           </div>
         </nav>
       </header>
 
-      <div className="relative z-10 flex min-h-[calc(100vh-64px)]">
+      <div className="relative z-10 flex min-h-[calc(100vh-80px)]">
         {/* Sidebar */}
         <aside className={cn(
-          "fixed inset-y-16 left-0 z-30 w-64 border-r border-white/6 bg-background/80 backdrop-blur-xl transition-transform duration-300 lg:sticky lg:top-16 lg:translate-x-0 lg:h-[calc(100vh-64px)]",
+          "fixed inset-y-20 left-0 z-30 w-64 bg-[#0c1220]/40 backdrop-blur-2xl transition-transform duration-300 lg:sticky lg:top-20 lg:translate-x-0 lg:h-[calc(100vh-80px)]",
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}>
           {/* User card */}
@@ -560,7 +562,7 @@ export default function PersonalDashboardPage() {
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
               </div>
               <div>
-                <p className="text-sm font-semibold text-white">Personal Account</p>
+                <p className="text-sm font-semibold text-white">{t("dashPage.personalAccount")}</p>
                 <p className="text-xs font-mono text-white/40">{walletAddress ? `${walletAddress.slice(0, 6)}…${walletAddress.slice(-4)}` : "G...AL01"}</p>
               </div>
             </div>
@@ -705,11 +707,11 @@ export default function PersonalDashboardPage() {
                     <input
                       value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder={t("dashPage.searchPlaceholder")}
-                      className="h-10 w-full rounded-xl border border-white/[0.08] bg-white/[0.03] pl-10 pr-4 text-sm text-white placeholder:text-white/25 focus:border-[#f0b400]/40 focus:outline-none focus:ring-1 focus:ring-[#f0b400]/15 transition-all"
+                      className="h-10 w-full rounded-xl border border-white/15 bg-[#0a0a0c]/50 pl-10 pr-4 text-sm text-white placeholder:text-white/25 focus:border-[#f0b400]/40 focus:outline-none focus:ring-1 focus:ring-[#f0b400]/15 transition-all"
                     />
                   </div>
                   <select value={sortBy} onChange={(e) => setSortBy(e.target.value as "date" | "amount" | "title")}
-                    className="h-10 rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 text-xs font-medium text-white/60 focus:border-[#f0b400]/40 focus:outline-none appearance-none cursor-pointer">
+                    className="h-10 rounded-xl border border-white/15 bg-[#0a0a0c]/50 px-3 text-xs font-medium text-white/60 focus:border-[#f0b400]/40 focus:outline-none appearance-none cursor-pointer">
                     <option value="date">{t("dashPage.sortBy")}: {t("dashPage.sortDate")}</option>
                     <option value="amount">{t("dashPage.sortBy")}: {t("dashPage.sortAmount")}</option>
                     <option value="title">{t("dashPage.sortBy")}: {t("dashPage.sortTitle")}</option>
@@ -1165,6 +1167,9 @@ export default function PersonalDashboardPage() {
           )}
         </main>
       </div>
+      
+      {/* Footer */}
+      <Footer />
     </div>
   )
 }
