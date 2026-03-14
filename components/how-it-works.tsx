@@ -167,10 +167,10 @@ export function HowItWorks() {
             <span>{twText}</span>
             <span className={cn("ml-0.5 inline-block h-4 w-0.5 bg-[#f0b400] align-middle", twActive ? "animate-pulse" : "opacity-0")} />
           </p>
-          <h2 className="mb-4 text-5xl font-bold tracking-tight text-foreground md:text-6xl text-balance">
+          <h2 className="mb-4 text-5xl font-bold tracking-tight text-white md:text-6xl text-balance">
             {t("hiw.title")}
           </h2>
-          <p className="mx-auto max-w-2xl text-base font-medium text-muted-foreground leading-relaxed text-pretty">
+          <p className="mx-auto max-w-2xl text-base font-medium text-white/60 leading-relaxed text-pretty">
             {t("hiw.desc")}
           </p>
         </div>
@@ -192,9 +192,9 @@ export function HowItWorks() {
           ))}
         </div>
 
-        <div className="section-reveal-child rounded-2xl border border-border/20 bg-card/40 p-6 backdrop-blur-sm shadow-[0_8px_40px_rgba(0,0,0,0.3),0_1px_3px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.06)] md:p-10" style={{ transitionDelay: isVisible ? "200ms" : "0ms" }}>
+        <div className="section-reveal-child rounded-2xl border border-white/10 bg-[#0a0a0c]/70 p-6 backdrop-blur-xl shadow-[0_8px_40px_rgba(0,0,0,0.4),0_1px_3px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.06)] md:p-10" style={{ transitionDelay: isVisible ? "200ms" : "0ms" }}>
           <div className="mb-4 text-center">
-            <p className="text-sm font-medium text-muted-foreground">{current.description}</p>
+            <p className="text-sm font-medium text-white/60">{current.description}</p>
           </div>
           <FlowDiagram key={current.id} steps={current.steps} />
         </div>

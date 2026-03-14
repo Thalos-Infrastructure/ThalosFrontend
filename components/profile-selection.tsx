@@ -18,7 +18,7 @@ export function ProfileSelection({ onNavigate }: { onNavigate: (section: string)
             <span>{twText}</span>
             <span className={cn("ml-0.5 inline-block h-4 w-0.5 bg-[#f0b400] align-middle", twActive ? "animate-pulse" : "opacity-0")} />
           </p>
-          <p className="mx-auto max-w-3xl text-lg font-medium text-muted-foreground leading-relaxed text-pretty md:text-xl">
+          <p className="mx-auto max-w-3xl text-lg font-medium text-white/60 leading-relaxed text-pretty md:text-xl">
             {t("profiles.desc")}
           </p>
         </div>

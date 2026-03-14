@@ -71,9 +71,9 @@ export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }
       <header
         className={cn(
           "fixed top-0 left-0 right-0 z-50 transition-transform duration-500",
-          "border-b border-border/30",
-          "bg-background/80 backdrop-blur-xl",
-          "shadow-[0_2px_16px_rgba(0,0,0,0.08)]",
+          "border-b border-white/10",
+          "bg-[#0a0a0c]/80 backdrop-blur-xl",
+          "shadow-[0_2px_16px_rgba(0,0,0,0.25)]",
           visible ? "translate-y-0" : "-translate-y-full"
         )}
       >
@@ -100,7 +100,7 @@ export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }
               <button
                 key={item.section}
                 onClick={() => onNavigate(item.section)}
-                className="text-base font-bold text-muted-foreground transition-all duration-300 hover:text-foreground"
+                className="text-base font-bold text-white/70 transition-all duration-300 hover:text-white"
               >
                 {item.label}
               </button>
@@ -110,19 +110,19 @@ export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }
             <div ref={dropdownRef} className="relative">
               <button
                 onClick={() => setUseCaseOpen(!useCaseOpen)}
-                className="flex items-center gap-1.5 text-base font-bold text-muted-foreground transition-all duration-300 hover:text-foreground"
+                className="flex items-center gap-1.5 text-base font-bold text-white/70 transition-all duration-300 hover:text-white"
               >
                 Use Cases
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={cn("transition-transform duration-200", useCaseOpen && "rotate-180")}><path d="M6 9l6 6 6-6" /></svg>
               </button>
               {useCaseOpen && (
-                <div className="absolute top-full left-1/2 z-50 mt-3 -translate-x-1/2 w-64 rounded-xl border border-border/30 bg-popover/98 p-2 backdrop-blur-xl shadow-[0_12px_40px_rgba(0,0,0,0.15)]" style={{ scrollbarWidth: "none" }}>
+                <div className="absolute top-full left-1/2 z-50 mt-3 -translate-x-1/2 w-64 rounded-xl border border-white/15 bg-[#0c0c0e]/95 p-2 backdrop-blur-xl shadow-[0_12px_40px_rgba(0,0,0,0.4)]" style={{ scrollbarWidth: "none" }}>
                   <div className="max-h-[460px] overflow-y-auto" style={{ scrollbarWidth: "none" }}>
                     {useCaseCategories.map((cat) => (
                       <div key={cat.label}>
                         <button
                           onClick={() => setExpandedCat(expandedCat === cat.label ? null : cat.label)}
-                          className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-xs font-bold uppercase tracking-wider text-[#f0b400]/80 transition-colors hover:bg-secondary hover:text-[#f0b400]"
+                          className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-xs font-bold uppercase tracking-wider text-[#f0b400]/80 transition-colors hover:bg-white/10 hover:text-[#f0b400]"
                         >
                           {cat.label}
                           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={cn("transition-transform duration-200", expandedCat === cat.label && "rotate-180")}><path d="M6 9l6 6 6-6" /></svg>
@@ -133,7 +133,7 @@ export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }
                               <button
                                 key={item}
                                 onClick={() => { onNavigate("use-cases"); setUseCaseOpen(false); setExpandedCat(null) }}
-                                className="rounded-md px-3 py-1.5 text-left text-xs font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                                className="rounded-md px-3 py-1.5 text-left text-xs font-medium text-white/60 transition-colors hover:bg-white/10 hover:text-white"
                               >
                                 {item}
                               </button>
@@ -163,7 +163,7 @@ export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }
             <Button
               size="sm"
               onClick={() => setShowSignIn(true)}
-              className="rounded-full bg-foreground px-7 py-2 text-base text-background font-bold shadow-[0_2px_12px_rgba(0,0,0,0.12),0_1px_2px_rgba(0,0,0,0.2)] hover:opacity-85 transition-all duration-400"
+              className="rounded-full bg-white px-7 py-2 text-base text-[#0a0a0c] font-bold shadow-[0_2px_12px_rgba(0,0,0,0.12),0_1px_2px_rgba(0,0,0,0.2)] hover:bg-white/90 transition-all duration-400"
             >
               {t("nav.signIn")}
             </Button>
@@ -177,21 +177,21 @@ export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }
             onClick={() => setMobileOpen(!mobileOpen)}
             aria-label="Toggle menu"
           >
-            <span className={`block h-0.5 w-5 bg-foreground transition-transform ${mobileOpen ? "translate-y-2 rotate-45" : ""}`} />
-            <span className={`block h-0.5 w-5 bg-foreground transition-opacity ${mobileOpen ? "opacity-0" : ""}`} />
-            <span className={`block h-0.5 w-5 bg-foreground transition-transform ${mobileOpen ? "-translate-y-2 -rotate-45" : ""}`} />
+            <span className={`block h-0.5 w-5 bg-white transition-transform ${mobileOpen ? "translate-y-2 rotate-45" : ""}`} />
+            <span className={`block h-0.5 w-5 bg-white transition-opacity ${mobileOpen ? "opacity-0" : ""}`} />
+            <span className={`block h-0.5 w-5 bg-white transition-transform ${mobileOpen ? "-translate-y-2 -rotate-45" : ""}`} />
           </button>
         </nav>
 
         {/* Mobile menu */}
         {mobileOpen && (
-          <div className="bg-background/95 backdrop-blur-2xl md:hidden">
+          <div className="bg-[#0a0a0c]/95 backdrop-blur-2xl md:hidden">
             <div className="flex flex-col gap-1 p-4">
               {navLinks.map((item) => (
                 <button
                   key={item.section}
                   onClick={() => { onNavigate(item.section); setMobileOpen(false) }}
-                  className="rounded-lg px-4 py-3 text-left text-base font-bold text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                  className="rounded-lg px-4 py-3 text-left text-base font-bold text-white/70 transition-colors hover:bg-white/10 hover:text-white"
                 >
                   {item.label}
                 </button>
@@ -200,7 +200,7 @@ export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }
                 <Button
                   size="sm"
                   onClick={() => { setShowSignIn(true); setMobileOpen(false) }}
-                  className="flex-1 rounded-full bg-foreground text-background font-semibold shadow-[0_2px_12px_rgba(0,0,0,0.12)] hover:opacity-85"
+                  className="flex-1 rounded-full bg-white text-[#0a0a0c] font-semibold shadow-[0_2px_12px_rgba(0,0,0,0.12)] hover:bg-white/90"
                 >
                   {t("nav.signIn")}
                 </Button>

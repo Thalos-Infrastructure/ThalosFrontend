@@ -76,29 +76,29 @@ const marqueeItems = [...useCases, ...useCases]
 
 function UseCaseCard({ uc }: { uc: typeof useCases[number] }) {
   return (
-    <div className="w-[340px] shrink-0 rounded-2xl border border-border/20 bg-card/50 p-6 backdrop-blur-sm shadow-[0_8px_32px_rgba(0,0,0,0.1)] md:w-[380px]">
+    <div className="w-[340px] shrink-0 rounded-2xl border border-white/10 bg-[#0a0a0c]/70 p-6 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.4)] md:w-[380px]">
       {/* Title */}
       <div className="mb-4 flex items-center gap-3">
         <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: uc.color }} />
-        <h3 className="text-lg font-bold text-foreground">{uc.title}</h3>
+        <h3 className="text-lg font-bold text-white">{uc.title}</h3>
       </div>
 
       {/* Conversation */}
       <div className="flex flex-col gap-3 mb-4">
         <div>
           <p className="text-xs font-bold mb-1" style={{ color: uc.color }}>{uc.buyerLabel}</p>
-          <p className="text-sm leading-relaxed text-muted-foreground italic">{'"'}{uc.buyer}{'"'}</p>
+          <p className="text-sm leading-relaxed text-white/60 italic">{'"'}{uc.buyer}{'"'}</p>
         </div>
         <div>
-          <p className="text-xs font-bold text-muted-foreground/60 mb-1">{uc.sellerLabel}</p>
-          <p className="text-sm leading-relaxed text-muted-foreground italic">{'"'}{uc.seller}{'"'}</p>
+          <p className="text-xs font-bold text-white/40 mb-1">{uc.sellerLabel}</p>
+          <p className="text-sm leading-relaxed text-white/60 italic">{'"'}{uc.seller}{'"'}</p>
         </div>
       </div>
 
       {/* Result */}
-      <div className="rounded-xl border border-border/10 bg-secondary/30 px-4 py-3">
+      <div className="rounded-xl border border-white/5 bg-white/5 px-4 py-3">
         <p className="text-[10px] font-bold uppercase tracking-wider text-[#f0b400] mb-1">Result</p>
-        <p className="text-xs font-medium leading-relaxed text-muted-foreground">{uc.result}</p>
+        <p className="text-xs font-medium leading-relaxed text-white/60">{uc.result}</p>
       </div>
     </div>
   )
@@ -118,10 +118,10 @@ export function UseCases() {
             <span>{twText}</span>
             <span className={cn("ml-0.5 inline-block h-4 w-0.5 bg-[#f0b400] align-middle", twActive ? "animate-pulse" : "opacity-0")} />
           </p>
-          <h2 className="mb-4 text-4xl font-bold tracking-tight text-foreground md:text-6xl text-balance">
+          <h2 className="mb-4 text-4xl font-bold tracking-tight text-white md:text-6xl text-balance">
             {t("useCases.title")}
           </h2>
-          <p className="mx-auto max-w-3xl text-base font-medium text-muted-foreground leading-relaxed text-pretty">
+          <p className="mx-auto max-w-3xl text-base font-medium text-white/60 leading-relaxed text-pretty">
             {t("useCases.desc")}
           </p>
         </div>

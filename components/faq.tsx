@@ -8,12 +8,12 @@ import { useLanguage } from "@/lib/i18n"
 
 function FAQItem({ q, a, open, toggle }: { q: string; a: string; open: boolean; toggle: () => void }) {
   return (
-    <div className="border-b border-border/20">
+    <div className="border-b border-white/10">
       <button
         onClick={toggle}
         className="flex w-full items-center justify-between py-5 text-left transition-colors"
       >
-        <span className="text-base font-semibold text-foreground pr-4">{q}</span>
+        <span className="text-base font-semibold text-white pr-4">{q}</span>
         <svg
           width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
           strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
@@ -27,7 +27,7 @@ function FAQItem({ q, a, open, toggle }: { q: string; a: string; open: boolean; 
         className="overflow-hidden transition-all duration-400"
         style={{ maxHeight: open ? "300px" : "0px", opacity: open ? 1 : 0 }}
       >
-        <p className="pb-5 text-sm font-medium leading-relaxed text-muted-foreground">{a}</p>
+        <p className="pb-5 text-sm font-medium leading-relaxed text-white/60">{a}</p>
       </div>
     </div>
   )
@@ -58,12 +58,12 @@ export function FAQ() {
             <span>{twText}</span>
             <span className={cn("ml-0.5 inline-block h-4 w-0.5 bg-[#f0b400] align-middle", twActive ? "animate-pulse" : "opacity-0")} />
           </p>
-          <h2 className="mb-4 text-4xl font-bold tracking-tight text-foreground md:text-5xl text-balance">
+          <h2 className="mb-4 text-4xl font-bold tracking-tight text-white md:text-5xl text-balance">
             {t("faq.title")}
           </h2>
         </div>
 
-        <div className="rounded-2xl border border-border/20 bg-card/30 px-6 backdrop-blur-sm shadow-[0_8px_32px_rgba(0,0,0,0.08)]">
+        <div className="rounded-2xl border border-white/10 bg-[#0a0a0c]/70 px-6 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.3)]">
           {faqs.map((faq, i) => (
             <div
               key={i}

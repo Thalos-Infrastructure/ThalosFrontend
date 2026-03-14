@@ -160,7 +160,7 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
             {LETTERS.map((letter, i) => (
               <span
                 key={i}
-                className="animate-fade-in-up text-7xl font-black text-foreground/90"
+                className="animate-fade-in-up text-7xl font-black text-white/90"
                 style={{ animationDelay: `${i * 100}ms`, animationFillMode: "both" }}
               >
                 {letter}
@@ -169,15 +169,15 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
           </div>
 
           <div className="max-w-3xl mx-auto text-center">
-            <h1 className="animate-fade-in-up animation-delay-200 text-4xl font-bold tracking-tight text-foreground md:text-5xl lg:text-6xl xl:text-7xl text-balance">
+            <h1 className="animate-fade-in-up animation-delay-200 text-4xl font-bold tracking-tight text-white md:text-5xl lg:text-6xl xl:text-7xl text-balance">
               Secure Payments
             </h1>
-            <p className="mt-3 animate-fade-in-up animation-delay-400 text-4xl font-bold tracking-tight text-foreground md:text-5xl lg:text-6xl xl:text-7xl">
+            <p className="mt-3 animate-fade-in-up animation-delay-400 text-4xl font-bold tracking-tight text-white md:text-5xl lg:text-6xl xl:text-7xl">
               with <TypewriterEscrows />
             </p>
 
             <div className="mt-16 max-w-2xl mx-auto animate-fade-in-up animation-delay-600">
-              <p className="text-lg md:text-xl font-medium leading-relaxed text-muted-foreground text-pretty">
+              <p className="text-lg md:text-xl font-medium leading-relaxed text-white/60 text-pretty">
                 <span className="text-[#f0b400] font-bold">{t("hero.weAreTag")}</span>{" "}
                 {t("hero.weAre")}
               </p>
@@ -211,10 +211,10 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
               {t("hero.trustLayer")}
             </p>
 
-            <div className="space-y-8 text-lg font-medium leading-relaxed text-muted-foreground text-left max-w-2xl mx-auto">
+            <div className="space-y-8 text-lg font-medium leading-relaxed text-white/60 text-left max-w-2xl mx-auto">
               <p>{t("hero.trust1")}</p>
               <p>
-                {t("hero.trust2a")} <span className="text-foreground font-semibold">{t("hero.trust2highlight")}</span>{t("hero.trust2b")}
+                {t("hero.trust2a")} <span className="text-white font-semibold">{t("hero.trust2highlight")}</span>{t("hero.trust2b")}
               </p>
               <p>{t("hero.trust3")}</p>
               <div className="pt-6 text-center">
@@ -236,7 +236,7 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
               variant="outline"
               size="lg"
               onClick={() => onNavigate("how-it-works")}
-              className="h-14 rounded-full border-border/40 bg-secondary/50 px-12 text-base font-bold text-foreground shadow-[0_6px_0_rgba(0,0,0,0.08),0_8px_24px_rgba(0,0,0,0.15)] hover:bg-secondary hover:shadow-[0_4px_0_rgba(0,0,0,0.08),0_6px_20px_rgba(0,0,0,0.15)] hover:translate-y-[2px] active:shadow-[0_1px_0_rgba(0,0,0,0.08),0_2px_8px_rgba(0,0,0,0.1)] active:translate-y-[4px] transition-all duration-200"
+              className="h-14 rounded-full border-white/20 bg-white/10 px-12 text-base font-bold text-white shadow-[0_6px_0_rgba(0,0,0,0.15),0_8px_24px_rgba(0,0,0,0.2)] hover:bg-white/15 hover:shadow-[0_4px_0_rgba(0,0,0,0.15),0_6px_20px_rgba(0,0,0,0.2)] hover:translate-y-[2px] active:shadow-[0_1px_0_rgba(0,0,0,0.15),0_2px_8px_rgba(0,0,0,0.15)] active:translate-y-[4px] transition-all duration-200"
             >
               {t("hero.cta2")}
             </Button>

@@ -85,10 +85,10 @@ export function DashboardSection() {
             <span>{twText}</span>
             <span className={cn("ml-0.5 inline-block h-4 w-0.5 bg-[#f0b400] align-middle", twActive ? "animate-pulse" : "opacity-0")} />
           </p>
-          <h2 className="mb-4 text-4xl font-bold tracking-tight text-foreground md:text-5xl text-balance">
+          <h2 className="mb-4 text-4xl font-bold tracking-tight text-white md:text-5xl text-balance">
             {t("dash.title")}
           </h2>
-          <p className="mx-auto max-w-2xl text-base font-medium text-muted-foreground leading-relaxed text-pretty">
+          <p className="mx-auto max-w-2xl text-base font-medium text-white/60 leading-relaxed text-pretty">
             {t("dash.desc")}
           </p>
         </div>
@@ -103,13 +103,13 @@ export function DashboardSection() {
           ].map((stat, idx) => (
             <div
               key={stat.label}
-              className="section-reveal-child rounded-2xl border border-border/20 bg-card/40 p-5 backdrop-blur-sm shadow-[0_4px_16px_rgba(0,0,0,0.25),0_1px_2px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.06)] transition-all duration-500 hover:border-[#b0c4de]/20 hover:shadow-[0_4px_20px_rgba(176,196,222,0.06),0_1px_2px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.06)]"
+              className="section-reveal-child rounded-2xl border border-white/10 bg-[#0a0a0c]/70 p-5 backdrop-blur-xl shadow-[0_4px_16px_rgba(0,0,0,0.35),0_1px_2px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.06)] transition-all duration-500 hover:border-[#b0c4de]/20 hover:shadow-[0_4px_20px_rgba(176,196,222,0.1),0_1px_2px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.06)]"
               style={{ transitionDelay: isVisible ? `${idx * 100}ms` : "0ms" }}
             >
-              <p className="text-xs font-semibold text-muted-foreground">{stat.label}</p>
+              <p className="text-xs font-semibold text-white/50">{stat.label}</p>
               <div className="mt-1 flex items-baseline gap-1.5">
-                <p className="text-2xl font-bold text-foreground">{stat.value}</p>
-                {stat.suffix && <span className="text-xs font-medium text-muted-foreground">{stat.suffix}</span>}
+                <p className="text-2xl font-bold text-white">{stat.value}</p>
+                {stat.suffix && <span className="text-xs font-medium text-white/50">{stat.suffix}</span>}
               </div>
             </div>
           ))}
@@ -121,43 +121,43 @@ export function DashboardSection() {
             <div
               key={escrow.id}
               className={cn(
-                "section-reveal-child group rounded-2xl border border-border/20 bg-card/40 p-5 backdrop-blur-sm transition-all duration-500",
-                "shadow-[0_4px_16px_rgba(0,0,0,0.25),0_1px_2px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.06)]",
-                "hover:border-[#b0c4de]/15 hover:shadow-[0_4px_20px_rgba(176,196,222,0.06),0_1px_2px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.06)]",
-                selectedEscrow === escrow.id && "border-[#f0b400]/15 bg-card/45",
+                "section-reveal-child group rounded-2xl border border-white/10 bg-[#0a0a0c]/70 p-5 backdrop-blur-xl transition-all duration-500",
+                "shadow-[0_4px_16px_rgba(0,0,0,0.35),0_1px_2px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.06)]",
+                "hover:border-[#b0c4de]/15 hover:shadow-[0_4px_20px_rgba(176,196,222,0.1),0_1px_2px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.06)]",
+                selectedEscrow === escrow.id && "border-[#f0b400]/15 bg-[#0a0a0c]/80",
               )}
               style={{ transitionDelay: isVisible ? `${400 + idx * 100}ms` : "0ms" }}
             >
               <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div className="flex flex-col gap-1">
                   <div className="flex items-center gap-3">
-                    <h3 className="text-sm font-bold text-foreground">{escrow.title}</h3>
+                    <h3 className="text-sm font-bold text-white">{escrow.title}</h3>
                     <Badge variant="outline" className={cn("text-xs font-semibold", statusConfig[escrow.status].className)}>
                       {statusConfig[escrow.status].label}
                     </Badge>
                   </div>
-                  <p className="text-xs font-medium text-muted-foreground">{escrow.id}</p>
+                  <p className="text-xs font-medium text-white/50">{escrow.id}</p>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-6">
                   <div>
-                    <p className="text-xs font-semibold text-muted-foreground">Amount</p>
-                    <p className="text-sm font-bold text-foreground">${escrow.amount} <span className="text-xs font-medium text-muted-foreground">USDC</span></p>
+                    <p className="text-xs font-semibold text-white/50">Amount</p>
+                    <p className="text-sm font-bold text-white">${escrow.amount} <span className="text-xs font-medium text-white/50">USDC</span></p>
                   </div>
                   <div>
-                    <p className="text-xs font-semibold text-muted-foreground">Time</p>
-                    <p className="text-sm font-medium text-foreground">{escrow.timeRemaining}</p>
+                    <p className="text-xs font-semibold text-white/50">Time</p>
+                    <p className="text-sm font-medium text-white">{escrow.timeRemaining}</p>
                   </div>
                   {escrow.yieldEnabled && escrow.yield && (
                     <div>
-                      <p className="text-xs font-semibold text-muted-foreground">Yield</p>
+                      <p className="text-xs font-semibold text-white/50">Yield</p>
                       <p className="text-sm font-semibold text-emerald-400">{escrow.yield} USDC</p>
                     </div>
                   )}
                   <div className="hidden lg:block">
-                    <p className="text-xs font-semibold text-muted-foreground">Progress</p>
+                    <p className="text-xs font-semibold text-white/50">Progress</p>
                     <div className="mt-1 flex items-center gap-2">
-                      <div className="h-1.5 w-20 overflow-hidden rounded-full bg-secondary">
+                      <div className="h-1.5 w-20 overflow-hidden rounded-full bg-white/10">
                         <div
                           className={cn(
                             "h-full rounded-full transition-all",
@@ -166,7 +166,7 @@ export function DashboardSection() {
                           style={{ width: `${escrow.progress}%` }}
                         />
                       </div>
-                      <span className="text-xs font-medium text-muted-foreground">{escrow.completedMilestones}/{escrow.milestones}</span>
+                      <span className="text-xs font-medium text-white/50">{escrow.completedMilestones}/{escrow.milestones}</span>
                     </div>
                   </div>
 
@@ -175,7 +175,7 @@ export function DashboardSection() {
                       variant="ghost"
                       size="sm"
                       onClick={() => setSelectedEscrow(selectedEscrow === escrow.id ? null : escrow.id)}
-                      className="text-xs font-semibold text-muted-foreground hover:text-[#b0c4de] hover:bg-[#b0c4de]/10"
+                      className="text-xs font-semibold text-white/60 hover:text-[#b0c4de] hover:bg-[#b0c4de]/10"
                     >
                       View
                     </Button>
