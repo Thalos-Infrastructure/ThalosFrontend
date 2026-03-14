@@ -8,7 +8,7 @@ import { useLanguage } from "@/lib/i18n"
 
 function FAQItem({ q, a, open, toggle }: { q: string; a: string; open: boolean; toggle: () => void }) {
   return (
-    <div className="border-b border-white/10">
+    <div className="border-b border-white/15">
       <button
         onClick={toggle}
         className="flex w-full items-center justify-between py-5 text-left transition-colors"
@@ -27,7 +27,7 @@ function FAQItem({ q, a, open, toggle }: { q: string; a: string; open: boolean; 
         className="overflow-hidden transition-all duration-400"
         style={{ maxHeight: open ? "300px" : "0px", opacity: open ? 1 : 0 }}
       >
-        <p className="pb-5 text-sm font-medium leading-relaxed text-white/60">{a}</p>
+        <p className="pb-5 text-sm font-medium leading-relaxed text-white/70">{a}</p>
       </div>
     </div>
   )
@@ -63,7 +63,7 @@ export function FAQ() {
           </h2>
         </div>
 
-        <div className="rounded-2xl border border-white/10 bg-[#0a0a0c]/70 px-6 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.3)]">
+        <div className="rounded-2xl border border-white/15 bg-[#0c1220]/85 px-6 backdrop-blur-2xl shadow-[0_12px_48px_rgba(0,0,0,0.5),0_2px_8px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.08)]">
           {faqs.map((faq, i) => (
             <div
               key={i}

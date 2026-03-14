@@ -88,16 +88,24 @@
   opacity: 0.65 !important;
 }
 
-/* Light mode text overrides - keep special colors, make regular text black */
+/* Light mode text overrides - navy blue text for better contrast */
 .light .text-white {
-  color: oklch(0.12 0.01 250) !important;
+  color: #1a2744 !important;
 }
 
-.light .text-white\/90,
+.light .text-white\/90 {
+  color: #1f3158 !important;
+}
+
 .light .text-white\/80,
-.light .text-white\/70,
-.light .text-white\/60 {
-  color: oklch(0.25 0.01 250) !important;
+.light .text-white\/70 {
+  color: #2d4a7c !important;
+}
+
+.light .text-white\/60,
+.light .text-white\/50,
+.light .text-white\/40 {
+  color: #4a6fa5 !important;
 }
 
 /* But keep white text inside dark containers */
@@ -106,6 +114,8 @@
 .light [class*="bg-\\[\\#0"] .text-white\/80,
 .light [class*="bg-\\[\\#0"] .text-white\/70,
 .light [class*="bg-\\[\\#0"] .text-white\/60,
+.light [class*="bg-\\[\\#0"] .text-white\/50,
+.light [class*="bg-\\[\\#0"] .text-white\/40,
 .light header .text-white,
 .light header .text-white\/60,
 .light header .text-white\/70,
@@ -118,19 +128,19 @@
   color: inherit !important;
 }
 
-/* Preserve yellow/gold color */
+/* Preserve yellow/gold color - make slightly darker for light mode */
 .light .text-\\[\\#f0b400\\] {
-  color: #f0b400 !important;
+  color: #d9a300 !important;
 }
 
 /* Preserve blue/accent colors */
 .light .text-\\[\\#b0c4de\\] {
-  color: #b0c4de !important;
+  color: #4a7ab0 !important;
 }
 
-/* Preserve emerald/green */
+/* Preserve emerald/green - darker for light mode */
 .light .text-emerald-400 {
-  color: rgb(52 211 153) !important;
+  color: rgb(16 185 129) !important;
 }
 
 @theme inline {

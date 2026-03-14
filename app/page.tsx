@@ -16,7 +16,7 @@ const DashboardSection = dynamic(() => import("@/components/dashboard-section").
 const FAQ = dynamic(() => import("@/components/faq").then(m => ({ default: m.FAQ })), { ssr: false })
 const Footer = dynamic(() => import("@/components/footer").then(m => ({ default: m.Footer })), { ssr: false })
 const BottomBar = dynamic(() => import("@/components/bottom-bar").then(m => ({ default: m.BottomBar })), { ssr: false })
-const FloatingSocialBar = dynamic(() => import("@/components/floating-social-bar").then(m => ({ default: m.FloatingSocialBar })), { ssr: false })
+
 
 export default function Home() {
   const { t } = useLanguage()
@@ -119,7 +119,6 @@ export default function Home() {
       </main>
 
       <BottomBar onNavigate={handleNavigate} />
-      <FloatingSocialBar />
     </div>
   )
 }

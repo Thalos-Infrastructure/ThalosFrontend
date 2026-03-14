@@ -103,10 +103,10 @@ export function DashboardSection() {
           ].map((stat, idx) => (
             <div
               key={stat.label}
-              className="section-reveal-child rounded-2xl border border-white/10 bg-[#0a0a0c]/70 p-5 backdrop-blur-xl shadow-[0_4px_16px_rgba(0,0,0,0.35),0_1px_2px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.06)] transition-all duration-500 hover:border-[#b0c4de]/20 hover:shadow-[0_4px_20px_rgba(176,196,222,0.1),0_1px_2px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.06)]"
+              className="section-reveal-child rounded-2xl border border-white/15 bg-[#0c1220]/85 p-5 backdrop-blur-2xl shadow-[0_12px_48px_rgba(0,0,0,0.5),0_2px_8px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.08)] transition-all duration-500 hover:border-[#b0c4de]/25 hover:shadow-[0_12px_52px_rgba(176,196,222,0.15),0_2px_8px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.1)]"
               style={{ transitionDelay: isVisible ? `${idx * 100}ms` : "0ms" }}
             >
-              <p className="text-xs font-semibold text-white/50">{stat.label}</p>
+              <p className="text-xs font-semibold text-white/60">{stat.label}</p>
               <div className="mt-1 flex items-baseline gap-1.5">
                 <p className="text-2xl font-bold text-white">{stat.value}</p>
                 {stat.suffix && <span className="text-xs font-medium text-white/50">{stat.suffix}</span>}
@@ -121,10 +121,10 @@ export function DashboardSection() {
             <div
               key={escrow.id}
               className={cn(
-                "section-reveal-child group rounded-2xl border border-white/10 bg-[#0a0a0c]/70 p-5 backdrop-blur-xl transition-all duration-500",
-                "shadow-[0_4px_16px_rgba(0,0,0,0.35),0_1px_2px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.06)]",
-                "hover:border-[#b0c4de]/15 hover:shadow-[0_4px_20px_rgba(176,196,222,0.1),0_1px_2px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.06)]",
-                selectedEscrow === escrow.id && "border-[#f0b400]/15 bg-[#0a0a0c]/80",
+                "section-reveal-child group rounded-2xl border border-white/15 bg-[#0c1220]/85 p-5 backdrop-blur-2xl transition-all duration-500",
+                "shadow-[0_12px_48px_rgba(0,0,0,0.5),0_2px_8px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.08)]",
+                "hover:border-[#b0c4de]/25 hover:shadow-[0_12px_52px_rgba(176,196,222,0.15),0_2px_8px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.1)]",
+                selectedEscrow === escrow.id && "border-[#f0b400]/25 bg-[#0c1220]/90",
               )}
               style={{ transitionDelay: isVisible ? `${400 + idx * 100}ms` : "0ms" }}
             >
@@ -136,16 +136,16 @@ export function DashboardSection() {
                       {statusConfig[escrow.status].label}
                     </Badge>
                   </div>
-                  <p className="text-xs font-medium text-white/50">{escrow.id}</p>
+                  <p className="text-xs font-medium text-white/60">{escrow.id}</p>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-6">
                   <div>
-                    <p className="text-xs font-semibold text-white/50">Amount</p>
-                    <p className="text-sm font-bold text-white">${escrow.amount} <span className="text-xs font-medium text-white/50">USDC</span></p>
+                    <p className="text-xs font-semibold text-white/60">Amount</p>
+                    <p className="text-sm font-bold text-white">${escrow.amount} <span className="text-xs font-medium text-white/60">USDC</span></p>
                   </div>
                   <div>
-                    <p className="text-xs font-semibold text-white/50">Time</p>
+                    <p className="text-xs font-semibold text-white/60">Time</p>
                     <p className="text-sm font-medium text-white">{escrow.timeRemaining}</p>
                   </div>
                   {escrow.yieldEnabled && escrow.yield && (

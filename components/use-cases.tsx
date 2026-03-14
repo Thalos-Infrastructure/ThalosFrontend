@@ -76,7 +76,7 @@ const marqueeItems = [...useCases, ...useCases]
 
 function UseCaseCard({ uc }: { uc: typeof useCases[number] }) {
   return (
-    <div className="w-[340px] shrink-0 rounded-2xl border border-white/10 bg-[#0a0a0c]/70 p-6 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.4)] md:w-[380px]">
+    <div className="w-[340px] shrink-0 rounded-2xl border border-white/15 bg-[#0c1220]/85 p-6 backdrop-blur-2xl shadow-[0_12px_48px_rgba(0,0,0,0.5),0_2px_8px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.08)] md:w-[380px]">
       {/* Title */}
       <div className="mb-4 flex items-center gap-3">
         <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: uc.color }} />
@@ -87,18 +87,18 @@ function UseCaseCard({ uc }: { uc: typeof useCases[number] }) {
       <div className="flex flex-col gap-3 mb-4">
         <div>
           <p className="text-xs font-bold mb-1" style={{ color: uc.color }}>{uc.buyerLabel}</p>
-          <p className="text-sm leading-relaxed text-white/60 italic">{'"'}{uc.buyer}{'"'}</p>
+          <p className="text-sm leading-relaxed text-white/70 italic">{'"'}{uc.buyer}{'"'}</p>
         </div>
         <div>
-          <p className="text-xs font-bold text-white/40 mb-1">{uc.sellerLabel}</p>
-          <p className="text-sm leading-relaxed text-white/60 italic">{'"'}{uc.seller}{'"'}</p>
+          <p className="text-xs font-bold text-white/50 mb-1">{uc.sellerLabel}</p>
+          <p className="text-sm leading-relaxed text-white/70 italic">{'"'}{uc.seller}{'"'}</p>
         </div>
       </div>
 
       {/* Result */}
-      <div className="rounded-xl border border-white/5 bg-white/5 px-4 py-3">
+      <div className="rounded-xl border border-white/10 bg-white/8 px-4 py-3">
         <p className="text-[10px] font-bold uppercase tracking-wider text-[#f0b400] mb-1">Result</p>
-        <p className="text-xs font-medium leading-relaxed text-white/60">{uc.result}</p>
+        <p className="text-xs font-medium leading-relaxed text-white/70">{uc.result}</p>
       </div>
     </div>
   )
