@@ -41,44 +41,34 @@
   color-scheme: dark;
 }
 
-/* Light theme - soft light background, dark cards/header/footer/sidebar keep dark style */
+/* Light theme - same as dark mode but with lighter visible background for ocean images */
 .light {
-  /* Light background with visible image */
-  --background: oklch(0.92 0.008 220);
-  /* Dark text for content on light background */
-  --foreground: oklch(0.18 0.01 250);
-  /* Cards stay dark like dark mode */
-  --card: oklch(0.18 0.008 250);
+  /* Slightly lighter background so ocean images show through better */
+  --background: oklch(0.88 0.01 220);
+  /* Keep all other colors same as dark mode */
+  --foreground: oklch(0.97 0 0);
+  --card: oklch(0.15 0.005 250);
   --card-foreground: oklch(0.97 0 0);
-  /* Popover/menus stay dark */
   --popover: oklch(0.15 0.005 250);
   --popover-foreground: oklch(0.97 0 0);
-  /* Primary button colors */
   --primary: oklch(0.80 0.17 88);
   --primary-foreground: oklch(0.12 0 0);
-  /* Secondary elements - dark pastel */
-  --secondary: oklch(0.25 0.015 250);
-  --secondary-foreground: oklch(0.95 0 0);
-  /* Muted - for subtle backgrounds */
-  --muted: oklch(0.85 0.006 250);
-  --muted-foreground: oklch(0.35 0.01 250);
-  /* Accent */
+  --secondary: oklch(0.2 0.005 250);
+  --secondary-foreground: oklch(0.9 0 0);
+  --muted: oklch(0.2 0.005 250);
+  --muted-foreground: oklch(0.6 0 0);
   --accent: oklch(0.65 0.2 260);
   --accent-foreground: oklch(0.98 0 0);
-  /* Destructive */
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.577 0.245 27.325);
-  /* Border - visible on light bg */
-  --border: oklch(0.75 0.01 250);
+  --border: oklch(0.25 0.01 250);
   --input: oklch(0.22 0.008 250);
   --ring: oklch(0.78 0.16 85);
-  /* Charts */
   --chart-1: oklch(0.78 0.16 85);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
-  /* Sidebar stays dark like dark mode */
   --sidebar: oklch(0.12 0.005 250);
   --sidebar-foreground: oklch(0.97 0 0);
   --sidebar-primary: oklch(0.78 0.16 85);
@@ -87,64 +77,18 @@
   --sidebar-accent-foreground: oklch(0.97 0 0);
   --sidebar-border: oklch(0.25 0.01 250);
   --sidebar-ring: oklch(0.78 0.16 85);
-  color-scheme: light;
+  color-scheme: dark;
 }
 
-/* Light mode specific overrides */
-
-/* Hero section text should be dark on light background */
-.light .text-foreground {
-  color: oklch(0.15 0.01 250) !important;
+/* Light mode - make background images more visible */
+.light .opacity-35 {
+  opacity: 0.55 !important;
 }
 
-.light .text-muted-foreground {
-  color: oklch(0.35 0.01 250) !important;
-}
-
-/* But cards and dark containers keep white text */
-.light [class*="bg-\\[\\#"],
-.light [class*="bg-card"],
-.light .bg-card,
-.light header,
-.light footer,
-.light aside {
-  color: white !important;
-}
-
-.light [class*="bg-\\[\\#"] .text-foreground,
-.light [class*="bg-\\[\\#"] .text-muted-foreground,
-.light [class*="bg-card"] .text-foreground,
-.light [class*="bg-card"] .text-muted-foreground,
-.light .bg-card .text-foreground,
-.light .bg-card .text-muted-foreground,
-.light header .text-foreground,
-.light header .text-muted-foreground,
-.light footer .text-foreground,
-.light footer .text-muted-foreground,
-.light aside .text-foreground,
-.light aside .text-muted-foreground {
-  color: inherit !important;
-}
-
-.light [class*="bg-\\[\\#"] *,
-.light header *,
-.light footer *,
-.light aside * {
-  color: white;
-}
-
-.light [class*="bg-\\[\\#"] .text-white\\/60,
-.light [class*="bg-\\[\\#"] .text-white\\/40,
-.light header .text-white\\/60,
-.light footer .text-white\\/60,
-.light aside .text-white\\/60 {
-  color: rgba(255,255,255,0.6) !important;
-}
-
-/* Card backgrounds stay dark */
-.light [class*="bg-card\\/"],
-.light .bg-card {
-  background-color: oklch(0.18 0.008 250) !important;
+/* Light mode - reduce overlay darkness so images show */
+.light [style*="opacity: 0.35"],
+.light [style*="opacity: 0.4"] {
+  opacity: 0.25 !important;
 }
 
 @theme inline {
