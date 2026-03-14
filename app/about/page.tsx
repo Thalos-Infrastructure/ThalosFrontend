@@ -118,7 +118,7 @@ export default function AboutPage() {
   if (loading) return <ThalosLoader />
 
   return (
-    <div className="relative min-h-screen bg-background text-foreground">
+    <div className="relative min-h-screen bg-[#050507] text-foreground">
       {/* Ocean collage background */}
       <div className="pointer-events-none fixed inset-0 z-0" aria-hidden="true">
         <div className="absolute inset-0 grid grid-cols-3 grid-rows-2 gap-0 opacity-50">
@@ -127,10 +127,10 @@ export default function AboutPage() {
           <div className="col-span-1 row-span-1 bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1920&q=80&auto=format&fit=crop')" }} />
           <div className="col-span-1 row-span-1 bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1476673160081-cf065607f449?w=1920&q=80&auto=format&fit=crop')" }} />
         </div>
-        <div className="absolute inset-0 bg-gradient-to-b from-background/15 via-background/35 to-background/75" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#050507]/15 via-[#050507]/35 to-[#050507]/75" />
       </div>
       <div
-        className="pointer-events-none fixed inset-0 z-0 bg-background"
+        className="pointer-events-none fixed inset-0 z-0 bg-[#050507]"
         style={{ opacity: overlayOpacity, transition: "opacity 150ms linear" }}
         aria-hidden="true"
       />

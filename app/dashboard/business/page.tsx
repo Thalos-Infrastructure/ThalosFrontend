@@ -18,9 +18,10 @@ const useCases = [
   { id: "travel", labelKey: "useCase.travel", icon: "plane", suggestedTitle: "Travel Package Agreement", suggestedDesc: "Describe the travel package details, destinations, dates, inclusions, cancellation policy, and payment schedule." },
   { id: "dealership", labelKey: "useCase.dealership", icon: "tag", suggestedTitle: "Vehicle Purchase Agreement", suggestedDesc: "Describe the vehicle make/model/year, VIN, agreed price, financing terms, and delivery conditions." },
   { id: "rental-platform", labelKey: "useCase.rentalPlatform", icon: "home", suggestedTitle: "Short-Term Rental Agreement", suggestedDesc: "Describe the property, booking dates, house rules, deposit amount, and checkout procedures." },
-  { id: "event", labelKey: "useCase.event", icon: "calendar", suggestedTitle: "Event Management Agreement", suggestedDesc: "Describe the event type, venue, date, services included, setup requirements, and payment milestones." },
+{ id: "event", labelKey: "useCase.event", icon: "calendar", suggestedTitle: "Event Management Agreement", suggestedDesc: "Describe the event type, venue, date, services included, setup requirements, and payment milestones." },
+  { id: "bounty", labelKey: "useCase.bounty", icon: "star", suggestedTitle: "Thalos Bounty", suggestedDesc: "Create a bounty for tasks that can be completed by multiple validators. Share the bounty link publicly." },
   { id: "other", labelKey: "useCase.other", icon: "plus", suggestedTitle: "", suggestedDesc: "" },
-]
+  ]
 
 /* ── Form Components ── */
 function FormInput({ label, value, onChange, placeholder, type = "text", disabled = false, info, required = false }: {
@@ -386,7 +387,7 @@ export default function BusinessDashboardPage() {
       <div className="relative z-10 flex min-h-[calc(100vh-80px)]">
         {/* Sidebar */}
         <aside className={cn(
-          "fixed inset-y-20 left-0 z-30 w-64 bg-[#0c1220]/40 backdrop-blur-2xl transition-transform duration-300 lg:sticky lg:top-20 lg:translate-x-0 lg:h-[calc(100vh-80px)]",
+          "fixed inset-y-20 left-0 z-30 w-64 bg-[#0c1220]/90 backdrop-blur-xl transition-transform duration-300 lg:sticky lg:top-20 lg:translate-x-0 lg:h-[calc(100vh-80px)]",
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}>
           <div className="border-b border-white/[0.06] p-5">
@@ -407,7 +408,7 @@ export default function BusinessDashboardPage() {
                 className={cn("flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200",
                   activeSection === item.id ? "bg-[#3b82f6]/10 text-[#3b82f6]" : "text-white/70 hover:bg-white/5 hover:text-white"
                 )}>
-                {item.icon}{t(`dashPage.${item.id === "create" ? "newAgreement" : item.id === "templates" ? "templates" : item.id}`)}
+                {item.icon}{item.id === "bounty" ? "Thalos Bounty" : t(`dashPage.${item.id === "create" ? "newAgreement" : item.id === "templates" ? "templates" : item.id}`)}
               </button>
             ))}
           </nav>
@@ -442,12 +443,12 @@ export default function BusinessDashboardPage() {
                   <p className="mb-6 max-w-md text-sm text-white/60">
                     Create and manage bounties for your organization. Reward contributors, developers, and community members for completing tasks and milestones.
                   </p>
-                  <div className="flex items-center gap-3">
+                  <div className="flex flex-wrap items-center justify-center gap-3">
                     <Button className="rounded-lg bg-[#f0b400] px-6 py-2 text-sm font-semibold text-[#0c1220] hover:bg-[#e5ab00] shadow-[0_2px_8px_rgba(240,180,0,0.25)]">
                       Create Bounty
                     </Button>
                     <Button variant="outline" className="rounded-lg border-white/15 bg-white/5 px-6 py-2 text-sm font-semibold text-white hover:bg-white/10">
-                      View Active Bounties
+                      View Bounties
                     </Button>
                   </div>
                 </div>
