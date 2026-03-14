@@ -500,7 +500,7 @@ export default function PersonalDashboardPage() {
       </div>
 
       {/* Header */}
-      <header className="sticky top-0 z-40 border-b border-white/10 bg-[#0a0a0c]/60 backdrop-blur-xl">
+      <header className="sticky top-0 z-40 bg-[#0c1220]/90 backdrop-blur-xl shadow-[0_4px_24px_rgba(0,0,0,0.3)]">
         <nav className="mx-auto flex h-20 max-w-[1400px] items-center justify-between px-4 lg:px-8">
           <div className="flex items-center gap-4">
             {/* Mobile sidebar toggle */}
@@ -515,7 +515,7 @@ export default function PersonalDashboardPage() {
           <div className="flex items-center gap-3">
             {/* Profile dropdown */}
             <div className="relative">
-              <button onClick={() => setProfileMenuOpen(!profileMenuOpen)} className="flex items-center gap-2 rounded-full border border-white/15 bg-[#0a0a0c]/50 px-3 py-1.5 text-sm font-medium text-white/70 hover:bg-white/10 hover:text-white transition-all">
+              <button onClick={() => setProfileMenuOpen(!profileMenuOpen)} className="flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-sm font-medium text-white/70 hover:bg-white/10 hover:text-white transition-all">
                 {walletAddress ? (
                   <span className="font-mono text-[11px] text-[#f0b400]">{walletAddress.slice(0, 6)}…{walletAddress.slice(-4)}</span>
                 ) : (
@@ -552,7 +552,7 @@ export default function PersonalDashboardPage() {
       <div className="relative z-10 flex min-h-[calc(100vh-80px)]">
         {/* Sidebar */}
         <aside className={cn(
-          "fixed inset-y-20 left-0 z-30 w-64 border-r border-white/10 bg-[#0a0a0c]/60 backdrop-blur-xl transition-transform duration-300 lg:sticky lg:top-20 lg:translate-x-0 lg:h-[calc(100vh-80px)]",
+          "fixed inset-y-20 left-0 z-30 w-64 bg-[#0c1220]/90 backdrop-blur-xl transition-transform duration-300 lg:sticky lg:top-20 lg:translate-x-0 lg:h-[calc(100vh-80px)]",
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}>
           {/* User card */}

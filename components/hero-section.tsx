@@ -224,19 +224,19 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
           </div>
 
           {/* Buttons */}
-          <div className="mt-16 flex flex-col items-center gap-5 sm:flex-row">
+          <div className="mt-16 flex flex-col items-center gap-4 sm:flex-row">
             <Button
               size="lg"
               onClick={() => onNavigate("profiles")}
-              className="h-12 rounded-xl bg-[#f0b400] px-8 text-sm font-bold text-[#0a0a0c] shadow-[0_0_20px_rgba(240,180,0,0.3)] hover:bg-[#f0b400]/90 hover:shadow-[0_0_30px_rgba(240,180,0,0.4)] transition-all duration-300"
+              className="h-11 rounded-lg bg-[#f0b400] px-7 text-sm font-semibold text-[#0c1220] shadow-[0_2px_8px_rgba(240,180,0,0.25)] hover:bg-[#e5ab00] hover:shadow-[0_4px_16px_rgba(240,180,0,0.35)] active:scale-[0.98] transition-all duration-200"
             >
               {t("hero.cta1")}
             </Button>
             <Button
-              variant="outline"
+              variant="ghost"
               size="lg"
               onClick={() => onNavigate("how-it-works")}
-              className="h-12 rounded-xl border-white/20 bg-transparent px-8 text-sm font-bold text-white hover:bg-white/10 hover:border-white/30 transition-all duration-300"
+              className="h-11 rounded-lg border border-white/15 bg-white/5 px-7 text-sm font-semibold text-white hover:bg-white/10 hover:border-white/25 active:scale-[0.98] transition-all duration-200"
             >
               {t("hero.cta2")}
             </Button>
