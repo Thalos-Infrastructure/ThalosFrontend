@@ -1338,7 +1338,7 @@ export function LanguageToggle({ className }: { className?: string }) {
   return (
   <button
   onClick={() => setLang(lang === "en" ? "es" : "en")}
-  className={`flex items-center gap-1.5 rounded-full border border-white/15 bg-[#0a0a0c]/70 px-3 py-1.5 text-xs font-bold text-white/70 transition-all duration-300 hover:bg-[#f0b400]/15 hover:text-[#f0b400] hover:border-[#f0b400]/30 ${className || ""}`}
+  className={`flex items-center gap-1.5 rounded-full border border-white/15 bg-[#0a0a0c]/60 px-3 py-1.5 text-xs font-bold text-white transition-all duration-300 hover:bg-[#f0b400]/15 hover:text-[#f0b400] hover:border-[#f0b400]/30 ${className || ""}`}
   aria-label={lang === "en" ? "Cambiar a Espanol" : "Switch to English"}
   title={lang === "en" ? "Cambiar a Espanol" : "Switch to English"}
   >
@@ -1358,7 +1358,7 @@ export function ThemeToggle({ className }: { className?: string }) {
   return (
   <button
   onClick={toggleTheme}
-  className={`flex items-center gap-1.5 rounded-full border border-white/15 bg-[#0a0a0c]/70 px-3 py-1.5 text-xs font-bold text-white/70 transition-all duration-300 hover:bg-[#f0b400]/15 hover:text-[#f0b400] hover:border-[#f0b400]/30 ${className || ""}`}
+  className={`flex items-center gap-1.5 rounded-full border border-white/15 bg-[#0a0a0c]/60 px-3 py-1.5 text-xs font-bold text-white transition-all duration-300 hover:bg-[#f0b400]/15 hover:text-[#f0b400] hover:border-[#f0b400]/30 ${className || ""}`}
   aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
   title={theme === "dark" ? "Light mode" : "Dark mode"}
   >

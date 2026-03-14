@@ -224,11 +224,11 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
           </div>
 
           {/* Buttons */}
-          <div className="mt-16 flex flex-col items-center gap-4 sm:flex-row">
+          <div className="mt-16 flex flex-col items-center gap-5 sm:flex-row">
             <Button
               size="lg"
               onClick={() => onNavigate("profiles")}
-              className="h-14 rounded-full bg-[#f0b400] px-12 text-base font-bold text-background shadow-[0_6px_0_rgba(180,130,0,0.6),0_8px_24px_rgba(240,180,0,0.25),inset_0_1px_0_rgba(255,255,255,0.3)] hover:bg-[#f0b400]/90 hover:shadow-[0_4px_0_rgba(180,130,0,0.6),0_6px_20px_rgba(240,180,0,0.3)] hover:translate-y-[2px] active:shadow-[0_1px_0_rgba(180,130,0,0.6),0_2px_8px_rgba(240,180,0,0.2)] active:translate-y-[4px] transition-all duration-200"
+              className="h-12 rounded-xl bg-[#f0b400] px-8 text-sm font-bold text-[#0a0a0c] shadow-[0_0_20px_rgba(240,180,0,0.3)] hover:bg-[#f0b400]/90 hover:shadow-[0_0_30px_rgba(240,180,0,0.4)] transition-all duration-300"
             >
               {t("hero.cta1")}
             </Button>
@@ -236,7 +236,7 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
               variant="outline"
               size="lg"
               onClick={() => onNavigate("how-it-works")}
-              className="h-14 rounded-full border-white/20 bg-white/10 px-12 text-base font-bold text-white shadow-[0_6px_0_rgba(0,0,0,0.15),0_8px_24px_rgba(0,0,0,0.2)] hover:bg-white/15 hover:shadow-[0_4px_0_rgba(0,0,0,0.15),0_6px_20px_rgba(0,0,0,0.2)] hover:translate-y-[2px] active:shadow-[0_1px_0_rgba(0,0,0,0.15),0_2px_8px_rgba(0,0,0,0.15)] active:translate-y-[4px] transition-all duration-200"
+              className="h-12 rounded-xl border-white/20 bg-transparent px-8 text-sm font-bold text-white hover:bg-white/10 hover:border-white/30 transition-all duration-300"
             >
               {t("hero.cta2")}
             </Button>

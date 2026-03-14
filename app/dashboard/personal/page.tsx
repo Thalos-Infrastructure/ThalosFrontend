@@ -500,7 +500,7 @@ export default function PersonalDashboardPage() {
       </div>
 
       {/* Header */}
-      <header className="sticky top-0 z-40 border-b border-white/10 bg-[#0a0a0c]/70 backdrop-blur-xl">
+      <header className="sticky top-0 z-40 border-b border-white/10 bg-[#0a0a0c]/60 backdrop-blur-xl">
         <nav className="mx-auto flex h-20 max-w-[1400px] items-center justify-between px-4 lg:px-8">
           <div className="flex items-center gap-4">
             {/* Mobile sidebar toggle */}
@@ -552,7 +552,7 @@ export default function PersonalDashboardPage() {
       <div className="relative z-10 flex min-h-[calc(100vh-80px)]">
         {/* Sidebar */}
         <aside className={cn(
-          "fixed inset-y-20 left-0 z-30 w-64 border-r border-white/10 bg-[#0a0a0c]/70 backdrop-blur-xl transition-transform duration-300 lg:sticky lg:top-20 lg:translate-x-0 lg:h-[calc(100vh-80px)]",
+          "fixed inset-y-20 left-0 z-30 w-64 border-r border-white/10 bg-[#0a0a0c]/60 backdrop-blur-xl transition-transform duration-300 lg:sticky lg:top-20 lg:translate-x-0 lg:h-[calc(100vh-80px)]",
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}>
           {/* User card */}

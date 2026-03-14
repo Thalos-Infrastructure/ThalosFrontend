@@ -385,7 +385,7 @@ export default function AboutPage() {
         </section>
 
         {/* ═══════ FOOTER ═══════ */}
-        <footer className="border-t border-white/10 bg-[#0a0a0c]/70 backdrop-blur-xl">
+        <footer className="bg-[#0a0a0c]/60 backdrop-blur-xl">
           <div className="mx-auto max-w-7xl px-6 py-12">
             <div className="flex flex-col gap-10 lg:flex-row lg:items-start lg:justify-between">
               {/* Left: Logo + description + partners */}

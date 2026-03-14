@@ -88,6 +88,41 @@
   opacity: 0.65 !important;
 }
 
+/* Light mode - keep white text in dark containers (cards, sections with dark bg) */
+.light [class*="bg-\\[\\#0"] .text-white,
+.light [class*="bg-\\[\\#0"] .text-white\/90,
+.light [class*="bg-\\[\\#0"] .text-white\/80,
+.light [class*="bg-\\[\\#0"] .text-white\/70,
+.light [class*="bg-\\[\\#0"] .text-white\/60,
+.light [class*="bg-\\[\\#0"] .text-white\/50,
+.light [class*="bg-\\[\\#0"] .text-white\/40,
+.light [class*="bg-\\[\\#0"] .text-white\/30,
+.light [class*="bg-white\\/5"] .text-white,
+.light [class*="bg-white\\/10"] .text-white,
+.light [class*="rounded-2xl"][class*="border"] .text-white,
+.light [class*="rounded-2xl"][class*="border"] .text-white\/90,
+.light [class*="rounded-2xl"][class*="border"] .text-white\/80,
+.light [class*="rounded-2xl"][class*="border"] .text-white\/70,
+.light [class*="rounded-2xl"][class*="border"] .text-white\/60,
+.light [class*="rounded-2xl"][class*="border"] .text-white\/50,
+.light [class*="rounded-2xl"][class*="border"] .text-white\/40,
+.light header .text-white,
+.light header .text-white\/90,
+.light header .text-white\/80,
+.light header .text-white\/70,
+.light header .text-white\/60,
+.light footer .text-white,
+.light footer .text-white\/60,
+.light footer .text-white\/40,
+.light footer .text-white\/30,
+.light aside .text-white,
+.light aside .text-white\/70,
+.light aside .text-white\/60,
+.light aside .text-white\/50,
+.light aside .text-white\/40 {
+  color: inherit !important;
+}
+
 @theme inline {
   --font-sans: 'Inter', 'Inter Fallback';
   --font-mono: 'Geist Mono', 'Geist Mono Fallback';

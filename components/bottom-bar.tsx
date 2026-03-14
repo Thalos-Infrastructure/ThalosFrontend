@@ -114,7 +114,7 @@ export function BottomBar({ onNavigate }: { onNavigate: (section: string) => voi
           >
             {/* Water bg layer */}
             <div className="absolute inset-0 bg-cover bg-center opacity-20" style={{ backgroundImage: "url('/ocean-bg.png')" }} aria-hidden="true" />
-            <div className="absolute inset-0 bg-[#0a0a0c]/85 backdrop-blur-xl" aria-hidden="true" />
+            <div className="absolute inset-0 bg-[#0a0a0c]/70 backdrop-blur-xl" aria-hidden="true" />
 
             <div className="relative z-10 p-3">
               {/* Header */}
@@ -180,7 +180,7 @@ export function BottomBar({ onNavigate }: { onNavigate: (section: string) => voi
             style={{ backgroundImage: "url('/ocean-bg.png')" }}
             aria-hidden="true"
           />
-          <div className="absolute inset-0 bg-[#0a0a0c]/85 backdrop-blur-xl" aria-hidden="true" />
+          <div className="absolute inset-0 bg-[#0a0a0c]/70 backdrop-blur-xl" aria-hidden="true" />
 
           {/* Menu button */}
           <button
