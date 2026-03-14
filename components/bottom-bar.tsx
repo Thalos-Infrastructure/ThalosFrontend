@@ -188,11 +188,12 @@ export function BottomBar({ onNavigate }: { onNavigate: (section: string) => voi
             className={cn(
               "relative z-10 flex items-center gap-3 rounded-full px-5 py-3 text-base font-bold transition-all duration-300 active:scale-95 shadow-[0_3px_0_rgba(0,0,0,0.2),0_4px_12px_rgba(0,0,0,0.25),inset_0_1px_0_rgba(255,255,255,0.1)]",
               showMenu
-                ? "bg-white/15 text-white"
-                : "text-white hover:bg-white/8"
+                ? "bg-white/15"
+                : "hover:bg-white/8"
             )}
+            style={{ color: '#ffffff' }}
           >
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
             </svg>
             Menu

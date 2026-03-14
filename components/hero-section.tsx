@@ -227,7 +227,7 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
           <div className="mt-16 flex flex-col items-center gap-4 sm:flex-row">
             <Button
               size="lg"
-              onClick={() => onNavigate("profiles")}
+              onClick={() => onNavigate("sign-in")}
               className="h-11 rounded-lg border border-[#f0b400]/30 bg-[#f0b400]/10 px-7 text-sm font-bold text-[#f0b400] shadow-[0_2px_8px_rgba(240,180,0,0.15)] hover:bg-[#f0b400]/20 hover:border-[#f0b400]/40 hover:shadow-[0_4px_16px_rgba(240,180,0,0.25)] active:scale-[0.98] transition-all duration-200"
             >
               {t("hero.cta1")}
