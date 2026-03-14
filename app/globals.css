@@ -126,6 +126,14 @@
   color: #3d5a80 !important;
 }
 
+/* Light mode - sidebar text stays white */
+.light aside .text-white,
+.light aside .text-white\/70,
+.light aside .text-white\/60,
+.light aside .text-white\/50 {
+  color: white !important;
+}
+
 @theme inline {
   --font-sans: 'Inter', 'Inter Fallback';
   --font-mono: 'Geist Mono', 'Geist Mono Fallback';

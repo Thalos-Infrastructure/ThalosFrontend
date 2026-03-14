@@ -351,7 +351,6 @@ export default function BusinessDashboardPage() {
           </div>
 
           <div className="flex items-center gap-3">
-            <ThemeToggle />
             <div className="relative">
               <button onClick={() => setProfileMenuOpen(!profileMenuOpen)} className="flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-sm font-medium text-white/70 hover:bg-white/10 hover:text-white transition-all">
                 <div className="h-6 w-6 rounded-full bg-[#3b82f6]/10 flex items-center justify-center text-[#3b82f6]">
@@ -379,6 +378,7 @@ export default function BusinessDashboardPage() {
               )}
             </div>
             <LanguageToggle />
+            <ThemeToggle />
           </div>
         </nav>
       </header>
@@ -427,7 +427,7 @@ export default function BusinessDashboardPage() {
           {/* ══════ THALOS BOUNTY ══════ */}
           {activeSection === "bounty" && (
             <div className="mx-auto max-w-4xl">
-              <h1 className="mb-6 text-2xl font-semibold text-white">{t("dashPage.thalosBounty")}</h1>
+              <h1 className="mb-6 text-2xl font-semibold text-white">Thalos Bounty</h1>
               
               <div className="rounded-2xl border border-white/10 bg-[#0c1220] p-8 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)]">
                 <div className="flex flex-col items-center text-center">
@@ -438,7 +438,7 @@ export default function BusinessDashboardPage() {
                       <path d="M15 9.5c0-1.5-1.5-2.5-3-2.5s-3 1-3 2.5 1.5 2 3 2.5 3 1 3 2.5-1.5 2.5-3 2.5-3-1-3-2.5"/>
                     </svg>
                   </div>
-                  <h2 className="mb-2 text-xl font-semibold text-white">Thalos Bounty Program</h2>
+                  <h2 className="mb-2 text-xl font-semibold text-white">Thalos Bounty</h2>
                   <p className="mb-6 max-w-md text-sm text-white/60">
                     Create and manage bounties for your organization. Reward contributors, developers, and community members for completing tasks and milestones.
                   </p>
