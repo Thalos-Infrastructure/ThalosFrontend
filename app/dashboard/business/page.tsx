@@ -6,7 +6,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { ThalosLoader } from "@/components/thalos-loader"
-import { LanguageToggle, useLanguage } from "@/lib/i18n"
+import { LanguageToggle, ThemeToggle, useLanguage } from "@/lib/i18n"
 import { Footer } from "@/components/footer"
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area,
@@ -125,9 +125,10 @@ const sidebarItems = [
   { id: "create", labelKey: "dashPage.newAgreement", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg> },
   { id: "agreements", labelKey: "dashPage.agreements", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> },
   { id: "templates", labelKey: "dashPage.templates", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg> },
+  { id: "bounty", labelKey: "dashPage.thalosBounty", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v12"/><path d="M15 9.5c0-1.5-1.5-2.5-3-2.5s-3 1-3 2.5 1.5 2 3 2.5 3 1 3 2.5-1.5 2.5-3 2.5-3-1-3-2.5"/></svg> },
   { id: "wallets", labelKey: "dashPage.wallets", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg> },
   { id: "analytics", labelKey: "dashPage.analytics", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg> },
-]
+  ]
 
 /* ════════════════════════════════════════════════
    PAGE
@@ -350,6 +351,7 @@ export default function BusinessDashboardPage() {
           </div>
 
           <div className="flex items-center gap-3">
+            <ThemeToggle />
             <div className="relative">
               <button onClick={() => setProfileMenuOpen(!profileMenuOpen)} className="flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-sm font-medium text-white/70 hover:bg-white/10 hover:text-white transition-all">
                 <div className="h-6 w-6 rounded-full bg-[#3b82f6]/10 flex items-center justify-center text-[#3b82f6]">
@@ -394,7 +396,7 @@ export default function BusinessDashboardPage() {
               </div>
               <div>
                 <p className="text-sm font-semibold text-white">{t("dashPage.enterpriseAccount")}</p>
-                <p className="text-xs text-white/40">G...SE01</p>
+                <p className="text-xs text-white/60">G...SE01</p>
               </div>
             </div>
           </div>
@@ -403,7 +405,7 @@ export default function BusinessDashboardPage() {
             {sidebarItems.map((item) => (
               <button key={item.id} onClick={() => { setActiveSection(item.id); setSidebarOpen(false); if (item.id === "create") resetWizard() }}
                 className={cn("flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200",
-                  activeSection === item.id ? "bg-[#3b82f6]/10 text-[#3b82f6]" : "text-white/50 hover:bg-white/5 hover:text-white/80"
+                  activeSection === item.id ? "bg-[#3b82f6]/10 text-[#3b82f6]" : "text-white/70 hover:bg-white/5 hover:text-white"
                 )}>
                 {item.icon}{t(`dashPage.${item.id === "create" ? "newAgreement" : item.id === "templates" ? "templates" : item.id}`)}
               </button>
@@ -422,6 +424,56 @@ export default function BusinessDashboardPage() {
 
         {/* Main content */}
         <main className="flex-1 overflow-y-auto p-4 lg:p-8">
+          {/* ══════ THALOS BOUNTY ══════ */}
+          {activeSection === "bounty" && (
+            <div className="mx-auto max-w-4xl">
+              <h1 className="mb-6 text-2xl font-semibold text-white">{t("dashPage.thalosBounty")}</h1>
+              
+              <div className="rounded-2xl border border-white/10 bg-[#0c1220] p-8 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)]">
+                <div className="flex flex-col items-center text-center">
+                  <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#f0b400]/10">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#f0b400" strokeWidth="1.5">
+                      <circle cx="12" cy="12" r="10"/>
+                      <path d="M12 6v12"/>
+                      <path d="M15 9.5c0-1.5-1.5-2.5-3-2.5s-3 1-3 2.5 1.5 2 3 2.5 3 1 3 2.5-1.5 2.5-3 2.5-3-1-3-2.5"/>
+                    </svg>
+                  </div>
+                  <h2 className="mb-2 text-xl font-semibold text-white">Thalos Bounty Program</h2>
+                  <p className="mb-6 max-w-md text-sm text-white/60">
+                    Create and manage bounties for your organization. Reward contributors, developers, and community members for completing tasks and milestones.
+                  </p>
+                  <div className="flex items-center gap-3">
+                    <Button className="rounded-lg bg-[#f0b400] px-6 py-2 text-sm font-semibold text-[#0c1220] hover:bg-[#e5ab00] shadow-[0_2px_8px_rgba(240,180,0,0.25)]">
+                      Create Bounty
+                    </Button>
+                    <Button variant="outline" className="rounded-lg border-white/15 bg-white/5 px-6 py-2 text-sm font-semibold text-white hover:bg-white/10">
+                      View Active Bounties
+                    </Button>
+                  </div>
+                </div>
+                
+                <div className="mt-8 grid gap-4 md:grid-cols-3">
+                  <div className="rounded-xl border border-white/10 bg-white/5 p-4 text-center">
+                    <p className="text-2xl font-bold text-[#f0b400]">0</p>
+                    <p className="text-xs text-white/50">Active Bounties</p>
+                  </div>
+                  <div className="rounded-xl border border-white/10 bg-white/5 p-4 text-center">
+                    <p className="text-2xl font-bold text-white">$0</p>
+                    <p className="text-xs text-white/50">Total Rewards</p>
+                  </div>
+                  <div className="rounded-xl border border-white/10 bg-white/5 p-4 text-center">
+                    <p className="text-2xl font-bold text-white">0</p>
+                    <p className="text-xs text-white/50">Completed</p>
+                  </div>
+                </div>
+              </div>
+              
+              <p className="mt-4 text-center text-xs text-white/40">
+                Bounty functionality coming soon. Stay tuned for updates.
+              </p>
+            </div>
+          )}
+
           {/* ══════ ANALYTICS ══════ */}
           {activeSection === "analytics" && (
             <div className="mx-auto max-w-5xl">

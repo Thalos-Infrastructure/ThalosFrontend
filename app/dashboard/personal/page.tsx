@@ -8,7 +8,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { ThalosLoader } from "@/components/thalos-loader"
-import { LanguageToggle, useLanguage } from "@/lib/i18n"
+import { LanguageToggle, ThemeToggle, useLanguage } from "@/lib/i18n"
 import { useStellarWallet } from "@/lib/stellar-wallet"
 import { Footer } from "@/components/footer"
 import {
@@ -513,6 +513,7 @@ export default function PersonalDashboardPage() {
           </div>
 
           <div className="flex items-center gap-3">
+            <ThemeToggle />
             {/* Profile dropdown */}
             <div className="relative">
               <button onClick={() => setProfileMenuOpen(!profileMenuOpen)} className="flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-sm font-medium text-white/70 hover:bg-white/10 hover:text-white transition-all">
@@ -563,7 +564,7 @@ export default function PersonalDashboardPage() {
               </div>
               <div>
                 <p className="text-sm font-semibold text-white">{t("dashPage.personalAccount")}</p>
-                <p className="text-xs font-mono text-white/40">{walletAddress ? `${walletAddress.slice(0, 6)}…${walletAddress.slice(-4)}` : "G...AL01"}</p>
+                <p className="text-xs font-mono text-white/60">{walletAddress ? `${walletAddress.slice(0, 6)}…${walletAddress.slice(-4)}` : "G...AL01"}</p>
               </div>
             </div>
           </div>
@@ -573,7 +574,7 @@ export default function PersonalDashboardPage() {
             {sidebarItems.map((item) => (
               <button key={item.id} onClick={() => { setActiveSection(item.id); setSidebarOpen(false); if (item.id === "create") resetWizard() }}
                 className={cn("flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200",
-                  activeSection === item.id ? "bg-[#f0b400]/10 text-[#f0b400]" : "text-white/50 hover:bg-white/5 hover:text-white/80"
+                  activeSection === item.id ? "bg-[#f0b400]/10 text-[#f0b400]" : "text-white/70 hover:bg-white/5 hover:text-white"
                 )}>
                 {item.icon}{t(`dashPage.${item.id === "create" ? "newAgreement" : item.id}`)}
               </button>
