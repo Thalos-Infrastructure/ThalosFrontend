@@ -1333,7 +1333,7 @@ export function useLanguage() {
 }
 
 /** Small globe toggle button */
-> export function LanguageToggle({ className }: { className?: string }) {
+export function LanguageToggle({ className }: { className?: string }) {
   const { lang, setLang } = useLanguage()
   return (
   <button
@@ -1353,7 +1353,7 @@ export function useLanguage() {
 }
 
 /** Sun/Moon theme toggle */
-> export function ThemeToggle({ className }: { className?: string }) {
+export function ThemeToggle({ className }: { className?: string }) {
   const { theme, toggleTheme } = useLanguage()
   return (
   <button
