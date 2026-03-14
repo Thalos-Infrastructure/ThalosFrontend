@@ -34,9 +34,9 @@ function TypewriterEscrows() {
   }, [displayText, phase])
 
   return (
-    <span className="text-[#f0b400] inline-flex items-baseline min-w-[200px] md:min-w-[340px] text-left" style={{ textShadow: "none" }}>
-      <span style={{ textShadow: "none" }}>{displayText}</span>
-      <span className="ml-0.5 inline-block h-[0.85em] w-[3px] bg-[#f0b400] align-middle" style={{ animation: "typewriter-cursor 0.8s ease-in-out infinite", boxShadow: "none" }} />
+    <span className="text-[#f0b400] inline-flex items-baseline min-w-[200px] md:min-w-[340px] text-left" style={{ textShadow: "none", filter: "none", WebkitFilter: "none" }}>
+      <span style={{ textShadow: "none", filter: "none" }}>{displayText}</span>
+      <span className="ml-0.5 inline-block h-[0.85em] w-[3px] bg-[#f0b400] align-middle" style={{ animation: "typewriter-cursor 0.8s ease-in-out infinite", boxShadow: "none", filter: "none" }} />
     </span>
   )
 }
@@ -71,9 +71,9 @@ function TypewriterPlatform() {
   }, [displayText, phase])
 
   return (
-    <span className="text-[#f0b400] font-bold text-xl md:text-2xl inline-flex items-baseline" style={{ textShadow: "none" }}>
-      <span style={{ textShadow: "none" }}>{displayText}</span>
-      <span className="ml-0.5 inline-block h-[0.85em] w-[3px] bg-[#f0b400] align-middle" style={{ animation: "typewriter-cursor 0.8s ease-in-out infinite", boxShadow: "none" }} />
+    <span className="text-[#f0b400] font-bold text-xl md:text-2xl inline-flex items-baseline" style={{ textShadow: "none", filter: "none", WebkitFilter: "none" }}>
+      <span style={{ textShadow: "none", filter: "none" }}>{displayText}</span>
+      <span className="ml-0.5 inline-block h-[0.85em] w-[3px] bg-[#f0b400] align-middle" style={{ animation: "typewriter-cursor 0.8s ease-in-out infinite", boxShadow: "none", filter: "none" }} />
     </span>
   )
 }
@@ -139,7 +139,7 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
         {LETTERS.map((letter, i) => (
           <span
             key={i}
-            className="block font-black leading-[0.72] text-foreground"
+            className="block font-black leading-[0.72] text-white"
             style={{
               opacity: letterOpacities[i],
               transition: "opacity 120ms cubic-bezier(0.25, 0.1, 0.25, 1)",

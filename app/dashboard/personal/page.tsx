@@ -8,7 +8,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { ThalosLoader } from "@/components/thalos-loader"
-import { LanguageToggle, ThemeToggle, useLanguage } from "@/lib/i18n"
+import { LanguageToggle, useLanguage } from "@/lib/i18n"
 import { useStellarWallet } from "@/lib/stellar-wallet"
 import { Footer } from "@/components/footer"
 import {
@@ -545,7 +545,6 @@ export default function PersonalDashboardPage() {
               )}
             </div>
             <LanguageToggle />
-            <ThemeToggle />
           </div>
         </nav>
       </header>

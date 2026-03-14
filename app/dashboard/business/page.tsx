@@ -6,7 +6,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { ThalosLoader } from "@/components/thalos-loader"
-import { LanguageToggle, ThemeToggle, useLanguage } from "@/lib/i18n"
+import { LanguageToggle, useLanguage } from "@/lib/i18n"
 import { Footer } from "@/components/footer"
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area,
@@ -377,7 +377,6 @@ export default function BusinessDashboardPage() {
               )}
             </div>
             <LanguageToggle />
-            <ThemeToggle />
           </div>
         </nav>
       </header>

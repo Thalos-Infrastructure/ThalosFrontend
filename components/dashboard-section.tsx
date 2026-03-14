@@ -192,36 +192,36 @@ export function DashboardSection() {
               </div>
 
               {selectedEscrow === escrow.id && (
-                <div className="mt-4 border-t border-border/10 pt-4">
+                <div className="mt-4 border-t border-white/10 pt-4">
                   <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                    <div className="rounded-xl bg-card/20 p-4 border border-border/10">
-                      <p className="mb-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">Milestones</p>
+                    <div className="rounded-xl bg-white/5 p-4 border border-white/10">
+                      <p className="mb-2 text-xs font-bold uppercase tracking-wider text-white/50">Milestones</p>
                       <div className="flex flex-col gap-2">
                         {Array.from({ length: escrow.milestones }, (_, i) => (
                           <div key={`milestone-${escrow.id}-${i}`} className="flex items-center gap-2">
                             <div className={cn(
                               "h-2 w-2 rounded-full",
-                              i < escrow.completedMilestones ? "bg-emerald-400" : "bg-muted-foreground/30"
+                              i < escrow.completedMilestones ? "bg-emerald-400" : "bg-white/30"
                             )} />
-                            <span className="text-xs font-medium text-muted-foreground">
+                            <span className="text-xs font-medium text-white/60">
                               Milestone {i + 1} {i < escrow.completedMilestones ? "(Completed)" : "(Pending)"}
                             </span>
                           </div>
                         ))}
                       </div>
                     </div>
-                    <div className="rounded-xl bg-card/20 p-4 border border-border/10">
-                      <p className="mb-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">Conditions</p>
-                      <p className="text-xs font-medium text-muted-foreground">
+                    <div className="rounded-xl bg-white/5 p-4 border border-white/10">
+                      <p className="mb-2 text-xs font-bold uppercase tracking-wider text-white/50">Conditions</p>
+                      <p className="text-xs font-medium text-white/60">
                         Funds are released based on verified milestone completion. All parties must confirm before each release stage.
                       </p>
                     </div>
-                    <div className="rounded-xl bg-card/20 p-4 border border-border/10">
-                      <p className="mb-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">Contract</p>
-                      <p className="text-xs font-mono font-medium text-muted-foreground">
+                    <div className="rounded-xl bg-white/5 p-4 border border-white/10">
+                      <p className="mb-2 text-xs font-bold uppercase tracking-wider text-white/50">Contract</p>
+                      <p className="text-xs font-mono font-medium text-white/60">
                         GBXK...7F2D
                       </p>
-                      <p className="mt-1 text-xs font-medium text-muted-foreground">Stellar Network</p>
+                      <p className="mt-1 text-xs font-medium text-white/60">Stellar Network</p>
                     </div>
                   </div>
                 </div>

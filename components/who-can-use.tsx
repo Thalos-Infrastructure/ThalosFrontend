@@ -28,10 +28,10 @@ export function WhoCanUse() {
             <span>{twText}</span>
             <span className={cn("ml-0.5 inline-block h-4 w-0.5 bg-[#f0b400] align-middle", twActive ? "animate-pulse" : "opacity-0")} />
           </p>
-          <h2 className="mb-4 text-4xl font-bold tracking-tight text-foreground md:text-5xl text-balance">
+          <h2 className="mb-4 text-4xl font-bold tracking-tight text-white md:text-5xl text-balance">
             {t("whoCanUse.title")}
           </h2>
-          <p className="mx-auto max-w-3xl text-base font-medium text-muted-foreground leading-relaxed text-pretty">
+          <p className="mx-auto max-w-3xl text-base font-medium text-white/60 leading-relaxed text-pretty">
             {t("whoCanUse.desc")}
           </p>
         </div>
@@ -41,16 +41,16 @@ export function WhoCanUse() {
           {personas.map((persona, idx) => (
             <div
               key={persona.key}
-              className="section-reveal-child group rounded-2xl border border-border/20 bg-card/40 p-6 backdrop-blur-sm shadow-[0_4px_16px_rgba(0,0,0,0.25),inset_0_1px_0_rgba(255,255,255,0.06)] transition-all duration-500 hover:border-[#f0b400]/20 hover:shadow-[0_4px_20px_rgba(240,180,0,0.06),inset_0_1px_0_rgba(255,255,255,0.06)]"
+              className="section-reveal-child group rounded-2xl border border-white/15 bg-[#0c1220]/85 p-6 backdrop-blur-2xl shadow-[0_12px_48px_rgba(0,0,0,0.5),0_2px_8px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.08)] transition-all duration-500 hover:border-[#f0b400]/25 hover:shadow-[0_12px_52px_rgba(240,180,0,0.1),0_2px_8px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.1)]"
               style={{ transitionDelay: isVisible ? `${idx * 80}ms` : "0ms" }}
             >
               <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-[#f0b400]/10 text-[#f0b400] transition-colors group-hover:bg-[#f0b400]/15">
                 {persona.icon}
               </div>
-              <h3 className="mb-2 text-base font-bold text-foreground">
+              <h3 className="mb-2 text-base font-bold text-white">
                 {t(`whoCanUse.${persona.key}`)}
               </h3>
-              <p className="text-sm font-medium text-muted-foreground leading-relaxed">
+              <p className="text-sm font-medium text-white/60 leading-relaxed">
                 {t(`whoCanUse.${persona.key}Desc`)}
               </p>
             </div>

@@ -129,7 +129,7 @@ function FlowDiagram({ steps }: { steps: typeof useCases[0]["steps"] }) {
               "flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border transition-all duration-500 md:h-14 md:w-14",
               i <= activeStep
                 ? "border-[#f0b400]/30 bg-[#f0b400]/10 text-[#f0b400] shadow-[0_4px_20px_rgba(240,180,0,0.15)]"
-                : "border-border/30 bg-card/30 text-muted-foreground"
+                : "border-white/20 bg-white/5 text-white/50"
             )}
           >
             {icons[step.icon]}
@@ -137,11 +137,11 @@ function FlowDiagram({ steps }: { steps: typeof useCases[0]["steps"] }) {
           <div className="min-w-0 flex-1 text-left md:flex-initial md:text-center">
             <p className={cn(
               "text-sm font-semibold transition-colors",
-              i <= activeStep ? "text-foreground" : "text-muted-foreground"
+              i <= activeStep ? "text-white" : "text-white/50"
             )}>
               {step.label}
             </p>
-            <p className="text-xs text-muted-foreground leading-relaxed">{step.detail}</p>
+            <p className="text-xs text-white/60 leading-relaxed">{step.detail}</p>
           </div>
         </div>
       ))}
@@ -194,7 +194,7 @@ export function HowItWorks() {
 
         <div className="section-reveal-child rounded-2xl border border-white/15 bg-[#0c1220]/85 p-6 backdrop-blur-2xl shadow-[0_12px_48px_rgba(0,0,0,0.5),0_2px_8px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.08)] md:p-10" style={{ transitionDelay: isVisible ? "200ms" : "0ms" }}>
           <div className="mb-4 text-center">
-            <p className="text-sm font-medium text-white/60">{current.description}</p>
+            <p className="text-sm font-medium text-white/70">{current.description}</p>
           </div>
           <FlowDiagram key={current.id} steps={current.steps} />
         </div>

@@ -74,10 +74,10 @@ export function BottomBar({ onNavigate }: { onNavigate: (section: string) => voi
       {showQR && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-background/60 backdrop-blur-sm" onClick={() => setShowQR(false)}>
           <div className="relative mx-4 w-full max-w-sm rounded-2xl border border-border/20 bg-card p-10 shadow-[0_24px_80px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.06)]" onClick={(e) => e.stopPropagation()}>
-            <button onClick={() => setShowQR(false)} className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition-colors" aria-label="Close">
+            <button onClick={() => setShowQR(false)} className="absolute top-4 right-4 text-white/60 hover:text-white transition-colors" aria-label="Close">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
-            <p className="mb-6 text-center text-sm font-bold text-foreground">{t("bar.scanMobile")}</p>
+            <p className="mb-6 text-center text-sm font-bold text-white">{t("bar.scanMobile")}</p>
             <div className="mx-auto flex h-56 w-56 items-center justify-center rounded-2xl bg-[#0a0a0a] p-4 shadow-[0_8px_32px_rgba(0,0,0,0.3)]">
               <Image
                 src={`https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent("https://thalos-prototype.vercel.app/")}&bgcolor=0a0a0a&color=f0b400&qzone=3&format=png`}

@@ -72,9 +72,9 @@ export function Footer() {
               </ul>
             </div>
             <div>
-              <p className="mb-3 text-xs font-bold uppercase tracking-widest text-[#f0b400]">{t("footer.contact")}</p>
-              {/* Vertical social icons */}
-              <div className="flex flex-col gap-2">
+              <p className="mb-3 text-xs font-bold uppercase tracking-widest text-[#f0b400]">Get in Touch</p>
+              {/* 2x2 grid social icons */}
+              <div className="grid grid-cols-2 gap-2">
                 <a 
                   href="mailto:thalosinfrastructure@gmail.com" 
                   className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-white/60 transition-all hover:border-[#f0b400]/40 hover:bg-[#f0b400]/10 hover:text-[#f0b400]"
