@@ -94,22 +94,22 @@
 }
 
 /* Light mode - titles and subtitles use card blue color */
-.light .text-white:not([class*="bg-[#0"]):not(header *):not(footer *):not(aside *):not([class*="rounded-2xl"][class*="border"] *) {
+.light .text-white:not([class*="bg-[#0"]):not(header *):not(footer *):not(aside *):not(nav *):not([class*="rounded-2xl"][class*="border"] *) {
   color: #0c1220 !important;
 }
 
-.light .text-white\/90:not([class*="bg-[#0"]):not(header *):not(footer *):not(aside *):not([class*="rounded-2xl"][class*="border"] *),
-.light .text-white\/80:not([class*="bg-[#0"]):not(header *):not(footer *):not(aside *):not([class*="rounded-2xl"][class*="border"] *) {
+.light .text-white\/90:not([class*="bg-[#0"]):not(header *):not(footer *):not(aside *):not(nav *):not([class*="rounded-2xl"][class*="border"] *),
+.light .text-white\/80:not([class*="bg-[#0"]):not(header *):not(footer *):not(aside *):not(nav *):not([class*="rounded-2xl"][class*="border"] *) {
   color: #1a2a42 !important;
 }
 
-.light .text-white\/70:not([class*="bg-[#0"]):not(header *):not(footer *):not(aside *):not([class*="rounded-2xl"][class*="border"] *),
-.light .text-white\/60:not([class*="bg-[#0"]):not(header *):not(footer *):not(aside *):not([class*="rounded-2xl"][class*="border"] *) {
+.light .text-white\/70:not([class*="bg-[#0"]):not(header *):not(footer *):not(aside *):not(nav *):not([class*="rounded-2xl"][class*="border"] *),
+.light .text-white\/60:not([class*="bg-[#0"]):not(header *):not(footer *):not(aside *):not(nav *):not([class*="rounded-2xl"][class*="border"] *) {
   color: #2a4060 !important;
 }
 
-.light .text-white\/50:not([class*="bg-[#0"]):not(header *):not(footer *):not(aside *):not([class*="rounded-2xl"][class*="border"] *),
-.light .text-white\/40:not([class*="bg-[#0"]):not(header *):not(footer *):not(aside *):not([class*="rounded-2xl"][class*="border"] *) {
+.light .text-white\/50:not([class*="bg-[#0"]):not(header *):not(footer *):not(aside *):not(nav *):not([class*="rounded-2xl"][class*="border"] *),
+.light .text-white\/40:not([class*="bg-[#0"]):not(header *):not(footer *):not(aside *):not(nav *):not([class*="rounded-2xl"][class*="border"] *) {
   color: #3d5a80 !important;
 }
 
