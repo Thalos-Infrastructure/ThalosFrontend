@@ -41,27 +41,30 @@
   color-scheme: dark;
 }
 
-/* Light theme - same as dark mode but with lighter visible background for ocean images */
+/* Light theme - light background with black text, special colors (yellow, blue) remain */
 .light {
-  /* Slightly lighter background so ocean images show through better */
-  --background: oklch(0.88 0.01 220);
-  /* Keep all other colors same as dark mode */
-  --foreground: oklch(0.97 0 0);
+  /* Light background so ocean images show better */
+  --background: oklch(0.92 0.01 220);
+  /* Black text for light mode */
+  --foreground: oklch(0.15 0.01 250);
+  /* Cards keep dark for contrast */
   --card: oklch(0.15 0.005 250);
   --card-foreground: oklch(0.97 0 0);
   --popover: oklch(0.15 0.005 250);
   --popover-foreground: oklch(0.97 0 0);
   --primary: oklch(0.80 0.17 88);
   --primary-foreground: oklch(0.12 0 0);
-  --secondary: oklch(0.2 0.005 250);
-  --secondary-foreground: oklch(0.9 0 0);
-  --muted: oklch(0.2 0.005 250);
-  --muted-foreground: oklch(0.6 0 0);
+  /* Secondary with dark bg for bubbles */
+  --secondary: oklch(0.18 0.005 250);
+  --secondary-foreground: oklch(0.95 0 0);
+  --muted: oklch(0.18 0.005 250);
+  --muted-foreground: oklch(0.35 0.01 250);
   --accent: oklch(0.65 0.2 260);
   --accent-foreground: oklch(0.98 0 0);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.577 0.245 27.325);
-  --border: oklch(0.25 0.01 250);
+  /* Visible border for light mode */
+  --border: oklch(0.3 0.01 250);
   --input: oklch(0.22 0.008 250);
   --ring: oklch(0.78 0.16 85);
   --chart-1: oklch(0.78 0.16 85);
@@ -77,18 +80,57 @@
   --sidebar-accent-foreground: oklch(0.97 0 0);
   --sidebar-border: oklch(0.25 0.01 250);
   --sidebar-ring: oklch(0.78 0.16 85);
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 /* Light mode - make background images more visible */
-.light .opacity-35 {
-  opacity: 0.55 !important;
+.light .opacity-50 {
+  opacity: 0.65 !important;
 }
 
-/* Light mode - reduce overlay darkness so images show */
-.light [style*="opacity: 0.35"],
-.light [style*="opacity: 0.4"] {
-  opacity: 0.25 !important;
+/* Light mode text overrides - keep special colors, make regular text black */
+.light .text-white {
+  color: oklch(0.12 0.01 250) !important;
+}
+
+.light .text-white\/90,
+.light .text-white\/80,
+.light .text-white\/70,
+.light .text-white\/60 {
+  color: oklch(0.25 0.01 250) !important;
+}
+
+/* But keep white text inside dark containers */
+.light [class*="bg-\\[\\#0"] .text-white,
+.light [class*="bg-\\[\\#0"] .text-white\/90,
+.light [class*="bg-\\[\\#0"] .text-white\/80,
+.light [class*="bg-\\[\\#0"] .text-white\/70,
+.light [class*="bg-\\[\\#0"] .text-white\/60,
+.light header .text-white,
+.light header .text-white\/60,
+.light header .text-white\/70,
+.light footer .text-white,
+.light footer .text-white\/60,
+.light aside .text-white,
+.light aside .text-white\/60,
+.light aside .text-white\/70,
+.light aside .text-white\/40 {
+  color: inherit !important;
+}
+
+/* Preserve yellow/gold color */
+.light .text-\\[\\#f0b400\\] {
+  color: #f0b400 !important;
+}
+
+/* Preserve blue/accent colors */
+.light .text-\\[\\#b0c4de\\] {
+  color: #b0c4de !important;
+}
+
+/* Preserve emerald/green */
+.light .text-emerald-400 {
+  color: rgb(52 211 153) !important;
 }
 
 @theme inline {

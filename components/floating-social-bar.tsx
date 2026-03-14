@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { cn } from "@/lib/utils"
 import { Mail, Github } from "lucide-react"
 
@@ -22,15 +22,16 @@ function InstagramIcon({ className }: { className?: string }) {
 
 export function FloatingSocialBar() {
   const [isVisible, setIsVisible] = useState(false)
+  const [isHovered, setIsHovered] = useState(false)
   const [lastScrollY, setLastScrollY] = useState(0)
+  const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY
       
-      // Show after scrolling down 300px and hide when scrolling up near top
+      // Show after scrolling down 300px
       if (currentScrollY > 300) {
-        // Show when scrolling down, hide when scrolling up fast
         if (currentScrollY > lastScrollY || currentScrollY > 500) {
           setIsVisible(true)
         }
@@ -45,20 +46,27 @@ export function FloatingSocialBar() {
     return () => window.removeEventListener("scroll", handleScroll)
   }, [lastScrollY])
 
+  // Fade out when not hovered (to not cover content), fade in on hover
+  const displayOpacity = isVisible ? (isHovered ? 1 : 0.15) : 0
+
   return (
     <div
+      ref={containerRef}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       className={cn(
-        "fixed right-4 top-1/2 -translate-y-1/2 z-40 hidden lg:flex flex-col items-center gap-2 transition-all duration-500",
-        isVisible ? "opacity-100 translate-x-0" : "opacity-0 translate-x-8 pointer-events-none"
+        "fixed right-4 top-1/2 -translate-y-1/2 z-40 hidden lg:flex flex-col items-center gap-2 transition-all duration-300",
+        isVisible ? "translate-x-0" : "translate-x-8 pointer-events-none"
       )}
+      style={{ opacity: displayOpacity }}
     >
-      {/* Title */}
-      <div className="mb-2 rounded-lg bg-[#0a0a0c]/80 backdrop-blur-xl px-3 py-2 border border-white/10">
+      {/* Title - fixed like Platform, Resources */}
+      <div className="mb-2 rounded-lg bg-[#0a0a0c]/70 backdrop-blur-xl px-3 py-2 border border-white/10">
         <p className="text-[9px] font-bold uppercase tracking-widest text-[#f0b400] whitespace-nowrap">Get in Touch</p>
       </div>
       
       {/* Social icons */}
-      <div className="flex flex-col gap-2 rounded-2xl bg-[#0a0a0c]/80 backdrop-blur-xl p-2 border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
+      <div className="flex flex-col gap-2 rounded-2xl bg-[#0a0a0c]/70 backdrop-blur-xl p-2 border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
         <a 
           href="mailto:thalosinfrastructure@gmail.com" 
           className="flex h-10 w-10 items-center justify-center rounded-xl text-white/60 transition-all hover:bg-[#f0b400]/15 hover:text-[#f0b400]"

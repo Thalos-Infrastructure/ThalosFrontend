@@ -121,13 +121,13 @@ export default function AboutPage() {
     <div className="relative min-h-screen bg-background text-foreground">
       {/* Ocean collage background */}
       <div className="pointer-events-none fixed inset-0 z-0" aria-hidden="true">
-        <div className="absolute inset-0 grid grid-cols-3 grid-rows-2 gap-0 opacity-35">
-          <div className="col-span-2 row-span-1 bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1505142468610-359e7d316be0?w=1280&q=60&auto=format&fit=crop')" }} />
-          <div className="col-span-1 row-span-2 bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=1280&q=60&auto=format&fit=crop')" }} />
-          <div className="col-span-1 row-span-1 bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1280&q=60&auto=format&fit=crop')" }} />
-          <div className="col-span-1 row-span-1 bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1476673160081-cf065607f449?w=1280&q=60&auto=format&fit=crop')" }} />
+        <div className="absolute inset-0 grid grid-cols-3 grid-rows-2 gap-0 opacity-50">
+          <div className="col-span-2 row-span-1 bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1505142468610-359e7d316be0?w=1920&q=80&auto=format&fit=crop')" }} />
+          <div className="col-span-1 row-span-2 bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=1920&q=80&auto=format&fit=crop')" }} />
+          <div className="col-span-1 row-span-1 bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1920&q=80&auto=format&fit=crop')" }} />
+          <div className="col-span-1 row-span-1 bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1476673160081-cf065607f449?w=1920&q=80&auto=format&fit=crop')" }} />
         </div>
-        <div className="absolute inset-0 bg-gradient-to-b from-background/25 via-background/45 to-background/85" />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/15 via-background/35 to-background/75" />
       </div>
       <div
         className="pointer-events-none fixed inset-0 z-0 bg-background"
@@ -157,7 +157,7 @@ export default function AboutPage() {
       </div>
 
       {/* Top nav - same style as main page navbar */}
-      <header className="fixed top-0 left-0 right-0 z-50 border-b border-border/30 bg-background/80 backdrop-blur-xl shadow-[0_2px_16px_rgba(0,0,0,0.08)]">
+      <header className="fixed top-0 left-0 right-0 z-50 border-b border-white/10 bg-[#0a0a0c]/70 backdrop-blur-xl shadow-[0_2px_16px_rgba(0,0,0,0.25)]">
         <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
           <Link href="/" className="flex items-center">
             <Image src="/thalos-icon.png" alt="Thalos" width={72} height={72} className="h-16 w-16 object-contain" priority />
@@ -385,23 +385,63 @@ export default function AboutPage() {
         </section>
 
         {/* ═══════ FOOTER ═══════ */}
-        <footer className="border-t border-border/10">
-          <div className="mx-auto max-w-7xl px-6 py-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-3">
-              <Image src="/thalos-icon.png" alt="Thalos" width={32} height={32} className="h-8 w-8 object-contain" />
-              <span className="text-xs text-muted-foreground">&copy; {new Date().getFullYear()} Thalos Infrastructure</span>
+        <footer className="border-t border-white/10 bg-[#0a0a0c]/70 backdrop-blur-xl">
+          <div className="mx-auto max-w-7xl px-6 py-12">
+            <div className="flex flex-col gap-10 lg:flex-row lg:items-start lg:justify-between">
+              {/* Left: Logo + description + partners */}
+              <div className="flex max-w-md flex-col gap-5">
+                <div className="flex items-start gap-4">
+                  <Image src="/thalos-icon.png" alt="Thalos" width={56} height={56} className="h-14 w-14 shrink-0 object-contain" />
+                  <p className="text-sm font-medium leading-relaxed text-white/60">
+                    Payments and escrow platform on Stellar. Protected funds, staged payments, and productive capital while retained.
+                  </p>
+                </div>
+                
+                {/* Partners */}
+                <div className="flex items-center gap-5">
+                  <a href="https://stellar.org/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 transition-opacity hover:opacity-80">
+                    <span className="text-[10px] font-semibold uppercase tracking-widest text-white/40">Built on</span>
+                    <Image src="/stellar-full.png" alt="Stellar" width={24} height={24} className="h-5 w-5 shrink-0 object-contain opacity-50" />
+                  </a>
+                  <div className="h-3.5 w-px bg-white/10" aria-hidden="true" />
+                  <a href="https://www.trustlesswork.com/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 transition-opacity hover:opacity-80">
+                    <span className="text-[10px] font-semibold uppercase tracking-widest text-white/40">Escrows by</span>
+                    <Image src="/trustless-logo.png" alt="Trustless Work" width={20} height={20} className="h-4 w-auto object-contain opacity-50" />
+                  </a>
+                </div>
+              </div>
+
+              {/* Right: Links in 3 columns */}
+              <div className="grid grid-cols-3 gap-10">
+                <div>
+                  <p className="mb-3 text-xs font-bold uppercase tracking-widest text-[#f0b400]">{t("footer.platform")}</p>
+                  <ul className="flex flex-col gap-2.5">
+                    <li><Link href="/#how-it-works" className="text-sm font-medium text-white/60 transition-colors hover:text-white">{t("nav.howItWorks")}</Link></li>
+                    <li><Link href="/#profiles" className="text-sm font-medium text-white/60 transition-colors hover:text-white">{t("nav.solutions")}</Link></li>
+                  </ul>
+                </div>
+                <div>
+                  <p className="mb-3 text-xs font-bold uppercase tracking-widest text-[#f0b400]">{t("footer.resources")}</p>
+                  <ul className="flex flex-col gap-2.5">
+                    <li><a href="https://www.trustlesswork.com/" target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-white/60 transition-colors hover:text-white">Trustless Work</a></li>
+                    <li><a href="https://stellar.org/" target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-white/60 transition-colors hover:text-white">Stellar Network</a></li>
+                    <li><a href="https://thalos.gitbook.io/thalos-docs" target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-white/60 transition-colors hover:text-white">{t("footer.documentation")}</a></li>
+                  </ul>
+                </div>
+                <div>
+                  <p className="mb-3 text-xs font-bold uppercase tracking-widest text-[#f0b400]">{t("footer.contact")}</p>
+                  <ul className="flex flex-col gap-2.5">
+                    <li><a href="mailto:thalosinfrastructure@gmail.com" className="text-sm font-medium text-white/60 transition-colors hover:text-white">{t("footer.emailUs")}</a></li>
+                    <li><a href="https://x.com/Thalos_infra" target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-white/60 transition-colors hover:text-white">{t("footer.followOnX")}</a></li>
+                    <li><a href="https://www.instagram.com/thalos_platform/" target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-white/60 transition-colors hover:text-white">Instagram</a></li>
+                    <li><a href="https://github.com/Thalos-Infrastructure" target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-white/60 transition-colors hover:text-white">GitHub</a></li>
+                  </ul>
+                </div>
+              </div>
             </div>
-            <div className="flex items-center gap-4">
-              <a href="https://github.com/Thalos-Infrastructure" target="_blank" rel="noopener noreferrer" className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">
-                GitHub
-              </a>
-              <a href="https://x.com/Thalos_infra" target="_blank" rel="noopener noreferrer" className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">
-                X / Twitter
-              </a>
-              <a href="mailto:thalosinfrastructure@gmail.com" className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">
-                Email
-              </a>
-            </div>
+
+            {/* Copyright */}
+            <p className="mt-10 text-center text-xs text-white/30">&copy; {new Date().getFullYear()} Thalos Platform. {t("footer.rights")}</p>
           </div>
         </footer>
       </main>
