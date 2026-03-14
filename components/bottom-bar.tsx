@@ -110,11 +110,11 @@ export function BottomBar({ onNavigate }: { onNavigate: (section: string) => voi
         {showMenu && (
           <div
             ref={menuRef}
-            className="absolute bottom-full left-0 mb-3 w-64 overflow-hidden rounded-2xl border border-white/15 bg-[#0c0c0e] shadow-[0_20px_60px_rgba(0,0,0,0.5),0_4px_16px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.12)]"
+            className="absolute bottom-full left-0 mb-3 w-64 overflow-hidden rounded-2xl border border-white/15 bg-[#0c1220] shadow-[0_20px_60px_rgba(0,0,0,0.5),0_4px_16px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.12)]"
           >
             {/* Water bg layer */}
             <div className="absolute inset-0 bg-cover bg-center opacity-20" style={{ backgroundImage: "url('/ocean-bg.png')" }} aria-hidden="true" />
-            <div className="absolute inset-0 bg-[#0a0a0c]/70 backdrop-blur-xl" aria-hidden="true" />
+            <div className="absolute inset-0 bg-[#0c1220]/90 backdrop-blur-xl" aria-hidden="true" />
 
             <div className="relative z-10 p-3">
               {/* Header */}
@@ -180,7 +180,7 @@ export function BottomBar({ onNavigate }: { onNavigate: (section: string) => voi
             style={{ backgroundImage: "url('/ocean-bg.png')" }}
             aria-hidden="true"
           />
-          <div className="absolute inset-0 bg-[#0a0a0c]/70 backdrop-blur-xl" aria-hidden="true" />
+          <div className="absolute inset-0 bg-[#0c1220]/90 backdrop-blur-xl" aria-hidden="true" />
 
           {/* Menu button */}
           <button
