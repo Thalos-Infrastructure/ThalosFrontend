@@ -76,7 +76,7 @@ const marqueeItems = [...useCases, ...useCases]
 
 function UseCaseCard({ uc }: { uc: typeof useCases[number] }) {
   return (
-    <div className="w-[340px] shrink-0 rounded-2xl border border-white/15 bg-[#0c1220]/85 p-6 backdrop-blur-2xl shadow-[0_12px_48px_rgba(0,0,0,0.5),0_2px_8px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.08)] md:w-[380px]">
+    <div className="w-[340px] shrink-0 rounded-2xl border border-white/10 bg-[#0a0a0c]/70 p-6 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.4)] md:w-[380px]">
       {/* Title */}
       <div className="mb-4 flex items-center gap-3">
         <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: uc.color }} />

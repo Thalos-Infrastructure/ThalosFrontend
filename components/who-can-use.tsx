@@ -41,7 +41,7 @@ export function WhoCanUse() {
           {personas.map((persona, idx) => (
             <div
               key={persona.key}
-              className="section-reveal-child group rounded-2xl border border-white/15 bg-[#0c1220]/85 p-6 backdrop-blur-2xl shadow-[0_12px_48px_rgba(0,0,0,0.5),0_2px_8px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.08)] transition-all duration-500 hover:border-[#f0b400]/25 hover:shadow-[0_12px_52px_rgba(240,180,0,0.1),0_2px_8px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.1)]"
+              className="section-reveal-child group rounded-2xl border border-white/10 bg-[#0a0a0c]/70 p-6 backdrop-blur-xl shadow-[0_4px_16px_rgba(0,0,0,0.25),inset_0_1px_0_rgba(255,255,255,0.06)] transition-all duration-500 hover:border-[#f0b400]/20 hover:shadow-[0_4px_20px_rgba(240,180,0,0.06),inset_0_1px_0_rgba(255,255,255,0.06)]"
               style={{ transitionDelay: isVisible ? `${idx * 80}ms` : "0ms" }}
             >
               <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-[#f0b400]/10 text-[#f0b400] transition-colors group-hover:bg-[#f0b400]/15">

@@ -63,7 +63,7 @@ export function FAQ() {
           </h2>
         </div>
 
-        <div className="rounded-2xl border border-white/15 bg-[#0c1220]/85 px-6 backdrop-blur-2xl shadow-[0_12px_48px_rgba(0,0,0,0.5),0_2px_8px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.08)]">
+        <div className="rounded-2xl border border-white/10 bg-[#0a0a0c]/70 px-6 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.3)]">
           {faqs.map((faq, i) => (
             <div
               key={i}

@@ -184,7 +184,7 @@ export function HowItWorks() {
                 "rounded-xl border-2 px-6 py-3 text-sm font-bold tracking-wide transition-all duration-300",
                 activeUseCase === uc.id
                   ? "border-[#f0b400] bg-[#f0b400]/20 text-[#f0b400] shadow-[0_4px_20px_rgba(240,180,0,0.25),0_0_0_1px_rgba(240,180,0,0.1)]"
-                  : "border-white/15 bg-[#0c1220]/85 text-white shadow-[0_4px_16px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] hover:border-[#f0b400]/30 hover:bg-[#0c1220] hover:text-[#f0b400]"
+                  : "border-white/20 bg-white/5 text-white/90 shadow-[0_2px_8px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.08)] hover:border-white/40 hover:bg-white/10 hover:text-white"
               )}
             >
               {uc.label}
@@ -192,7 +192,7 @@ export function HowItWorks() {
           ))}
         </div>
 
-        <div className="section-reveal-child rounded-2xl border border-white/15 bg-[#0c1220]/85 p-6 backdrop-blur-2xl shadow-[0_12px_48px_rgba(0,0,0,0.5),0_2px_8px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.08)] md:p-10" style={{ transitionDelay: isVisible ? "200ms" : "0ms" }}>
+        <div className="section-reveal-child rounded-2xl border border-white/10 bg-[#0a0a0c]/70 p-6 backdrop-blur-xl shadow-[0_8px_40px_rgba(0,0,0,0.4),0_1px_3px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.06)] md:p-10" style={{ transitionDelay: isVisible ? "200ms" : "0ms" }}>
           <div className="mb-4 text-center">
             <p className="text-sm font-medium text-white/70">{current.description}</p>
           </div>
