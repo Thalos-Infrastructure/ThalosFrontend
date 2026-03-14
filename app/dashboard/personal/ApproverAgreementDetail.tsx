@@ -57,7 +57,9 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
     setErrorMs(null);
     try {
       const { disputeMilestone, sendTransaction } = await import("@/services/trustlessworkService");
+      console.log("[v0] Dispute request params:", { contractId: agr.id, milestoneIndex: idx.toString(), signer: walletAddress });
       const res = await disputeMilestone(agr.id, idx.toString(), walletAddress);
+      console.log("[v0] Dispute API response:", res);
       if (!res.success) throw new Error(res.error || "Error raising dispute");
       const xdr = res.data && typeof res.data === 'object' && 'unsignedTransaction' in res.data ? (res.data as any).unsignedTransaction : undefined;
       if (xdr) {
