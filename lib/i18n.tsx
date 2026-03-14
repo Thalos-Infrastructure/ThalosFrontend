@@ -1333,15 +1333,15 @@ export function useLanguage() {
 }
 
 /** Small globe toggle button */
-export function LanguageToggle({ className }: { className?: string }) {
+> export function LanguageToggle({ className }: { className?: string }) {
   const { lang, setLang } = useLanguage()
   return (
-    <button
-      onClick={() => setLang(lang === "en" ? "es" : "en")}
-      className={`flex items-center gap-1.5 rounded-full border border-border/40 bg-secondary/50 px-3 py-1.5 text-xs font-bold text-muted-foreground transition-all duration-300 hover:bg-secondary hover:text-foreground hover:border-border ${className || ""}`}
-      aria-label={lang === "en" ? "Cambiar a Espanol" : "Switch to English"}
-      title={lang === "en" ? "Cambiar a Espanol" : "Switch to English"}
-    >
+  <button
+  onClick={() => setLang(lang === "en" ? "es" : "en")}
+  className={`flex items-center gap-1.5 rounded-full border border-white/15 bg-[#0c1220]/80 px-3 py-1.5 text-xs font-bold text-white/70 transition-all duration-300 hover:bg-[#f0b400]/15 hover:text-[#f0b400] hover:border-[#f0b400]/30 ${className || ""}`}
+  aria-label={lang === "en" ? "Cambiar a Espanol" : "Switch to English"}
+  title={lang === "en" ? "Cambiar a Espanol" : "Switch to English"}
+  >
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="12" cy="12" r="10"/>
         <line x1="2" y1="12" x2="22" y2="12"/>
@@ -1353,15 +1353,15 @@ export function LanguageToggle({ className }: { className?: string }) {
 }
 
 /** Sun/Moon theme toggle */
-export function ThemeToggle({ className }: { className?: string }) {
+> export function ThemeToggle({ className }: { className?: string }) {
   const { theme, toggleTheme } = useLanguage()
   return (
-    <button
-      onClick={toggleTheme}
-      className={`flex items-center gap-1.5 rounded-full border border-border/40 bg-secondary/50 px-3 py-1.5 text-xs font-bold text-muted-foreground transition-all duration-300 hover:bg-secondary hover:text-foreground hover:border-border ${className || ""}`}
-      aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-      title={theme === "dark" ? "Light mode" : "Dark mode"}
-    >
+  <button
+  onClick={toggleTheme}
+  className={`flex items-center gap-1.5 rounded-full border border-white/15 bg-[#0c1220]/80 px-3 py-1.5 text-xs font-bold text-white/70 transition-all duration-300 hover:bg-[#f0b400]/15 hover:text-[#f0b400] hover:border-[#f0b400]/30 ${className || ""}`}
+  aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+  title={theme === "dark" ? "Light mode" : "Dark mode"}
+  >
       {theme === "dark" ? (
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
       ) : (

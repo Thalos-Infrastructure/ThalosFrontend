@@ -27,7 +27,7 @@ export function Footer() {
   const { t } = useLanguage()
   const { ref, isVisible } = useSectionReveal(0.05)
   return (
-    <footer className="border-t border-white/10 bg-[#0a0a0c]/60 backdrop-blur-xl" ref={ref}>
+    <footer className="border-t border-white/15 bg-[#0c1220]/85 backdrop-blur-2xl" ref={ref}>
       <div className={cn("mx-auto max-w-7xl px-6 py-12 section-reveal", isVisible && "is-visible")}>
         <div className="flex flex-col gap-10 lg:flex-row lg:items-start lg:justify-between">
           {/* Left: Logo + description + partners */}
