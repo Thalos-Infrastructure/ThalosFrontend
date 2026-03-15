@@ -599,12 +599,15 @@ export default function PersonalDashboardPage() {
           {/* ══════ THALOS BOUNTY ══════ */}
           {activeSection === "bounty" && (
             <div className="mx-auto max-w-4xl">
-              <div className="rounded-2xl border border-white/10 bg-[#0c1220] p-8 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)]">
-                <div className="flex flex-col items-center text-center">
-                  <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#f0b400]/10">
-                    <Image src="/thalos-icon.png" alt="Thalos" width={40} height={40} className="h-10 w-10 object-contain" />
-                  </div>
-                  <p className="mb-6 max-w-md text-sm text-white/60">
+              <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#0c1220] p-8 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)]">
+                {/* Background image */}
+                <div className="absolute inset-0 z-0">
+                  <Image src="/thalos-bounty-bg.gif" alt="" fill className="object-cover opacity-20" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#0c1220] via-[#0c1220]/80 to-[#0c1220]/60" />
+                </div>
+                
+                <div className="relative z-10 flex flex-col items-center text-center">
+                  <p className="mb-6 max-w-md text-sm text-white/80">
                     {t("dashPage.bountyDesc")}
                   </p>
                   <div className="flex flex-wrap items-center justify-center gap-3">
@@ -617,16 +620,16 @@ export default function PersonalDashboardPage() {
                   </div>
                 </div>
                 
-                <div className="mt-8 grid gap-4 md:grid-cols-3">
-                  <div className="rounded-xl border border-white/10 bg-white/5 p-4 text-center">
+                <div className="relative z-10 mt-8 grid gap-4 md:grid-cols-3">
+                  <div className="rounded-xl border border-white/10 bg-[#0c1220]/80 p-4 text-center backdrop-blur-sm">
                     <p className="text-2xl font-bold text-[#f0b400]">0</p>
                     <p className="text-xs text-white/50">{t("dashPage.activeBounties")}</p>
                   </div>
-                  <div className="rounded-xl border border-white/10 bg-white/5 p-4 text-center">
+                  <div className="rounded-xl border border-white/10 bg-[#0c1220]/80 p-4 text-center backdrop-blur-sm">
                     <p className="text-2xl font-bold text-white">$0</p>
                     <p className="text-xs text-white/50">{t("dashPage.earned")}</p>
                   </div>
-                  <div className="rounded-xl border border-white/10 bg-white/5 p-4 text-center">
+                  <div className="rounded-xl border border-white/10 bg-[#0c1220]/80 p-4 text-center backdrop-blur-sm">
                     <p className="text-2xl font-bold text-white">0</p>
                     <p className="text-xs text-white/50">{t("dashPage.completed")}</p>
                   </div>
