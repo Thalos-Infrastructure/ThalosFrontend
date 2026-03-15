@@ -605,14 +605,14 @@ export default function PersonalDashboardPage() {
               
               <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#0c1220] p-8 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)]">
                 {/* Background collage pattern */}
-                <div className="absolute inset-0 z-0 grid grid-cols-3 grid-rows-2 gap-2 p-4 opacity-20">
-                  {[...Array(6)].map((_, i) => (
-                    <div key={i} className="relative overflow-hidden rounded-lg">
-                      <Image src="/thalos-bounty-bg.gif" alt="" fill className="object-contain" />
+                <div className="absolute inset-0 z-0 grid grid-cols-4 grid-rows-2 gap-0.5 opacity-25">
+                  {[...Array(8)].map((_, i) => (
+                    <div key={i} className="relative overflow-hidden">
+                      <Image src="/thalos-bounty-bg.gif" alt="" fill className="object-cover scale-110" />
                     </div>
                   ))}
                 </div>
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0c1220] via-[#0c1220]/85 to-[#0c1220]/60" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0c1220] via-[#0c1220]/80 to-[#0c1220]/50" />
                 
                 <div className="relative z-10 flex flex-col items-center text-center">
                   <p className="mb-6 max-w-md text-sm text-white/80">

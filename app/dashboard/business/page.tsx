@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback, useId, useRef, useMemo } from 
 import Image from "next/image"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
+import { AlertTriangle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { ThalosLoader } from "@/components/thalos-loader"
 import { LanguageToggle, ThemeToggle, useLanguage } from "@/lib/i18n"
@@ -145,6 +146,8 @@ export default function BusinessDashboardPage() {
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
   const [agreements, setAgreements] = useState<Agreement[]>(initialAgreements)
   const [viewingAgreement, setViewingAgreement] = useState<string | null>(null)
+  const [disputedMs, setDisputedMs] = useState<Set<string>>(new Set())
+  const [showDisputeConfirm, setShowDisputeConfirm] = useState<{ agrId: string; msIdx: number } | null>(null)
 
   const approveMilestone = (agrId: string, msIdx: number) => {
     setAgreements(prev => prev.map(a => a.id === agrId ? { ...a, milestones: a.milestones.map((m, i) => i === msIdx && m.status === "pending" ? { ...m, status: "approved" as const } : m) } : a))
@@ -435,15 +438,15 @@ export default function BusinessDashboardPage() {
               </p>
               
               <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#0c1220] p-8 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)]">
-                {/* Background collage pattern */}
-                <div className="absolute inset-0 z-0 grid grid-cols-3 grid-rows-2 gap-2 p-4 opacity-20">
-                  {[...Array(6)].map((_, i) => (
-                    <div key={i} className="relative overflow-hidden rounded-lg">
-                      <Image src="/thalos-bounty-bg.gif" alt="" fill className="object-contain" />
+{/* Background collage pattern */}
+                <div className="absolute inset-0 z-0 grid grid-cols-4 grid-rows-2 gap-0.5 opacity-25">
+                  {[...Array(8)].map((_, i) => (
+                    <div key={i} className="relative overflow-hidden">
+                      <Image src="/thalos-bounty-bg.gif" alt="" fill className="object-cover scale-110" />
                     </div>
                   ))}
                 </div>
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0c1220] via-[#0c1220]/85 to-[#0c1220]/60" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0c1220] via-[#0c1220]/80 to-[#0c1220]/50" />
                 
                 <div className="relative z-10 flex flex-col items-center text-center">
                   <p className="mb-6 max-w-md text-sm text-white/80">
@@ -752,6 +755,19 @@ export default function BusinessDashboardPage() {
                               Release Funds
                             </Button>
                           )}
+                          {ms.status !== "released" && !disputedMs.has(`${agr.id}-${idx}`) && (
+                            <Button 
+                              size="sm" 
+                              onClick={() => setShowDisputeConfirm({ agrId: agr.id, msIdx: idx })}
+                              className="rounded-full bg-red-500/10 px-3 text-xs font-semibold text-red-400 hover:bg-red-500/20 border border-red-500/20"
+                            >
+                              <AlertTriangle className="h-3 w-3 mr-1" />
+                              {t("dispute.raiseDispute")}
+                            </Button>
+                          )}
+                          {disputedMs.has(`${agr.id}-${idx}`) && (
+                            <span className="text-xs text-red-400 font-medium">{t("dispute.disputed")}</span>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -801,6 +817,39 @@ export default function BusinessDashboardPage() {
               </div>
             )
           })()}
+
+          {/* Dispute Confirmation Modal */}
+          {showDisputeConfirm && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+              <div className="mx-4 max-w-md rounded-2xl border border-white/10 bg-[#0c1220] p-6 shadow-2xl">
+                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-500/10 mx-auto">
+                  <AlertTriangle className="h-6 w-6 text-red-400" />
+                </div>
+                <h3 className="text-center text-lg font-bold text-white mb-2">{t("dispute.confirmTitle")}</h3>
+                <p className="text-center text-sm text-white/60 mb-6">{t("dispute.confirmDesc")}</p>
+                <div className="flex gap-3">
+                  <Button 
+                    variant="outline" 
+                    className="flex-1 rounded-lg border-white/10 text-white hover:bg-white/5"
+                    onClick={() => setShowDisputeConfirm(null)}
+                  >
+                    {t("dispute.cancel")}
+                  </Button>
+                  <Button 
+                    className="flex-1 rounded-lg bg-red-500 text-white hover:bg-red-600"
+                    onClick={() => {
+                      if (showDisputeConfirm) {
+                        setDisputedMs(prev => new Set(prev).add(`${showDisputeConfirm.agrId}-${showDisputeConfirm.msIdx}`))
+                        setShowDisputeConfirm(null)
+                      }
+                    }}
+                  >
+                    {t("dispute.confirm")}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* ══════ TEMPLATES ══════ */}
           {activeSection === "templates" && (

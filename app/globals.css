@@ -141,17 +141,34 @@
 }
 .light main .text-white\/80,
 .light main .text-white\/70,
-.light main .text-white\/60 {
+.light main .text-white\/60,
+.light main .text-white\/50,
+.light main .text-white\/40,
+.light main .text-white\/30 {
   color: white !important;
 }
-.light main .text-white\/50 {
-  color: rgba(255, 255, 255, 0.85) !important;
+
+/* Light mode - force all text colors in main content to white */
+.light main .text-\[\#f0b400\] {
+  color: #f0b400 !important;
 }
-.light main .text-white\/40 {
-  color: rgba(255, 255, 255, 0.8) !important;
+.light main .text-gray-400,
+.light main .text-gray-500,
+.light main .text-gray-600 {
+  color: rgba(255, 255, 255, 0.9) !important;
 }
-.light main .text-white\/30 {
-  color: rgba(255, 255, 255, 0.7) !important;
+
+/* Light mode - chart text and axis labels */
+.light main text,
+.light main .recharts-text,
+.light main .recharts-cartesian-axis-tick-value {
+  fill: white !important;
+}
+
+/* Light mode - truncate/mono text for addresses */
+.light main .truncate,
+.light main .font-mono {
+  color: white !important;
 }
 
 /* Light mode - dashboard cards get blue-ish tint */
