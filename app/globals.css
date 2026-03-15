@@ -135,27 +135,31 @@
   color: white !important;
 }
 
-/* Light mode - main dashboard content keeps white text */
-.light main .text-white {
-  color: white !important;
-}
+/* Light mode - ALL text in main dashboard area forced to white */
+.light main .text-white,
 .light main .text-white\/80,
 .light main .text-white\/70,
 .light main .text-white\/60,
 .light main .text-white\/50,
 .light main .text-white\/40,
-.light main .text-white\/30 {
+.light main .text-white\/35,
+.light main .text-white\/30,
+.light main .text-white\/25,
+.light main .text-white\/20 {
   color: white !important;
 }
 
-/* Light mode - force all text colors in main content to white */
+/* Light mode - preserve accent colors */
 .light main .text-\[\#f0b400\] {
   color: #f0b400 !important;
 }
+
+/* Light mode - force gray text to white */
 .light main .text-gray-400,
 .light main .text-gray-500,
-.light main .text-gray-600 {
-  color: rgba(255, 255, 255, 0.9) !important;
+.light main .text-gray-600,
+.light main .text-muted-foreground {
+  color: white !important;
 }
 
 /* Light mode - chart text and axis labels */
@@ -171,6 +175,23 @@
   color: white !important;
 }
 
+/* Light mode - all paragraph and span text */
+.light main p,
+.light main span,
+.light main h1,
+.light main h2,
+.light main h3,
+.light main h4,
+.light main label {
+  color: white !important;
+}
+
+/* Light mode - preserve button text colors */
+.light main button.bg-\[\#f0b400\] span,
+.light main button.bg-\[\#f0b400\] {
+  color: #0c1220 !important;
+}
+
 /* Light mode - dashboard cards get blue-ish tint */
 .light .bg-\[\#0c1220\] {
   background-color: #1a2a42 !important;
@@ -180,6 +201,43 @@
 }
 .light .bg-\[\#0c1220\]\/80 {
   background-color: rgba(26, 42, 66, 0.9) !important;
+}
+
+/* Global smooth transitions */
+* {
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Page transitions */
+main {
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Section transitions */
+[class*="activeSection"] {
+  animation: slideIn 0.25s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 @theme inline {

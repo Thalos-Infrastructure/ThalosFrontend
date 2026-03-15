@@ -432,7 +432,7 @@ export default function BusinessDashboardPage() {
         <main className="flex-1 overflow-y-auto p-4 lg:p-8">
           {/* ══════ THALOS BOUNTY ══════ */}
           {activeSection === "bounty" && (
-            <div className="mx-auto max-w-4xl pt-8">
+            <div className="mx-auto max-w-4xl pt-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
               <p className="mb-4 text-center text-xs text-white/40">
                 {t("dashPage.bountyComingSoon")}
               </p>
@@ -482,7 +482,7 @@ export default function BusinessDashboardPage() {
 
           {/* ══════ ANALYTICS ══════ */}
           {activeSection === "analytics" && (
-            <div className="mx-auto max-w-5xl">
+            <div className="mx-auto max-w-5xl animate-in fade-in slide-in-from-bottom-2 duration-300">
               <h1 className="mb-6 text-2xl font-semibold text-white">{t("dashPage.enterprise")} {t("dashPage.analytics")}</h1>
 
               <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -569,7 +569,7 @@ export default function BusinessDashboardPage() {
 
           {/* ══════ AGREEMENTS ══════ */}
           {activeSection === "agreements" && !viewingAgreement && (
-            <div className="mx-auto max-w-4xl">
+            <div className="mx-auto max-w-4xl animate-in fade-in slide-in-from-bottom-2 duration-300">
               {/* Header */}
               <div className="mb-6 flex items-center justify-between">
                 <h1 className="text-2xl font-semibold text-white">{t("dashPage.enterpriseAgreements")}</h1>
@@ -853,7 +853,7 @@ export default function BusinessDashboardPage() {
 
           {/* ══════ TEMPLATES ══════ */}
           {activeSection === "templates" && (
-            <div className="mx-auto max-w-4xl">
+            <div className="mx-auto max-w-4xl animate-in fade-in slide-in-from-bottom-2 duration-300">
               <div className="mb-2 flex items-center justify-between">
                 <div>
                   <h1 className="text-2xl font-semibold text-white">{t("dashPage.templates")}</h1>
@@ -972,7 +972,7 @@ export default function BusinessDashboardPage() {
 
           {/* ══════ WALLETS ══════ */}
           {activeSection === "wallets" && (
-            <div className="mx-auto max-w-4xl">
+            <div className="mx-auto max-w-4xl animate-in fade-in slide-in-from-bottom-2 duration-300">
               <h1 className="mb-6 text-2xl font-semibold text-white">Enterprise Wallets</h1>
               <div className="flex flex-col gap-4">
                 {connectedWallets.map((w) => (
@@ -1011,7 +1011,7 @@ export default function BusinessDashboardPage() {
 
           {/* ══════ CREATE AGREEMENT ══════ */}
           {activeSection === "create" && (
-            <div className="mx-auto max-w-4xl">
+            <div className="mx-auto max-w-4xl animate-in fade-in slide-in-from-bottom-2 duration-300">
               <div className="mb-6 flex items-center justify-between">
                 <h1 className="text-2xl font-semibold text-white">New Agreement</h1>
                 <Button onClick={() => { setActiveSection("agreements"); resetWizard() }} className="rounded-full bg-white/10 px-6 text-sm font-semibold text-white/70 hover:bg-white/15 hover:text-white">View Agreements</Button>

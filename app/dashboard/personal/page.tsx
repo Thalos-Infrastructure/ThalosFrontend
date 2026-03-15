@@ -598,7 +598,7 @@ export default function PersonalDashboardPage() {
         <main className="flex-1 overflow-y-auto p-4 lg:p-8">
           {/* ══════ THALOS BOUNTY ══════ */}
           {activeSection === "bounty" && (
-            <div className="mx-auto max-w-4xl pt-8">
+            <div className="mx-auto max-w-4xl pt-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
               <p className="mb-4 text-center text-xs text-white/40">
                 {t("dashPage.bountyComingSoon")}
               </p>
@@ -648,7 +648,7 @@ export default function PersonalDashboardPage() {
 
           {/* ══════ ANALYTICS ══════ */}
           {activeSection === "analytics" && (
-            <div className="mx-auto max-w-5xl">
+            <div className="mx-auto max-w-5xl animate-in fade-in slide-in-from-bottom-2 duration-300">
               <h1 className="mb-6 text-2xl font-semibold text-white">{t("dashPage.analytics")}</h1>
 
               {/* Stats row */}
@@ -738,7 +738,7 @@ export default function PersonalDashboardPage() {
 
           {/* ══════ AGREEMENTS ══════ */}
           {activeSection === "agreements" && !viewingAgreement && (
-            <div className="mx-auto max-w-4xl">
+            <div className="mx-auto max-w-4xl animate-in fade-in slide-in-from-bottom-2 duration-300">
               {/* Header */}
               <div className="mb-6 flex items-center justify-between">
                 <h1 className="text-2xl font-semibold text-white">{t("dashPage.myAgreements")}</h1>
@@ -953,7 +953,7 @@ export default function PersonalDashboardPage() {
 
           {/* ══════ WALLETS ══════ */}
           {activeSection === "wallets" && (
-            <div className="mx-auto max-w-4xl">
+            <div className="mx-auto max-w-4xl animate-in fade-in slide-in-from-bottom-2 duration-300">
               <h1 className="mb-6 text-2xl font-semibold text-white">My Wallets</h1>
               <div className="flex flex-col gap-4">
                 {connectedWallets.map((w) => (
@@ -1004,7 +1004,7 @@ export default function PersonalDashboardPage() {
 
           {/* ══════ CREATE AGREEMENT ══════ */}
           {activeSection === "create" && (
-            <div className="mx-auto max-w-4xl">
+            <div className="mx-auto max-w-4xl animate-in fade-in slide-in-from-bottom-2 duration-300">
               <div className="mb-6 flex items-center justify-between">
                 <h1 className="text-2xl font-semibold text-white">New Agreement</h1>
                 <Button onClick={() => { setActiveSection("agreements"); resetWizard() }}
