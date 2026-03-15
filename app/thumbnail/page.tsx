@@ -19,9 +19,7 @@ export default function ThumbnailPage() {
     try {
       const dataUrl = await toPng(thumbnailRef.current, {
         quality: 1,
-        pixelRatio: 2,
-        width: 1200,
-        height: 630
+        pixelRatio: 2
       })
       
       const link = document.createElement('a')
@@ -38,12 +36,12 @@ export default function ThumbnailPage() {
     {/* Download button */}
     <button
       onClick={handleDownload}
-      className="fixed top-4 right-4 z-50 rounded-lg bg-[#f0b400] px-6 py-3 text-sm font-semibold text-black hover:bg-[#e5ab00] shadow-lg transition-all"
+      className="fixed top-4 right-4 z-50 rounded-lg bg-[#f0b400] px-6 py-3 text-sm font-semibold text-black hover:bg-[#e5ab00] shadow-lg transition-all print:hidden"
     >
       Download PNG
     </button>
     
-    <div ref={thumbnailRef} className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden" style={{ width: '1200px', height: '630px', minHeight: '630px' }}>
+    <div ref={thumbnailRef} className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden">
       {/* Ocean sunset background */}
       <Image
         src="/ocean-sunset-bg.png"
