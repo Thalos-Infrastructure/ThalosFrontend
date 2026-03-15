@@ -48,7 +48,7 @@ export default function Home() {
   const handleNavigate = useCallback((section: string) => {
     // Handle sign-in navigation to auth page
     if (section === "sign-in") {
-      router.push("/sign-in")
+      router.push("/auth/login")
       return
     }
     const el = sectionsRef.current[section] || document.getElementById(section)

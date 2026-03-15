@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils"
 import { ThalosLoader } from "@/components/thalos-loader"
 import { LanguageToggle, ThemeToggle, useLanguage } from "@/lib/i18n"
 import { Footer } from "@/components/footer"
+import { useStellarWallet } from "@/lib/stellar-wallet"
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area,
 } from "recharts"
@@ -136,6 +137,7 @@ const sidebarItems = [
    ════════════════════════════════════════════════ */
 export default function BusinessDashboardPage() {
   const { t } = useLanguage()
+  const { openWalletModal } = useStellarWallet()
   const [loading, setLoading] = useState(false)
 
   const [activeSection, setActiveSection] = useState("agreements")
@@ -434,14 +436,14 @@ export default function BusinessDashboardPage() {
               
               <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#0c1220] p-8 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)]">
                 {/* Background collage pattern */}
-                <div className="absolute inset-0 z-0 grid grid-cols-4 grid-rows-3 gap-1 opacity-15">
-                  {[...Array(12)].map((_, i) => (
-                    <div key={i} className="relative overflow-hidden">
-                      <Image src="/thalos-bounty-bg.gif" alt="" fill className="object-cover" style={{ transform: `scale(${1 + (i % 3) * 0.2}) rotate(${(i % 4) * 15}deg)` }} />
+                <div className="absolute inset-0 z-0 grid grid-cols-3 grid-rows-2 gap-2 p-4 opacity-20">
+                  {[...Array(6)].map((_, i) => (
+                    <div key={i} className="relative overflow-hidden rounded-lg">
+                      <Image src="/thalos-bounty-bg.gif" alt="" fill className="object-contain" />
                     </div>
                   ))}
                 </div>
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0c1220] via-[#0c1220]/90 to-[#0c1220]/70" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0c1220] via-[#0c1220]/85 to-[#0c1220]/60" />
                 
                 <div className="relative z-10 flex flex-col items-center text-center">
                   <p className="mb-6 max-w-md text-sm text-white/80">
@@ -947,9 +949,12 @@ export default function BusinessDashboardPage() {
                     </div>
                   </div>
                 ))}
-                <button className="flex items-center justify-center gap-3 rounded-2xl border border-dashed border-white/10 bg-white/[0.02] p-8 text-white/30 hover:border-[#3b82f6]/30 hover:text-[#3b82f6] transition-all">
+                <button 
+                  onClick={() => openWalletModal()}
+                  className="flex items-center justify-center gap-3 rounded-2xl border border-dashed border-white/10 bg-[#0c1220]/60 p-8 text-white/70 hover:border-[#3b82f6]/30 hover:text-[#3b82f6] hover:bg-[#0c1220]/80 transition-all"
+                >
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                  <span className="text-sm font-medium">Connect New Wallet</span>
+                  <span className="text-sm font-medium">{t("dashPage.connectWallet")}</span>
                 </button>
               </div>
             </div>

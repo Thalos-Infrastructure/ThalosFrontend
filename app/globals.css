@@ -142,12 +142,27 @@
 .light main .text-white\/80,
 .light main .text-white\/70,
 .light main .text-white\/60 {
+  color: white !important;
+}
+.light main .text-white\/50 {
+  color: rgba(255, 255, 255, 0.85) !important;
+}
+.light main .text-white\/40 {
   color: rgba(255, 255, 255, 0.8) !important;
 }
-.light main .text-white\/50,
-.light main .text-white\/40,
 .light main .text-white\/30 {
-  color: rgba(255, 255, 255, 0.5) !important;
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
+/* Light mode - dashboard cards get blue-ish tint */
+.light .bg-\[\#0c1220\] {
+  background-color: #1a2a42 !important;
+}
+.light .bg-\[\#0c1220\]\/60 {
+  background-color: rgba(26, 42, 66, 0.85) !important;
+}
+.light .bg-\[\#0c1220\]\/80 {
+  background-color: rgba(26, 42, 66, 0.9) !important;
 }
 
 @theme inline {
