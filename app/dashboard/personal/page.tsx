@@ -598,13 +598,21 @@ export default function PersonalDashboardPage() {
         <main className="flex-1 overflow-y-auto p-4 lg:p-8">
           {/* ══════ THALOS BOUNTY ══════ */}
           {activeSection === "bounty" && (
-            <div className="mx-auto max-w-4xl">
+            <div className="mx-auto max-w-4xl pt-8">
+              <p className="mb-4 text-center text-xs text-white/40">
+                {t("dashPage.bountyComingSoon")}
+              </p>
+              
               <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#0c1220] p-8 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)]">
-                {/* Background image */}
-                <div className="absolute inset-0 z-0">
-                  <Image src="/thalos-bounty-bg.gif" alt="" fill className="object-cover opacity-20" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#0c1220] via-[#0c1220]/80 to-[#0c1220]/60" />
+                {/* Background collage pattern */}
+                <div className="absolute inset-0 z-0 grid grid-cols-4 grid-rows-3 gap-1 opacity-15">
+                  {[...Array(12)].map((_, i) => (
+                    <div key={i} className="relative overflow-hidden">
+                      <Image src="/thalos-bounty-bg.gif" alt="" fill className="object-cover" style={{ transform: `scale(${1 + (i % 3) * 0.2}) rotate(${(i % 4) * 15}deg)` }} />
+                    </div>
+                  ))}
                 </div>
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0c1220] via-[#0c1220]/90 to-[#0c1220]/70" />
                 
                 <div className="relative z-10 flex flex-col items-center text-center">
                   <p className="mb-6 max-w-md text-sm text-white/80">
@@ -635,10 +643,6 @@ export default function PersonalDashboardPage() {
                   </div>
                 </div>
               </div>
-              
-              <p className="mt-4 text-center text-xs text-white/40">
-                {t("dashPage.bountyComingSoon")}
-              </p>
             </div>
           )}
 
@@ -655,7 +659,7 @@ export default function PersonalDashboardPage() {
                   { l: t("dashPage.yieldEarned"), v: "$32.50" },
                   { l: t("dashPage.completed"), v: "1" },
                 ].map((s) => (
-                  <div key={s.l} className="rounded-xl border border-white/[0.06] bg-[#0a0a0c]/70 p-4 backdrop-blur-md">
+                  <div key={s.l} className="rounded-xl border border-white/10 bg-[#0c1220]/60 p-4 shadow-[0_4px_16px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.05)]">
                     <p className="text-[10px] font-bold uppercase tracking-widest text-white/30">{s.l}</p>
                     <p className="mt-1 text-lg font-bold text-white">{s.v}</p>
                   </div>
@@ -664,7 +668,7 @@ export default function PersonalDashboardPage() {
 
               {/* Charts */}
               <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
-                <div className="rounded-xl border border-white/[0.06] bg-[#0a0a0c]/70 p-5 backdrop-blur-md">
+                <div className="rounded-xl border border-white/10 bg-[#0c1220]/60 p-5 shadow-[0_4px_16px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.05)]">
                   <h3 className="mb-1 text-sm font-semibold uppercase tracking-wider text-white/40">{t("dashPage.monthlyAgreements")}</h3>
                   <p className="mb-4 text-xs text-white/25">&nbsp;</p>
                   <div className="h-52">
@@ -680,7 +684,7 @@ export default function PersonalDashboardPage() {
                   </div>
                 </div>
 
-                <div className="rounded-xl border border-white/[0.06] bg-[#0a0a0c]/70 p-5 backdrop-blur-md">
+                <div className="rounded-xl border border-white/10 bg-[#0c1220]/60 p-5 shadow-[0_4px_16px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.05)]">
                   <h3 className="mb-1 text-sm font-semibold uppercase tracking-wider text-white/40">{t("dashPage.volume")}</h3>
                   <p className="mb-4 text-xs text-white/25">&nbsp;</p>
                   <div className="h-52">
@@ -704,7 +708,7 @@ export default function PersonalDashboardPage() {
               </div>
 
               {/* Recent agreements */}
-              <div className="rounded-xl border border-white/[0.06] bg-[#0a0a0c]/70 p-5 backdrop-blur-md">
+              <div className="rounded-xl border border-white/10 bg-[#0c1220]/60 p-5 shadow-[0_4px_16px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.05)]">
                 <div className="mb-4 flex items-center justify-between">
                   <h3 className="text-sm font-semibold uppercase tracking-wider text-white/40">{t("dashPage.recentAgreements")}</h3>
                   <button onClick={() => setActiveSection("agreements")} className="text-xs font-semibold text-[#f0b400] hover:underline">{t("dashPage.viewAll")}</button>
@@ -787,7 +791,7 @@ export default function PersonalDashboardPage() {
 
               {/* Agreements list */}
               {filteredAgreements.length === 0 ? (
-                <div className="flex flex-col items-center justify-center rounded-2xl border border-white/[0.06] bg-[#0a0a0c]/70 py-16 px-6 text-center">
+                <div className="flex flex-col items-center justify-center rounded-2xl border border-white/10 bg-[#0c1220] py-16 px-6 text-center shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)]">
                   <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" className="text-white/15 mb-4"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
                   <p className="text-sm font-medium text-white/40">{t("dashPage.noResults")}</p>
                   <p className="mt-1 text-xs text-white/20">{t("dashPage.noResultsDesc")}</p>
@@ -802,7 +806,7 @@ export default function PersonalDashboardPage() {
                   const progressPct = (completedMs / agr.milestones.length) * 100
                   return (
                     <button key={agr.id} onClick={() => setViewingAgreement(agr.id)}
-                      className="flex flex-col gap-4 rounded-2xl border border-white/[0.06] bg-[#0a0a0c]/70 p-5 backdrop-blur-md transition-all hover:border-white/15 text-left w-full">
+                      className="flex flex-col gap-4 rounded-2xl border border-white/10 bg-[#0c1220] p-5 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)] transition-all hover:border-white/20 text-left w-full">
                       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between w-full">
                         <div>
                           <p className="text-base font-semibold text-white">{agr.title}</p>

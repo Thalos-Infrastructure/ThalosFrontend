@@ -427,13 +427,21 @@ export default function BusinessDashboardPage() {
         <main className="flex-1 overflow-y-auto p-4 lg:p-8">
           {/* ══════ THALOS BOUNTY ══════ */}
           {activeSection === "bounty" && (
-            <div className="mx-auto max-w-4xl">
+            <div className="mx-auto max-w-4xl pt-8">
+              <p className="mb-4 text-center text-xs text-white/40">
+                {t("dashPage.bountyComingSoon")}
+              </p>
+              
               <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#0c1220] p-8 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)]">
-                {/* Background image */}
-                <div className="absolute inset-0 z-0">
-                  <Image src="/thalos-bounty-bg.gif" alt="" fill className="object-cover opacity-20" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#0c1220] via-[#0c1220]/80 to-[#0c1220]/60" />
+                {/* Background collage pattern */}
+                <div className="absolute inset-0 z-0 grid grid-cols-4 grid-rows-3 gap-1 opacity-15">
+                  {[...Array(12)].map((_, i) => (
+                    <div key={i} className="relative overflow-hidden">
+                      <Image src="/thalos-bounty-bg.gif" alt="" fill className="object-cover" style={{ transform: `scale(${1 + (i % 3) * 0.2}) rotate(${(i % 4) * 15}deg)` }} />
+                    </div>
+                  ))}
                 </div>
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0c1220] via-[#0c1220]/90 to-[#0c1220]/70" />
                 
                 <div className="relative z-10 flex flex-col items-center text-center">
                   <p className="mb-6 max-w-md text-sm text-white/80">
@@ -464,10 +472,6 @@ export default function BusinessDashboardPage() {
                   </div>
                 </div>
               </div>
-              
-              <p className="mt-4 text-center text-xs text-white/40">
-                {t("dashPage.bountyComingSoon")}
-              </p>
             </div>
           )}
 

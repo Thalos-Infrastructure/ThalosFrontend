@@ -126,12 +126,28 @@
   color: #3d5a80 !important;
 }
 
-/* Light mode - sidebar text stays white */
+/* Light mode - sidebar and dashboard content text stays white */
 .light aside .text-white,
 .light aside .text-white\/70,
 .light aside .text-white\/60,
-.light aside .text-white\/50 {
+.light aside .text-white\/50,
+.light aside .text-white\/40 {
   color: white !important;
+}
+
+/* Light mode - main dashboard content keeps white text */
+.light main .text-white {
+  color: white !important;
+}
+.light main .text-white\/80,
+.light main .text-white\/70,
+.light main .text-white\/60 {
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+.light main .text-white\/50,
+.light main .text-white\/40,
+.light main .text-white\/30 {
+  color: rgba(255, 255, 255, 0.5) !important;
 }
 
 @theme inline {
