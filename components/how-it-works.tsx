@@ -129,7 +129,7 @@ function FlowDiagram({ steps }: { steps: typeof useCases[0]["steps"] }) {
               "flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border transition-all duration-500 md:h-14 md:w-14",
               i <= activeStep
                 ? "border-[#f0b400]/30 bg-[#f0b400]/10 text-[#f0b400] shadow-[0_4px_20px_rgba(240,180,0,0.15)]"
-                : "border-border/30 bg-card/30 text-muted-foreground"
+                : "border-white/20 bg-white/5 text-white/50"
             )}
           >
             {icons[step.icon]}
@@ -137,11 +137,11 @@ function FlowDiagram({ steps }: { steps: typeof useCases[0]["steps"] }) {
           <div className="min-w-0 flex-1 text-left md:flex-initial md:text-center">
             <p className={cn(
               "text-sm font-semibold transition-colors",
-              i <= activeStep ? "text-foreground" : "text-muted-foreground"
+              i <= activeStep ? "text-white" : "text-white/50"
             )}>
               {step.label}
             </p>
-            <p className="text-xs text-muted-foreground leading-relaxed">{step.detail}</p>
+            <p className="text-xs text-white/60 leading-relaxed">{step.detail}</p>
           </div>
         </div>
       ))}
@@ -167,24 +167,24 @@ export function HowItWorks() {
             <span>{twText}</span>
             <span className={cn("ml-0.5 inline-block h-4 w-0.5 bg-[#f0b400] align-middle", twActive ? "animate-pulse" : "opacity-0")} />
           </p>
-          <h2 className="mb-4 text-5xl font-bold tracking-tight text-foreground md:text-6xl text-balance">
+          <h2 className="mb-4 text-5xl font-bold tracking-tight text-white md:text-6xl text-balance">
             {t("hiw.title")}
           </h2>
-          <p className="mx-auto max-w-2xl text-base font-medium text-muted-foreground leading-relaxed text-pretty">
+          <p className="mx-auto max-w-2xl text-base font-medium text-white/60 leading-relaxed text-pretty">
             {t("hiw.desc")}
           </p>
         </div>
 
-        <div className="section-reveal-child mb-10 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center sm:justify-center" style={{ transitionDelay: isVisible ? "120ms" : "0ms" }}>
+        <div className="section-reveal-child mb-10 grid grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:items-center sm:justify-center sm:gap-4" style={{ transitionDelay: isVisible ? "120ms" : "0ms" }}>
           {useCases.map((uc) => (
             <button
               key={uc.id}
               onClick={() => setActiveUseCase(uc.id)}
               className={cn(
-                "rounded-full border px-5 py-2.5 text-sm font-semibold transition-all duration-400",
+                "rounded-xl border-2 px-6 py-3 text-sm font-bold tracking-wide transition-all duration-300",
                 activeUseCase === uc.id
-                  ? "border-[#f0b400]/30 bg-[#f0b400]/10 text-[#f0b400] shadow-[0_2px_10px_rgba(240,180,0,0.15),inset_0_1px_0_rgba(255,255,255,0.06)]"
-                  : "border-border/20 bg-card/30 text-muted-foreground shadow-[0_1px_4px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.04)] hover:border-[#b0c4de]/30 hover:text-[#b0c4de]"
+                  ? "border-[#f0b400] bg-[#f0b400]/20 text-[#f0b400] shadow-[0_4px_20px_rgba(240,180,0,0.25),0_0_0_1px_rgba(240,180,0,0.1)]"
+                  : "border-white/20 bg-white/5 text-white/90 shadow-[0_2px_8px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.08)] hover:border-white/40 hover:bg-white/10 hover:text-white"
               )}
             >
               {uc.label}
@@ -192,9 +192,9 @@ export function HowItWorks() {
           ))}
         </div>
 
-        <div className="section-reveal-child rounded-2xl border border-border/20 bg-card/40 p-6 backdrop-blur-sm shadow-[0_8px_40px_rgba(0,0,0,0.3),0_1px_3px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.06)] md:p-10" style={{ transitionDelay: isVisible ? "200ms" : "0ms" }}>
+        <div className="section-reveal-child rounded-2xl border border-white/10 bg-[#0c1220] p-6 shadow-[0_8px_40px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)] md:p-10" style={{ transitionDelay: isVisible ? "200ms" : "0ms" }}>
           <div className="mb-4 text-center">
-            <p className="text-sm font-medium text-muted-foreground">{current.description}</p>
+            <p className="text-sm font-medium text-white/70">{current.description}</p>
           </div>
           <FlowDiagram key={current.id} steps={current.steps} />
         </div>

@@ -21,7 +21,8 @@ const translations: Record<Lang, Record<string, string>> = {
     "hero.desc": "Thalos powers agreements with programmable escrows on the Stellar network. Funds stay protected, milestones drive releases, and idle capital earns yield.",
     "hero.cta1": "Get Started",
     "hero.cta2": "See How It Works",
-    "hero.weAre": "a decentralized escrow and trust infrastructure built on Stellar that enables secure, programmable, milestone-based payments between individuals, entrepreneurs, and businesses across multiple industries without relying on traditional intermediaries.",
+    "hero.weAreTag": "<We are>",
+    "hero.weAre": "a decentralized escrow and trust platform built on Stellar that enables secure, programmable, milestone-based payments between individuals, entrepreneurs, and businesses across multiple industries without relying on traditional intermediaries.",
     "hero.trustLayer": "The Trust Layer",
     "hero.trust1": "Thalos solves the trust problem in digital and high-value transactions by locking funds on-chain until predefined conditions are met. It combines smart-contract-based escrow, wallet-based identity, and transparent agreement tracking to reduce fraud, disputes, payment delays, and counterparty risk.",
     "hero.trust2a": "Unlike traditional platforms that extract high fees, impose custodial control, or limit flexibility, Thalos is ",
@@ -41,7 +42,7 @@ const translations: Record<Lang, Record<string, string>> = {
 
     // Where Thalos Applies
     "profiles.tag": "[Where Thalos Applies]",
-    "profiles.desc": "Anywhere there is counterparty risk, payment uncertainty, milestone delivery, high-value exchange, or cross-border friction — Thalos can apply.",
+    "profiles.desc": "Anywhere there is counterparty risk, payment uncertainty, milestone delivery, high-value exchange, or cross-border friction, Thalos can apply.",
 
     // Profiles
     "profiles.personal": "Personal",
@@ -217,17 +218,17 @@ const translations: Record<Lang, Record<string, string>> = {
     "vision.missionText": "To build the leading decentralized escrow and trust infrastructure on Stellar, empowering individuals, entrepreneurs, and businesses to transact securely across industries and borders.",
     "vision.techTitle": "Core Technology Stack",
     "vision.techDesc": "Each layer of Thalos is designed to work together, creating a complete trust infrastructure for programmable payments.",
-    "vision.T": "Transparency",
+    "vision.T": "Trust-First Design",
     "vision.TDesc": "Clear rules and visible conditions in every agreement.",
-    "vision.h": "Hybrid",
-    "vision.hDesc": "Efficient architecture combining operational speed with blockchain verification.",
-    "vision.a": "Automation",
+    "vision.h": "Hybrid Architecture",
+    "vision.hDesc": "Efficient system combining operational speed with blockchain verification.",
+    "vision.a": "Automated Execution",
     "vision.aDesc": "Self-executing agreements powered by programmable logic.",
-    "vision.l": "Liquidity",
+    "vision.l": "Liquidity Control",
     "vision.lDesc": "Funds secured with conditional release mechanisms.",
-    "vision.o": "Orchestrated",
-    "vision.oDesc": "Structured infrastructure where each party operates under predefined rules.",
-    "vision.s": "Security",
+    "vision.o": "Orchestrated Flows",
+    "vision.oDesc": "Structured platform where each party operates under predefined rules.",
+    "vision.s": "Stellar-Powered Security",
     "vision.sDesc": "Non-custodial, cryptographic protection from start to finish.",
     "vision.visionExtended": "We envision a financial system where trust is not a prerequisite but a product of the system itself. Where a freelancer in Buenos Aires can work with a client in Berlin with the same certainty as a handshake between neighbors. Where every peso, dollar, and euro locked in an agreement works for everyone involved until the moment it is released.",
     "vision.missionExtended": "Thalos is more than a payment platform. It is a trust infrastructure designed for the real world, where agreements are complex, parties are global, and the cost of broken promises is high. We build on Stellar because speed, low cost, and accessibility matter. We integrate Trustless Work because non-custodial escrow should be the standard, not the exception.",
@@ -259,6 +260,18 @@ const translations: Record<Lang, Record<string, string>> = {
     // Partners
     "partners.builtOn": "Built on",
     "partners.escrowsBy": "Escrows by",
+
+    // Auth Section
+    "auth.getStarted": "Get Started",
+    "auth.signInToBuild": "Sign In to Build",
+    "auth.chooseProfile": "Choose your profile type and start assembling your payment platform.",
+    "auth.profileType": "Profile Type",
+    "auth.personalRetail": "Personal / Retail",
+    "auth.businessEnterprise": "Business / Enterprise",
+    "auth.continueGoogle": "Continue with Google",
+    "auth.continueEmail": "Continue with Email",
+    "auth.connectStellarWallet": "Connect Stellar Wallet",
+    "auth.securelyConnect": "Securely connect your wallet to access escrow features.",
 
     // Status labels
     "status.funded": "Funded",
@@ -345,6 +358,17 @@ const translations: Record<Lang, Record<string, string>> = {
     "wizard.personalDescPlaceholder": "Describe the agreement terms...",
 
     // Theme
+    // Dispute
+    "dispute.raiseDispute": "Raise Dispute",
+    "dispute.disputeRaised": "Dispute Raised",
+    "dispute.disputeDesc": "Disagree with this milestone? Raise a dispute for mediation.",
+    "dispute.confirmDispute": "Are you sure you want to raise a dispute on this milestone?",
+    "dispute.disputeWarning": "This will flag the escrow as disputed. A dispute resolver will review and make a decision.",
+    "dispute.cancel": "Cancel",
+    "dispute.confirm": "Confirm Dispute",
+    "dispute.inDispute": "In Dispute",
+    "dispute.awaitingResolution": "Awaiting resolution by dispute resolver",
+
     "theme.light": "Light",
     "theme.dark": "Dark",
     "dashPage.analytics": "Analytics",
@@ -385,6 +409,8 @@ const translations: Record<Lang, Record<string, string>> = {
     "dashPage.signOut": "Sign Out",
     "dashPage.personal": "Personal",
     "dashPage.enterprise": "Enterprise",
+    "dashPage.personalAccount": "Personal Account",
+    "dashPage.enterpriseAccount": "Enterprise Account",
     "dashPage.connectWallet": "Connect New Wallet",
     "dashPage.copyAddress": "Copy Address",
     "dashPage.viewExplorer": "View on Explorer",
@@ -504,12 +530,13 @@ const translations: Record<Lang, Record<string, string>> = {
     "wizard.engagementId": "Engagement ID",
 
     // Personal use cases
-    "useCase.freelancer": "Freelancer Service",
-    "useCase.rental": "Rental Agreement",
-    "useCase.carSale": "Peer-to-Peer Car Sale",
-    "useCase.coaching": "Online Coaching / Course",
-    "useCase.homeRepair": "Home Repair Service",
-    "useCase.other": "Other",
+"useCase.freelancer": "Freelancer Service",
+  "useCase.rental": "Rental Agreement",
+  "useCase.carSale": "Peer-to-Peer Car Sale",
+  "useCase.coaching": "Online Coaching / Course",
+  "useCase.homeRepair": "Home Repair Service",
+  "useCase.bounty": "Thalos Bounty",
+  "useCase.other": "Other",
 
     // Business use cases
     "useCase.carRental": "Car Rental Company",
@@ -600,13 +627,14 @@ const translations: Record<Lang, Record<string, string>> = {
     "nav.useCases": "Casos de Uso",
 
     // Hero
-    "hero.tag": "Infraestructura de Escrow en Stellar",
+    "hero.tag": "Plataforma de Escrow en Stellar",
     "hero.title1": "Pagos Protegidos.",
     "hero.title2": "Capital Productivo.",
     "hero.desc": "Thalos impulsa acuerdos con escrows programables en la red Stellar. Los fondos permanecen protegidos, los hitos impulsan las liberaciones y el capital inactivo genera rendimiento.",
     "hero.cta1": "Comenzar",
     "hero.cta2": "Ver Como Funciona",
-    "hero.weAre": "una infraestructura descentralizada de escrow y confianza construida sobre Stellar que permite pagos seguros, programables y basados en hitos entre individuos, emprendedores y empresas de multiples industrias sin depender de intermediarios tradicionales.",
+    "hero.weAreTag": "<Somos>",
+    "hero.weAre": "una plataforma descentralizada de escrow y confianza construida sobre Stellar que permite pagos seguros, programables y basados en hitos entre individuos, emprendedores y empresas de multiples industrias sin depender de intermediarios tradicionales.",
     "hero.trustLayer": "La Capa de Confianza",
     "hero.trust1": "Thalos resuelve el problema de confianza en transacciones digitales y de alto valor bloqueando fondos en la cadena hasta que se cumplan condiciones predefinidas. Combina escrow basado en contratos inteligentes, identidad basada en billeteras y seguimiento transparente de acuerdos para reducir fraudes, disputas, retrasos en pagos y riesgo de contraparte.",
     "hero.trust2a": "A diferencia de las plataformas tradicionales que cobran altas comisiones, imponen control custodial o limitan la flexibilidad, Thalos es ",
@@ -626,7 +654,7 @@ const translations: Record<Lang, Record<string, string>> = {
 
     // Where Thalos Applies
     "profiles.tag": "[Donde Aplica Thalos]",
-    "profiles.desc": "Donde exista riesgo de contraparte, incertidumbre en pagos, entrega por hitos, intercambios de alto valor o friccion transfronteriza — Thalos puede aplicarse.",
+    "profiles.desc": "Donde exista riesgo de contraparte, incertidumbre en pagos, entrega por hitos, intercambios de alto valor o friccion transfronteriza, Thalos puede aplicarse.",
 
     // Profiles
     "profiles.personal": "Personal",
@@ -799,20 +827,20 @@ const translations: Record<Lang, Record<string, string>> = {
     "vision.vision": "Nuestra Vision",
     "vision.visionText": "Un mundo donde cada transaccion, sin importar su complejidad, se ejecuta con confianza, transparencia y certeza programable, sin depender de intermediarios.",
     "vision.mission": "Nuestra Mision",
-    "vision.missionText": "Construir la infraestructura descentralizada de escrow y confianza lider sobre Stellar, empoderando a individuos, emprendedores y empresas para realizar transacciones seguras a traves de industrias y fronteras.",
+    "vision.missionText": "Construir la plataforma descentralizada de escrow y confianza lider sobre Stellar, empoderando a individuos, emprendedores y empresas para realizar transacciones seguras a traves de industrias y fronteras.",
     "vision.techTitle": "Stack Tecnologico Principal",
-    "vision.techDesc": "Cada capa de Thalos esta disenada para trabajar en conjunto, creando una infraestructura de confianza completa para pagos programables.",
-    "vision.T": "Transparencia",
+    "vision.techDesc": "Cada capa de Thalos esta disenada para trabajar en conjunto, creando una plataforma de confianza completa para pagos programables.",
+    "vision.T": "Transparencia Total",
     "vision.TDesc": "Reglas claras y condiciones visibles en cada acuerdo.",
-    "vision.h": "Hibrido",
-    "vision.hDesc": "Arquitectura eficiente que combina velocidad operativa con verificacion blockchain.",
-    "vision.a": "Automatizacion",
+    "vision.h": "Hibrido Eficiente",
+    "vision.hDesc": "Arquitectura que combina velocidad operativa con verificacion blockchain.",
+    "vision.a": "Automatizacion Inteligente",
     "vision.aDesc": "Acuerdos autoejecutables impulsados por logica programable.",
-    "vision.l": "Liquidez",
+    "vision.l": "Liquidez Controlada",
     "vision.lDesc": "Fondos asegurados con mecanismos de liberacion condicional.",
-    "vision.o": "Orquestado",
-    "vision.oDesc": "Infraestructura estructurada donde cada parte opera bajo reglas predefinidas.",
-    "vision.s": "Seguridad",
+    "vision.o": "Orquestacion de Flujos",
+    "vision.oDesc": "Plataforma estructurada donde cada parte opera bajo reglas predefinidas.",
+    "vision.s": "Seguridad en Stellar",
     "vision.sDesc": "Proteccion criptografica no custodial de principio a fin.",
     "vision.visionExtended": "Imaginamos un sistema financiero donde la confianza no sea un requisito previo, sino un producto del propio sistema. Donde un freelancer en Buenos Aires pueda trabajar con un cliente en Berlin con la misma certeza que un apreton de manos entre vecinos. Donde cada peso, dolar y euro bloqueado en un acuerdo trabaje para todos los involucrados hasta el momento de su liberacion.",
     "vision.missionExtended": "Thalos es mas que una plataforma de pagos. Es una infraestructura de confianza disenada para el mundo real, donde los acuerdos son complejos, las partes son globales y el costo de las promesas rotas es alto. Construimos sobre Stellar porque la velocidad, el bajo costo y la accesibilidad importan. Integramos Trustless Work porque el escrow no custodial deberia ser el estandar, no la excepcion.",
@@ -846,6 +874,18 @@ const translations: Record<Lang, Record<string, string>> = {
     // Partners
     "partners.builtOn": "Construido en",
     "partners.escrowsBy": "Escrows por",
+
+    // Auth Section
+    "auth.getStarted": "Comenzar",
+    "auth.signInToBuild": "Inicia Sesion para Construir",
+    "auth.chooseProfile": "Elige tu tipo de perfil y comienza a crear tu plataforma de pagos.",
+    "auth.profileType": "Tipo de Perfil",
+    "auth.personalRetail": "Personal / Individual",
+    "auth.businessEnterprise": "Empresa / Corporativo",
+    "auth.continueGoogle": "Continuar con Google",
+    "auth.continueEmail": "Continuar con Email",
+    "auth.connectStellarWallet": "Conectar Billetera Stellar",
+    "auth.securelyConnect": "Conecta tu billetera de forma segura para acceder a las funciones de escrow.",
 
     // Status labels
     "status.funded": "Financiado",
@@ -915,7 +955,18 @@ const translations: Record<Lang, Record<string, string>> = {
     "flow.stepRelease": "3. Liberar",
     "flow.viewEvidence": "Ver Evidencia",
 
-  // Wizard steps & labels
+  // Dispute
+    "dispute.raiseDispute": "Abrir Disputa",
+    "dispute.disputeRaised": "Disputa Abierta",
+    "dispute.disputeDesc": "No estas de acuerdo con este hito? Abre una disputa para mediacion.",
+    "dispute.confirmDispute": "Estas seguro de que quieres abrir una disputa en este hito?",
+    "dispute.disputeWarning": "Esto marcara el escrow como en disputa. Un mediador revisara y tomara una decision.",
+    "dispute.cancel": "Cancelar",
+    "dispute.confirm": "Confirmar Disputa",
+    "dispute.inDispute": "En Disputa",
+    "dispute.awaitingResolution": "Esperando resolucion del mediador",
+
+    // Wizard steps & labels
   "wizard.escrowType": "Tipo de Escrow",
     "wizard.useCase": "Caso de Uso",
     "wizard.agreementInfo": "Info del Acuerdo",
@@ -1013,6 +1064,8 @@ const translations: Record<Lang, Record<string, string>> = {
     "dashPage.signOut": "Cerrar Sesion",
     "dashPage.personal": "Personal",
     "dashPage.enterprise": "Empresa",
+    "dashPage.personalAccount": "Cuenta Personal",
+    "dashPage.enterpriseAccount": "Cuenta Empresarial",
     "dashPage.connectWallet": "Conectar Nueva Billetera",
     "dashPage.copyAddress": "Copiar Direccion",
     "dashPage.viewExplorer": "Ver en Explorador",
@@ -1132,12 +1185,13 @@ const translations: Record<Lang, Record<string, string>> = {
     "wizard.engagementId": "ID de Compromiso",
 
     // Personal use cases
-    "useCase.freelancer": "Servicio Freelance",
-    "useCase.rental": "Contrato de Alquiler",
-    "useCase.carSale": "Venta de Auto entre Pares",
-    "useCase.coaching": "Coaching / Curso en Linea",
-    "useCase.homeRepair": "Servicio de Reparacion del Hogar",
-    "useCase.other": "Otro",
+"useCase.freelancer": "Servicio Freelance",
+  "useCase.rental": "Contrato de Alquiler",
+  "useCase.carSale": "Venta de Auto entre Pares",
+  "useCase.coaching": "Coaching / Curso en Linea",
+  "useCase.homeRepair": "Servicio de Reparacion del Hogar",
+  "useCase.bounty": "Thalos Bounty",
+  "useCase.other": "Otro",
 
     // Business use cases
     "useCase.carRental": "Empresa de Alquiler de Autos",
@@ -1290,12 +1344,12 @@ export function useLanguage() {
 export function LanguageToggle({ className }: { className?: string }) {
   const { lang, setLang } = useLanguage()
   return (
-    <button
-      onClick={() => setLang(lang === "en" ? "es" : "en")}
-      className={`flex items-center gap-1.5 rounded-full border border-border/40 bg-secondary/50 px-3 py-1.5 text-xs font-bold text-muted-foreground transition-all duration-300 hover:bg-secondary hover:text-foreground hover:border-border ${className || ""}`}
-      aria-label={lang === "en" ? "Cambiar a Espanol" : "Switch to English"}
-      title={lang === "en" ? "Cambiar a Espanol" : "Switch to English"}
-    >
+  <button
+  onClick={() => setLang(lang === "en" ? "es" : "en")}
+  className={`flex items-center gap-1.5 rounded-full border border-white/15 bg-[#0a0a0c]/60 px-3 py-1.5 text-xs font-bold text-white transition-all duration-300 hover:bg-[#f0b400]/15 hover:text-[#f0b400] hover:border-[#f0b400]/30 ${className || ""}`}
+  aria-label={lang === "en" ? "Cambiar a Espanol" : "Switch to English"}
+  title={lang === "en" ? "Cambiar a Espanol" : "Switch to English"}
+  >
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="12" cy="12" r="10"/>
         <line x1="2" y1="12" x2="22" y2="12"/>
@@ -1310,12 +1364,12 @@ export function LanguageToggle({ className }: { className?: string }) {
 export function ThemeToggle({ className }: { className?: string }) {
   const { theme, toggleTheme } = useLanguage()
   return (
-    <button
-      onClick={toggleTheme}
-      className={`flex items-center gap-1.5 rounded-full border border-border/40 bg-secondary/50 px-3 py-1.5 text-xs font-bold text-muted-foreground transition-all duration-300 hover:bg-secondary hover:text-foreground hover:border-border ${className || ""}`}
-      aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-      title={theme === "dark" ? "Light mode" : "Dark mode"}
-    >
+  <button
+  onClick={toggleTheme}
+  className={`flex items-center gap-1.5 rounded-full border border-white/15 bg-[#0a0a0c]/60 px-3 py-1.5 text-xs font-bold text-white transition-all duration-300 hover:bg-[#f0b400]/15 hover:text-[#f0b400] hover:border-[#f0b400]/30 ${className || ""}`}
+  aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+  title={theme === "dark" ? "Light mode" : "Dark mode"}
+  >
       {theme === "dark" ? (
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
       ) : (

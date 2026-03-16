@@ -72,12 +72,12 @@ export function BottomBar({ onNavigate }: { onNavigate: (section: string) => voi
 
       {/* QR Modal */}
       {showQR && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-background/80 backdrop-blur-xl" onClick={() => setShowQR(false)}>
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-background/60 backdrop-blur-sm" onClick={() => setShowQR(false)}>
           <div className="relative mx-4 w-full max-w-sm rounded-2xl border border-border/20 bg-card p-10 shadow-[0_24px_80px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.06)]" onClick={(e) => e.stopPropagation()}>
-            <button onClick={() => setShowQR(false)} className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition-colors" aria-label="Close">
+            <button onClick={() => setShowQR(false)} className="absolute top-4 right-4 text-white/60 hover:text-white transition-colors" aria-label="Close">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
-            <p className="mb-6 text-center text-sm font-bold text-foreground">{t("bar.scanMobile")}</p>
+            <p className="mb-6 text-center text-sm font-bold text-white">{t("bar.scanMobile")}</p>
             <div className="mx-auto flex h-56 w-56 items-center justify-center rounded-2xl bg-[#0a0a0a] p-4 shadow-[0_8px_32px_rgba(0,0,0,0.3)]">
               <Image
                 src={`https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent("https://thalos-prototype.vercel.app/")}&bgcolor=0a0a0a&color=f0b400&qzone=3&format=png`}
@@ -110,23 +110,23 @@ export function BottomBar({ onNavigate }: { onNavigate: (section: string) => voi
         {showMenu && (
           <div
             ref={menuRef}
-            className="absolute bottom-full left-0 mb-3 w-64 overflow-hidden rounded-2xl border border-white/15 shadow-[0_20px_60px_rgba(0,0,0,0.5),0_4px_16px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.12)]"
+            className="absolute bottom-full left-0 mb-3 w-64 overflow-hidden rounded-2xl border border-white/15 bg-[#0c1220] shadow-[0_20px_60px_rgba(0,0,0,0.5),0_4px_16px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.12)]"
           >
             {/* Water bg layer */}
             <div className="absolute inset-0 bg-cover bg-center opacity-20" style={{ backgroundImage: "url('/ocean-bg.png')" }} aria-hidden="true" />
-            <div className="absolute inset-0 bg-background/85 backdrop-blur-2xl" aria-hidden="true" />
+            <div className="absolute inset-0 bg-[#0c1220]/90 backdrop-blur-xl" aria-hidden="true" />
 
             <div className="relative z-10 p-3">
               {/* Header */}
               <div className="mb-2 px-3 pt-1 pb-2 border-b border-white/8">
-                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/50">{t("bar.navigation")}</p>
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/40">{t("bar.navigation")}</p>
               </div>
 
               {/* Menu items */}
               <div className="flex flex-col gap-0.5 py-1">
                 <button
                   onClick={() => { setShowSignIn(true); setShowMenu(false) }}
-                  className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-foreground/80 transition-all duration-300 hover:bg-white/10 hover:text-white shadow-[inset_0_0_0_0_rgba(255,255,255,0)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_1px_3px_rgba(0,0,0,0.2)] active:scale-[0.97]"
+                  className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-white/80 transition-all duration-300 hover:bg-white/10 hover:text-white shadow-[inset_0_0_0_0_rgba(255,255,255,0)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_1px_3px_rgba(0,0,0,0.2)] active:scale-[0.97]"
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
@@ -136,7 +136,7 @@ export function BottomBar({ onNavigate }: { onNavigate: (section: string) => voi
 
                 <button
                   onClick={() => { onNavigate("how-it-works"); setShowMenu(false) }}
-                  className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-foreground/80 transition-all duration-300 hover:bg-white/10 hover:text-white shadow-[inset_0_0_0_0_rgba(255,255,255,0)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_1px_3px_rgba(0,0,0,0.2)] active:scale-[0.97]"
+                  className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-white/80 transition-all duration-300 hover:bg-white/10 hover:text-white shadow-[inset_0_0_0_0_rgba(255,255,255,0)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_1px_3px_rgba(0,0,0,0.2)] active:scale-[0.97]"
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                     <circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/>
@@ -146,7 +146,7 @@ export function BottomBar({ onNavigate }: { onNavigate: (section: string) => voi
 
                 <button
                   onClick={() => { onNavigate("profiles"); setShowMenu(false) }}
-                  className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-foreground/80 transition-all duration-300 hover:bg-white/10 hover:text-white shadow-[inset_0_0_0_0_rgba(255,255,255,0)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_1px_3px_rgba(0,0,0,0.2)] active:scale-[0.97]"
+                  className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-white/80 transition-all duration-300 hover:bg-white/10 hover:text-white shadow-[inset_0_0_0_0_rgba(255,255,255,0)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_1px_3px_rgba(0,0,0,0.2)] active:scale-[0.97]"
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
@@ -161,7 +161,7 @@ export function BottomBar({ onNavigate }: { onNavigate: (section: string) => voi
               {/* Contact */}
               <a
                 href="mailto:thalosinfrastructure@gmail.com"
-                className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-foreground/80 transition-all duration-300 hover:bg-white/10 hover:text-white shadow-[inset_0_0_0_0_rgba(255,255,255,0)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_1px_3px_rgba(0,0,0,0.2)] active:scale-[0.97]"
+                className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-white/80 transition-all duration-300 hover:bg-white/10 hover:text-white shadow-[inset_0_0_0_0_rgba(255,255,255,0)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_1px_3px_rgba(0,0,0,0.2)] active:scale-[0.97]"
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><path d="M22 6l-10 7L2 6"/>
@@ -180,7 +180,7 @@ export function BottomBar({ onNavigate }: { onNavigate: (section: string) => voi
             style={{ backgroundImage: "url('/ocean-bg.png')" }}
             aria-hidden="true"
           />
-          <div className="absolute inset-0 bg-background/60 backdrop-blur-xl" aria-hidden="true" />
+          <div className="absolute inset-0 bg-[#0c1220]/90 backdrop-blur-xl" aria-hidden="true" />
 
           {/* Menu button */}
           <button
@@ -188,11 +188,12 @@ export function BottomBar({ onNavigate }: { onNavigate: (section: string) => voi
             className={cn(
               "relative z-10 flex items-center gap-3 rounded-full px-5 py-3 text-base font-bold transition-all duration-300 active:scale-95 shadow-[0_3px_0_rgba(0,0,0,0.2),0_4px_12px_rgba(0,0,0,0.25),inset_0_1px_0_rgba(255,255,255,0.1)]",
               showMenu
-                ? "bg-white/15 text-white"
-                : "text-foreground/80 hover:bg-white/8 hover:text-white"
+                ? "bg-white/15"
+                : "hover:bg-white/8"
             )}
+            style={{ color: '#ffffff' }}
           >
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
             </svg>
             Menu
