@@ -4,6 +4,7 @@ import { Inter, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { LanguageProvider } from '@/lib/i18n'
 import { StellarWalletProvider } from '@/lib/stellar-wallet'
+import { AuthProvider } from '@/lib/auth-store'
 import './globals.css'
 
 const _inter = Inter({ subsets: ["latin"] });
@@ -36,9 +37,11 @@ export default function RootLayout({
       </head>
       <body className="font-sans antialiased transition-colors duration-300">
         <LanguageProvider>
-          <StellarWalletProvider>
-            {children}
-          </StellarWalletProvider>
+          <AuthProvider>
+            <StellarWalletProvider>
+              {children}
+            </StellarWalletProvider>
+          </AuthProvider>
         </LanguageProvider>
         <Analytics />
       </body>
