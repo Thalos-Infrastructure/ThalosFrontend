@@ -1,7 +1,7 @@
 "use client";
 
 import { useStellarWallet } from "@/lib/stellar-wallet";
-import { useAuthStore } from "@/lib/auth-store.tsx";
+import { useAuthStore } from "@/lib/auth-store";
 
 export function useCurrentAddress() {
   const { address: walletAddress } = useStellarWallet();
