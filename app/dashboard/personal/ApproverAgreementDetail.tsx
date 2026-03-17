@@ -13,7 +13,8 @@ type Agreement = {
   balance?: string;
   serviceProvider?: string;
   released?: boolean;
-};
+  agreement_id?: string; // Supabase agreement ID if synced
+  };
 interface ApproverAgreementDetailProps {
   agr: Agreement;
   walletAddress: string;
@@ -57,8 +58,11 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
     setErrorMs(null);
     try {
       const { disputeMilestone, sendTransaction } = await import("@/services/trustlessworkService");
+      const { openDispute } = await import("@/lib/actions/disputes");
+      
       const res = await disputeMilestone(agr.id, idx.toString(), walletAddress);
       if (!res.success) throw new Error(res.error || "Error raising dispute");
+      
       const xdr = res.data && typeof res.data === 'object' && 'unsignedTransaction' in res.data ? (res.data as any).unsignedTransaction : undefined;
       if (xdr) {
         const { signTransaction: freighterSign } = await import("@stellar/freighter-api");
@@ -69,6 +73,16 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
         }
         const sendRes = await sendTransaction(signedResult.signedTxXdr);
         if (!sendRes.success) throw new Error(sendRes.error || "Error sending transaction");
+        
+        // Register dispute in Supabase if we have an agreement_id (from local DB)
+        if (agr.agreement_id) {
+          await openDispute({
+            agreement_id: agr.agreement_id,
+            opened_by: walletAddress,
+            reason: `Dispute raised on milestone ${idx + 1}`,
+            evidence_urls: []
+          });
+        }
       }
       setDisputedMs(prev => new Set(prev).add(idx));
       setShowDisputeConfirm(null);
@@ -265,7 +279,8 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
                   <p className="text-lg font-bold text-white">{"$"}{localMilestones.length === 1 && idx === 0 ? agr.amount : ms.amount} <span className="text-xs font-normal text-white/35">USDC</span></p>
                   
                   {/* Dispute button - appears when evidence is submitted but not yet released */}
-                  {isFunded && (ms.status === "approved" || ms.status === "Completed" || ms.approved === true) && ms.status !== "released" && !disputedMs.has(idx) && (
+                  {/* Dispute button - show for funded escrows on any milestone that is not released and not already disputed */}
+                  {isFunded && ms.status !== "released" && !disputedMs.has(idx) && (
                     <Button 
                       size="sm" 
                       onClick={() => setShowDisputeConfirm(idx)} 

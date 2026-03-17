@@ -1,6 +1,7 @@
 "use client"
 
 import dynamic from "next/dynamic"
+import { useRouter } from "next/navigation"
 import { useCallback, useRef, useState, useEffect } from "react"
 import { useLanguage } from "@/lib/i18n"
 import { ThalosLoader } from "@/components/thalos-loader"
@@ -42,12 +43,19 @@ export default function Home() {
     return () => window.removeEventListener("scroll", onScroll)
   }, [])
 
+  const router = useRouter()
+  
   const handleNavigate = useCallback((section: string) => {
+    // Handle sign-in navigation to auth page
+    if (section === "sign-in") {
+      router.push("/auth/login")
+      return
+    }
     const el = sectionsRef.current[section] || document.getElementById(section)
     if (el) {
       el.scrollIntoView({ behavior: "smooth", block: "start" })
     }
-  }, [])
+  }, [router])
 
   const setRef = useCallback((section: string) => (el: HTMLDivElement | null) => {
     sectionsRef.current[section] = el

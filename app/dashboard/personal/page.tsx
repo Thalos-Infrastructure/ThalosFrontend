@@ -8,7 +8,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { ThalosLoader } from "@/components/thalos-loader"
-import { LanguageToggle, useLanguage } from "@/lib/i18n"
+import { LanguageToggle, ThemeToggle, useLanguage } from "@/lib/i18n"
 import { useStellarWallet } from "@/lib/stellar-wallet"
 import { useCurrentAddress } from "@/lib/use-current-address"
 import { useAuthStore } from "@/lib/auth-store"
@@ -180,9 +180,10 @@ function UseCaseIcon({ icon, className }: { icon: string; className?: string }) 
 const sidebarItems = [
   { id: "create", label: "New Agreement", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg> },
   { id: "agreements", label: "Agreements", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> },
+  { id: "bounty", label: "Thalos Bounty", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v12"/><path d="M15 9.5c0-1.5-1.5-2.5-3-2.5s-3 1-3 2.5 1.5 2 3 2.5 3 1 3 2.5-1.5 2.5-3 2.5-3-1-3-2.5"/></svg> },
   { id: "wallets", label: "My Wallets", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg> },
   { id: "analytics", label: "Analytics", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg> },
-]
+  ]
 
 /* ── Seller Evidence Submission Component ── */
 function SellerMilestoneList({ agr, agreements, setAgreements, t }: {
@@ -550,6 +551,7 @@ export default function PersonalDashboardPage() {
               )}
             </div>
             <LanguageToggle />
+            <ThemeToggle />
           </div>
         </nav>
       </header>
@@ -557,7 +559,7 @@ export default function PersonalDashboardPage() {
       <div className="relative z-10 flex min-h-[calc(100vh-80px)]">
         {/* Sidebar */}
         <aside className={cn(
-          "fixed inset-y-20 left-0 z-30 w-64 bg-[#0c1220]/40 backdrop-blur-2xl transition-transform duration-300 lg:sticky lg:top-20 lg:translate-x-0 lg:h-[calc(100vh-80px)]",
+          "fixed inset-y-20 left-0 z-30 w-64 bg-[#0c1220]/90 backdrop-blur-xl transition-transform duration-300 lg:sticky lg:top-20 lg:translate-x-0 lg:h-[calc(100vh-80px)]",
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}>
           {/* User card */}
@@ -568,7 +570,7 @@ export default function PersonalDashboardPage() {
               </div>
               <div>
                 <p className="text-sm font-semibold text-white">{t("dashPage.personalAccount")}</p>
-                <p className="text-xs font-mono text-white/40">{walletAddress ? `${walletAddress.slice(0, 6)}…${walletAddress.slice(-4)}` : "G...AL01"}</p>
+                <p className="text-xs font-mono text-white/60">{walletAddress ? `${walletAddress.slice(0, 6)}…${walletAddress.slice(-4)}` : "G...AL01"}</p>
               </div>
             </div>
           </div>
@@ -578,9 +580,9 @@ export default function PersonalDashboardPage() {
             {sidebarItems.map((item) => (
               <button key={item.id} onClick={() => { setActiveSection(item.id); setSidebarOpen(false); if (item.id === "create") resetWizard() }}
                 className={cn("flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200",
-                  activeSection === item.id ? "bg-[#f0b400]/10 text-[#f0b400]" : "text-white/50 hover:bg-white/5 hover:text-white/80"
+                  activeSection === item.id ? "bg-[#f0b400]/10 text-[#f0b400]" : "text-white/70 hover:bg-white/5 hover:text-white"
                 )}>
-                {item.icon}{t(`dashPage.${item.id === "create" ? "newAgreement" : item.id}`)}
+                {item.icon}{item.id === "bounty" ? "Thalos Bounty" : t(`dashPage.${item.id === "create" ? "newAgreement" : item.id}`)}
               </button>
             ))}
           </nav>
@@ -609,10 +611,57 @@ export default function PersonalDashboardPage() {
               <WalletAddress address={walletAddress} />
             </div>
           )}
-
+          {/* ══════ THALOS BOUNTY ══════ */}
+          {activeSection === "bounty" && (
+            <div className="mx-auto max-w-4xl pt-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
+              <p className="mb-4 text-center text-xs text-white/40">
+                {t("dashPage.bountyComingSoon")}
+              </p>
+              
+              <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#0c1220] p-8 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)]">
+                {/* Background collage pattern */}
+                <div className="absolute inset-0 z-0 grid grid-cols-4 grid-rows-2 gap-0.5 opacity-25">
+                  {[...Array(8)].map((_, i) => (
+                    <div key={i} className="relative overflow-hidden">
+                      <Image src="/thalos-bounty-bg.gif" alt="" fill className="object-cover scale-110" />
+                    </div>
+                  ))}
+                </div>
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0c1220] via-[#0c1220]/80 to-[#0c1220]/50" />
+                
+                <div className="relative z-10 flex flex-col items-center text-center">
+                  <p className="mb-6 max-w-md text-sm text-white/80">
+                    {t("dashPage.bountyDesc")}
+                  </p>
+                  <div className="flex flex-wrap items-center justify-center gap-3">
+                    <Button className="rounded-lg bg-[#f0b400] px-6 py-2 text-sm font-semibold text-[#0c1220] hover:bg-[#e5ab00] shadow-[0_2px_8px_rgba(240,180,0,0.25)]">
+                      {t("dashPage.createBounty")}
+                    </Button>
+                    <Button variant="outline" className="rounded-lg border-white/15 bg-white/5 px-6 py-2 text-sm font-semibold text-white hover:bg-white/10">
+                      {t("dashPage.viewBounties")}
+                    </Button>
+                  </div>
+                </div>
+                
+                <div className="relative z-10 mt-8 grid gap-4 md:grid-cols-3">
+                  <div className="rounded-xl border border-white/10 bg-[#0c1220]/80 p-4 text-center backdrop-blur-sm">
+                    <p className="text-2xl font-bold text-[#f0b400]">0</p>
+                    <p className="text-xs text-white/50">{t("dashPage.activeBounties")}</p>
+                  </div>
+                  <div className="rounded-xl border border-white/10 bg-[#0c1220]/80 p-4 text-center backdrop-blur-sm">
+                    <p className="text-2xl font-bold text-white">$0</p>
+                    <p className="text-xs text-white/50">{t("dashPage.earned")}</p>
+                  </div>
+                  <div className="rounded-xl border border-white/10 bg-[#0c1220]/80 p-4 text-center backdrop-blur-sm">
+                    <p className="text-2xl font-bold text-white">0</p>
+                    <p className="text-xs text-white/50">{t("dashPage.completed")}</p>
+                  </div>
+                </div>
+              </div>
+          
           {/* ══════ ANALYTICS ══════ */}
           {activeSection === "analytics" && (
-            <div className="mx-auto max-w-5xl">
+            <div className="mx-auto max-w-5xl animate-in fade-in slide-in-from-bottom-2 duration-300">
               <h1 className="mb-6 text-2xl font-semibold text-white">{t("dashPage.analytics")}</h1>
 
               {/* Stats row */}
@@ -623,7 +672,7 @@ export default function PersonalDashboardPage() {
                   { l: t("dashPage.yieldEarned"), v: "$32.50" },
                   { l: t("dashPage.completed"), v: "1" },
                 ].map((s) => (
-                  <div key={s.l} className="rounded-xl border border-white/[0.06] bg-[#0a0a0c]/70 p-4 backdrop-blur-md">
+                  <div key={s.l} className="rounded-xl border border-white/10 bg-[#0c1220]/60 p-4 shadow-[0_4px_16px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.05)]">
                     <p className="text-[10px] font-bold uppercase tracking-widest text-white/30">{s.l}</p>
                     <p className="mt-1 text-lg font-bold text-white">{s.v}</p>
                   </div>
@@ -632,7 +681,7 @@ export default function PersonalDashboardPage() {
 
               {/* Charts */}
               <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
-                <div className="rounded-xl border border-white/[0.06] bg-[#0a0a0c]/70 p-5 backdrop-blur-md">
+                <div className="rounded-xl border border-white/10 bg-[#0c1220]/60 p-5 shadow-[0_4px_16px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.05)]">
                   <h3 className="mb-1 text-sm font-semibold uppercase tracking-wider text-white/40">{t("dashPage.monthlyAgreements")}</h3>
                   <p className="mb-4 text-xs text-white/25">&nbsp;</p>
                   <div className="h-52">
@@ -648,7 +697,7 @@ export default function PersonalDashboardPage() {
                   </div>
                 </div>
 
-                <div className="rounded-xl border border-white/[0.06] bg-[#0a0a0c]/70 p-5 backdrop-blur-md">
+                <div className="rounded-xl border border-white/10 bg-[#0c1220]/60 p-5 shadow-[0_4px_16px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.05)]">
                   <h3 className="mb-1 text-sm font-semibold uppercase tracking-wider text-white/40">{t("dashPage.volume")}</h3>
                   <p className="mb-4 text-xs text-white/25">&nbsp;</p>
                   <div className="h-52">
@@ -672,7 +721,7 @@ export default function PersonalDashboardPage() {
               </div>
 
               {/* Recent agreements */}
-              <div className="rounded-xl border border-white/[0.06] bg-[#0a0a0c]/70 p-5 backdrop-blur-md">
+              <div className="rounded-xl border border-white/10 bg-[#0c1220]/60 p-5 shadow-[0_4px_16px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.05)]">
                 <div className="mb-4 flex items-center justify-between">
                   <h3 className="text-sm font-semibold uppercase tracking-wider text-white/40">{t("dashPage.recentAgreements")}</h3>
                   <button onClick={() => setActiveSection("agreements")} className="text-xs font-semibold text-[#f0b400] hover:underline">{t("dashPage.viewAll")}</button>
@@ -702,7 +751,7 @@ export default function PersonalDashboardPage() {
 
           {/* ══════ AGREEMENTS ══════ */}
           {activeSection === "agreements" && !viewingAgreement && (
-            <div className="mx-auto max-w-4xl">
+            <div className="mx-auto max-w-4xl animate-in fade-in slide-in-from-bottom-2 duration-300">
               {/* Header */}
               <div className="mb-6 flex items-center justify-between">
                 <h1 className="text-2xl font-semibold text-white">{t("dashPage.myAgreements")}</h1>
@@ -755,7 +804,7 @@ export default function PersonalDashboardPage() {
 
               {/* Agreements list */}
               {filteredAgreements.length === 0 ? (
-                <div className="flex flex-col items-center justify-center rounded-2xl border border-white/[0.06] bg-[#0a0a0c]/70 py-16 px-6 text-center">
+                <div className="flex flex-col items-center justify-center rounded-2xl border border-white/10 bg-[#0c1220] py-16 px-6 text-center shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)]">
                   <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" className="text-white/15 mb-4"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
                   <p className="text-sm font-medium text-white/40">{t("dashPage.noResults")}</p>
                   <p className="mt-1 text-xs text-white/20">{t("dashPage.noResultsDesc")}</p>
@@ -770,7 +819,7 @@ export default function PersonalDashboardPage() {
                   const progressPct = (completedMs / agr.milestones.length) * 100
                   return (
                     <button key={agr.id} onClick={() => setViewingAgreement(agr.id)}
-                      className="flex flex-col gap-4 rounded-2xl border border-white/[0.06] bg-[#0a0a0c]/70 p-5 backdrop-blur-md transition-all hover:border-white/15 text-left w-full">
+                      className="flex flex-col gap-4 rounded-2xl border border-white/10 bg-[#0c1220] p-5 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)] transition-all hover:border-white/20 text-left w-full">
                       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between w-full">
                         <div>
                           <p className="text-base font-semibold text-white">{agr.title}</p>
@@ -842,7 +891,7 @@ export default function PersonalDashboardPage() {
                 </button>
 
                 {/* Header */}
-                <div className="mb-6 rounded-2xl border border-white/[0.06] bg-[#0a0a0c]/70 p-6 backdrop-blur-md">
+                <div className="mb-6 rounded-2xl border border-white/10 bg-[#0c1220] p-6 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)]">
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                       <div className="flex items-center gap-3 mb-2">
@@ -917,11 +966,11 @@ export default function PersonalDashboardPage() {
 
           {/* ══════ WALLETS ══════ */}
           {activeSection === "wallets" && (
-            <div className="mx-auto max-w-4xl">
+            <div className="mx-auto max-w-4xl animate-in fade-in slide-in-from-bottom-2 duration-300">
               <h1 className="mb-6 text-2xl font-semibold text-white">My Wallets</h1>
               <div className="flex flex-col gap-4">
                 {connectedWallets.map((w) => (
-                  <div key={w.value} className="rounded-2xl border border-white/[0.06] bg-[#0a0a0c]/70 p-6 backdrop-blur-md transition-all hover:border-white/15">
+                  <div key={w.value} className="rounded-2xl border border-white/10 bg-[#0c1220] p-6 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)] transition-all hover:border-white/15">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4">
                         <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#f0b400]/10 text-[#f0b400]">
@@ -945,9 +994,12 @@ export default function PersonalDashboardPage() {
                 ))}
 
                 {/* Add wallet */}
-                <button className="flex items-center justify-center gap-3 rounded-2xl border border-dashed border-white/10 bg-white/[0.02] p-8 text-white/30 hover:border-[#f0b400]/30 hover:text-[#f0b400] transition-all">
+                <button 
+                  onClick={() => openWalletModal()}
+                  className="flex items-center justify-center gap-3 rounded-2xl border border-dashed border-white/10 bg-[#0c1220]/60 p-8 text-white/70 hover:border-[#f0b400]/30 hover:text-[#f0b400] hover:bg-[#0c1220]/80 transition-all"
+                >
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                  <span className="text-sm font-medium">Connect New Wallet</span>
+                  <span className="text-sm font-medium">{t("dashPage.connectWallet")}</span>
                 </button>
               </div>
 
@@ -965,7 +1017,7 @@ export default function PersonalDashboardPage() {
 
           {/* ══════ CREATE AGREEMENT ══════ */}
           {activeSection === "create" && (
-            <div className="mx-auto max-w-4xl">
+            <div className="mx-auto max-w-4xl animate-in fade-in slide-in-from-bottom-2 duration-300">
               <div className="mb-6 flex items-center justify-between">
                 <h1 className="text-2xl font-semibold text-white">New Agreement</h1>
                 <Button onClick={() => { setActiveSection("agreements"); resetWizard() }}
@@ -1015,7 +1067,7 @@ export default function PersonalDashboardPage() {
                   </div>
                 </div>
               ) : (
-                <div className="rounded-2xl border border-white/[0.06] bg-[#0a0a0c]/70 p-6 backdrop-blur-md sm:p-8">
+                <div className="rounded-2xl border border-white/10 bg-[#0c1220] p-8 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)]">
 
                   {/* Step 0: Escrow Type */}
                   {step === 0 && (

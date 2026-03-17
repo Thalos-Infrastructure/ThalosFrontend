@@ -4,10 +4,12 @@ import React, { useState, useEffect, useCallback, useId, useRef, useMemo } from 
 import Image from "next/image"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
+import { AlertTriangle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { ThalosLoader } from "@/components/thalos-loader"
-import { LanguageToggle, useLanguage } from "@/lib/i18n"
+import { LanguageToggle, ThemeToggle, useLanguage } from "@/lib/i18n"
 import { Footer } from "@/components/footer"
+import { useStellarWallet } from "@/lib/stellar-wallet"
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area,
 } from "recharts"
@@ -18,9 +20,10 @@ const useCases = [
   { id: "travel", labelKey: "useCase.travel", icon: "plane", suggestedTitle: "Travel Package Agreement", suggestedDesc: "Describe the travel package details, destinations, dates, inclusions, cancellation policy, and payment schedule." },
   { id: "dealership", labelKey: "useCase.dealership", icon: "tag", suggestedTitle: "Vehicle Purchase Agreement", suggestedDesc: "Describe the vehicle make/model/year, VIN, agreed price, financing terms, and delivery conditions." },
   { id: "rental-platform", labelKey: "useCase.rentalPlatform", icon: "home", suggestedTitle: "Short-Term Rental Agreement", suggestedDesc: "Describe the property, booking dates, house rules, deposit amount, and checkout procedures." },
-  { id: "event", labelKey: "useCase.event", icon: "calendar", suggestedTitle: "Event Management Agreement", suggestedDesc: "Describe the event type, venue, date, services included, setup requirements, and payment milestones." },
+{ id: "event", labelKey: "useCase.event", icon: "calendar", suggestedTitle: "Event Management Agreement", suggestedDesc: "Describe the event type, venue, date, services included, setup requirements, and payment milestones." },
+  { id: "bounty", labelKey: "useCase.bounty", icon: "star", suggestedTitle: "Thalos Bounty", suggestedDesc: "Create a bounty for tasks that can be completed by multiple validators. Share the bounty link publicly." },
   { id: "other", labelKey: "useCase.other", icon: "plus", suggestedTitle: "", suggestedDesc: "" },
-]
+  ]
 
 /* ── Form Components ── */
 function FormInput({ label, value, onChange, placeholder, type = "text", disabled = false, info, required = false }: {
@@ -125,15 +128,17 @@ const sidebarItems = [
   { id: "create", labelKey: "dashPage.newAgreement", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg> },
   { id: "agreements", labelKey: "dashPage.agreements", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> },
   { id: "templates", labelKey: "dashPage.templates", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg> },
+  { id: "bounty", labelKey: "dashPage.thalosBounty", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v12"/><path d="M15 9.5c0-1.5-1.5-2.5-3-2.5s-3 1-3 2.5 1.5 2 3 2.5 3 1 3 2.5-1.5 2.5-3 2.5-3-1-3-2.5"/></svg> },
   { id: "wallets", labelKey: "dashPage.wallets", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg> },
   { id: "analytics", labelKey: "dashPage.analytics", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg> },
-]
+  ]
 
 /* ════════════════════════════════════════════════
    PAGE
    ════════════════════════════════════════════════ */
 export default function BusinessDashboardPage() {
   const { t } = useLanguage()
+  const { openWalletModal } = useStellarWallet()
   const [loading, setLoading] = useState(false)
 
   const [activeSection, setActiveSection] = useState("agreements")
@@ -141,6 +146,8 @@ export default function BusinessDashboardPage() {
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
   const [agreements, setAgreements] = useState<Agreement[]>(initialAgreements)
   const [viewingAgreement, setViewingAgreement] = useState<string | null>(null)
+  const [disputedMs, setDisputedMs] = useState<Set<string>>(new Set())
+  const [showDisputeConfirm, setShowDisputeConfirm] = useState<{ agrId: string; msIdx: number } | null>(null)
 
   const approveMilestone = (agrId: string, msIdx: number) => {
     setAgreements(prev => prev.map(a => a.id === agrId ? { ...a, milestones: a.milestones.map((m, i) => i === msIdx && m.status === "pending" ? { ...m, status: "approved" as const } : m) } : a))
@@ -377,6 +384,7 @@ export default function BusinessDashboardPage() {
               )}
             </div>
             <LanguageToggle />
+            <ThemeToggle />
           </div>
         </nav>
       </header>
@@ -384,7 +392,7 @@ export default function BusinessDashboardPage() {
       <div className="relative z-10 flex min-h-[calc(100vh-80px)]">
         {/* Sidebar */}
         <aside className={cn(
-          "fixed inset-y-20 left-0 z-30 w-64 bg-[#0c1220]/40 backdrop-blur-2xl transition-transform duration-300 lg:sticky lg:top-20 lg:translate-x-0 lg:h-[calc(100vh-80px)]",
+          "fixed inset-y-20 left-0 z-30 w-64 bg-[#0c1220]/90 backdrop-blur-xl transition-transform duration-300 lg:sticky lg:top-20 lg:translate-x-0 lg:h-[calc(100vh-80px)]",
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}>
           <div className="border-b border-white/[0.06] p-5">
@@ -394,7 +402,7 @@ export default function BusinessDashboardPage() {
               </div>
               <div>
                 <p className="text-sm font-semibold text-white">{t("dashPage.enterpriseAccount")}</p>
-                <p className="text-xs text-white/40">G...SE01</p>
+                <p className="text-xs text-white/60">G...SE01</p>
               </div>
             </div>
           </div>
@@ -403,9 +411,9 @@ export default function BusinessDashboardPage() {
             {sidebarItems.map((item) => (
               <button key={item.id} onClick={() => { setActiveSection(item.id); setSidebarOpen(false); if (item.id === "create") resetWizard() }}
                 className={cn("flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200",
-                  activeSection === item.id ? "bg-[#3b82f6]/10 text-[#3b82f6]" : "text-white/50 hover:bg-white/5 hover:text-white/80"
+                  activeSection === item.id ? "bg-[#3b82f6]/10 text-[#3b82f6]" : "text-white/70 hover:bg-white/5 hover:text-white"
                 )}>
-                {item.icon}{t(`dashPage.${item.id === "create" ? "newAgreement" : item.id === "templates" ? "templates" : item.id}`)}
+                {item.icon}{item.id === "bounty" ? "Thalos Bounty" : t(`dashPage.${item.id === "create" ? "newAgreement" : item.id === "templates" ? "templates" : item.id}`)}
               </button>
             ))}
           </nav>
@@ -422,9 +430,59 @@ export default function BusinessDashboardPage() {
 
         {/* Main content */}
         <main className="flex-1 overflow-y-auto p-4 lg:p-8">
+          {/* ══════ THALOS BOUNTY ══════ */}
+          {activeSection === "bounty" && (
+            <div className="mx-auto max-w-4xl pt-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
+              <p className="mb-4 text-center text-xs text-white/40">
+                {t("dashPage.bountyComingSoon")}
+              </p>
+              
+              <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#0c1220] p-8 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)]">
+{/* Background collage pattern */}
+                <div className="absolute inset-0 z-0 grid grid-cols-4 grid-rows-2 gap-0.5 opacity-25">
+                  {[...Array(8)].map((_, i) => (
+                    <div key={i} className="relative overflow-hidden">
+                      <Image src="/thalos-bounty-bg.gif" alt="" fill className="object-cover scale-110" />
+                    </div>
+                  ))}
+                </div>
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0c1220] via-[#0c1220]/80 to-[#0c1220]/50" />
+                
+                <div className="relative z-10 flex flex-col items-center text-center">
+                  <p className="mb-6 max-w-md text-sm text-white/80">
+                    {t("dashPage.bountyDescEnterprise")}
+                  </p>
+                  <div className="flex flex-wrap items-center justify-center gap-3">
+                    <Button className="rounded-lg bg-[#f0b400] px-6 py-2 text-sm font-semibold text-[#0c1220] hover:bg-[#e5ab00] shadow-[0_2px_8px_rgba(240,180,0,0.25)]">
+                      {t("dashPage.createBounty")}
+                    </Button>
+                    <Button variant="outline" className="rounded-lg border-white/15 bg-white/5 px-6 py-2 text-sm font-semibold text-white hover:bg-white/10">
+                      {t("dashPage.viewBounties")}
+                    </Button>
+                  </div>
+                </div>
+                
+                <div className="relative z-10 mt-8 grid gap-4 md:grid-cols-3">
+                  <div className="rounded-xl border border-white/10 bg-[#0c1220]/80 p-4 text-center backdrop-blur-sm">
+                    <p className="text-2xl font-bold text-[#f0b400]">0</p>
+                    <p className="text-xs text-white/50">{t("dashPage.activeBounties")}</p>
+                  </div>
+                  <div className="rounded-xl border border-white/10 bg-[#0c1220]/80 p-4 text-center backdrop-blur-sm">
+                    <p className="text-2xl font-bold text-white">$0</p>
+                    <p className="text-xs text-white/50">{t("dashPage.totalRewards")}</p>
+                  </div>
+                  <div className="rounded-xl border border-white/10 bg-[#0c1220]/80 p-4 text-center backdrop-blur-sm">
+                    <p className="text-2xl font-bold text-white">0</p>
+                    <p className="text-xs text-white/50">{t("dashPage.completed")}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* ══════ ANALYTICS ══════ */}
           {activeSection === "analytics" && (
-            <div className="mx-auto max-w-5xl">
+            <div className="mx-auto max-w-5xl animate-in fade-in slide-in-from-bottom-2 duration-300">
               <h1 className="mb-6 text-2xl font-semibold text-white">{t("dashPage.enterprise")} {t("dashPage.analytics")}</h1>
 
               <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -434,7 +492,7 @@ export default function BusinessDashboardPage() {
                   { l: t("dashPage.yieldEarned"), v: "$24K" },
                   { l: t("dashPage.completed"), v: "48" },
                 ].map((s) => (
-                  <div key={s.l} className="rounded-xl border border-white/[0.06] bg-[#0a0a0c]/70 p-4 backdrop-blur-md">
+                  <div key={s.l} className="rounded-xl border border-white/10 bg-[#0c1220] p-4 shadow-[0_4px_16px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.05)]">
                     <p className="text-[10px] font-bold uppercase tracking-widest text-white/30">{s.l}</p>
                     <p className="mt-1 text-lg font-bold text-white">{s.v}</p>
                   </div>
@@ -442,7 +500,7 @@ export default function BusinessDashboardPage() {
               </div>
 
               <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
-                <div className="rounded-xl border border-white/[0.06] bg-[#0a0a0c]/70 p-5 backdrop-blur-md">
+                <div className="rounded-xl border border-white/10 bg-[#0c1220] p-5 shadow-[0_4px_16px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.05)]">
                   <h3 className="mb-1 text-sm font-semibold uppercase tracking-wider text-white/40">{t("dashPage.monthlyAgreements")}</h3>
                   <p className="mb-4 text-xs text-white/25">&nbsp;</p>
                   <div className="h-52">
@@ -458,7 +516,7 @@ export default function BusinessDashboardPage() {
                   </div>
                 </div>
 
-                <div className="rounded-xl border border-white/[0.06] bg-[#0a0a0c]/70 p-5 backdrop-blur-md">
+                <div className="rounded-xl border border-white/10 bg-[#0c1220] p-5 shadow-[0_4px_16px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.05)]">
                   <h3 className="mb-1 text-sm font-semibold uppercase tracking-wider text-white/40">{t("dashPage.volume")}</h3>
                   <p className="mb-4 text-xs text-white/25">&nbsp;</p>
                   <div className="h-52">
@@ -481,7 +539,7 @@ export default function BusinessDashboardPage() {
                 </div>
               </div>
 
-              <div className="rounded-xl border border-white/[0.06] bg-[#0a0a0c]/70 p-5 backdrop-blur-md">
+              <div className="rounded-xl border border-white/10 bg-[#0c1220] p-5 shadow-[0_4px_16px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.05)]">
                 <div className="mb-4 flex items-center justify-between">
                   <h3 className="text-sm font-semibold uppercase tracking-wider text-white/40">{t("dashPage.recentAgreements")}</h3>
                   <button onClick={() => setActiveSection("agreements")} className="text-xs font-semibold text-[#3b82f6] hover:underline">{t("dashPage.viewAll")}</button>
@@ -511,7 +569,7 @@ export default function BusinessDashboardPage() {
 
           {/* ══════ AGREEMENTS ══════ */}
           {activeSection === "agreements" && !viewingAgreement && (
-            <div className="mx-auto max-w-4xl">
+            <div className="mx-auto max-w-4xl animate-in fade-in slide-in-from-bottom-2 duration-300">
               {/* Header */}
               <div className="mb-6 flex items-center justify-between">
                 <h1 className="text-2xl font-semibold text-white">{t("dashPage.enterpriseAgreements")}</h1>
@@ -528,11 +586,11 @@ export default function BusinessDashboardPage() {
                     <input
                       value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder={t("dashPage.searchPlaceholder")}
-                      className="h-10 w-full rounded-xl border border-white/15 bg-[#0a0a0c]/50 pl-10 pr-4 text-sm text-white placeholder:text-white/25 focus:border-[#3b82f6]/40 focus:outline-none focus:ring-1 focus:ring-[#3b82f6]/15 transition-all"
+                      className="h-10 w-full rounded-xl border border-white/15 bg-[#0c1220]/80 pl-10 pr-4 text-sm text-white placeholder:text-white/25 focus:border-[#3b82f6]/40 focus:outline-none focus:ring-1 focus:ring-[#3b82f6]/15 transition-all"
                     />
                   </div>
                   <select value={sortBy} onChange={(e) => setSortBy(e.target.value as "date" | "amount" | "title")}
-                    className="h-10 rounded-xl border border-white/15 bg-[#0a0a0c]/50 px-3 text-xs font-medium text-white/60 focus:border-[#3b82f6]/40 focus:outline-none appearance-none cursor-pointer">
+                    className="h-10 rounded-xl border border-white/15 bg-[#0c1220]/80 px-3 text-xs font-medium text-white/60 focus:border-[#3b82f6]/40 focus:outline-none appearance-none cursor-pointer">
                     <option value="date">{t("dashPage.sortBy")}: {t("dashPage.sortDate")}</option>
                     <option value="amount">{t("dashPage.sortBy")}: {t("dashPage.sortAmount")}</option>
                     <option value="title">{t("dashPage.sortBy")}: {t("dashPage.sortTitle")}</option>
@@ -559,7 +617,7 @@ export default function BusinessDashboardPage() {
 
               {/* Agreements list */}
               {filteredAgreements.length === 0 ? (
-                <div className="flex flex-col items-center justify-center rounded-2xl border border-white/[0.06] bg-[#0a0a0c]/70 py-16 px-6 text-center">
+                <div className="flex flex-col items-center justify-center rounded-2xl border border-white/10 bg-[#0c1220] py-16 px-6 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)] text-center">
                   <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" className="text-white/15 mb-4"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
                   <p className="text-sm font-medium text-white/40">{t("dashPage.noResults")}</p>
                   <p className="mt-1 text-xs text-white/20">{t("dashPage.noResultsDesc")}</p>
@@ -574,7 +632,7 @@ export default function BusinessDashboardPage() {
                   const progressPct = (completedMs / agr.milestones.length) * 100
                   return (
                     <button key={agr.id} onClick={() => setViewingAgreement(agr.id)}
-                      className="flex flex-col gap-4 rounded-2xl border border-white/[0.06] bg-[#0a0a0c]/70 p-5 backdrop-blur-md transition-all hover:border-white/15 text-left w-full">
+                      className="flex flex-col gap-4 rounded-2xl border border-white/10 bg-[#0c1220] p-5 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)] transition-all hover:border-white/20 text-left w-full">
                       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between w-full">
                         <div>
                           <p className="text-base font-semibold text-white">{agr.title}</p>
@@ -622,7 +680,7 @@ export default function BusinessDashboardPage() {
                   Back to Agreements
                 </button>
 
-                <div className="mb-6 rounded-2xl border border-white/[0.06] bg-[#0a0a0c]/70 p-6 backdrop-blur-md">
+                <div className="mb-6 rounded-2xl border border-white/10 bg-[#0c1220] p-6 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)]">
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                       <div className="flex items-center gap-3 mb-2">
@@ -697,6 +755,19 @@ export default function BusinessDashboardPage() {
                               Release Funds
                             </Button>
                           )}
+                          {ms.status !== "released" && !disputedMs.has(`${agr.id}-${idx}`) && (
+                            <Button 
+                              size="sm" 
+                              onClick={() => setShowDisputeConfirm({ agrId: agr.id, msIdx: idx })}
+                              className="rounded-full bg-red-500/10 px-3 text-xs font-semibold text-red-400 hover:bg-red-500/20 border border-red-500/20"
+                            >
+                              <AlertTriangle className="h-3 w-3 mr-1" />
+                              {t("dispute.raiseDispute")}
+                            </Button>
+                          )}
+                          {disputedMs.has(`${agr.id}-${idx}`) && (
+                            <span className="text-xs text-red-400 font-medium">{t("dispute.disputed")}</span>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -704,7 +775,7 @@ export default function BusinessDashboardPage() {
                 </div>
 
                 {!allReleased && (
-                  <div className="rounded-2xl border border-white/[0.06] bg-[#0a0a0c]/70 p-6 backdrop-blur-md">
+                  <div className="rounded-2xl border border-white/10 bg-[#0c1220] p-6 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)]">
                     <h3 className="mb-4 text-sm font-bold uppercase tracking-wider text-white/40">Release Actions</h3>
                     <div className="flex flex-wrap gap-3">
                       {agr.type === "Single Release" && agr.milestones[0]?.status === "pending" && (
@@ -747,9 +818,42 @@ export default function BusinessDashboardPage() {
             )
           })()}
 
+          {/* Dispute Confirmation Modal */}
+          {showDisputeConfirm && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+              <div className="mx-4 max-w-md rounded-2xl border border-white/10 bg-[#0c1220] p-6 shadow-2xl">
+                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-500/10 mx-auto">
+                  <AlertTriangle className="h-6 w-6 text-red-400" />
+                </div>
+                <h3 className="text-center text-lg font-bold text-white mb-2">{t("dispute.confirmTitle")}</h3>
+                <p className="text-center text-sm text-white/60 mb-6">{t("dispute.confirmDesc")}</p>
+                <div className="flex gap-3">
+                  <Button 
+                    variant="outline" 
+                    className="flex-1 rounded-lg border-white/10 text-white hover:bg-white/5"
+                    onClick={() => setShowDisputeConfirm(null)}
+                  >
+                    {t("dispute.cancel")}
+                  </Button>
+                  <Button 
+                    className="flex-1 rounded-lg bg-red-500 text-white hover:bg-red-600"
+                    onClick={() => {
+                      if (showDisputeConfirm) {
+                        setDisputedMs(prev => new Set(prev).add(`${showDisputeConfirm.agrId}-${showDisputeConfirm.msIdx}`))
+                        setShowDisputeConfirm(null)
+                      }
+                    }}
+                  >
+                    {t("dispute.confirm")}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* ══════ TEMPLATES ══════ */}
           {activeSection === "templates" && (
-            <div className="mx-auto max-w-4xl">
+            <div className="mx-auto max-w-4xl animate-in fade-in slide-in-from-bottom-2 duration-300">
               <div className="mb-2 flex items-center justify-between">
                 <div>
                   <h1 className="text-2xl font-semibold text-white">{t("dashPage.templates")}</h1>
@@ -819,7 +923,7 @@ export default function BusinessDashboardPage() {
 
               {/* Template cards */}
               {templates.length === 0 && !showSaveTemplate ? (
-                <div className="mt-6 flex flex-col items-center justify-center rounded-2xl border border-white/[0.06] bg-[#0a0a0c]/70 py-16 px-6 text-center">
+                <div className="mt-6 flex flex-col items-center justify-center rounded-2xl border border-white/10 bg-[#0c1220] py-16 px-6 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)] text-center">
                   <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" className="text-white/15 mb-4"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
                   <p className="text-sm font-medium text-white/40">{t("dashPage.noTemplates")}</p>
                   <p className="mt-1 text-xs text-white/20">{t("dashPage.noTemplatesDesc")}</p>
@@ -827,7 +931,7 @@ export default function BusinessDashboardPage() {
               ) : (
                 <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
                   {templates.map((tpl) => (
-                    <div key={tpl.id} className="group rounded-2xl border border-white/[0.06] bg-[#0a0a0c]/70 p-5 backdrop-blur-md transition-all hover:border-white/15">
+                    <div key={tpl.id} className="group rounded-2xl border border-white/10 bg-[#0c1220] p-5 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)] transition-all hover:border-white/20">
                       <div className="flex items-start justify-between mb-3">
                         <div>
                           <p className="text-base font-semibold text-white">{tpl.name}</p>
@@ -868,11 +972,11 @@ export default function BusinessDashboardPage() {
 
           {/* ══════ WALLETS ══════ */}
           {activeSection === "wallets" && (
-            <div className="mx-auto max-w-4xl">
+            <div className="mx-auto max-w-4xl animate-in fade-in slide-in-from-bottom-2 duration-300">
               <h1 className="mb-6 text-2xl font-semibold text-white">Enterprise Wallets</h1>
               <div className="flex flex-col gap-4">
                 {connectedWallets.map((w) => (
-                  <div key={w.value} className="rounded-2xl border border-white/[0.06] bg-[#0a0a0c]/70 p-6 backdrop-blur-md hover:border-white/15 transition-all">
+                  <div key={w.value} className="rounded-2xl border border-white/10 bg-[#0c1220] p-6 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)] hover:border-white/15 transition-all">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4">
                         <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#3b82f6]/10 text-[#3b82f6]">
@@ -894,9 +998,12 @@ export default function BusinessDashboardPage() {
                     </div>
                   </div>
                 ))}
-                <button className="flex items-center justify-center gap-3 rounded-2xl border border-dashed border-white/10 bg-white/[0.02] p-8 text-white/30 hover:border-[#3b82f6]/30 hover:text-[#3b82f6] transition-all">
+                <button 
+                  onClick={() => openWalletModal()}
+                  className="flex items-center justify-center gap-3 rounded-2xl border border-dashed border-white/10 bg-[#0c1220]/60 p-8 text-white/70 hover:border-[#3b82f6]/30 hover:text-[#3b82f6] hover:bg-[#0c1220]/80 transition-all"
+                >
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                  <span className="text-sm font-medium">Connect New Wallet</span>
+                  <span className="text-sm font-medium">{t("dashPage.connectWallet")}</span>
                 </button>
               </div>
             </div>
@@ -904,7 +1011,7 @@ export default function BusinessDashboardPage() {
 
           {/* ══════ CREATE AGREEMENT ══════ */}
           {activeSection === "create" && (
-            <div className="mx-auto max-w-4xl">
+            <div className="mx-auto max-w-4xl animate-in fade-in slide-in-from-bottom-2 duration-300">
               <div className="mb-6 flex items-center justify-between">
                 <h1 className="text-2xl font-semibold text-white">New Agreement</h1>
                 <Button onClick={() => { setActiveSection("agreements"); resetWizard() }} className="rounded-full bg-white/10 px-6 text-sm font-semibold text-white/70 hover:bg-white/15 hover:text-white">View Agreements</Button>
@@ -932,7 +1039,7 @@ export default function BusinessDashboardPage() {
               )}
 
               {submitted ? (
-                <div className="flex flex-col items-center gap-6 rounded-2xl border border-white/[0.06] bg-[#0a0a0c]/70 p-10 text-center backdrop-blur-md">
+                <div className="flex flex-col items-center gap-6 rounded-2xl border border-white/10 bg-[#0c1220] p-10 text-center shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)]">
                   <div className="flex h-20 w-20 items-center justify-center rounded-full bg-emerald-500/10">
                     <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg>
                   </div>
@@ -954,7 +1061,7 @@ export default function BusinessDashboardPage() {
                   </div>
                 </div>
               ) : (
-                <div className="rounded-2xl border border-white/[0.06] bg-[#0a0a0c]/70 p-6 backdrop-blur-md sm:p-8">
+                <div className="rounded-2xl border border-white/10 bg-[#0c1220] p-8 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)]">
 
                   {step === 0 && (
                     <div className="flex flex-col gap-6">

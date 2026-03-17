@@ -126,6 +126,120 @@
   color: #3d5a80 !important;
 }
 
+/* Light mode - sidebar and dashboard content text stays white */
+.light aside .text-white,
+.light aside .text-white\/70,
+.light aside .text-white\/60,
+.light aside .text-white\/50,
+.light aside .text-white\/40 {
+  color: white !important;
+}
+
+/* Light mode - ALL text in main dashboard area forced to white */
+.light main .text-white,
+.light main .text-white\/80,
+.light main .text-white\/70,
+.light main .text-white\/60,
+.light main .text-white\/50,
+.light main .text-white\/40,
+.light main .text-white\/35,
+.light main .text-white\/30,
+.light main .text-white\/25,
+.light main .text-white\/20 {
+  color: white !important;
+}
+
+/* Light mode - preserve accent colors */
+.light main .text-\[\#f0b400\] {
+  color: #f0b400 !important;
+}
+
+/* Light mode - force gray text to white */
+.light main .text-gray-400,
+.light main .text-gray-500,
+.light main .text-gray-600,
+.light main .text-muted-foreground {
+  color: white !important;
+}
+
+/* Light mode - chart text and axis labels */
+.light main text,
+.light main .recharts-text,
+.light main .recharts-cartesian-axis-tick-value {
+  fill: white !important;
+}
+
+/* Light mode - truncate/mono text for addresses */
+.light main .truncate,
+.light main .font-mono {
+  color: white !important;
+}
+
+/* Light mode - all paragraph and span text */
+.light main p,
+.light main span,
+.light main h1,
+.light main h2,
+.light main h3,
+.light main h4,
+.light main label {
+  color: white !important;
+}
+
+/* Light mode - preserve button text colors */
+.light main button.bg-\[\#f0b400\] span,
+.light main button.bg-\[\#f0b400\] {
+  color: #0c1220 !important;
+}
+
+/* Light mode - dashboard cards get blue-ish tint */
+.light .bg-\[\#0c1220\] {
+  background-color: #1a2a42 !important;
+}
+.light .bg-\[\#0c1220\]\/60 {
+  background-color: rgba(26, 42, 66, 0.85) !important;
+}
+.light .bg-\[\#0c1220\]\/80 {
+  background-color: rgba(26, 42, 66, 0.9) !important;
+}
+
+/* Global smooth transitions */
+* {
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Page transitions */
+main {
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Section transitions */
+[class*="activeSection"] {
+  animation: slideIn 0.25s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
 @theme inline {
   --font-sans: 'Inter', 'Inter Fallback';
   --font-mono: 'Geist Mono', 'Geist Mono Fallback';
