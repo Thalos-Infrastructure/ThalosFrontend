@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useAuthStore } from "@/lib/auth-store";
+import { useAuthStore } from "@/lib/auth-store.tsx";
 
 function getParams(): { token: string | null; next: string } {
   if (typeof window === "undefined") return { token: null, next: "/dashboard/personal" };

@@ -4,7 +4,7 @@ import React, { useState, useRef } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/lib/i18n";
-import { useAuthStore } from "@/lib/auth-store";
+import { useAuthStore } from "@/lib/auth-store.tsx";
 import { useRouter } from "next/navigation";
 import { signInWithOAuthAction } from "@/lib/actions/auth-oauth";
 import { useStellarWallet } from "@/lib/stellar-wallet";

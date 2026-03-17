@@ -11,7 +11,7 @@ import { ThalosLoader } from "@/components/thalos-loader"
 import { LanguageToggle, ThemeToggle, useLanguage } from "@/lib/i18n"
 import { useStellarWallet } from "@/lib/stellar-wallet"
 import { useCurrentAddress } from "@/lib/use-current-address"
-import { useAuthStore } from "@/lib/auth-store"
+import { useAuthStore } from "@/lib/auth-store.tsx"
 import { WalletAddress } from "@/components/ui/wallet-address"
 import { Footer } from "@/components/footer"
 import {
