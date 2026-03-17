@@ -10,6 +10,9 @@ import { cn } from "@/lib/utils"
 import { ThalosLoader } from "@/components/thalos-loader"
 import { LanguageToggle, ThemeToggle, useLanguage } from "@/lib/i18n"
 import { useStellarWallet } from "@/lib/stellar-wallet"
+import { useCurrentAddress } from "@/lib/use-current-address"
+import { useAuthStore } from "@/lib/auth-store"
+import { WalletAddress } from "@/components/ui/wallet-address"
 import { Footer } from "@/components/footer"
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area,
@@ -301,7 +304,9 @@ export default function PersonalDashboardPage() {
   // Prevent duplicate fetches in Strict Mode or double mount
   const fetchedEscrowsRef = React.useRef<string | null>(null);
   const { t } = useLanguage();
-  const { address: walletAddress, signTransaction, openWalletModal } = useStellarWallet();
+  const { signTransaction, openWalletModal } = useStellarWallet();
+  const walletAddress = useCurrentAddress();
+  const { user: socialUser } = useAuthStore();
   const [loading, setLoading] = useState(false);
 
   const [activeSection, setActiveSection] = useState("agreements");
@@ -596,6 +601,16 @@ export default function PersonalDashboardPage() {
 
         {/* Main content */}
         <main className="flex-1 overflow-y-auto p-4 lg:p-8">
+          {/* Welcome + wallet asignada (estilo Offer-Hub) */}
+          {walletAddress && (
+            <div className="mb-6 flex flex-col gap-2">
+              <p className="text-lg font-semibold text-white">
+                {t("signin.welcome")}, {socialUser?.name ?? "User"}!
+              </p>
+              <p className="text-sm text-white/50">happening with your projects today</p>
+              <WalletAddress address={walletAddress} />
+            </div>
+          )}
           {/* ══════ THALOS BOUNTY ══════ */}
           {activeSection === "bounty" && (
             <div className="mx-auto max-w-4xl pt-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
@@ -643,9 +658,7 @@ export default function PersonalDashboardPage() {
                   </div>
                 </div>
               </div>
-            </div>
-          )}
-
+          
           {/* ══════ ANALYTICS ══════ */}
           {activeSection === "analytics" && (
             <div className="mx-auto max-w-5xl animate-in fade-in slide-in-from-bottom-2 duration-300">

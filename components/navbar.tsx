@@ -4,8 +4,8 @@ import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { useState, useEffect, useRef } from "react"
 import { cn } from "@/lib/utils"
-import { SignInPanel } from "@/components/sign-in-panel"
 import { useLanguage, LanguageToggle, ThemeToggle } from "@/lib/i18n"
+import { SocialAuthModal } from "@/components/social-auth-modal"
 
 const useCaseCategories: { label: string; items: string[] }[] = [
   { label: "Digital Economy", items: ["Freelancers", "Agencies", "Developers", "Creators"] },
@@ -23,7 +23,7 @@ const useCaseCategories: { label: string; items: string[] }[] = [
 export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }) {
   const { t } = useLanguage()
   const [mobileOpen, setMobileOpen] = useState(false)
-  const [showSignIn, setShowSignIn] = useState(false)
+  const [showAuthModal, setShowAuthModal] = useState<"login" | "signup" | null>(null)
   const [visible, setVisible] = useState(true)
   const [useCaseOpen, setUseCaseOpen] = useState(false)
   const [expandedCat, setExpandedCat] = useState<string | null>(null)
@@ -61,10 +61,6 @@ export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }
     return () => window.removeEventListener("scroll", onScroll)
   }, [])
 
-  useEffect(() => {
-    if (showSignIn) { document.body.style.overflow = "hidden" } else { document.body.style.overflow = "" }
-    return () => { document.body.style.overflow = "" }
-  }, [showSignIn])
 
   return (
     <>
@@ -157,14 +153,14 @@ export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }
             ))}
           </div>
 
-          {/* Desktop actions: Sign In then Language */}
+          {/* Desktop: solo botón Login (abre el modal con Google, GitHub, Email y Connect Stellar Wallet) */}
           <div className="hidden items-center gap-3 md:flex">
             <Button
               size="sm"
-              onClick={() => setShowSignIn(true)}
-              className="rounded-full bg-white px-7 py-2 text-base text-[#0a0a0c] font-bold shadow-[0_2px_12px_rgba(0,0,0,0.12),0_1px_2px_rgba(0,0,0,0.2)] hover:bg-white/90 transition-all duration-400"
+              onClick={() => setShowAuthModal("login")}
+              className="rounded-full bg-[#0f766e] px-7 py-2 text-base text-background font-bold shadow-[0_2px_12px_rgba(0,0,0,0.18)] hover:bg-[#115e59] transition-all duration-400"
             >
-              {t("nav.signIn")}
+              Login
             </Button>
             <LanguageToggle />
             <ThemeToggle />
@@ -198,10 +194,10 @@ export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }
               <div className="mt-2 flex items-center gap-2">
                 <Button
                   size="sm"
-                  onClick={() => { setShowSignIn(true); setMobileOpen(false) }}
-                  className="flex-1 rounded-full bg-white text-[#0a0a0c] font-semibold shadow-[0_2px_12px_rgba(0,0,0,0.12)] hover:bg-white/90"
+                  onClick={() => { setShowAuthModal("login"); setMobileOpen(false) }}
+                  className="flex-1 rounded-full bg-[#0f766e] text-base font-bold text-background shadow-[0_2px_12px_rgba(0,0,0,0.12)] hover:bg-[#115e59]"
                 >
-                  {t("nav.signIn")}
+                  Login
                 </Button>
                 <LanguageToggle />
                 <ThemeToggle />
@@ -211,7 +207,11 @@ export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }
         )}
       </header>
 
-      <SignInPanel open={showSignIn} onClose={() => setShowSignIn(false)} />
+      <SocialAuthModal
+        open={showAuthModal !== null}
+        mode={showAuthModal === "signup" ? "signup" : "login"}
+        onClose={() => setShowAuthModal(null)}
+      />
     </>
   )
 }
