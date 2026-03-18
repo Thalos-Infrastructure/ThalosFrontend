@@ -13,7 +13,7 @@ function getParams(): { token: string | null; next: string } {
 }
 
 export default function AuthCallbackSuccessPage() {
-  const login = useAuthStore((s) => s.login);
+  const { login } = useAuthStore();
   const [status, setStatus] = useState<"loading" | "done" | "error">("loading");
 
   useEffect(() => {

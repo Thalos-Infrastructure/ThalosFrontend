@@ -1239,5 +1239,5 @@ export default function PersonalDashboardPage() {
       {/* Footer */}
       <Footer />
     </div>
-  )
+  );
 }
