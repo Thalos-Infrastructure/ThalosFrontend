@@ -610,6 +610,7 @@ export default function PersonalDashboardPage() {
               <WalletAddress address={walletAddress} />
             </div>
           )}
+          
           {/* ══════ THALOS BOUNTY ══════ */}
           {activeSection === "bounty" && (
             <div className="mx-auto max-w-4xl pt-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
@@ -657,6 +658,8 @@ export default function PersonalDashboardPage() {
                   </div>
                 </div>
               </div>
+            </div>
+          )}
           
           {/* ══════ ANALYTICS ══════ */}
           {activeSection === "analytics" && (
