@@ -1,7 +1,6 @@
 "use client";
+
 import { ApproverAgreementDetail } from "./ApproverAgreementDetail";
-
-
 import React, { useState, useEffect, useCallback, useId, useRef, useMemo } from "react"
 import Image from "next/image"
 import Link from "next/link"
