@@ -18,7 +18,7 @@ interface SocialAuthModalProps {
 export function SocialAuthModal({ mode, open, onClose }: SocialAuthModalProps) {
   const { t } = useLanguage();
   const router = useRouter();
-  const { login } = useAuthStore();
+  const { login, logout } = useAuthStore();
   const { isConnecting, walletError, openWalletModal } = useStellarWallet();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -63,7 +63,7 @@ export function SocialAuthModal({ mode, open, onClose }: SocialAuthModalProps) {
       const data = await res.json();
       login(data.user, data.token);
       onClose();
-      router.push("/dashboard/personal");
+      router.push("/auth/select-profile");
     } catch (e) {
       const msg = e instanceof Error ? e.message : "No se pudo iniciar sesión.";
       setError(msg);
@@ -167,7 +167,14 @@ export function SocialAuthModal({ mode, open, onClose }: SocialAuthModalProps) {
         <Button
           type="button"
           variant="outline"
-          onClick={() => openWalletModal(() => { onClose(); router.push("/dashboard/personal"); }, "personal")}
+          onClick={() =>
+            openWalletModal(() => {
+              // Quitar sesión OAuth/email para que la UI muestre la wallet de Freighter (B), no la asignada a la cuenta (A).
+              logout();
+              onClose();
+              router.push("/auth/select-profile");
+            }, "personal")
+          }
           disabled={isConnecting}
           className="h-10 w-full gap-3 rounded-xl border-border/40 bg-secondary/40 text-sm font-semibold text-foreground hover:bg-secondary"
         >
