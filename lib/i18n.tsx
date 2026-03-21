@@ -128,6 +128,8 @@ const translations: Record<Lang, Record<string, string>> = {
     "footer.visionTeam": "Vision & Mission",
     "footer.documentation": "Documentation",
 
+    "common.loading": "Loading…",
+
     // Sign In
     "signin.welcome": "Welcome back",
     "signin.desc": "Access your agreements and protected funds.",
@@ -749,6 +751,8 @@ const translations: Record<Lang, Record<string, string>> = {
     "footer.rights": "Todos los derechos reservados.",
     "footer.visionTeam": "Vision y Mision",
     "footer.documentation": "Documentacion",
+
+    "common.loading": "Cargando…",
 
     // Sign In
     "signin.welcome": "Bienvenido de nuevo",

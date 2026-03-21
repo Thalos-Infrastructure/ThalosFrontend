@@ -13,7 +13,7 @@ type StellarWalletContextValue = {
   isConnecting: boolean
   walletError: string | null
   /** Abre el modal "Connect Wallet" del Stellar Wallets Kit (xBull, Ledger, Freighter, LOBSTR, etc.) */
-  openWalletModal: (onConnected?: (address: string) => void, accountType?: "personal" | "business") => Promise<void>
+  openWalletModal: (onConnected?: (address: string) => void, accountType?: "personal" | "enterprise") => Promise<void>
   disconnect: () => void
   signTransaction: (xdr: string, networkPassphrase: string) => Promise<{ signedTxXdr: string } | null>
   refreshProfile: () => Promise<void>
@@ -53,7 +53,7 @@ export function StellarWalletProvider({ children }: { children: React.ReactNode 
   }, [address])
 
   const openWalletModal = useCallback(
-    async (onConnected?: (address: string) => void, accountType: "personal" | "business" = "personal") => {
+    async (onConnected?: (address: string) => void, accountType: "personal" | "enterprise" = "personal") => {
       setIsConnecting(true)
       setWalletError(null)
       try {
