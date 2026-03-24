@@ -119,10 +119,38 @@
 }
 
 /* Light mode - footer text should be blue tones */
-.light footer .text-white\/60 {
+.light footer .text-white\/60,
+.light footer p.text-sm {
+  color: #1a2a42 !important;
+}
+.light footer .text-white\/30,
+.light footer span.text-\[10px\] {
+  color: #3d5a80 !important;
+}
+.light footer a.text-sm {
   color: #2a4060 !important;
 }
-.light footer .text-white\/30 {
+.light footer a.text-sm:hover {
+  color: #0c1220 !important;
+}
+
+/* Light mode - landing page sections text blue */
+.light .text-muted-foreground {
+  color: #2a4060 !important;
+}
+.light h1.text-foreground,
+.light h2.text-foreground,
+.light h3.text-foreground,
+.light .text-foreground:not(header *):not(nav *):not(aside *):not([class*="bg-[#0c1220]"] *) {
+  color: #0c1220 !important;
+}
+
+/* Light mode - about page vision/mission text */
+.light section p.text-lg,
+.light section p.text-base {
+  color: #1a2a42 !important;
+}
+.light section p.text-muted-foreground\/80 {
   color: #3d5a80 !important;
 }
 

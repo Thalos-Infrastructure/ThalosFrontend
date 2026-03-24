@@ -14,6 +14,7 @@ import { useAuthStore } from "@/lib/auth-store"
 import { WalletAddress } from "@/components/ui/wallet-address"
 import { Footer } from "@/components/footer"
 import { RampsSection } from "@/components/ramps/ramps-section"
+import { InlineOnramp } from "@/components/ramps/inline-onramp"
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area,
 } from "recharts"
@@ -321,6 +322,8 @@ export default function PersonalDashboardPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState<"all" | "funded" | "in_progress" | "released">("all")
   const [sortBy, setSortBy] = useState<"date" | "amount" | "title">("date")
+  const [currentPage, setCurrentPage] = useState(1)
+  const ITEMS_PER_PAGE = 10
 
   const filteredAgreements = useMemo(() => {
     let filtered = [...agreements]
@@ -349,6 +352,18 @@ export default function PersonalDashboardPage() {
     })
     return filtered
   }, [agreements, statusFilter, searchQuery, sortBy])
+
+  // Pagination
+  const totalPages = Math.ceil(filteredAgreements.length / ITEMS_PER_PAGE)
+  const paginatedAgreements = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE
+    return filteredAgreements.slice(start, start + ITEMS_PER_PAGE)
+  }, [filteredAgreements, currentPage])
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [statusFilter, searchQuery, sortBy])
 
   const statusCounts = useMemo(() => {
     const counts = { all: agreements.length, funded: 0, in_progress: 0, released: 0 }
@@ -815,8 +830,9 @@ export default function PersonalDashboardPage() {
                   <p className="mt-1 text-xs text-white/20">{t("dashPage.noResultsDesc")}</p>
                 </div>
               ) : (
+              <>
               <div className="flex flex-col gap-4">
-                {filteredAgreements.map((agr) => {
+                {paginatedAgreements.map((agr) => {
                   const allReleased = agr.milestones.every(m => m.status === "released")
                   const effectiveStatus = allReleased ? "released" : agr.status
                   const st = statusConfig[effectiveStatus] || statusConfig.funded
@@ -849,30 +865,95 @@ export default function PersonalDashboardPage() {
                   )
                 })}
               </div>
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="mt-6 flex items-center justify-between">
+                  <p className="text-xs text-white/40">
+                    Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1}-{Math.min(currentPage * ITEMS_PER_PAGE, filteredAgreements.length)} of {filteredAgreements.length}
+                  </p>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                      disabled={currentPage === 1}
+                      className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/[0.02] text-white/50 transition-all hover:bg-white/[0.06] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6"/></svg>
+                    </button>
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                      let pageNum: number
+                      if (totalPages <= 5) {
+                        pageNum = i + 1
+                      } else if (currentPage <= 3) {
+                        pageNum = i + 1
+                      } else if (currentPage >= totalPages - 2) {
+                        pageNum = totalPages - 4 + i
+                      } else {
+                        pageNum = currentPage - 2 + i
+                      }
+                      return (
+                        <button
+                          key={pageNum}
+                          onClick={() => setCurrentPage(pageNum)}
+                          className={cn(
+                            "flex h-8 w-8 items-center justify-center rounded-lg text-xs font-semibold transition-all",
+                            currentPage === pageNum
+                              ? "bg-[#f0b400]/15 text-[#f0b400] border border-[#f0b400]/20"
+                              : "border border-white/10 bg-white/[0.02] text-white/50 hover:bg-white/[0.06] hover:text-white"
+                          )}
+                        >
+                          {pageNum}
+                        </button>
+                      )
+                    })}
+                    <button
+                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                      disabled={currentPage === totalPages}
+                      className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/[0.02] text-white/50 transition-all hover:bg-white/[0.06] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18l6-6-6-6"/></svg>
+                    </button>
+                  </div>
+                </div>
+              )}
+              </>
               )}
               {/* Section: Agreements that require my attention */}
-              <div className="mt-12">
-                <h2 className="text-xl font-semibold text-white mb-4">{t("dashPage.pendingAction")}</h2>
-                {approverLoading ? (
-                  <div className="text-white/40 text-sm">{t("dashPage.loadingEscrows")}</div>
-                ) : approverEscrows.length === 0 ? (
-                  <div className="text-white/40 text-sm">{t("dashPage.noEscrows")}</div>
-                ) : (
-                  <div className="flex flex-col gap-4">
-                    {approverEscrows.map((agr) => (
-                      <ApproverAgreementDetail
-                        key={agr.id}
-                        agr={agr}
-                        walletAddress={walletAddress}
-                      />
-                    ))}
+              {approverEscrows.length > 0 && (
+                <div className="mt-12">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <h2 className="text-xl font-semibold text-white">{t("dashPage.pendingAction")}</h2>
+                      <span className="rounded-full bg-[#f0b400]/15 px-2.5 py-0.5 text-xs font-bold text-[#f0b400]">
+                        {approverEscrows.length}
+                      </span>
+                    </div>
                   </div>
-
-
-                // --- Place this at the end of the file, after export default ---
-
-                )}
-              </div>
+                  {approverLoading ? (
+                    <div className="text-white/40 text-sm">{t("dashPage.loadingEscrows")}</div>
+                  ) : (
+                    <div className="flex flex-col gap-3">
+                      {approverEscrows.slice(0, 5).map((agr) => (
+                        <ApproverAgreementDetail
+                          key={agr.id}
+                          agr={agr}
+                          walletAddress={walletAddress}
+                        />
+                      ))}
+                      {approverEscrows.length > 5 && (
+                        <button 
+                          className="flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.02] py-3 text-sm font-medium text-white/50 hover:bg-white/[0.04] hover:text-white/70 transition-all"
+                          onClick={() => {/* TODO: Show all pending */}}
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M6 9l6 6 6-6"/>
+                          </svg>
+                          View all {approverEscrows.length} pending agreements
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
@@ -1182,6 +1263,14 @@ export default function PersonalDashboardPage() {
                           <p className="mt-2 text-xs text-white/30">{t("wizard.platformFeeLabel")} {platformFee} USDC (1%)</p>
                         </div>
                       </div>
+                      {/* On-Ramp Option - Fund directly if needed */}
+                      <InlineOnramp
+                        targetAmount={totalAmount + platformFee}
+                        targetCurrency="USDC"
+                        walletAddress={walletAddress}
+                        onComplete={() => {/* Funds received, can proceed */}}
+                        className="mb-2"
+                      />
                       <div className="rounded-xl border border-[#f0b400]/15 bg-[#f0b400]/5 p-5">
                         <div className="mb-4 flex items-center gap-2">
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f0b400" strokeWidth="1.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
