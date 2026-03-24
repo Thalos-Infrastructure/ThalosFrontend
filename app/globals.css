@@ -94,70 +94,102 @@
 }
 
 /* ══════════════════════════════════════════════════════════════════
-   LIGHT MODE - LANDING PAGE: text dark blue, CARDS: same as dark mode
+   LIGHT MODE OVERRIDES
    ══════════════════════════════════════════════════════════════════ */
 
-/* ----- LANDING PAGE (not dashboard) ----- */
-/* Hero titles - dark blue */
+/* ===== HEADER: text stays WHITE ===== */
+.light header,
+.light header a,
+.light header button,
+.light header span,
+.light nav a { 
+  color: white !important; 
+}
+
+/* ===== HERO: titles dark, typewriter yellow ===== */
 .light .hero-title { color: #0c1220 !important; }
 .light .hero-trust-layer { color: #1a2a42 !important; }
-
-/* Body text - blue tones */
-.light .trust-dialog-text, 
-.light .trust-dialog-text p { color: #2a4060 !important; }
-.light .trust-highlight { color: #0c1220 !important; }
-
-/* Typewriter - yellow */
-.light .typewriter-text, 
-.light .typewriter-text span { color: #f0b400 !important; }
-
-/* Hero CTA buttons */
+.light .typewriter-text, .light .typewriter-text span { color: #f0b400 !important; }
 .light .hero-cta-secondary { border-color: #1a2a42 !important; color: #1a2a42 !important; }
 
-/* Footer - dark blue text */
-.light footer,
-.light footer p, 
-.light footer span, 
-.light footer a, 
-.light footer div { color: #0c1220 !important; }
+/* ===== BODY TEXT (sections after hero): dark blue ===== */
+.light .trust-dialog-text, .light .trust-dialog-text p { color: #2a4060 !important; }
+.light .trust-highlight { color: #0c1220 !important; }
 
-/* No shadow on header buttons */
-.light header button, 
-.light nav button { box-shadow: none !important; }
+/* Section titles: darker, paragraphs: lighter blue */
+.light section h2.text-white { color: #0c1220 !important; }
+.light section p.text-white\/60, 
+.light section p.text-white\/70,
+.light section span.text-white\/60,
+.light section span.text-white\/70 { color: #2a4060 !important; }
 
-/* Stellar logo visibility */
+/* ===== CARDS (use-cases, FAQ, dashboard): SAME AS DARK MODE ===== */
+.light .bg-\[\#0c1220\],
+.light [class*="bg-[#0c1220]"] {
+  background-color: #0c1220 !important;
+}
+.light .bg-\[\#0c1220\] .text-white,
+.light .bg-\[\#0c1220\] .text-white\/60,
+.light .bg-\[\#0c1220\] .text-white\/70,
+.light .bg-\[\#0c1220\] p,
+.light .bg-\[\#0c1220\] span,
+.light .bg-\[\#0c1220\] h1,
+.light .bg-\[\#0c1220\] h2,
+.light .bg-\[\#0c1220\] h3,
+.light .bg-\[\#0c1220\] h4,
+.light [class*="bg-[#0c1220]"] .text-white,
+.light [class*="bg-[#0c1220]"] .text-white\/60,
+.light [class*="bg-[#0c1220]"] .text-white\/70,
+.light [class*="bg-[#0c1220]"] p,
+.light [class*="bg-[#0c1220]"] span,
+.light [class*="bg-[#0c1220]"] button {
+  color: white !important;
+}
+.light [class*="bg-[#0c1220]"] .text-white\/60,
+.light [class*="bg-[#0c1220]"] .text-white\/70 {
+  color: rgba(255,255,255,0.7) !important;
+}
+.light [class*="bg-[#0c1220]"] .text-\[\#f0b400\] {
+  color: #f0b400 !important;
+}
+
+/* ===== FAQ: white text inside dark card ===== */
+.light #faq .bg-\[\#0c1220\] .text-white,
+.light #faq .bg-\[\#0c1220\] span,
+.light #faq .bg-\[\#0c1220\] button span {
+  color: white !important;
+}
+.light #faq .bg-\[\#0c1220\] .text-white\/70,
+.light #faq .bg-\[\#0c1220\] p.text-white\/70 {
+  color: rgba(255,255,255,0.7) !important;
+}
+
+/* ===== FOOTER: text blue, titles yellow ===== */
+.light footer p.text-white\/60,
+.light footer span.text-white\/60,
+.light footer a.text-white\/60,
+.light footer span.text-white\/30,
+.light footer p.text-white\/30 { 
+  color: #1a2a42 !important; 
+}
+.light footer .text-\[\#f0b400\] { 
+  color: #f0b400 !important; 
+}
+.light footer a:hover { 
+  color: #0c1220 !important; 
+}
+
+/* ===== Stellar logo visibility ===== */
 .light img[alt="Stellar"] {
   filter: brightness(0) saturate(100%) invert(15%) sepia(20%) saturate(1000%) hue-rotate(190deg) brightness(95%) contrast(95%);
 }
 
-/* ----- CARDS: Keep dark mode colors (bg + text) ----- */
-/* Cards with dark background keep their white text */
-.light [class*="bg-[#0c1220]"],
-.light [class*="bg-[#0d1526]"],
-.light [class*="bg-[#111827]"],
-.light [class*="border-white/10"][class*="rounded"] {
-  /* Background stays as defined inline */
-}
-.light [class*="bg-[#0c1220]"] .text-white,
-.light [class*="bg-[#0c1220]"] .text-white\/70,
-.light [class*="bg-[#0c1220]"] .text-white\/60,
-.light [class*="bg-[#0c1220]"] .text-white\/50,
-.light [class*="bg-[#0c1220]"] p,
-.light [class*="bg-[#0c1220]"] span,
-.light [class*="bg-[#0c1220]"] h1,
-.light [class*="bg-[#0c1220]"] h2,
-.light [class*="bg-[#0c1220]"] h3,
-.light [class*="bg-[#0c1220]"] h4 {
-  color: inherit !important;
-}
+/* ===== No shadow on header buttons ===== */
+.light header button, .light nav button { box-shadow: none !important; }
 
-/* ----- DASHBOARD: all text stays white ----- */
-.light aside .text-white,
-.light aside .text-white\/70,
-.light aside .text-white\/60,
-.light aside .text-white\/50 {
-  color: inherit !important;
-}
+/* ===== DASHBOARD: preserve dark mode look ===== */
+.light aside,
+.light aside * { color: inherit !important; }
 
 /* Global smooth transitions */
 * {
