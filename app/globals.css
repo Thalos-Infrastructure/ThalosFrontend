@@ -94,113 +94,69 @@
 }
 
 /* ══════════════════════════════════════════════════════════════════
-   LIGHT MODE - Text colors (blue tones) - Cards stay dark mode colors
-   Last updated: 2026-03-23
+   LIGHT MODE - LANDING PAGE: text dark blue, CARDS: same as dark mode
    ══════════════════════════════════════════════════════════════════ */
 
-/* Light mode - Hero titles dark blue */
+/* ----- LANDING PAGE (not dashboard) ----- */
+/* Hero titles - dark blue */
 .light .hero-title { color: #0c1220 !important; }
 .light .hero-trust-layer { color: #1a2a42 !important; }
 
-/* Light mode - Body text blue tones */
-.light .trust-dialog-text, .light .trust-dialog-text p { color: #2a4060 !important; }
+/* Body text - blue tones */
+.light .trust-dialog-text, 
+.light .trust-dialog-text p { color: #2a4060 !important; }
 .light .trust-highlight { color: #0c1220 !important; }
 
-/* Light mode - ONLY typewriter text is yellow (not titles) */
-.light .typewriter-text, .light .typewriter-text span { color: #f0b400 !important; }
+/* Typewriter - yellow */
+.light .typewriter-text, 
+.light .typewriter-text span { color: #f0b400 !important; }
 
-/* Light mode - Hero CTA buttons */
+/* Hero CTA buttons */
 .light .hero-cta-secondary { border-color: #1a2a42 !important; color: #1a2a42 !important; }
-.light .hero-cta-secondary:hover { background-color: rgba(26, 42, 66, 0.1) !important; }
 
-/* Light mode - Footer text dark blue */
-.light footer { color: #0c1220 !important; }
-.light footer p, .light footer span, .light footer a, .light footer div { color: #0c1220 !important; }
-.light footer a:hover { color: #2a4060 !important; }
+/* Footer - dark blue text */
+.light footer,
+.light footer p, 
+.light footer span, 
+.light footer a, 
+.light footer div { color: #0c1220 !important; }
 
-/* Light mode - No shadow on header buttons */
-.light header button, .light nav button { box-shadow: none !important; }
+/* No shadow on header buttons */
+.light header button, 
+.light nav button { box-shadow: none !important; }
 
-/* Light mode - stellar logo visibility */
+/* Stellar logo visibility */
 .light img[alt="Stellar"] {
   filter: brightness(0) saturate(100%) invert(15%) sepia(20%) saturate(1000%) hue-rotate(190deg) brightness(95%) contrast(95%);
 }
 
-/* Light mode - sidebar and dashboard content text stays white */
+/* ----- CARDS: Keep dark mode colors (bg + text) ----- */
+/* Cards with dark background keep their white text */
+.light [class*="bg-[#0c1220]"],
+.light [class*="bg-[#0d1526]"],
+.light [class*="bg-[#111827]"],
+.light [class*="border-white/10"][class*="rounded"] {
+  /* Background stays as defined inline */
+}
+.light [class*="bg-[#0c1220]"] .text-white,
+.light [class*="bg-[#0c1220]"] .text-white\/70,
+.light [class*="bg-[#0c1220]"] .text-white\/60,
+.light [class*="bg-[#0c1220]"] .text-white\/50,
+.light [class*="bg-[#0c1220]"] p,
+.light [class*="bg-[#0c1220]"] span,
+.light [class*="bg-[#0c1220]"] h1,
+.light [class*="bg-[#0c1220]"] h2,
+.light [class*="bg-[#0c1220]"] h3,
+.light [class*="bg-[#0c1220]"] h4 {
+  color: inherit !important;
+}
+
+/* ----- DASHBOARD: all text stays white ----- */
 .light aside .text-white,
 .light aside .text-white\/70,
 .light aside .text-white\/60,
-.light aside .text-white\/50,
-.light aside .text-white\/40 {
-  color: white !important;
-}
-
-/* Light mode - ALL text in main dashboard area forced to white */
-.light main .text-white,
-.light main .text-white\/80,
-.light main .text-white\/70,
-.light main .text-white\/60,
-.light main .text-white\/50,
-.light main .text-white\/40,
-.light main .text-white\/35,
-.light main .text-white\/30,
-.light main .text-white\/25,
-.light main .text-white\/20 {
-  color: white !important;
-}
-
-/* Light mode - preserve accent colors */
-.light main .text-\[\#f0b400\] {
-  color: #f0b400 !important;
-}
-
-/* Light mode - force gray text to white */
-.light main .text-gray-400,
-.light main .text-gray-500,
-.light main .text-gray-600,
-.light main .text-muted-foreground {
-  color: white !important;
-}
-
-/* Light mode - chart text and axis labels */
-.light main text,
-.light main .recharts-text,
-.light main .recharts-cartesian-axis-tick-value {
-  fill: white !important;
-}
-
-/* Light mode - truncate/mono text for addresses */
-.light main .truncate,
-.light main .font-mono {
-  color: white !important;
-}
-
-/* Light mode - all paragraph and span text */
-.light main p,
-.light main span,
-.light main h1,
-.light main h2,
-.light main h3,
-.light main h4,
-.light main label {
-  color: white !important;
-}
-
-/* Light mode - preserve button text colors */
-.light main button.bg-\[\#f0b400\] span,
-.light main button.bg-\[\#f0b400\] {
-  color: #0c1220 !important;
-}
-
-/* Light mode - dashboard cards get blue-ish tint */
-.light .bg-\[\#0c1220\] {
-  background-color: #1a2a42 !important;
-}
-.light .bg-\[\#0c1220\]\/60 {
-  background-color: rgba(26, 42, 66, 0.85) !important;
-}
-.light .bg-\[\#0c1220\]\/80 {
-  background-color: rgba(26, 42, 66, 0.9) !important;
+.light aside .text-white\/50 {
+  color: inherit !important;
 }
 
 /* Global smooth transitions */
