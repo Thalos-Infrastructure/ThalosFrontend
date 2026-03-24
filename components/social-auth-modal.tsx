@@ -91,64 +91,66 @@ export function SocialAuthModal({ mode, open, onClose }: SocialAuthModalProps) {
     openWalletModal(() => {
       onClose();
       router.push(accountType === "enterprise" ? "/dashboard/business" : "/dashboard/personal");
-    }, accountType);
+    }, accountType === "enterprise" ? "business" : "personal");
   };
 
   return (
     <div className="fixed inset-0 z-[90] flex items-center justify-center p-4" onClick={onClose}>
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+      
+      {/* Modal */}
       <div
-        className="relative z-10 flex w-full max-w-4xl overflow-hidden rounded-2xl border border-white/10 bg-[#0c1220] shadow-[0_40px_120px_rgba(0,0,0,0.5)]"
+        className="relative z-10 w-full max-w-md overflow-hidden rounded-2xl border border-white/10 bg-[#0f1729] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)]"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Left side - Image */}
-        <div className="relative hidden w-1/2 md:block">
+        {/* Image header with subtle text */}
+        <div className="relative h-32 overflow-hidden">
           <Image
             src="/earth-space.jpg"
-            alt="Earth from space"
+            alt=""
             fill
             className="object-cover"
             priority
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent to-[#0c1220]/80" />
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#0f1729]" />
+          <div className="absolute inset-0 flex items-center justify-center">
+            <p className="text-xs font-medium uppercase tracking-[0.25em] text-white/40">
+              The Trust Layer
+            </p>
+          </div>
         </div>
 
-        {/* Right side - Form */}
-        <div className="relative flex w-full flex-col px-8 py-10 md:w-1/2">
+        {/* Content */}
+        <div className="relative px-6 pb-6 -mt-4">
+          {/* Close button */}
           <button
             onClick={onClose}
-            className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full text-white/40 hover:bg-white/5 hover:text-white"
+            className="absolute -top-28 right-3 flex h-8 w-8 items-center justify-center rounded-full bg-black/30 text-white/60 hover:bg-black/50 hover:text-white transition-colors"
             aria-label="Close"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <line x1="18" y1="6" x2="6" y2="18" />
               <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
           </button>
 
-          <div className="mb-6 text-center">
-            <h2 className="text-2xl font-bold tracking-tight text-white">
-              {isLogin ? "Welcome back" : "Create an account"}
-            </h2>
-            <p className="mt-2 text-sm text-white/50">
-              {isLogin ? "Sign in to continue" : "Join Thalos today"}
-            </p>
-          </div>
-
           {/* Account Type Selection */}
-          <div className="mb-6">
-            <p className="mb-3 text-xs font-medium uppercase tracking-wider text-white/40">Select account type</p>
+          <div className="mb-5">
+            <p className="mb-3 text-center text-xs font-medium uppercase tracking-wider text-white/40">
+              Select account type
+            </p>
             <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"
                 onClick={() => setAccountType("personal")}
                 className={`flex flex-col items-center gap-2 rounded-xl border p-4 transition-all ${
                   accountType === "personal"
-                    ? "border-[#f0b400] bg-[#f0b400]/10 text-[#f0b400]"
-                    : "border-white/10 bg-white/[0.02] text-white/60 hover:border-white/20 hover:bg-white/[0.04]"
+                    ? "border-[#f0b400]/50 bg-[#f0b400]/10 text-[#f0b400]"
+                    : "border-white/10 bg-[#1a2744] text-white/60 hover:border-white/20 hover:bg-[#1e2d4d]"
                 }`}
               >
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                   <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                   <circle cx="12" cy="7" r="4" />
                 </svg>
@@ -159,18 +161,15 @@ export function SocialAuthModal({ mode, open, onClose }: SocialAuthModalProps) {
                 onClick={() => setAccountType("enterprise")}
                 className={`flex flex-col items-center gap-2 rounded-xl border p-4 transition-all ${
                   accountType === "enterprise"
-                    ? "border-[#f0b400] bg-[#f0b400]/10 text-[#f0b400]"
-                    : "border-white/10 bg-white/[0.02] text-white/60 hover:border-white/20 hover:bg-white/[0.04]"
+                    ? "border-[#f0b400]/50 bg-[#f0b400]/10 text-[#f0b400]"
+                    : "border-white/10 bg-[#1a2744] text-white/60 hover:border-white/20 hover:bg-[#1e2d4d]"
                 }`}
               >
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                   <path d="M3 21h18" />
                   <path d="M5 21V7l8-4v18" />
                   <path d="M19 21V11l-6-4" />
-                  <path d="M9 9v.01" />
-                  <path d="M9 12v.01" />
-                  <path d="M9 15v.01" />
-                  <path d="M9 18v.01" />
+                  <path d="M9 9v.01M9 12v.01M9 15v.01M9 18v.01" />
                 </svg>
                 <span className="text-sm font-semibold">Enterprise</span>
               </button>
@@ -179,12 +178,13 @@ export function SocialAuthModal({ mode, open, onClose }: SocialAuthModalProps) {
 
           {/* Auth Options - Only show after account type selected */}
           {accountType && (
-            <>
-              <div className="flex flex-col gap-2.5">
+            <div className="animate-fade-in">
+              {/* OAuth buttons */}
+              <div className="flex flex-col gap-2">
                 <Button
                   type="button"
                   variant="outline"
-                  className="h-11 w-full gap-3 rounded-xl border-white/10 bg-white/[0.03] text-sm font-semibold text-white hover:bg-white/[0.06]"
+                  className="h-11 w-full gap-3 rounded-xl border-white/10 bg-[#1a2744] text-sm font-medium text-white hover:bg-[#1e2d4d] hover:border-white/20"
                   onClick={() => handleOAuth("google")}
                   disabled={oauthLoading !== null}
                 >
@@ -199,7 +199,7 @@ export function SocialAuthModal({ mode, open, onClose }: SocialAuthModalProps) {
                 <Button
                   type="button"
                   variant="outline"
-                  className="h-11 w-full gap-3 rounded-xl border-white/10 bg-white/[0.03] text-sm font-semibold text-white hover:bg-white/[0.06]"
+                  className="h-11 w-full gap-3 rounded-xl border-white/10 bg-[#1a2744] text-sm font-medium text-white hover:bg-[#1e2d4d] hover:border-white/20"
                   onClick={() => handleOAuth("github")}
                   disabled={oauthLoading !== null}
                 >
@@ -212,16 +212,17 @@ export function SocialAuthModal({ mode, open, onClose }: SocialAuthModalProps) {
 
               <div className="my-4 flex items-center gap-3">
                 <div className="h-px flex-1 bg-white/10" />
-                <span className="text-[10px] font-semibold uppercase tracking-widest text-white/30">or</span>
+                <span className="text-[10px] font-medium uppercase tracking-widest text-white/30">or</span>
                 <div className="h-px flex-1 bg-white/10" />
               </div>
 
+              {/* Wallet button */}
               <Button
                 type="button"
                 variant="outline"
                 onClick={handleWalletConnect}
                 disabled={isConnecting}
-                className="h-11 w-full gap-3 rounded-xl border-white/10 bg-white/[0.03] text-sm font-semibold text-white hover:bg-white/[0.06]"
+                className="h-11 w-full gap-3 rounded-xl border-white/10 bg-[#1a2744] text-sm font-medium text-white hover:bg-[#1e2d4d] hover:border-white/20"
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                   <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
@@ -230,94 +231,59 @@ export function SocialAuthModal({ mode, open, onClose }: SocialAuthModalProps) {
                 {isConnecting ? t("signin.walletConnecting") : t("signin.wallet")}
               </Button>
               {walletError && (
-                <p className="mt-1 text-xs text-red-400/90" role="alert">{walletError}</p>
+                <p className="mt-2 text-xs text-red-400/90 text-center" role="alert">{walletError}</p>
               )}
 
-              {/* Email/Password Form Toggle */}
+              {/* Email toggle */}
               {!showEmailForm ? (
                 <button
                   type="button"
-                  onClick={() => setShowEmailForm(true)}
-                  className="mt-4 text-center text-xs text-white/40 hover:text-white/60 transition-colors"
+                  onClick={() => {
+                    setShowEmailForm(true);
+                    setTimeout(() => emailInputRef.current?.focus(), 100);
+                  }}
+                  className="mt-4 w-full text-center text-xs text-white/40 hover:text-white/60 transition-colors"
                 >
                   or continue with email
                 </button>
               ) : (
-                <>
-                  <div className="my-4 flex items-center gap-3">
-                    <div className="h-px flex-1 bg-white/10" />
-                    <span className="text-[10px] font-semibold uppercase tracking-widest text-white/30">email</span>
-                    <div className="h-px flex-1 bg-white/10" />
-                  </div>
-
-                  <form onSubmit={handleSubmit} className="space-y-3">
-                    {!isLogin && (
-                      <div className="space-y-1">
-                        <label className="text-xs font-medium text-white/40">Name</label>
-                        <input
-                          type="text"
-                          value={name}
-                          onChange={(e) => setName(e.target.value)}
-                          className="h-10 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 text-sm text-white placeholder:text-white/30 focus:border-[#f0b400]/50 focus:outline-none focus:ring-2 focus:ring-[#f0b400]/15"
-                          placeholder="Your name"
-                        />
-                      </div>
-                    )}
-                    <div className="space-y-1">
-                      <label className="text-xs font-medium text-white/40">Email</label>
-                      <input
-                        ref={emailInputRef}
-                        type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="h-10 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 text-sm text-white placeholder:text-white/30 focus:border-[#f0b400]/50 focus:outline-none focus:ring-2 focus:ring-[#f0b400]/15"
-                        placeholder="you@example.com"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <div className="flex items-center justify-between">
-                        <label className="text-xs font-medium text-white/40">Password</label>
-                        {isLogin && (
-                          <button type="button" className="text-[11px] font-medium text-[#f0b400]/80 hover:text-[#f0b400]">
-                            Forgot?
-                          </button>
-                        )}
-                      </div>
-                      <input
-                        type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="h-10 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 text-sm text-white placeholder:text-white/30 focus:border-[#f0b400]/50 focus:outline-none focus:ring-2 focus:ring-[#f0b400]/15"
-                        placeholder="Enter your password"
-                      />
-                    </div>
-
-                    {error && <p className="text-xs text-red-400 mt-1">{error}</p>}
-
-                    <Button
-                      type="submit"
-                      className="mt-2 h-11 w-full rounded-xl bg-white text-sm font-semibold text-[#0c1220] hover:bg-white/90"
-                      disabled={loading}
-                    >
-                      {loading ? "Processing..." : isLogin ? "Sign in" : "Create account"}
-                    </Button>
-                  </form>
-                </>
+                <form onSubmit={handleSubmit} className="mt-4 space-y-3 animate-fade-in">
+                  {!isLogin && (
+                    <input
+                      type="text"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className="h-10 w-full rounded-xl border border-white/10 bg-[#1a2744] px-3 text-sm text-white placeholder:text-white/30 focus:border-[#f0b400]/40 focus:outline-none"
+                      placeholder="Your name"
+                    />
+                  )}
+                  <input
+                    ref={emailInputRef}
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="h-10 w-full rounded-xl border border-white/10 bg-[#1a2744] px-3 text-sm text-white placeholder:text-white/30 focus:border-[#f0b400]/40 focus:outline-none"
+                    placeholder="Email address"
+                  />
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="h-10 w-full rounded-xl border border-white/10 bg-[#1a2744] px-3 text-sm text-white placeholder:text-white/30 focus:border-[#f0b400]/40 focus:outline-none"
+                    placeholder="Password"
+                  />
+                  {error && <p className="text-xs text-red-400">{error}</p>}
+                  <Button
+                    type="submit"
+                    className="h-10 w-full rounded-xl border border-white/20 bg-white/10 text-sm font-semibold text-white hover:bg-white/15 transition-colors"
+                    disabled={loading}
+                  >
+                    {loading ? "Processing..." : isLogin ? "Sign in" : "Create account"}
+                  </Button>
+                </form>
               )}
-            </>
+            </div>
           )}
-
-          {/* Footer */}
-          <p className="mt-6 text-center text-xs text-white/30">
-            {isLogin ? "Don't have an account? " : "Already have an account? "}
-            <button
-              type="button"
-              onClick={() => {/* Toggle mode */}}
-              className="font-semibold text-[#f0b400] hover:text-[#f0b400]/80"
-            >
-              {isLogin ? "Sign up" : "Sign in"}
-            </button>
-          </p>
         </div>
       </div>
     </div>

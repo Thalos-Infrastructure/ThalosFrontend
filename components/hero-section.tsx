@@ -34,7 +34,7 @@ function TypewriterEscrows() {
   }, [displayText, phase])
 
   return (
-    <span className="text-[#f0b400] inline-flex items-baseline min-w-[200px] md:min-w-[340px] text-left" style={{ textShadow: "none", filter: "none", WebkitFilter: "none" }}>
+    <span className="typewriter-text text-[#f0b400] inline-flex items-baseline min-w-[200px] md:min-w-[340px] text-left" style={{ textShadow: "none", filter: "none", WebkitFilter: "none" }}>
       <span style={{ textShadow: "none", filter: "none" }}>{displayText}</span>
       <span className="ml-0.5 inline-block h-[0.85em] w-[3px] bg-[#f0b400] align-middle" style={{ animation: "typewriter-cursor 0.8s ease-in-out infinite", boxShadow: "none", filter: "none" }} />
     </span>
@@ -71,7 +71,7 @@ function TypewriterPlatform() {
   }, [displayText, phase])
 
   return (
-    <span className="text-[#f0b400] font-bold text-xl md:text-2xl inline-flex items-baseline" style={{ textShadow: "none", filter: "none", WebkitFilter: "none" }}>
+    <span className="typewriter-text text-[#f0b400] font-bold text-xl md:text-2xl inline-flex items-baseline" style={{ textShadow: "none", filter: "none", WebkitFilter: "none" }}>
       <span style={{ textShadow: "none", filter: "none" }}>{displayText}</span>
       <span className="ml-0.5 inline-block h-[0.85em] w-[3px] bg-[#f0b400] align-middle" style={{ animation: "typewriter-cursor 0.8s ease-in-out infinite", boxShadow: "none", filter: "none" }} />
     </span>
@@ -169,7 +169,7 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
           </div>
 
           <div className="max-w-3xl mx-auto text-center">
-            <h1 className="animate-fade-in-up animation-delay-200 text-4xl font-bold tracking-tight text-white md:text-5xl lg:text-6xl xl:text-7xl text-balance">
+            <h1 className="hero-title animate-fade-in-up animation-delay-200 text-4xl font-bold tracking-tight text-white md:text-5xl lg:text-6xl xl:text-7xl text-balance">
               Secure Payments
             </h1>
             <p className="mt-3 animate-fade-in-up animation-delay-400 text-4xl font-bold tracking-tight text-white md:text-5xl lg:text-6xl xl:text-7xl">
@@ -207,7 +207,7 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
           }}
         >
           <div className="mx-auto max-w-3xl">
-            <p className="mb-10 text-sm font-bold uppercase tracking-[0.2em] text-[#f0b400] text-center">
+            <p className="hero-trust-layer mb-10 text-sm font-bold uppercase tracking-[0.2em] text-[#f0b400] text-center">
               {t("hero.trustLayer")}
             </p>
 

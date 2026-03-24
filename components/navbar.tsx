@@ -158,7 +158,7 @@ export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }
             <Button
               size="sm"
               onClick={() => setShowAuthModal("login")}
-              className="rounded-full bg-[#0f766e] px-7 py-2 text-base text-background font-bold shadow-[0_2px_12px_rgba(0,0,0,0.18)] hover:bg-[#115e59] transition-all duration-400"
+              className="rounded-full border border-[#f0b400]/30 bg-[#f0b400]/10 px-7 py-2 text-base text-[#f0b400] font-bold shadow-[0_2px_8px_rgba(240,180,0,0.15)] hover:bg-[#f0b400]/20 hover:border-[#f0b400]/50 transition-all duration-300"
             >
               Login
             </Button>
@@ -195,7 +195,7 @@ export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }
                 <Button
                   size="sm"
                   onClick={() => { setShowAuthModal("login"); setMobileOpen(false) }}
-                  className="flex-1 rounded-full bg-[#0f766e] text-base font-bold text-background shadow-[0_2px_12px_rgba(0,0,0,0.12)] hover:bg-[#115e59]"
+                  className="flex-1 rounded-full border border-[#f0b400]/30 bg-[#f0b400]/10 text-base font-bold text-[#f0b400] shadow-[0_2px_8px_rgba(240,180,0,0.15)] hover:bg-[#f0b400]/20 hover:border-[#f0b400]/50"
                 >
                   Login
                 </Button>
