@@ -103,10 +103,10 @@ export function SocialAuthModal({ mode, open, onClose }: SocialAuthModalProps) {
           <div className="absolute inset-0 bg-gradient-to-r from-transparent to-[#0c1220]/80" />
           <div className="absolute bottom-8 left-8 right-8">
             <p className="text-lg font-semibold text-white mb-1">
-              Escrow-Secured Transactions
+              Secure Digital Agreements
             </p>
             <p className="text-sm text-white/50 leading-relaxed">
-              Funds locked on-chain until conditions are met. Zero counterparty risk.
+              Protected payments until conditions are verified. Trust built into every transaction.
             </p>
           </div>
         </div>

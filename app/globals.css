@@ -94,28 +94,27 @@
 }
 
 /* ══════════════════════════════════════════════════════════════════
-   LIGHT MODE - MINIMAL OVERRIDES (preserves dark cards)
+   LIGHT MODE - Text colors (blue tones) - Cards stay dark mode colors
    ══════════════════════════════════════════════════════════════════ */
 
-/* Light mode - Hero section text */
+/* Light mode - Hero titles dark blue */
 .light .hero-title { color: #0c1220 !important; }
-.light .hero-trust-layer { color: #0c1220 !important; }
-.light .trust-dialog-text, .light .trust-dialog-text p { color: #1a2a42 !important; }
+.light .hero-trust-layer { color: #1a2a42 !important; }
+
+/* Light mode - Body text blue tones */
+.light .trust-dialog-text, .light .trust-dialog-text p { color: #2a4060 !important; }
 .light .trust-highlight { color: #0c1220 !important; }
 
-/* Light mode - Typewriter MUST stay yellow */
+/* Light mode - ONLY typewriter text is yellow (not titles) */
 .light .typewriter-text, .light .typewriter-text span { color: #f0b400 !important; }
 
 /* Light mode - Hero CTA buttons */
-.light .hero-cta-secondary { border-color: #0c1220 !important; color: #0c1220 !important; }
-.light .hero-cta-secondary:hover { background-color: rgba(12, 18, 32, 0.1) !important; }
+.light .hero-cta-secondary { border-color: #1a2a42 !important; color: #1a2a42 !important; }
+.light .hero-cta-secondary:hover { background-color: rgba(26, 42, 66, 0.1) !important; }
 
-/* Light mode - Section titles yellow */
-.light #how-it-works h2, .light #use-cases h2, .light #faq h2,
-.light #profiles h2, .light #dashboard h2 { color: #f0b400 !important; }
-
-/* Light mode - Footer text dark */
-.light footer, .light footer * { color: #0c1220 !important; }
+/* Light mode - Footer text dark blue */
+.light footer { color: #0c1220 !important; }
+.light footer p, .light footer span, .light footer a, .light footer div { color: #0c1220 !important; }
 .light footer a:hover { color: #2a4060 !important; }
 
 /* Light mode - No shadow on header buttons */
