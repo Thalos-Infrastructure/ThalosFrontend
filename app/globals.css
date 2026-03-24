@@ -205,10 +205,19 @@
 .light .use-case-card .seller-label {
   color: rgba(255,255,255,0.5) !important;
 }
-/* Buyer labels keep their inline style colors */
-.light .use-case-card .buyer-label {
-  /* color comes from inline style */
-}
+/* Buyer labels - FORCE the exact dark mode colors */
+.light .use-case-card:nth-child(1) .buyer-label { color: #f0b400 !important; }
+.light .use-case-card:nth-child(2) .buyer-label { color: #4ade80 !important; }
+.light .use-case-card:nth-child(3) .buyer-label { color: #60a5fa !important; }
+.light .use-case-card:nth-child(4) .buyer-label { color: #f97316 !important; }
+.light .use-case-card:nth-child(5) .buyer-label { color: #a78bfa !important; }
+.light .use-case-card:nth-child(6) .buyer-label { color: #f472b6 !important; }
+.light .use-case-card:nth-child(7) .buyer-label { color: #2dd4bf !important; }
+
+/* Amber/yellow colors for Partial Release status */
+.light .text-amber-400 { color: #f59e0b !important; }
+.light .bg-amber-500\/10 { background-color: rgba(245, 158, 11, 0.1) !important; }
+.light .border-amber-500\/20 { border-color: rgba(245, 158, 11, 0.2) !important; }
 
 /* ===== DASHBOARD STATS CARDS: same colors as dark mode ===== */
 .light .dashboard-stat-card {

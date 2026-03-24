@@ -6,6 +6,8 @@ import { useEffect, useRef, useState, useCallback } from "react"
 import { useLanguage, LanguageToggle, ThemeToggle } from "@/lib/i18n"
 import { cn } from "@/lib/utils"
 import { ThalosLoader } from "@/components/thalos-loader"
+import { Button } from "@/components/ui/button"
+import { SocialAuthModal } from "@/components/social-auth-modal"
 
 /* ── THALOS vertical letters ── */
 const THALOS_LETTERS = ["T", "h", "a", "l", "o", "s"]
@@ -80,6 +82,7 @@ export default function AboutPage() {
   const [loading, setLoading] = useState(true)
   const [scrollDarken, setScrollDarken] = useState(0)
   const [letterOpacities, setLetterOpacities] = useState<number[]>([1, 1, 1, 1, 1, 1])
+  const [showAuthModal, setShowAuthModal] = useState<"login" | "signup" | null>(null)
 
   useEffect(() => {
     const timer = setTimeout(() => setLoading(false), 400)
@@ -165,6 +168,13 @@ export default function AboutPage() {
           <div className="flex items-center gap-3">
             <LanguageToggle />
             <ThemeToggle />
+            <Button
+              size="sm"
+              onClick={() => setShowAuthModal("login")}
+              className="rounded-full border border-[#f0b400]/40 bg-[#f0b400]/10 px-5 py-2 text-sm text-[#f0b400] font-bold hover:bg-[#f0b400]/20 hover:border-[#f0b400]/60 transition-all duration-300"
+            >
+              Login
+            </Button>
           </div>
         </nav>
       </header>
@@ -383,12 +393,12 @@ export default function AboutPage() {
                 <div className="flex items-center justify-center gap-5 pl-[72px]">
                   <a href="https://stellar.org/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 transition-opacity hover:opacity-80">
                     <span className="text-[10px] font-semibold uppercase tracking-widest text-white/30">Built on</span>
-                    <Image src="/stellar-full.png" alt="Stellar" width={24} height={24} className="h-4 w-4 shrink-0 object-contain opacity-40" />
+                    <Image src="/stellar-full.png" alt="Stellar" width={48} height={48} className="h-6 w-6 shrink-0 object-contain opacity-60" />
                   </a>
-                  <div className="h-3 w-px bg-white/10" aria-hidden="true" />
+                  <div className="h-4 w-px bg-white/10" aria-hidden="true" />
                   <a href="https://www.trustlesswork.com/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 transition-opacity hover:opacity-80">
                     <span className="text-[10px] font-semibold uppercase tracking-widest text-white/30">Escrows by</span>
-                    <Image src="/trustless-logo.png" alt="Trustless Work" width={20} height={20} className="h-3.5 w-auto object-contain opacity-40" />
+                    <Image src="/trustless-logo.png" alt="Trustless Work" width={40} height={40} className="h-5 w-auto object-contain opacity-60" />
                   </a>
                 </div>
               </div>
@@ -427,6 +437,13 @@ export default function AboutPage() {
           </div>
         </footer>
       </main>
+
+      {/* Auth Modal */}
+      <SocialAuthModal
+        open={showAuthModal !== null}
+        mode={showAuthModal === "signup" ? "signup" : "login"}
+        onClose={() => setShowAuthModal(null)}
+      />
     </div>
   )
 }
