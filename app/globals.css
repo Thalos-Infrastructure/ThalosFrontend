@@ -187,6 +187,75 @@
 /* ===== No shadow on header buttons ===== */
 .light header button, .light nav button { box-shadow: none !important; }
 
+/* ===== THALOS VERTICAL: colored gradients like use-case avatars ===== */
+.light .thalos-letter {
+  color: #1a2a42 !important;
+}
+.light .thalos-letter:nth-child(1) { color: #f0b400 !important; }
+.light .thalos-letter:nth-child(2) { color: #60a5fa !important; }
+.light .thalos-letter:nth-child(3) { color: #f97316 !important; }
+.light .thalos-letter:nth-child(4) { color: #a78bfa !important; }
+.light .thalos-letter:nth-child(5) { color: #f472b6 !important; }
+.light .thalos-letter:nth-child(6) { color: #34d399 !important; }
+
+/* ===== USE-CASES avatars: preserve individual colors ===== */
+/* Colors: #f0b400, #60a5fa, #f97316, #a78bfa, #f472b6 */
+.light [style*="background"][style*="f0b400"],
+.light [style*="background"][style*="60a5fa"],
+.light [style*="background"][style*="f97316"],
+.light [style*="background"][style*="a78bfa"],
+.light [style*="background"][style*="f472b6"] {
+  /* Preserve inline colors */
+}
+
+/* ===== DASHBOARD STATS CARDS: same colors as dark mode ===== */
+.light .dashboard-stat-card {
+  background-color: #0c1220 !important;
+}
+.light .dashboard-stat-card .stat-label {
+  color: rgba(255,255,255,0.6) !important;
+}
+.light .dashboard-stat-card .stat-value {
+  color: white !important;
+}
+.light .dashboard-stat-card .stat-suffix {
+  color: rgba(255,255,255,0.5) !important;
+}
+/* Green amounts stay green */
+.light .text-emerald-400,
+.light [class*="text-emerald"] {
+  color: #34d399 !important;
+}
+
+/* ===== HOW-IT-WORKS filter buttons: colored like use-case avatars ===== */
+.light #how-it-works button.border-white\/20 {
+  background-color: #1a2a42 !important;
+  border-color: #1a2a42 !important;
+  color: white !important;
+}
+.light #how-it-works button.border-white\/20:nth-child(1) { background-color: rgba(240,180,0,0.15) !important; border-color: #f0b400 !important; color: #f0b400 !important; }
+.light #how-it-works button.border-white\/20:nth-child(2) { background-color: rgba(96,165,250,0.15) !important; border-color: #60a5fa !important; color: #60a5fa !important; }
+.light #how-it-works button.border-white\/20:nth-child(3) { background-color: rgba(249,115,22,0.15) !important; border-color: #f97316 !important; color: #f97316 !important; }
+.light #how-it-works button.border-white\/20:nth-child(4) { background-color: rgba(167,139,250,0.15) !important; border-color: #a78bfa !important; color: #a78bfa !important; }
+.light #how-it-works button.border-\[\#f0b400\] {
+  background-color: rgba(240, 180, 0, 0.2) !important;
+}
+
+/* ===== BACKGROUND IMAGES: more visible in light mode ===== */
+.light [class*="bg-gradient-to-b"][class*="from-background"] {
+  --tw-gradient-from: rgba(255, 255, 255, 0.3) !important;
+}
+.light .from-background {
+  --tw-gradient-from: rgba(255, 255, 255, 0.3) !important;
+}
+.light [class*="to-transparent"] {
+  --tw-gradient-to: transparent !important;
+}
+/* Reduce overall page whitewash */
+.light .bg-background {
+  background-color: rgba(245, 248, 255, 0.85) !important;
+}
+
 /* ===== DASHBOARD: preserve dark mode look ===== */
 .light aside,
 .light aside * { color: inherit !important; }

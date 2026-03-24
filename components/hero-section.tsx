@@ -139,7 +139,7 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
         {LETTERS.map((letter, i) => (
           <span
             key={i}
-            className="block font-black leading-[0.72] text-white"
+            className="thalos-letter block font-black leading-[0.72] text-white"
             style={{
               opacity: letterOpacities[i],
               transition: "opacity 120ms cubic-bezier(0.25, 0.1, 0.25, 1)",
@@ -160,7 +160,7 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
             {LETTERS.map((letter, i) => (
               <span
                 key={i}
-                className="animate-fade-in-up text-7xl font-black text-white/90"
+                className="thalos-letter animate-fade-in-up text-7xl font-black text-white/90"
                 style={{ animationDelay: `${i * 100}ms`, animationFillMode: "both" }}
               >
                 {letter}

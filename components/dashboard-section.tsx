@@ -103,13 +103,13 @@ export function DashboardSection() {
           ].map((stat, idx) => (
             <div
               key={stat.label}
-              className="section-reveal-child rounded-2xl border border-white/10 bg-[#0c1220] p-5 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)] transition-all duration-500 hover:border-[#b0c4de]/20 hover:shadow-[0_8px_40px_rgba(176,196,222,0.1),inset_0_1px_0_rgba(255,255,255,0.08)]"
+              className="dashboard-stat-card section-reveal-child rounded-2xl border border-white/10 bg-[#0c1220] p-5 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)] transition-all duration-500 hover:border-[#b0c4de]/20 hover:shadow-[0_8px_40px_rgba(176,196,222,0.1),inset_0_1px_0_rgba(255,255,255,0.08)]"
               style={{ transitionDelay: isVisible ? `${idx * 100}ms` : "0ms" }}
             >
-              <p className="text-xs font-semibold text-white/60">{stat.label}</p>
+              <p className="stat-label text-xs font-semibold text-white/60">{stat.label}</p>
               <div className="mt-1 flex items-baseline gap-1.5">
-                <p className="text-2xl font-bold text-white">{stat.value}</p>
-                {stat.suffix && <span className="text-xs font-medium text-white/50">{stat.suffix}</span>}
+                <p className="stat-value text-2xl font-bold text-white">{stat.value}</p>
+                {stat.suffix && <span className="stat-suffix text-xs font-medium text-white/50">{stat.suffix}</span>}
               </div>
             </div>
           ))}
