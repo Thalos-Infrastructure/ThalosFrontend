@@ -121,7 +121,7 @@ export function DashboardSection() {
             <div
               key={escrow.id}
               className={cn(
-                "section-reveal-child group rounded-2xl border border-white/10 bg-[#0c1220] p-5 transition-all duration-500",
+                "escrow-card section-reveal-child group rounded-2xl border border-white/10 bg-[#0c1220] p-5 transition-all duration-500",
                 "shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)]",
                 "hover:border-[#b0c4de]/20 hover:shadow-[0_8px_40px_rgba(176,196,222,0.1),inset_0_1px_0_rgba(255,255,255,0.08)]",
                 selectedEscrow === escrow.id && "border-[#f0b400]/20 bg-[#0c1220]",

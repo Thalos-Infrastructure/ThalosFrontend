@@ -187,25 +187,27 @@
 /* ===== No shadow on header buttons ===== */
 .light header button, .light nav button { box-shadow: none !important; }
 
-/* ===== THALOS VERTICAL: colored gradients like use-case avatars ===== */
+/* ===== THALOS VERTICAL: dark blue ===== */
 .light .thalos-letter {
   color: #1a2a42 !important;
 }
-.light .thalos-letter:nth-child(1) { color: #f0b400 !important; }
-.light .thalos-letter:nth-child(2) { color: #60a5fa !important; }
-.light .thalos-letter:nth-child(3) { color: #f97316 !important; }
-.light .thalos-letter:nth-child(4) { color: #a78bfa !important; }
-.light .thalos-letter:nth-child(5) { color: #f472b6 !important; }
-.light .thalos-letter:nth-child(6) { color: #34d399 !important; }
 
-/* ===== USE-CASES avatars: preserve individual colors ===== */
-/* Colors: #f0b400, #60a5fa, #f97316, #a78bfa, #f472b6 */
-.light [style*="background"][style*="f0b400"],
-.light [style*="background"][style*="60a5fa"],
-.light [style*="background"][style*="f97316"],
-.light [style*="background"][style*="a78bfa"],
-.light [style*="background"][style*="f472b6"] {
-  /* Preserve inline colors */
+/* ===== USE-CASES: preserve dark card with white text and colored labels ===== */
+.light .use-case-card {
+  background-color: #0c1220 !important;
+}
+.light .use-case-card .card-title {
+  color: white !important;
+}
+.light .use-case-card .card-text {
+  color: rgba(255,255,255,0.7) !important;
+}
+.light .use-case-card .seller-label {
+  color: rgba(255,255,255,0.5) !important;
+}
+/* Buyer labels keep their inline style colors */
+.light .use-case-card .buyer-label {
+  /* color comes from inline style */
 }
 
 /* ===== DASHBOARD STATS CARDS: same colors as dark mode ===== */
@@ -221,7 +223,29 @@
 .light .dashboard-stat-card .stat-suffix {
   color: rgba(255,255,255,0.5) !important;
 }
-/* Green amounts stay green */
+
+/* ===== ESCROW CARDS: same colors as dark mode ===== */
+.light .escrow-card {
+  background-color: #0c1220 !important;
+}
+.light .escrow-card h3,
+.light .escrow-card .text-white {
+  color: white !important;
+}
+.light .escrow-card .text-white\/60,
+.light .escrow-card .text-white\/50 {
+  color: rgba(255,255,255,0.6) !important;
+}
+/* Yield must be green */
+.light .escrow-card .text-emerald-400 {
+  color: #34d399 !important;
+}
+/* Release button text stays dark on yellow bg */
+.light .escrow-card button.bg-\[\#f0b400\] {
+  color: #0c1220 !important;
+}
+
+/* Green amounts stay green everywhere */
 .light .text-emerald-400,
 .light [class*="text-emerald"] {
   color: #34d399 !important;
@@ -243,18 +267,30 @@
 
 /* ===== BACKGROUND IMAGES: more visible in light mode ===== */
 .light [class*="bg-gradient-to-b"][class*="from-background"] {
-  --tw-gradient-from: rgba(255, 255, 255, 0.3) !important;
+  --tw-gradient-from: rgba(255, 255, 255, 0.15) !important;
 }
 .light .from-background {
-  --tw-gradient-from: rgba(255, 255, 255, 0.3) !important;
+  --tw-gradient-from: rgba(255, 255, 255, 0.15) !important;
 }
 .light [class*="to-transparent"] {
   --tw-gradient-to: transparent !important;
 }
 /* Reduce overall page whitewash */
 .light .bg-background {
-  background-color: rgba(245, 248, 255, 0.85) !important;
+  background-color: rgba(240, 245, 255, 0.7) !important;
 }
+
+/* ===== USE-CASES: buyer/seller labels keep their individual colors ===== */
+.light .bg-\[\#0c1220\] p[style*="color"],
+.light [class*="bg-[#0c1220]"] p[style*="color"] {
+  color: inherit !important;
+}
+
+/* ===== DASHBOARD: yield green, release button dark, status colors ===== */
+.light .text-emerald-400 { color: #34d399 !important; }
+.light .text-amber-400 { color: #f59e0b !important; }
+.light .bg-emerald-500\/10 { background-color: rgba(16, 185, 129, 0.1) !important; }
+.light .bg-amber-500\/10 { background-color: rgba(245, 158, 11, 0.1) !important; }
 
 /* ===== DASHBOARD: preserve dark mode look ===== */
 .light aside,
