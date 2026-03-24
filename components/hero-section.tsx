@@ -211,10 +211,10 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
               {t("hero.trustLayer")}
             </p>
 
-            <div className="space-y-8 text-lg font-medium leading-relaxed text-white/60 text-left max-w-2xl mx-auto">
+            <div className="trust-dialog-text space-y-8 text-lg font-medium leading-relaxed text-white/60 text-left max-w-2xl mx-auto">
               <p>{t("hero.trust1")}</p>
               <p>
-                {t("hero.trust2a")} <span className="text-white font-semibold">{t("hero.trust2highlight")}</span>{t("hero.trust2b")}
+                {t("hero.trust2a")} <span className="trust-highlight text-white font-semibold">{t("hero.trust2highlight")}</span>{t("hero.trust2b")}
               </p>
               <p>{t("hero.trust3")}</p>
               <div className="pt-6 text-center">

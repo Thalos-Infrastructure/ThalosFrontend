@@ -82,13 +82,13 @@ export function SocialAuthModal({ mode, open, onClose }: SocialAuthModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-[90] flex items-center justify-center p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-[90] flex items-center justify-center p-4 animate-in fade-in duration-200" onClick={onClose}>
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200" />
       
       {/* Modal - Split layout with image on left */}
       <div
-        className="relative z-10 flex w-full max-w-[820px] overflow-hidden rounded-2xl border border-white/10 bg-[#0c1220] shadow-2xl"
+        className="relative z-10 flex w-full max-w-[820px] overflow-hidden rounded-2xl border border-white/10 bg-[#0c1220] shadow-2xl animate-in zoom-in-95 slide-in-from-bottom-4 duration-300"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Left side - Image */}
@@ -101,12 +101,12 @@ export function SocialAuthModal({ mode, open, onClose }: SocialAuthModalProps) {
             priority
           />
           <div className="absolute inset-0 bg-gradient-to-r from-transparent to-[#0c1220]/80" />
-          <div className="absolute inset-0 flex flex-col items-center justify-center p-8">
-            <p className="text-xs font-medium uppercase tracking-[0.25em] text-white/50 mb-2">
-              The Trust Layer
+          <div className="absolute bottom-8 left-8 right-8">
+            <p className="text-lg font-semibold text-white mb-1">
+              Escrow-Secured Transactions
             </p>
-            <p className="text-center text-sm text-white/30 leading-relaxed">
-              Secure payments powered by blockchain technology
+            <p className="text-sm text-white/50 leading-relaxed">
+              Funds locked on-chain until conditions are met. Zero counterparty risk.
             </p>
           </div>
         </div>

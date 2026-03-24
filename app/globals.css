@@ -93,141 +93,37 @@
   --foreground: #0c1220;
 }
 
-/* Light mode - titles and subtitles use card blue color */
-.light .text-white:not([class*="bg-[#0"]):not(header *):not(footer *):not(aside *):not(nav *):not([class*="rounded-2xl"][class*="border"] *) {
-  color: #0c1220 !important;
-}
+/* ══════════════════════════════════════════════════════════════════
+   LIGHT MODE - MINIMAL OVERRIDES (preserves dark cards)
+   ══════════════════════════════════════════════════════════════════ */
 
-.light .text-white\/90:not([class*="bg-[#0"]):not(header *):not(footer *):not(aside *):not(nav *):not([class*="rounded-2xl"][class*="border"] *),
-.light .text-white\/80:not([class*="bg-[#0"]):not(header *):not(footer *):not(aside *):not(nav *):not([class*="rounded-2xl"][class*="border"] *) {
-  color: #1a2a42 !important;
-}
+/* Light mode - Hero section text */
+.light .hero-title { color: #0c1220 !important; }
+.light .hero-trust-layer { color: #0c1220 !important; }
+.light .trust-dialog-text, .light .trust-dialog-text p { color: #1a2a42 !important; }
+.light .trust-highlight { color: #0c1220 !important; }
 
-.light .text-white\/70:not([class*="bg-[#0"]):not(header *):not(footer *):not(aside *):not(nav *):not([class*="rounded-2xl"][class*="border"] *),
-.light .text-white\/60:not([class*="bg-[#0"]):not(header *):not(footer *):not(aside *):not(nav *):not([class*="rounded-2xl"][class*="border"] *) {
-  color: #2a4060 !important;
-}
-
-.light .text-white\/50:not([class*="bg-[#0"]):not(header *):not(footer *):not(aside *):not(nav *):not([class*="rounded-2xl"][class*="border"] *),
-.light .text-white\/40:not([class*="bg-[#0"]):not(header *):not(footer *):not(aside *):not(nav *):not([class*="rounded-2xl"][class*="border"] *) {
-  color: #3d5a80 !important;
-}
-
-/* Light mode - stellar logo visibility fix */
-.light img[alt="Stellar"] {
-  filter: brightness(0) saturate(100%) invert(15%) sepia(20%) saturate(1000%) hue-rotate(190deg) brightness(95%) contrast(95%);
-}
-
-/* Light mode - footer text should be blue tones */
-.light footer .text-white\/60,
-.light footer p.text-sm {
-  color: #1a2a42 !important;
-}
-.light footer .text-white\/30,
-.light footer span.text-\[10px\] {
-  color: #3d5a80 !important;
-}
-.light footer a.text-sm {
-  color: #2a4060 !important;
-}
-.light footer a.text-sm:hover {
-  color: #0c1220 !important;
-}
-
-/* Light mode - landing page sections text blue */
-.light .text-muted-foreground {
-  color: #2a4060 !important;
-}
-.light h1.text-foreground,
-.light h2.text-foreground,
-.light h3.text-foreground,
-.light .text-foreground:not(header *):not(nav *):not(aside *):not([class*="bg-[#0c1220]"] *) {
-  color: #0c1220 !important;
-}
-
-/* Light mode - about page vision/mission text */
-.light section p.text-lg,
-.light section p.text-base {
-  color: #1a2a42 !important;
-}
-.light section p.text-muted-foreground\/80 {
-  color: #3d5a80 !important;
-}
-
-/* Light mode - Hero titles must be dark */
-.light .hero-title,
-.light #hero h1 {
-  color: #0c1220 !important;
-}
-
-/* Light mode - "The Trust Layer" - dark text */
-.light .hero-trust-layer {
-  color: #0c1220 !important;
-}
-
-/* Light mode - ALL typewriter text MUST be yellow #f0b400 (same as dark mode) */
-.light .typewriter-text,
-.light .typewriter-text span,
-.light .typewriter-text > span {
-  color: #f0b400 !important;
-}
-
-/* Light mode - Footer ALL text must be dark */
-.light footer,
-.light footer p,
-.light footer span,
-.light footer a,
-.light footer div {
-  color: #0c1220 !important;
-}
-.light footer a:hover {
-  color: #2a4060 !important;
-}
-
-/* Light mode - Header login button - no halo/shadow */
-.light header button,
-.light nav button {
-  box-shadow: none !important;
-}
-
-/* Light mode - Get Started / See How It Works buttons fix */
-.light .bg-\[\#f0b400\]\/10 {
-  background-color: #f0b400 !important;
-  color: #0c1220 !important;
-}
-.light .border-\[\#f0b400\]\/20,
-.light .border-\[\#f0b400\]\/30 {
-  border-color: #f0b400 !important;
-}
-.light .text-\[\#f0b400\] {
-  color: #0c1220 !important;
-}
-
-/* Light mode - Hero section body text */
-.light #hero .text-white\/60,
-.light #hero .text-white\/70 {
-  color: #2a4060 !important;
-}
-.light #hero .text-white {
-  color: #0c1220 !important;
-}
-
-/* Light mode - Dialog/About section text must be dark */
-.light [role="dialog"] p,
-.light .dialog-content p,
-.light section .text-white\/70,
-.light section .text-white\/80,
-.light article p {
-  color: #1a2a42 !important;
-}
+/* Light mode - Typewriter MUST stay yellow */
+.light .typewriter-text, .light .typewriter-text span { color: #f0b400 !important; }
 
 /* Light mode - Hero CTA buttons */
-.light .hero-cta-secondary {
-  border-color: #0c1220 !important;
-  color: #0c1220 !important;
-}
-.light .hero-cta-secondary:hover {
-  background-color: rgba(12, 18, 32, 0.1) !important;
+.light .hero-cta-secondary { border-color: #0c1220 !important; color: #0c1220 !important; }
+.light .hero-cta-secondary:hover { background-color: rgba(12, 18, 32, 0.1) !important; }
+
+/* Light mode - Section titles yellow */
+.light #how-it-works h2, .light #use-cases h2, .light #faq h2,
+.light #profiles h2, .light #dashboard h2 { color: #f0b400 !important; }
+
+/* Light mode - Footer text dark */
+.light footer, .light footer * { color: #0c1220 !important; }
+.light footer a:hover { color: #2a4060 !important; }
+
+/* Light mode - No shadow on header buttons */
+.light header button, .light nav button { box-shadow: none !important; }
+
+/* Light mode - stellar logo visibility */
+.light img[alt="Stellar"] {
+  filter: brightness(0) saturate(100%) invert(15%) sepia(20%) saturate(1000%) hue-rotate(190deg) brightness(95%) contrast(95%);
 }
 
 /* Light mode - sidebar and dashboard content text stays white */

@@ -51,7 +51,7 @@ export function FAQ() {
   ]
 
   return (
-    <section className="relative py-28" ref={ref}>
+    <section id="faq" className="relative py-28" ref={ref}>
       <div className={cn("mx-auto max-w-3xl px-6 section-reveal", isVisible && "is-visible")}>
         <div className="mb-14 text-center">
           <p className="mb-3 text-base font-bold uppercase tracking-wider text-[#f0b400] md:text-lg">
