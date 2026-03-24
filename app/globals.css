@@ -160,15 +160,16 @@
   color: #0c1220 !important;
 }
 
-/* Light mode - "The Trust Layer" must be yellow/gold (keeping brand color) */
+/* Light mode - "The Trust Layer" - dark text */
 .light .hero-trust-layer {
-  color: #c99a00 !important;
+  color: #0c1220 !important;
 }
 
-/* Light mode - ALL typewriter text MUST be yellow/gold */
+/* Light mode - ALL typewriter text MUST be yellow #f0b400 (same as dark mode) */
 .light .typewriter-text,
-.light .typewriter-text span {
-  color: #c99a00 !important;
+.light .typewriter-text span,
+.light .typewriter-text > span {
+  color: #f0b400 !important;
 }
 
 /* Light mode - Footer ALL text must be dark */
@@ -183,14 +184,23 @@
   color: #2a4060 !important;
 }
 
-/* Light mode - Email/CTA buttons more solid yellow */
-.light .bg-\[\#f0b400\]\/10,
-.light [class*="bg-[#f0b400]"] {
-  background-color: rgba(200, 155, 0, 0.3) !important;
+/* Light mode - Header login button - no halo/shadow */
+.light header button,
+.light nav button {
+  box-shadow: none !important;
+}
+
+/* Light mode - Get Started / See How It Works buttons fix */
+.light .bg-\[\#f0b400\]\/10 {
+  background-color: #f0b400 !important;
+  color: #0c1220 !important;
 }
 .light .border-\[\#f0b400\]\/20,
 .light .border-\[\#f0b400\]\/30 {
-  border-color: rgba(200, 155, 0, 0.5) !important;
+  border-color: #f0b400 !important;
+}
+.light .text-\[\#f0b400\] {
+  color: #0c1220 !important;
 }
 
 /* Light mode - Hero section body text */
@@ -200,6 +210,24 @@
 }
 .light #hero .text-white {
   color: #0c1220 !important;
+}
+
+/* Light mode - Dialog/About section text must be dark */
+.light [role="dialog"] p,
+.light .dialog-content p,
+.light section .text-white\/70,
+.light section .text-white\/80,
+.light article p {
+  color: #1a2a42 !important;
+}
+
+/* Light mode - Hero CTA buttons */
+.light .hero-cta-secondary {
+  border-color: #0c1220 !important;
+  color: #0c1220 !important;
+}
+.light .hero-cta-secondary:hover {
+  background-color: rgba(12, 18, 32, 0.1) !important;
 }
 
 /* Light mode - sidebar and dashboard content text stays white */
