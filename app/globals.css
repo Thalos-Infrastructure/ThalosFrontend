@@ -154,6 +154,54 @@
   color: #3d5a80 !important;
 }
 
+/* Light mode - "The Trust Layer" hero title must be dark */
+.light h1.text-4xl,
+.light h1.text-5xl,
+.light h1.text-6xl,
+.light .hero-title {
+  color: #0c1220 !important;
+}
+
+/* Light mode - Typewriter text should be yellow/gold */
+.light .typewriter-text,
+.light [class*="typewriter"],
+.light span.text-\[\#f0b400\],
+.light .text-primary {
+  color: #d4a000 !important;
+}
+
+/* Light mode - Footer copyright must be dark/visible */
+.light footer .text-\[10px\],
+.light footer .text-xs,
+.light footer span:not(.text-\[\#f0b400\]) {
+  color: #0c1220 !important;
+}
+
+/* Light mode - Email button more solid yellow */
+.light .bg-\[\#f0b400\]\/10 {
+  background-color: rgba(240, 180, 0, 0.25) !important;
+}
+.light .border-\[\#f0b400\]\/20 {
+  border-color: rgba(240, 180, 0, 0.4) !important;
+}
+.light button.border-\[\#f0b400\] {
+  border-color: #d4a000 !important;
+}
+
+/* Light mode - Hero section text fixes */
+.light .text-white\/90:not(header *):not(aside *):not(nav *):not(main *):not(footer *) {
+  color: #1a2a42 !important;
+}
+.light .text-white\/80:not(header *):not(aside *):not(nav *):not(main *):not(footer *) {
+  color: #2a4060 !important;
+}
+.light .text-white\/70:not(header *):not(aside *):not(nav *):not(main *):not(footer *) {
+  color: #3d5a80 !important;
+}
+.light .text-white\/60:not(header *):not(aside *):not(nav *):not(main *):not(footer *) {
+  color: #4a6a90 !important;
+}
+
 /* Light mode - sidebar and dashboard content text stays white */
 .light aside .text-white,
 .light aside .text-white\/70,

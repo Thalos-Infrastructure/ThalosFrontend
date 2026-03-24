@@ -7,7 +7,7 @@ import { useLanguage } from "@/lib/i18n"
 import { ThalosLoader } from "@/components/thalos-loader"
 import { Navbar } from "@/components/navbar"
 import { HeroSection } from "@/components/hero-section"
-
+import { SocialAuthModal } from "@/components/social-auth-modal"
 
 // Lazy load below-the-fold sections for faster initial paint
 const HowItWorks = dynamic(() => import("@/components/how-it-works").then(m => ({ default: m.HowItWorks })), { ssr: false })
@@ -23,6 +23,7 @@ export default function Home() {
   const { t } = useLanguage()
   const sectionsRef = useRef<Record<string, HTMLElement | null>>({})
   const [loading, setLoading] = useState(true)
+  const [showAuthModal, setShowAuthModal] = useState<"login" | "signup" | null>(null)
   const [introComplete, setIntroComplete] = useState(false)
   const [scrollDarken, setScrollDarken] = useState(0)
 
@@ -46,16 +47,16 @@ export default function Home() {
   const router = useRouter()
   
   const handleNavigate = useCallback((section: string) => {
-    // Handle sign-in navigation to auth page
+    // Handle sign-in navigation - open modal instead of navigating
     if (section === "sign-in") {
-      router.push("/auth/login")
+      setShowAuthModal("login")
       return
     }
     const el = sectionsRef.current[section] || document.getElementById(section)
     if (el) {
       el.scrollIntoView({ behavior: "smooth", block: "start" })
     }
-  }, [router])
+  }, [])
 
   const setRef = useCallback((section: string) => (el: HTMLDivElement | null) => {
     sectionsRef.current[section] = el
@@ -126,7 +127,14 @@ export default function Home() {
         </div>
       </main>
 
-      <BottomBar onNavigate={handleNavigate} />
-    </div>
+<BottomBar onNavigate={handleNavigate} />
+
+      {/* Auth Modal */}
+      <SocialAuthModal
+        open={showAuthModal !== null}
+        mode={showAuthModal === "signup" ? "signup" : "login"}
+        onClose={() => setShowAuthModal(null)}
+      />
+  </div>
   )
-}
+  }
