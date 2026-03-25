@@ -34,7 +34,7 @@ function TypewriterEscrows() {
   }, [displayText, phase])
 
   return (
-    <span className="text-[#f0b400] inline-flex items-baseline min-w-[200px] md:min-w-[340px] text-left" style={{ textShadow: "none", filter: "none", WebkitFilter: "none" }}>
+    <span className="typewriter-text text-[#f0b400] inline-flex items-baseline min-w-[200px] md:min-w-[340px] text-left" style={{ textShadow: "none", filter: "none", WebkitFilter: "none" }}>
       <span style={{ textShadow: "none", filter: "none" }}>{displayText}</span>
       <span className="ml-0.5 inline-block h-[0.85em] w-[3px] bg-[#f0b400] align-middle" style={{ animation: "typewriter-cursor 0.8s ease-in-out infinite", boxShadow: "none", filter: "none" }} />
     </span>
@@ -71,7 +71,7 @@ function TypewriterPlatform() {
   }, [displayText, phase])
 
   return (
-    <span className="text-[#f0b400] font-bold text-xl md:text-2xl inline-flex items-baseline" style={{ textShadow: "none", filter: "none", WebkitFilter: "none" }}>
+    <span className="typewriter-text text-[#f0b400] font-bold text-xl md:text-2xl inline-flex items-baseline" style={{ textShadow: "none", filter: "none", WebkitFilter: "none" }}>
       <span style={{ textShadow: "none", filter: "none" }}>{displayText}</span>
       <span className="ml-0.5 inline-block h-[0.85em] w-[3px] bg-[#f0b400] align-middle" style={{ animation: "typewriter-cursor 0.8s ease-in-out infinite", boxShadow: "none", filter: "none" }} />
     </span>
@@ -139,7 +139,7 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
         {LETTERS.map((letter, i) => (
           <span
             key={i}
-            className="block font-black leading-[0.72] text-white"
+            className="thalos-letter block font-black leading-[0.72] text-white"
             style={{
               opacity: letterOpacities[i],
               transition: "opacity 120ms cubic-bezier(0.25, 0.1, 0.25, 1)",
@@ -160,7 +160,7 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
             {LETTERS.map((letter, i) => (
               <span
                 key={i}
-                className="animate-fade-in-up text-7xl font-black text-white/90"
+                className="thalos-letter animate-fade-in-up text-7xl font-black text-white/90"
                 style={{ animationDelay: `${i * 100}ms`, animationFillMode: "both" }}
               >
                 {letter}
@@ -169,7 +169,7 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
           </div>
 
           <div className="max-w-3xl mx-auto text-center">
-            <h1 className="animate-fade-in-up animation-delay-200 text-4xl font-bold tracking-tight text-white md:text-5xl lg:text-6xl xl:text-7xl text-balance">
+            <h1 className="hero-title animate-fade-in-up animation-delay-200 text-4xl font-bold tracking-tight text-white md:text-5xl lg:text-6xl xl:text-7xl text-balance">
               Secure Payments
             </h1>
             <p className="mt-3 animate-fade-in-up animation-delay-400 text-4xl font-bold tracking-tight text-white md:text-5xl lg:text-6xl xl:text-7xl">
@@ -207,14 +207,14 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
           }}
         >
           <div className="mx-auto max-w-3xl">
-            <p className="mb-10 text-sm font-bold uppercase tracking-[0.2em] text-[#f0b400] text-center">
+            <p className="hero-trust-layer mb-10 text-sm font-bold uppercase tracking-[0.2em] text-[#f0b400] text-center">
               {t("hero.trustLayer")}
             </p>
 
-            <div className="space-y-8 text-lg font-medium leading-relaxed text-white/60 text-left max-w-2xl mx-auto">
+            <div className="trust-dialog-text space-y-8 text-lg font-medium leading-relaxed text-white/60 text-left max-w-2xl mx-auto">
               <p>{t("hero.trust1")}</p>
               <p>
-                {t("hero.trust2a")} <span className="text-white font-semibold">{t("hero.trust2highlight")}</span>{t("hero.trust2b")}
+                {t("hero.trust2a")} <span className="trust-highlight text-white font-semibold">{t("hero.trust2highlight")}</span>{t("hero.trust2b")}
               </p>
               <p>{t("hero.trust3")}</p>
               <div className="pt-6 text-center">
@@ -228,7 +228,7 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
             <Button
               size="lg"
               onClick={() => onNavigate("sign-in")}
-              className="h-11 rounded-lg border border-[#f0b400]/30 bg-[#f0b400]/10 px-7 text-sm font-bold text-[#f0b400] shadow-[0_2px_8px_rgba(240,180,0,0.15)] hover:bg-[#f0b400]/20 hover:border-[#f0b400]/40 hover:shadow-[0_4px_16px_rgba(240,180,0,0.25)] active:scale-[0.98] transition-all duration-200"
+              className="hero-cta-primary h-11 rounded-lg border border-[#f0b400] bg-[#f0b400] px-7 text-sm font-bold text-[#0c1220] hover:bg-[#d9a300] hover:border-[#d9a300] active:scale-[0.98] transition-all duration-200"
             >
               {t("hero.cta1")}
             </Button>
@@ -236,7 +236,7 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
               variant="ghost"
               size="lg"
               onClick={() => onNavigate("how-it-works")}
-              className="h-11 rounded-lg border border-white/15 bg-[#0c1220] px-7 text-sm font-bold text-white shadow-[0_2px_8px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.05)] hover:bg-[#0c1220]/90 hover:border-white/25 active:scale-[0.98] transition-all duration-200"
+              className="hero-cta-secondary h-11 rounded-lg border border-white/20 bg-transparent px-7 text-sm font-bold text-white hover:bg-white/10 hover:border-white/30 active:scale-[0.98] transition-all duration-200"
             >
               {t("hero.cta2")}
             </Button>

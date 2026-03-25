@@ -25,12 +25,12 @@ export function Footer() {
             <div className="flex items-center justify-center gap-5 pl-[72px]">
               <a href="https://stellar.org/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 transition-opacity hover:opacity-80">
                 <span className="text-[10px] font-semibold uppercase tracking-widest text-white/30">Built on</span>
-                <Image src="/stellar-full.png" alt="Stellar" width={24} height={24} className="h-4 w-4 shrink-0 object-contain opacity-40" />
+                <Image src="/stellar-full.png" alt="Stellar" width={48} height={48} className="h-6 w-6 shrink-0 object-contain opacity-60" />
               </a>
-              <div className="h-3 w-px bg-white/10" aria-hidden="true" />
+              <div className="h-4 w-px bg-white/10" aria-hidden="true" />
               <a href="https://www.trustlesswork.com/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 transition-opacity hover:opacity-80">
                 <span className="text-[10px] font-semibold uppercase tracking-widest text-white/30">Escrows by</span>
-                <Image src="/trustless-logo.png" alt="Trustless Work" width={20} height={20} className="h-3.5 w-auto object-contain opacity-40" />
+                <Image src="/trustless-logo.png" alt="Trustless Work" width={40} height={40} className="h-5 w-auto object-contain opacity-60" />
               </a>
             </div>
           </div>

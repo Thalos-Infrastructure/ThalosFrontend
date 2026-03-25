@@ -76,29 +76,29 @@ const marqueeItems = [...useCases, ...useCases]
 
 function UseCaseCard({ uc }: { uc: typeof useCases[number] }) {
   return (
-    <div className="w-[340px] shrink-0 rounded-2xl border border-white/10 bg-[#0c1220] p-6 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)] md:w-[380px]">
+    <div className="use-case-card w-[340px] shrink-0 rounded-2xl border border-white/10 bg-[#0c1220] p-6 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)] md:w-[380px]">
       {/* Title */}
       <div className="mb-4 flex items-center gap-3">
         <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: uc.color }} />
-        <h3 className="text-lg font-bold text-white">{uc.title}</h3>
+        <h3 className="card-title text-lg font-bold text-white">{uc.title}</h3>
       </div>
 
       {/* Conversation */}
       <div className="flex flex-col gap-3 mb-4">
         <div>
-          <p className="text-xs font-bold mb-1" style={{ color: uc.color }}>{uc.buyerLabel}</p>
-          <p className="text-sm leading-relaxed text-white/70 italic">{'"'}{uc.buyer}{'"'}</p>
+          <p className="buyer-label text-xs font-bold mb-1" style={{ color: uc.color }}>{uc.buyerLabel}</p>
+          <p className="card-text text-sm leading-relaxed text-white/70 italic">{'"'}{uc.buyer}{'"'}</p>
         </div>
         <div>
-          <p className="text-xs font-bold text-white/50 mb-1">{uc.sellerLabel}</p>
-          <p className="text-sm leading-relaxed text-white/70 italic">{'"'}{uc.seller}{'"'}</p>
+          <p className="seller-label text-xs font-bold text-white/50 mb-1">{uc.sellerLabel}</p>
+          <p className="card-text text-sm leading-relaxed text-white/70 italic">{'"'}{uc.seller}{'"'}</p>
         </div>
       </div>
 
       {/* Result */}
       <div className="rounded-xl border border-white/10 bg-white/8 px-4 py-3">
         <p className="text-[10px] font-bold uppercase tracking-wider text-[#f0b400] mb-1">Result</p>
-        <p className="text-xs font-medium leading-relaxed text-white/70">{uc.result}</p>
+        <p className="card-text text-xs font-medium leading-relaxed text-white/70">{uc.result}</p>
       </div>
     </div>
   )
