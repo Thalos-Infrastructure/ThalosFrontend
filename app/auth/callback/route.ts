@@ -12,7 +12,7 @@ import { Keypair } from "stellar-sdk";
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const code = url.searchParams.get("code");
-  const next = url.searchParams.get("next") ?? "/dashboard/personal";
+  const next = url.searchParams.get("next") ?? "/auth/select-profile";
   const base = url.origin;
 
   if (!code) {

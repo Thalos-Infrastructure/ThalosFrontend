@@ -8,7 +8,7 @@ export type Profile = {
   display_name: string | null
   email: string | null
   avatar_url: string | null
-  account_type: "personal" | "business"
+  account_type: "personal" | "enterprise"
   role: "user" | "validator" | "dispute_resolver" | "admin"
   created_at: string
   updated_at: string
@@ -18,7 +18,7 @@ export type ProfileUpdateInput = {
   display_name?: string
   email?: string
   avatar_url?: string
-  account_type?: "personal" | "business"
+  account_type?: "personal" | "enterprise"
 }
 
 /**
@@ -27,7 +27,7 @@ export type ProfileUpdateInput = {
  */
 export async function getOrCreateProfile(
   walletAddress: string,
-  accountType: "personal" | "business" = "personal"
+  accountType: "personal" | "enterprise" = "personal"
 ): Promise<{ profile: Profile | null; error: string | null }> {
   try {
     const supabase = await createClient()

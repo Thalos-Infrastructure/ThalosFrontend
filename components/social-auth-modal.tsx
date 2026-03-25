@@ -19,7 +19,7 @@ interface SocialAuthModalProps {
 export function SocialAuthModal({ mode, open, onClose }: SocialAuthModalProps) {
   const { t } = useLanguage();
   const router = useRouter();
-  const { login } = useAuthStore();
+  const { login, logout } = useAuthStore();
   const { isConnecting, walletError, openWalletModal } = useStellarWallet();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

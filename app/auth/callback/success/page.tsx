@@ -4,11 +4,11 @@ import { useEffect, useState } from "react";
 import { useAuthStore } from "@/lib/auth-store";
 
 function getParams(): { token: string | null; next: string } {
-  if (typeof window === "undefined") return { token: null, next: "/dashboard/personal" };
+  if (typeof window === "undefined") return { token: null, next: "/auth/select-profile" };
   const params = new URLSearchParams(window.location.search);
   return {
     token: params.get("token"),
-    next: params.get("next") ?? "/dashboard/personal",
+    next: params.get("next") ?? "/auth/select-profile",
   };
 }
 

@@ -9,21 +9,24 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useLanguage } from "@/lib/i18n"
 import { useStellarWallet } from "@/lib/stellar-wallet"
+import { useAuthStore } from "@/lib/auth-store"
 
 interface SignInPanelProps { open: boolean; onClose: () => void }
 
 export function SignInPanel({ open, onClose }: SignInPanelProps) {
   const { t } = useLanguage()
   const router = useRouter()
+  const { logout } = useAuthStore()
   const { address, isConnecting, walletError, openWalletModal } = useStellarWallet()
   const [profileType, setProfileType] = useState<"personal" | "business">("personal")
   const dashboardHref = profileType === "personal" ? "/dashboard/personal" : "/dashboard/business"
 
   const handleLoginWithWallet = () => {
     openWalletModal(() => {
+      logout()
       onClose()
       router.push(dashboardHref)
-    }, profileType)
+    }, profileType === "business" ? "enterprise" : "personal")
   }
 
   useEffect(() => {
