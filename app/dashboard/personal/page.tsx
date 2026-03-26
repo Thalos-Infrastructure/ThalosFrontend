@@ -21,8 +21,6 @@ import {
   YieldSection,
 } from "@/components/dashboard"
 import { getProfileByWallet, type Profile } from "@/lib/actions/profile"
-import { ContactSelector } from "@/components/agreements/contact-selector"
-import { AgreementChat } from "@/components/agreements/agreement-chat"
 import { AgreementsView } from "@/components/agreements/agreements-view"
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area,
@@ -768,7 +766,7 @@ export default function PersonalDashboardPage() {
             </div>
           )}
 
-          {/* ══════ BOUNTY (hidden from sidebar but kept for reference) ══════ */}
+          {/* ══════ BOUNTY (hidden from sidebar but kept for reference) ══��═══ */}
           {activeSection === "bounty-hidden" && (
             <div className="mx-auto max-w-4xl pt-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
               <p className="mb-4 text-center text-xs text-white/40">
