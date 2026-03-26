@@ -548,8 +548,6 @@ export default function PersonalDashboardPage() {
     <div className="absolute inset-0 bg-gradient-to-b from-[#080a0f] via-transparent to-[#080a0f]" />
     <div className="absolute inset-0 bg-gradient-to-r from-[#080a0f] via-transparent to-[#080a0f]" />
   </div>
-        <div className="absolute inset-0 bg-background/55" />
-      </div>
 
       {/* Header */}
       <header className="sticky top-0 z-40 bg-[#0c1220]/90 backdrop-blur-xl shadow-[0_4px_24px_rgba(0,0,0,0.3)]">
