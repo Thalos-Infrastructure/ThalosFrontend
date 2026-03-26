@@ -667,17 +667,29 @@ export default function PersonalDashboardPage() {
           
           {/* ══════ HOME DASHBOARD - Simplified Layout ══════ */}
           {activeSection === "home" && (
-            <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 space-y-6 mt-6">
-              {/* Balance Card */}
-              <BalanceCard
-                totalBalance="15,650.50"
-                lockedInEscrow={agreements.reduce((sum, a) => sum + parseFloat(a.amount.replace(/,/g, "") || "0"), 0).toLocaleString()}
-                availableBalance="12,450.00"
-                yieldEarned="32.50"
-                currency="USDC"
-                onDeposit={() => setActiveSection("ramps")}
-                onWithdraw={() => setActiveSection("ramps")}
-              />
+            <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 space-y-5 mt-6">
+              {/* Compact Balance Row */}
+              <div className="flex items-center justify-between rounded-xl border border-white/10 bg-[#0c1220] p-4">
+                <div className="flex items-center gap-6">
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">Balance</p>
+                    <p className="text-xl font-bold text-white">15,650.50 <span className="text-sm text-white/40">USDC</span></p>
+                  </div>
+                  <div className="h-8 w-px bg-white/10" />
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">In Escrow</p>
+                    <p className="text-lg font-semibold text-[#f0b400]">{agreements.reduce((sum, a) => sum + parseFloat(a.amount.replace(/,/g, "") || "0"), 0).toLocaleString()}</p>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={() => setActiveSection("wallets")} className="rounded-lg bg-[#f0b400] px-4 py-2 text-sm font-semibold text-[#0c1220] hover:bg-[#e5ab00] transition-colors">
+                    Deposit
+                  </button>
+                  <button onClick={() => setActiveSection("wallets")} className="rounded-lg border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10 transition-colors">
+                    Withdraw
+                  </button>
+                </div>
+              </div>
 
               {/* Quick Actions - Simplified (4 main actions) */}
               <div className="grid grid-cols-4 gap-3">
@@ -700,41 +712,60 @@ export default function PersonalDashboardPage() {
                   <span className="text-xs font-medium text-white/60">Agreements</span>
                 </button>
                 <button
-                  onClick={() => setActiveSection("bounty")}
-                  className="flex flex-col items-center gap-2 rounded-xl border border-white/6 bg-[#0c1220] p-4 hover:border-white/15 hover:bg-[#0c1220]/80 transition-all"
-                >
-                  <div className="rounded-lg p-2.5 bg-amber-400/10">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-amber-400"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                  </div>
-                  <span className="text-xs font-medium text-white/60">Bounty</span>
-                </button>
-                <button
-                  onClick={() => setActiveSection("ramps")}
+                  onClick={() => setActiveSection("investments")}
                   className="flex flex-col items-center gap-2 rounded-xl border border-white/6 bg-[#0c1220] p-4 hover:border-white/15 hover:bg-[#0c1220]/80 transition-all"
                 >
                   <div className="rounded-lg p-2.5 bg-emerald-400/10">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-emerald-400"><path d="M12 2v20M17 7l-5-5-5 5M7 17l5 5 5-5"/></svg>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-emerald-400"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
                   </div>
-                  <span className="text-xs font-medium text-white/60">Funds</span>
+                  <span className="text-xs font-medium text-white/60">Investments</span>
+                </button>
+                <button
+                  onClick={() => setActiveSection("wallets")}
+                  className="flex flex-col items-center gap-2 rounded-xl border border-white/6 bg-[#0c1220] p-4 hover:border-white/15 hover:bg-[#0c1220]/80 transition-all"
+                >
+                  <div className="rounded-lg p-2.5 bg-amber-400/10">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-amber-400"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg>
+                  </div>
+                  <span className="text-xs font-medium text-white/60">My Wallet</span>
                 </button>
               </div>
 
-              {/* Pending Agreements */}
-              <PendingAgreements
-                agreements={agreements
-                  .filter(a => a.status === "pending" || a.status === "funded" || a.milestones.some(m => m.status === "pending"))
-                  .slice(0, 5)
-                  .map(a => ({
-                    id: a.id,
-                    title: a.title,
-                    counterparty: a.counterparty,
-                    amount: a.amount,
-                    status: a.status === "funded" ? "awaiting_approval" as const : "awaiting_funding" as const,
-                    type: a.type,
-                  }))}
-                onAgreementClick={(id) => { setViewingAgreement(id); setActiveSection("agreements") }}
-                onViewAll={() => setActiveSection("agreements")}
-              />
+              {/* Pending Actions */}
+              <div className="rounded-xl border border-white/10 bg-[#0c1220] p-5">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-bold text-white">Pending Actions</h3>
+                  <button onClick={() => setActiveSection("agreements")} className="text-xs text-[#f0b400] hover:underline">View all</button>
+                </div>
+                {agreements.filter(a => a.status === "pending" || a.status === "funded").length === 0 ? (
+                  <p className="text-sm text-white/50 text-center py-6">No pending actions</p>
+                ) : (
+                  <div className="space-y-2">
+                    {agreements
+                      .filter(a => a.status === "pending" || a.status === "funded")
+                      .slice(0, 4)
+                      .map(a => (
+                        <button
+                          key={a.id}
+                          onClick={() => { setViewingAgreement(a.id); setActiveSection("agreements"); }}
+                          className="flex w-full items-center justify-between rounded-lg border border-white/6 bg-white/5 p-3 hover:bg-white/8 transition-colors"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className={cn("h-2 w-2 rounded-full", a.status === "funded" ? "bg-[#f0b400]" : "bg-sky-400")} />
+                            <div className="text-left">
+                              <p className="text-sm font-medium text-white">{a.title}</p>
+                              <p className="text-xs text-white/50">{a.counterparty}</p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm font-semibold text-white">{a.amount} {a.currency}</p>
+                            <p className="text-[10px] uppercase tracking-wider text-white/40">{a.status === "funded" ? "Awaiting Approval" : "Awaiting Funding"}</p>
+                          </div>
+                        </button>
+                      ))}
+                  </div>
+                )}
+              </div>
             </div>
           )}
           
@@ -1060,7 +1091,7 @@ export default function PersonalDashboardPage() {
 )
   })()}
 
-          {/* ══════ RAMPS (On-ramp / Off-ramp) ══════ */}
+          {/* ══════ RAMPS (On-ramp / Off-ramp) ═���════ */}
           {activeSection === "ramps" && (
             <RampsSection walletAddress={walletAddress} onOpenWalletModal={openWalletModal} />
           )}
