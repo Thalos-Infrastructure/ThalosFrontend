@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
 import { getContacts, addContact, searchThalosUsers, type Contact } from "@/lib/actions/contacts"
-import { Search, UserPlus, Copy, Check, X, Users } from "lucide-react"
+import { Search, UserPlus, Copy, Check, X, Users, Smartphone, Share2 } from "lucide-react"
 
 interface ContactSelectorProps {
   value: string
@@ -81,6 +81,62 @@ export function ContactSelector({ value, onChange, placeholder = "Enter wallet a
     await navigator.clipboard.writeText(inviteLink)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
+  }
+
+  // Import contacts from phone using Web Contacts API
+  async function importPhoneContacts() {
+    // Check if Contacts API is supported
+    if (!("contacts" in navigator && "ContactsManager" in window)) {
+      alert("Contact import is not supported on this device. Please use a mobile device with a compatible browser.")
+      return
+    }
+
+    try {
+      const props = ["name", "email", "tel"]
+      const opts = { multiple: true }
+      
+      // @ts-expect-error - Contacts API types not in TypeScript
+      const phoneContacts = await navigator.contacts.select(props, opts)
+      
+      // Add each contact to Thalos
+      for (const contact of phoneContacts) {
+        const name = contact.name?.[0] || "Unknown"
+        const email = contact.email?.[0]
+        const phone = contact.tel?.[0]
+        
+        if (name) {
+          await addContact({ name, email, phone })
+        }
+      }
+      
+      // Reload contacts
+      await loadContacts()
+      alert(`Successfully imported ${phoneContacts.length} contacts!`)
+    } catch (err) {
+      console.error("Error importing contacts:", err)
+    }
+  }
+
+  // Share Thalos referral link
+  async function shareReferralLink() {
+    const referralLink = `https://thalos.app/invite?ref=${encodeURIComponent(Date.now().toString(36))}`
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: "Join Thalos",
+          text: "I'm using Thalos for secure P2P agreements. Join me!",
+          url: referralLink,
+        })
+      } catch (err) {
+        // User cancelled or error
+        console.log("Share cancelled or failed:", err)
+      }
+    } else {
+      // Fallback to clipboard
+      await navigator.clipboard.writeText(referralLink)
+      alert("Referral link copied to clipboard!")
+    }
   }
 
   const activeContacts = contacts.filter(c => c.status === "active" && c.wallet_address)
@@ -165,6 +221,30 @@ export function ContactSelector({ value, onChange, placeholder = "Enter wallet a
                 </button>
               ))
             )}
+          </div>
+
+          {/* Import & Referral Actions */}
+          <div className="p-2 border-t border-white/6 flex gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={importPhoneContacts}
+              className="flex-1 justify-center gap-2 text-white/60 hover:text-white hover:bg-white/5 h-9"
+            >
+              <Smartphone className="h-4 w-4" />
+              <span className="text-xs">Import from Phone</span>
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={shareReferralLink}
+              className="flex-1 justify-center gap-2 text-white/60 hover:text-white hover:bg-white/5 h-9"
+            >
+              <Share2 className="h-4 w-4" />
+              <span className="text-xs">Refer Thalos</span>
+            </Button>
           </div>
 
           {/* Add Contact */}
