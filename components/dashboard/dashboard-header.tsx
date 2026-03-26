@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Bell, MessageCircle, Copy, Check, ChevronDown, User, Settings, LogOut } from "lucide-react"
+import { Bell, HelpCircle, Copy, Check, ChevronDown, User, Settings, LogOut } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useLanguage } from "@/lib/i18n"
@@ -161,14 +161,14 @@ export function DashboardHeader({
           )}
         </Button>
 
-        {/* Support Chat Button */}
+        {/* Support */}
         <Button
           variant="ghost"
+          size="icon"
           onClick={onSupportClick}
-          className="flex items-center gap-2 h-10 rounded-full border border-white/10 bg-white/5 px-3 hover:bg-white/10 transition-colors"
+          className="h-10 w-10 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 transition-colors"
         >
-          <MessageCircle className="h-4 w-4 text-white/70" />
-          <span className="text-xs font-medium text-white/70">Support</span>
+          <HelpCircle className="h-5 w-5 text-white/70" />
         </Button>
       </div>
     </div>

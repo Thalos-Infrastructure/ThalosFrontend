@@ -219,11 +219,9 @@
 .light .bg-amber-500\/10 { background-color: rgba(245, 158, 11, 0.1) !important; }
 .light .border-amber-500\/20 { border-color: rgba(245, 158, 11, 0.2) !important; }
 
-/* ===== DASHBOARD STATS CARDS: solid dark background ===== */
-.light .dashboard-stat-card,
-.dark .dashboard-stat-card {
+/* ===== DASHBOARD STATS CARDS: same colors as dark mode ===== */
+.light .dashboard-stat-card {
   background-color: #0c1220 !important;
-  border-color: rgba(255,255,255,0.1) !important;
 }
 .light .dashboard-stat-card .stat-label {
   color: rgba(255,255,255,0.6) !important;
@@ -233,14 +231,6 @@
 }
 .light .dashboard-stat-card .stat-suffix {
   color: rgba(255,255,255,0.5) !important;
-}
-
-/* All cards with dark bg should be solid, not translucent */
-.bg-\[\#0c1220\]\/60 {
-  background-color: #0c1220 !important;
-}
-.bg-\[\#0c1220\]\/80 {
-  background-color: #0c1220 !important;
 }
 
 /* ===== ESCROW CARDS: same colors as dark mode ===== */
@@ -268,53 +258,6 @@
 .light .text-emerald-400,
 .light [class*="text-emerald"] {
   color: #34d399 !important;
-}
-
-/* ===== DASHBOARD PAGE: Light mode text must be readable ===== */
-/* Sidebar in light mode */
-.light aside.bg-\[\#0c1220\],
-.light aside[class*="bg-[#0c1220]"] {
-  background-color: #f8fafc !important;
-  border-color: #e2e8f0 !important;
-}
-.light aside .text-white,
-.light aside .text-white\/60,
-.light aside .text-white\/50,
-.light aside .text-white\/70 {
-  color: #1e293b !important;
-}
-.light aside .text-\[\#f0b400\] {
-  color: #f0b400 !important;
-}
-.light aside .bg-\[\#f0b400\]\/10 {
-  background-color: rgba(240, 180, 0, 0.15) !important;
-}
-.light aside .border-white\/6 {
-  border-color: #e2e8f0 !important;
-}
-.light aside button:hover {
-  background-color: rgba(0, 0, 0, 0.05) !important;
-}
-
-/* Main content area - cards with dark bg stay dark */
-.light main .bg-\[\#0c1220\] {
-  background-color: #0c1220 !important;
-}
-.light main .bg-\[\#0c1220\] .text-white,
-.light main .bg-\[\#0c1220\] .text-white\/40,
-.light main .bg-\[\#0c1220\] .text-white\/50,
-.light main .bg-\[\#0c1220\] .text-white\/60 {
-  color: inherit !important;
-}
-
-/* Dashboard header in light mode */
-.light main .border-white\/6 {
-  border-color: #e2e8f0 !important;
-}
-
-/* Text that should be dark in light mode (outside dark cards) */
-.light main > div > .text-white:not([class*="bg-[#0c1220]"] *) {
-  color: #1e293b !important;
 }
 
 /* ===== HOW-IT-WORKS filter buttons: colored like use-case avatars ===== */
