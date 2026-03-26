@@ -333,17 +333,22 @@ export default function BusinessDashboardPage() {
 
   return (
     <div className="relative min-h-screen text-foreground">
-{/* Professional Thalos logo collage background */}
-  <div className="fixed inset-0 z-0 bg-[#080a0f]">
-    <div className="absolute inset-0 grid grid-cols-6 grid-rows-4 gap-8 p-8 opacity-[0.04]">
-      {[...Array(24)].map((_, i) => (
-        <div key={i} className="flex items-center justify-center" style={{ transform: `rotate(${(i % 4) * 15 - 22.5}deg)` }}>
-          <Image src="/thalos-vertical.png" alt="" width={80} height={80} className="object-contain" style={{ filter: 'grayscale(100%) brightness(2)' }} />
-        </div>
-      ))}
-    </div>
-    <div className="absolute inset-0 bg-gradient-to-b from-[#080a0f] via-transparent to-[#080a0f]" />
-    <div className="absolute inset-0 bg-gradient-to-r from-[#080a0f] via-transparent to-[#080a0f]" />
+{/* Professional gradient background with subtle pattern */}
+  <div className="fixed inset-0 z-0 bg-[#060810]">
+    {/* Subtle gradient orbs - Enterprise blue theme */}
+    <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-[#3b82f6]/5 rounded-full blur-[150px]" />
+    <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-[#f0b400]/5 rounded-full blur-[150px]" />
+    
+    {/* Subtle grid pattern */}
+    <div className="absolute inset-0 opacity-[0.015]" style={{
+      backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
+      backgroundSize: '60px 60px'
+    }} />
+    
+    {/* Noise overlay for texture */}
+    <div className="absolute inset-0 opacity-[0.02]" style={{
+      backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`
+    }} />
   </div>
 
       {/* Header */}
@@ -392,38 +397,78 @@ export default function BusinessDashboardPage() {
       </header>
 
       <div className="relative z-10 flex min-h-[calc(100vh-80px)]">
-        {/* Sidebar */}
+        {/* Modern Sidebar */}
         <aside className={cn(
-          "fixed inset-y-20 left-0 z-30 w-64 bg-[#0c1220]/90 backdrop-blur-xl transition-transform duration-300 lg:sticky lg:top-20 lg:translate-x-0 lg:h-[calc(100vh-80px)]",
+          "fixed inset-y-20 left-0 z-30 w-64 transition-transform duration-300 lg:sticky lg:top-20 lg:translate-x-0 lg:h-[calc(100vh-80px)]",
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}>
-          <div className="border-b border-white/[0.06] p-5">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-[#3b82f6]/10 flex items-center justify-center text-[#3b82f6]">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-white">{t("dashPage.enterpriseAccount")}</p>
-                <p className="text-xs text-white/60">G...SE01</p>
+          <div className="h-full flex flex-col bg-[#0a0d14]/95 backdrop-blur-xl border-r border-white/[0.06]">
+            {/* Enterprise Profile Section */}
+            <div className="p-4 border-b border-white/[0.06]">
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-[#3b82f6]/10 to-transparent border border-[#3b82f6]/10">
+                <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[#3b82f6] to-[#3b82f6]/60 flex items-center justify-center text-white font-bold text-sm">
+                  EN
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-white truncate">{t("dashPage.enterpriseAccount")}</p>
+                  <p className="text-[11px] font-mono text-[#3b82f6]/80 truncate">G...SE01</p>
+                </div>
               </div>
             </div>
-          </div>
 
-          <nav className="flex flex-col gap-1 p-3">
-            {sidebarItems.map((item) => (
-              <button key={item.id} onClick={() => { setActiveSection(item.id); setSidebarOpen(false); if (item.id === "create") resetWizard() }}
-                className={cn("flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200",
-                  activeSection === item.id ? "bg-[#3b82f6]/10 text-[#3b82f6]" : "text-white/70 hover:bg-white/5 hover:text-white"
-                )}>
-                {item.icon}{item.id === "bounty" ? "Thalos Bounty" : t(`dashPage.${item.id === "create" ? "newAgreement" : item.id === "templates" ? "templates" : item.id}`)}
+            {/* Main Navigation */}
+            <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
+              {sidebarItems.map((item) => {
+                const isActive = activeSection === item.id
+                return (
+                  <button 
+                    key={item.id} 
+                    onClick={() => { setActiveSection(item.id); setSidebarOpen(false); if (item.id === "create") resetWizard() }}
+                    className={cn(
+                      "group flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-all duration-200 relative overflow-hidden",
+                      isActive 
+                        ? "bg-[#3b82f6] text-white shadow-[0_4px_20px_rgba(59,130,246,0.25)]" 
+                        : "text-white/60 hover:bg-white/[0.04] hover:text-white"
+                    )}
+                  >
+                    {isActive && (
+                      <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent" />
+                    )}
+                    <span className={cn("relative z-10 transition-transform duration-200", isActive && "scale-110")}>
+                      {item.icon}
+                    </span>
+                    <span className="relative z-10">
+                      {item.id === "bounty" ? "Thalos Bounty" : t(`dashPage.${item.id === "create" ? "newAgreement" : item.id === "templates" ? "templates" : item.id}`)}
+                    </span>
+                    {isActive && (
+                      <div className="ml-auto relative z-10">
+                        <div className="h-2 w-2 rounded-full bg-white/40" />
+                      </div>
+                    )}
+                  </button>
+                )
+              })}
+            </nav>
+
+            {/* Bottom Section */}
+            <div className="p-3 border-t border-white/[0.06] space-y-2">
+              {/* Quick Stats */}
+              <div className="p-3 rounded-xl bg-gradient-to-br from-white/[0.04] to-transparent border border-white/[0.06]">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">{t("dashPage.totalBalance")}</span>
+                  <span className="text-xs text-emerald-400">+5.2%</span>
+                </div>
+                <p className="text-lg font-bold text-[#3b82f6]">$845,700<span className="text-sm font-normal text-white/40">.50</span></p>
+              </div>
+              
+              {/* Help Button */}
+              <button 
+                onClick={() => window.open("https://thalos.app/support", "_blank")}
+                className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-white/50 hover:bg-white/[0.04] hover:text-white transition-colors"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><circle cx="12" cy="17" r=".5"/></svg>
+                Help & Support
               </button>
-            ))}
-          </nav>
-
-          <div className="mt-auto border-t border-white/[0.06] p-4">
-            <div className="rounded-xl bg-[#3b82f6]/5 border border-[#3b82f6]/10 p-4">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-[#3b82f6]/60">{t("dashPage.totalBalance")}</p>
-              <p className="mt-1 text-xl font-bold text-[#3b82f6]">845,700.50 <span className="text-xs font-normal text-white/40">USDC</span></p>
             </div>
           </div>
         </aside>
