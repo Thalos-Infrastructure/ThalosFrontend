@@ -17,20 +17,13 @@ import { RampsSection } from "@/components/ramps/ramps-section"
 import { InlineOnramp } from "@/components/ramps/inline-onramp"
 import {
   DashboardHeader,
-  QuickActions,
-  BalanceCard,
-  PendingAgreements,
-  DashboardSidebar,
   MobileNav,
-  AgreementsList,
   YieldSection,
-  CardsSection,
-  PayServicesSection,
-  DepositWithdrawSection,
-  type QuickActionId,
-  type PendingAgreement,
 } from "@/components/dashboard"
 import { getProfileByWallet, type Profile } from "@/lib/actions/profile"
+import { ContactSelector } from "@/components/agreements/contact-selector"
+import { AgreementChat } from "@/components/agreements/agreement-chat"
+import { AgreementsView } from "@/components/agreements/agreements-view"
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area,
 } from "recharts"
@@ -927,124 +920,15 @@ export default function PersonalDashboardPage() {
                 </Button>
               </div>
 
-              {/* Toolbar */}
-              <div className="mb-5 flex flex-col gap-3">
-                {/* Search + Sort */}
-                <div className="flex items-center gap-3">
-                  <div className="relative flex-1">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/25">
-                      <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-                    </svg>
-                    <input
-                      value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder={t("dashPage.searchPlaceholder")}
-                      className="h-10 w-full rounded-xl border border-white/15 bg-[#0a0a0c]/50 pl-10 pr-4 text-sm text-white placeholder:text-white/25 focus:border-[#f0b400]/40 focus:outline-none focus:ring-1 focus:ring-[#f0b400]/15 transition-all"
-                    />
-                  </div>
-                  <select value={sortBy} onChange={(e) => setSortBy(e.target.value as "date" | "amount" | "title")}
-                    className="h-10 rounded-xl border border-white/15 bg-[#0a0a0c]/50 px-3 text-xs font-medium text-white/60 focus:border-[#f0b400]/40 focus:outline-none appearance-none cursor-pointer">
-                    <option value="date">{t("dashPage.sortBy")}: {t("dashPage.sortDate")}</option>
-                    <option value="amount">{t("dashPage.sortBy")}: {t("dashPage.sortAmount")}</option>
-                    <option value="title">{t("dashPage.sortBy")}: {t("dashPage.sortTitle")}</option>
-                  </select>
-                </div>
-                {/* Status filter tabs */}
-                <div className="flex items-center gap-1.5 overflow-x-auto">
-                  {(["all", "funded", "in_progress", "released"] as const).map((s) => {
-                    const labelMap = { all: "dashPage.all", funded: "dashPage.funded", in_progress: "dashPage.inProgress", released: "dashPage.releasedFilter" }
-                    const count = statusCounts[s]
-                    return (
-                      <button key={s} onClick={() => setStatusFilter(s)}
-                        className={cn("flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all whitespace-nowrap",
-                          statusFilter === s ? "bg-[#f0b400]/15 text-[#f0b400] border border-[#f0b400]/20" : "text-white/40 hover:text-white/60 hover:bg-white/[0.04] border border-transparent"
-                        )}>
-                        {t(labelMap[s])}
-                        <span className={cn("rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none",
-                          statusFilter === s ? "bg-[#f0b400]/20 text-[#f0b400]" : "bg-white/[0.06] text-white/30"
-                        )}>{count}</span>
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-
-              {/* Agreements list */}
-              {filteredAgreements.length === 0 ? (
-                <div className="flex flex-col items-center justify-center rounded-2xl border border-white/10 bg-[#0c1220] py-16 px-6 text-center shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)]">
-                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" className="text-white/15 mb-4"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                  <p className="text-sm font-medium text-white/40">{t("dashPage.noResults")}</p>
-                  <p className="mt-1 text-xs text-white/20">{t("dashPage.noResultsDesc")}</p>
-                </div>
-              ) : (
-              <>
-              <div className="flex flex-col gap-4">
-                {paginatedAgreements.map((agr) => {
-                  const allReleased = agr.milestones.every(m => m.status === "released")
-                  const effectiveStatus = allReleased ? "released" : agr.status
-                  const st = statusConfig[effectiveStatus] || statusConfig.funded
-                  const completedMs = agr.milestones.filter(m => m.status === "released").length
-                  const progressPct = (completedMs / agr.milestones.length) * 100
-                  return (
-                    <button key={agr.id} onClick={() => setViewingAgreement(agr.id)}
-                      className="flex flex-col gap-4 rounded-2xl border border-white/10 bg-[#0c1220] p-5 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)] transition-all hover:border-white/20 text-left w-full">
-                      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between w-full">
-                        <div>
-                          <p className="text-base font-semibold text-white">{agr.title}</p>
-                          <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-white/35">
-                            <span>{agr.type}</span><span className="text-white/15">|</span><span>{agr.counterparty}</span><span className="text-white/15">|</span><span>{agr.date}</span>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <span className={cn("rounded-full border px-3 py-1 text-xs font-semibold", st.color)}>{t(st.labelKey)}</span>
-                          <p className="text-lg font-bold text-white">{"$"}{agr.amount} <span className="text-xs font-normal text-white/35">USDC</span></p>
-                        </div>
-                      </div>
-                      {agr.milestones.length > 1 && (
-                        <div className="flex items-center gap-3 w-full">
-                          <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/[0.06]">
-                            <div className={cn("h-full rounded-full transition-all duration-500", allReleased ? "bg-emerald-400" : "bg-[#f0b400]")} style={{ width: `${progressPct}%` }} />
-                          </div>
-                          <span className="text-xs text-white/30">{completedMs}/{agr.milestones.length}</span>
-                        </div>
-                      )}
-                    </button>
-                  )
-                })}
-              </div>
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <div className="mt-6 flex items-center justify-between">
-                  <p className="text-xs text-white/40">
-                    Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1}-{Math.min(currentPage * ITEMS_PER_PAGE, filteredAgreements.length)} of {filteredAgreements.length}
-                  </p>
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                      disabled={currentPage === 1}
-                      className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/[0.02] text-white/50 transition-all hover:bg-white/[0.06] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
-                    >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6"/></svg>
-                    </button>
-                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                      let pageNum: number
-                      if (totalPages <= 5) {
-                        pageNum = i + 1
-                      } else if (currentPage <= 3) {
-                        pageNum = i + 1
-                      } else if (currentPage >= totalPages - 2) {
-                        pageNum = totalPages - 4 + i
-                      } else {
-                        pageNum = currentPage - 2 + i
-                      }
-                      return (
-                        <button
-                          key={pageNum}
-                          onClick={() => setCurrentPage(pageNum)}
-                          className={cn(
-                            "flex h-8 w-8 items-center justify-center rounded-lg text-xs font-semibold transition-all",
-                            currentPage === pageNum
-                              ? "bg-[#f0b400]/15 text-[#f0b400] border border-[#f0b400]/20"
-                              : "border border-white/10 bg-white/[0.02] text-white/50 hover:bg-white/[0.06] hover:text-white"
+              {/* New Structured Agreements View */}
+              <AgreementsView
+                agreements={agreements.map(a => ({
+                  ...a,
+                  updatedAt: a.date,
+                }))}
+                onAgreementClick={(id) => setViewingAgreement(id)}
+                currentUserWallet={walletAddress}
+              />
                           )}
                         >
                           {pageNum}
