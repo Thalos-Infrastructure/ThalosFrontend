@@ -607,42 +607,47 @@ export default function PersonalDashboardPage() {
       </header>
 
       <div className="relative z-10 flex min-h-[calc(100vh-80px)]">
-        {/* Sidebar */}
+        {/* Sidebar - Clean & Minimal */}
         <aside className={cn(
-          "fixed inset-y-20 left-0 z-30 w-64 bg-[#0c1220]/90 backdrop-blur-xl transition-transform duration-300 lg:sticky lg:top-20 lg:translate-x-0 lg:h-[calc(100vh-80px)]",
+          "fixed inset-y-20 left-0 z-30 w-56 bg-[#0c1220] border-r border-white/6 transition-transform duration-300 lg:sticky lg:top-20 lg:translate-x-0 lg:h-[calc(100vh-80px)]",
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}>
-          {/* User card */}
-          <div className="border-b border-white/6 p-5">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-[#f0b400]/10 flex items-center justify-center text-[#f0b400]">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-white">{t("dashPage.personalAccount")}</p>
-                <p className="text-xs font-mono text-white/60">{walletAddress ? `${walletAddress.slice(0, 6)}…${walletAddress.slice(-4)}` : "G...AL01"}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Nav */}
-          <nav className="flex flex-col gap-1 p-3">
+          {/* Main Nav */}
+          <nav className="flex flex-col gap-0.5 p-3 pt-4">
             {sidebarItems.map((item) => (
               <button key={item.id} onClick={() => { setActiveSection(item.id); setSidebarOpen(false); if (item.id === "create") resetWizard() }}
-                className={cn("flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200",
-                  activeSection === item.id ? "bg-[#f0b400]/10 text-[#f0b400]" : "text-white/70 hover:bg-white/5 hover:text-white"
+                className={cn("flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
+                  activeSection === item.id ? "bg-[#f0b400]/10 text-[#f0b400]" : "text-white/60 hover:bg-white/5 hover:text-white"
                 )}>
-                {item.icon}{item.id === "bounty" ? "Thalos Bounty" : t(`dashPage.${item.id === "create" ? "newAgreement" : item.id}`)}
+                {item.icon}
+                <span>{item.label}</span>
+              </button>
+            ))}
+            
+            {/* More Section Divider */}
+            <div className="my-3 h-px bg-white/6" />
+            <p className="px-3 mb-1 text-[10px] font-bold uppercase tracking-widest text-white/30">More</p>
+            
+            {moreSidebarItems.map((item) => (
+              <button key={item.id} onClick={() => { setActiveSection(item.id); setSidebarOpen(false); }}
+                className={cn("flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
+                  activeSection === item.id ? "bg-[#f0b400]/10 text-[#f0b400]" : "text-white/60 hover:bg-white/5 hover:text-white"
+                )}>
+                {item.icon}
+                <span>{item.label}</span>
               </button>
             ))}
           </nav>
 
-          {/* Balance card */}
-          <div className="mt-auto border-t border-white/6 p-4">
-            <div className="rounded-xl bg-[#f0b400]/5 border border-[#f0b400]/10 p-4">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-[#f0b400]/60">{t("dashPage.totalBalance")}</p>
-              <p className="mt-1 text-xl font-bold text-[#f0b400]">15,650.50 <span className="text-xs font-normal text-white/40">USDC</span></p>
-            </div>
+          {/* Bottom - Help */}
+          <div className="absolute bottom-0 left-0 right-0 border-t border-white/6 p-3">
+            <button 
+              onClick={() => window.open("https://thalos.app/support", "_blank")}
+              className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-white/50 hover:bg-white/5 hover:text-white transition-colors"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><circle cx="12" cy="17" r=".5"/></svg>
+              Help & Support
+            </button>
           </div>
         </aside>
 
@@ -737,8 +742,8 @@ export default function PersonalDashboardPage() {
             </div>
           )}
           
-          {/* ══════ YIELD (DeFindex) ══════ */}
-          {activeSection === "yield" && (
+          {/* ══════ INVESTMENTS (DeFindex) ══════ */}
+          {activeSection === "investments" && (
             <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 mt-6">
               <YieldSection
                 availableBalance="12,450.00"
@@ -749,27 +754,24 @@ export default function PersonalDashboardPage() {
             </div>
           )}
           
-          {/* ══════ CARDS ══════ */}
-          {activeSection === "cards" && (
-            <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 mt-6">
-              <CardsSection
-                onRequestCard={(providerId) => { console.log("[v0] Request card", providerId) }}
-              />
-            </div>
-          )}
           
-          {/* ══════ PAY SERVICES ══════ */}
+          
+          {/* ══════ SERVICES ══════ */}
           {activeSection === "services" && (
             <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 mt-6">
-              <PayServicesSection
-                userCountry="Argentina"
-                onPayService={(serviceId) => { console.log("[v0] Pay service", serviceId) }}
-              />
+              <div className="rounded-xl border border-white/10 bg-[#0c1220] p-6">
+                <h2 className="text-lg font-semibold text-white mb-2">Services</h2>
+                <p className="text-sm text-white/50 mb-4">Additional services will be available soon.</p>
+                <div className="flex items-center gap-2 text-xs text-white/30">
+                  <span className="rounded-full bg-[#f0b400]/10 px-2 py-0.5 text-[#f0b400]">Coming Soon</span>
+                  <span>Pay bills, utilities, and more</span>
+                </div>
+              </div>
             </div>
           )}
 
-          {/* ══════ THALOS BOUNTY ══════ */}
-          {activeSection === "bounty" && (
+          {/* ══════ BOUNTY (hidden from sidebar but kept for reference) ══════ */}
+          {activeSection === "bounty-hidden" && (
             <div className="mx-auto max-w-4xl pt-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
               <p className="mb-4 text-center text-xs text-white/40">
                 {t("dashPage.bountyComingSoon")}
@@ -929,24 +931,6 @@ export default function PersonalDashboardPage() {
                 onAgreementClick={(id) => setViewingAgreement(id)}
                 currentUserWallet={walletAddress}
               />
-                          )}
-                        >
-                          {pageNum}
-                        </button>
-                      )
-                    })}
-                    <button
-                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                      disabled={currentPage === totalPages}
-                      className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/[0.02] text-white/50 transition-all hover:bg-white/[0.06] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
-                    >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18l6-6-6-6"/></svg>
-                    </button>
-                  </div>
-                </div>
-              )}
-              </>
-              )}
               {/* Section: Agreements that require my attention */}
               {approverEscrows.length > 0 && (
                 <div className="mt-12">
