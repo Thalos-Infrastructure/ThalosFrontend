@@ -543,14 +543,18 @@ export default function PersonalDashboardPage() {
 
   return (
     <div className="relative min-h-screen text-foreground">
-      {/* Collage background */}
-      <div className="fixed inset-0 z-0">
-        <div className="absolute inset-0 grid grid-cols-3 grid-rows-2 gap-0 opacity-50">
-          <div className="col-span-2 row-span-1 bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1505142468610-359e7d316be0?w=1920&q=85&auto=format&fit=crop')" }} />
-          <div className="col-span-1 row-span-2 bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=1920&q=85&auto=format&fit=crop')" }} />
-          <div className="col-span-1 row-span-1 bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1920&q=85&auto=format&fit=crop')" }} />
-          <div className="col-span-1 row-span-1 bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1476673160081-cf065607f449?w=1920&q=85&auto=format&fit=crop')" }} />
+{/* Professional Thalos logo collage background */}
+  <div className="fixed inset-0 z-0 bg-[#080a0f]">
+    <div className="absolute inset-0 grid grid-cols-6 grid-rows-4 gap-8 p-8 opacity-[0.04]">
+      {[...Array(24)].map((_, i) => (
+        <div key={i} className="flex items-center justify-center" style={{ transform: `rotate(${(i % 4) * 15 - 22.5}deg)` }}>
+          <Image src="/thalos-vertical.png" alt="" width={80} height={80} className="object-contain" style={{ filter: 'grayscale(100%) brightness(2)' }} />
         </div>
+      ))}
+    </div>
+    <div className="absolute inset-0 bg-gradient-to-b from-[#080a0f] via-transparent to-[#080a0f]" />
+    <div className="absolute inset-0 bg-gradient-to-r from-[#080a0f] via-transparent to-[#080a0f]" />
+  </div>
         <div className="absolute inset-0 bg-background/55" />
       </div>
 
