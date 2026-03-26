@@ -48,7 +48,7 @@ export function AgreementsView({ agreements, onAgreementClick, onOpenChat, curre
     })
   }, [agreements, viewMode])
 
-  // Categorize agreements
+  // Categorize agreements - ALL agreements go into proper categories
   const categorized = useMemo(() => {
     const pending: Agreement[] = []
     const active: Agreement[] = []
@@ -56,41 +56,56 @@ export function AgreementsView({ agreements, onAgreementClick, onOpenChat, curre
 
     filteredByRole.forEach((agreement) => {
       const status = agreement.status.toLowerCase()
-      if (status === "completed" || status === "released") {
+      
+      // Check milestone statuses for more accurate categorization
+      const allMilestonesReleased = agreement.milestones?.every(m => m.status === "released")
+      const hasPendingMilestones = agreement.milestones?.some(m => m.status === "pending" || m.status === "approved")
+      
+      if (status === "completed" || status === "released" || allMilestonesReleased) {
         completed.push(agreement)
-      } else if (status === "pending" || status === "funded" || status === "dispute") {
+      } else if (status === "pending" || status === "funded" || status === "dispute" || hasPendingMilestones) {
+        // Pending = needs action from someone
         pending.push(agreement)
-      } else {
+      } else if (status === "in_progress") {
+        // Active = work is being done
         active.push(agreement)
+      } else {
+        // Default to pending if unclear
+        pending.push(agreement)
       }
     })
 
     return { pending, active, completed }
   }, [filteredByRole])
 
-  // Group pending agreements
+  // Group pending agreements by what action is needed
   const pendingGroups = useMemo(() => {
     const groups = {
-      approval: [] as Agreement[],
-      funding: [] as Agreement[],
-      review: [] as Agreement[],
-      dispute: [] as Agreement[],
+      approval: [] as Agreement[], // Waiting for your approval to release funds
+      funding: [] as Agreement[],  // Waiting for funds to be deposited
+      review: [] as Agreement[],   // Work submitted, waiting for your review
+      dispute: [] as Agreement[],  // In dispute
     }
 
     categorized.pending.forEach((agreement) => {
       const status = agreement.status.toLowerCase()
+      const hasApprovedMilestones = agreement.milestones?.some(m => m.status === "approved")
+      const hasPendingMilestones = agreement.milestones?.some(m => m.status === "pending")
+      
       if (status === "dispute") {
         groups.dispute.push(agreement)
-      } else if (status === "funded") {
+      } else if (status === "funded" || hasApprovedMilestones) {
+        // Funded or has approved milestones = waiting for approval to release
         groups.approval.push(agreement)
-      } else if (status === "pending") {
-        // Check if it needs funding or review
-        const hasPendingMilestones = agreement.milestones?.some(m => m.status === "pending")
-        if (hasPendingMilestones) {
-          groups.review.push(agreement)
-        } else {
-          groups.funding.push(agreement)
-        }
+      } else if (status === "pending" && !hasPendingMilestones) {
+        // Pending with no milestone work = needs funding
+        groups.funding.push(agreement)
+      } else if (hasPendingMilestones) {
+        // Has pending milestones = waiting for work/review
+        groups.review.push(agreement)
+      } else {
+        // Default to review
+        groups.review.push(agreement)
       }
     })
 

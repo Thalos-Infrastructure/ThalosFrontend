@@ -37,7 +37,6 @@ const useCases = [
   { id: "car-sale", labelKey: "useCase.carSale", icon: "car", suggestedTitle: "Vehicle Sale Agreement", suggestedDesc: "Describe the vehicle details, agreed price, inspection conditions, and transfer terms." },
   { id: "coaching", labelKey: "useCase.coaching", icon: "book", suggestedTitle: "Coaching / Course Agreement", suggestedDesc: "Describe the course content, schedule, completion criteria, and refund policy." },
   { id: "home-repair", labelKey: "useCase.homeRepair", icon: "tool", suggestedTitle: "Home Repair Service Agreement", suggestedDesc: "Describe the repair work, materials, timeline, and warranty terms." },
-  { id: "bounty", labelKey: "useCase.bounty", icon: "star", suggestedTitle: "Thalos Bounty", suggestedDesc: "Create a bounty for tasks that can be completed by multiple validators. Share the bounty link publicly." },
   { id: "other", labelKey: "useCase.other", icon: "plus", suggestedTitle: "", suggestedDesc: "" },
 ]
 
@@ -1479,19 +1478,27 @@ const newAgr: Agreement = {
       {/* Bottom padding for mobile nav */}
       <div className="h-20 lg:hidden" />
 
-      {/* Agreement Chat Panel */}
+      {/* Agreement Chat - Floating Popup */}
       {showAgreementChat && (
-        <div className="fixed inset-y-0 right-0 z-50 w-full max-w-md bg-[#0c1220] border-l border-white/10 shadow-[-8px_0_32px_rgba(0,0,0,0.5)]">
+        <div className="fixed bottom-6 right-6 z-50 w-96 h-[500px] bg-[#0c1220] rounded-2xl border border-white/10 shadow-[0_16px_64px_rgba(0,0,0,0.5)] overflow-hidden animate-in slide-in-from-bottom-4 duration-300">
           <div className="flex h-full flex-col">
-            <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
-              <h3 className="text-sm font-semibold text-white">Agreement Chat</h3>
-              <button
-                onClick={() => setShowAgreementChat(null)}
-                className="p-1.5 rounded-lg text-white/40 hover:bg-white/10 hover:text-white transition-colors"
-              >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
-              </button>
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-white/10 px-4 py-3 bg-[#0a0d14]">
+              <div className="flex items-center gap-2">
+                <div className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                <h3 className="text-sm font-semibold text-white">Agreement Chat</h3>
+              </div>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setShowAgreementChat(null)}
+                  className="p-1.5 rounded-lg text-white/40 hover:bg-white/10 hover:text-white transition-colors"
+                  title="Close chat"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                </button>
+              </div>
             </div>
+            {/* Chat Content */}
             <div className="flex-1 overflow-hidden">
               <AgreementChat
                 agreementId={showAgreementChat}
