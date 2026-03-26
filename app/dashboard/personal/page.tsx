@@ -17,20 +17,11 @@ import { RampsSection } from "@/components/ramps/ramps-section"
 import { InlineOnramp } from "@/components/ramps/inline-onramp"
 import {
   DashboardHeader,
-  QuickActions,
-  BalanceCard,
-  PendingAgreements,
-  DashboardSidebar,
   MobileNav,
-  AgreementsList,
   YieldSection,
-  CardsSection,
-  PayServicesSection,
-  DepositWithdrawSection,
-  type QuickActionId,
-  type PendingAgreement,
 } from "@/components/dashboard"
 import { getProfileByWallet, type Profile } from "@/lib/actions/profile"
+import { AgreementsView } from "@/components/agreements/agreements-view"
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area,
 } from "recharts"
@@ -193,19 +184,19 @@ function UseCaseIcon({ icon, className }: { icon: string; className?: string }) 
   return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className={c}><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
 }
 
-/* ── Sidebar nav items ── */
+/* ── Sidebar nav items (simplified per requirements) ── */
 const sidebarItems = [
-  { id: "home", label: "Home", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg> },
-  { id: "create", label: "New Agreement", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg> },
+  { id: "create", label: "Create Agreement", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg> },
   { id: "agreements", label: "Agreements", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> },
-  { id: "bounty", label: "Thalos Bounty", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> },
-  { id: "yield", label: "Generate Yield", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg> },
-  { id: "cards", label: "Cards", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg> },
-  { id: "services", label: "Pay Services", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg> },
-  { id: "ramps", label: "Deposit / Withdraw", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 2v20M17 7l-5-5-5 5M7 17l5 5 5-5"/></svg> },
-  { id: "wallets", label: "My Wallets", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg> },
+  { id: "wallets", label: "My Wallet", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg> },
   { id: "analytics", label: "Analytics", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg> },
-  ]
+]
+
+/* ── "More" section items ── */
+const moreSidebarItems = [
+  { id: "investments", label: "Investments", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg> },
+  { id: "services", label: "Services", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg> },
+]
 
 /* ── Seller Evidence Submission Component ── */
 function SellerMilestoneList({ agr, agreements, setAgreements, t }: {
@@ -543,16 +534,18 @@ export default function PersonalDashboardPage() {
 
   return (
     <div className="relative min-h-screen text-foreground">
-      {/* Collage background */}
-      <div className="fixed inset-0 z-0">
-        <div className="absolute inset-0 grid grid-cols-3 grid-rows-2 gap-0 opacity-50">
-          <div className="col-span-2 row-span-1 bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1505142468610-359e7d316be0?w=1920&q=85&auto=format&fit=crop')" }} />
-          <div className="col-span-1 row-span-2 bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=1920&q=85&auto=format&fit=crop')" }} />
-          <div className="col-span-1 row-span-1 bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1920&q=85&auto=format&fit=crop')" }} />
-          <div className="col-span-1 row-span-1 bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1476673160081-cf065607f449?w=1920&q=85&auto=format&fit=crop')" }} />
+{/* Professional Thalos logo collage background */}
+  <div className="fixed inset-0 z-0 bg-[#080a0f]">
+    <div className="absolute inset-0 grid grid-cols-6 grid-rows-4 gap-8 p-8 opacity-[0.04]">
+      {[...Array(24)].map((_, i) => (
+        <div key={i} className="flex items-center justify-center" style={{ transform: `rotate(${(i % 4) * 15 - 22.5}deg)` }}>
+          <Image src="/thalos-vertical.png" alt="" width={80} height={80} className="object-contain" style={{ filter: 'grayscale(100%) brightness(2)' }} />
         </div>
-        <div className="absolute inset-0 bg-background/55" />
-      </div>
+      ))}
+    </div>
+    <div className="absolute inset-0 bg-gradient-to-b from-[#080a0f] via-transparent to-[#080a0f]" />
+    <div className="absolute inset-0 bg-gradient-to-r from-[#080a0f] via-transparent to-[#080a0f]" />
+  </div>
 
       {/* Header */}
       <header className="sticky top-0 z-40 bg-[#0c1220]/90 backdrop-blur-xl shadow-[0_4px_24px_rgba(0,0,0,0.3)]">
@@ -610,42 +603,47 @@ export default function PersonalDashboardPage() {
       </header>
 
       <div className="relative z-10 flex min-h-[calc(100vh-80px)]">
-        {/* Sidebar */}
+        {/* Sidebar - Clean & Minimal */}
         <aside className={cn(
-          "fixed inset-y-20 left-0 z-30 w-64 bg-[#0c1220]/90 backdrop-blur-xl transition-transform duration-300 lg:sticky lg:top-20 lg:translate-x-0 lg:h-[calc(100vh-80px)]",
+          "fixed inset-y-20 left-0 z-30 w-56 bg-[#0c1220] border-r border-white/6 transition-transform duration-300 lg:sticky lg:top-20 lg:translate-x-0 lg:h-[calc(100vh-80px)]",
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}>
-          {/* User card */}
-          <div className="border-b border-white/6 p-5">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-[#f0b400]/10 flex items-center justify-center text-[#f0b400]">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-white">{t("dashPage.personalAccount")}</p>
-                <p className="text-xs font-mono text-white/60">{walletAddress ? `${walletAddress.slice(0, 6)}…${walletAddress.slice(-4)}` : "G...AL01"}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Nav */}
-          <nav className="flex flex-col gap-1 p-3">
+          {/* Main Nav */}
+          <nav className="flex flex-col gap-0.5 p-3 pt-4">
             {sidebarItems.map((item) => (
               <button key={item.id} onClick={() => { setActiveSection(item.id); setSidebarOpen(false); if (item.id === "create") resetWizard() }}
-                className={cn("flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200",
-                  activeSection === item.id ? "bg-[#f0b400]/10 text-[#f0b400]" : "text-white/70 hover:bg-white/5 hover:text-white"
+                className={cn("flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
+                  activeSection === item.id ? "bg-[#f0b400]/10 text-[#f0b400]" : "text-white/60 hover:bg-white/5 hover:text-white"
                 )}>
-                {item.icon}{item.id === "bounty" ? "Thalos Bounty" : t(`dashPage.${item.id === "create" ? "newAgreement" : item.id}`)}
+                {item.icon}
+                <span>{item.label}</span>
+              </button>
+            ))}
+            
+            {/* More Section Divider */}
+            <div className="my-3 h-px bg-white/6" />
+            <p className="px-3 mb-1 text-[10px] font-bold uppercase tracking-widest text-white/30">More</p>
+            
+            {moreSidebarItems.map((item) => (
+              <button key={item.id} onClick={() => { setActiveSection(item.id); setSidebarOpen(false); }}
+                className={cn("flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
+                  activeSection === item.id ? "bg-[#f0b400]/10 text-[#f0b400]" : "text-white/60 hover:bg-white/5 hover:text-white"
+                )}>
+                {item.icon}
+                <span>{item.label}</span>
               </button>
             ))}
           </nav>
 
-          {/* Balance card */}
-          <div className="mt-auto border-t border-white/6 p-4">
-            <div className="rounded-xl bg-[#f0b400]/5 border border-[#f0b400]/10 p-4">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-[#f0b400]/60">{t("dashPage.totalBalance")}</p>
-              <p className="mt-1 text-xl font-bold text-[#f0b400]">15,650.50 <span className="text-xs font-normal text-white/40">USDC</span></p>
-            </div>
+          {/* Bottom - Help */}
+          <div className="absolute bottom-0 left-0 right-0 border-t border-white/6 p-3">
+            <button 
+              onClick={() => window.open("https://thalos.app/support", "_blank")}
+              className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-white/50 hover:bg-white/5 hover:text-white transition-colors"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><circle cx="12" cy="17" r=".5"/></svg>
+              Help & Support
+            </button>
           </div>
         </aside>
 
@@ -669,17 +667,29 @@ export default function PersonalDashboardPage() {
           
           {/* ══════ HOME DASHBOARD - Simplified Layout ══════ */}
           {activeSection === "home" && (
-            <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 space-y-6 mt-6">
-              {/* Balance Card */}
-              <BalanceCard
-                totalBalance="15,650.50"
-                lockedInEscrow={agreements.reduce((sum, a) => sum + parseFloat(a.amount.replace(/,/g, "") || "0"), 0).toLocaleString()}
-                availableBalance="12,450.00"
-                yieldEarned="32.50"
-                currency="USDC"
-                onDeposit={() => setActiveSection("ramps")}
-                onWithdraw={() => setActiveSection("ramps")}
-              />
+            <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 space-y-5 mt-6">
+              {/* Compact Balance Row */}
+              <div className="flex items-center justify-between rounded-xl border border-white/10 bg-[#0c1220] p-4">
+                <div className="flex items-center gap-6">
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">Balance</p>
+                    <p className="text-xl font-bold text-white">15,650.50 <span className="text-sm text-white/40">USDC</span></p>
+                  </div>
+                  <div className="h-8 w-px bg-white/10" />
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">In Escrow</p>
+                    <p className="text-lg font-semibold text-[#f0b400]">{agreements.reduce((sum, a) => sum + parseFloat(a.amount.replace(/,/g, "") || "0"), 0).toLocaleString()}</p>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={() => setActiveSection("wallets")} className="rounded-lg bg-[#f0b400] px-4 py-2 text-sm font-semibold text-[#0c1220] hover:bg-[#e5ab00] transition-colors">
+                    Deposit
+                  </button>
+                  <button onClick={() => setActiveSection("wallets")} className="rounded-lg border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10 transition-colors">
+                    Withdraw
+                  </button>
+                </div>
+              </div>
 
               {/* Quick Actions - Simplified (4 main actions) */}
               <div className="grid grid-cols-4 gap-3">
@@ -702,46 +712,65 @@ export default function PersonalDashboardPage() {
                   <span className="text-xs font-medium text-white/60">Agreements</span>
                 </button>
                 <button
-                  onClick={() => setActiveSection("bounty")}
-                  className="flex flex-col items-center gap-2 rounded-xl border border-white/6 bg-[#0c1220] p-4 hover:border-white/15 hover:bg-[#0c1220]/80 transition-all"
-                >
-                  <div className="rounded-lg p-2.5 bg-amber-400/10">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-amber-400"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                  </div>
-                  <span className="text-xs font-medium text-white/60">Bounty</span>
-                </button>
-                <button
-                  onClick={() => setActiveSection("ramps")}
+                  onClick={() => setActiveSection("investments")}
                   className="flex flex-col items-center gap-2 rounded-xl border border-white/6 bg-[#0c1220] p-4 hover:border-white/15 hover:bg-[#0c1220]/80 transition-all"
                 >
                   <div className="rounded-lg p-2.5 bg-emerald-400/10">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-emerald-400"><path d="M12 2v20M17 7l-5-5-5 5M7 17l5 5 5-5"/></svg>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-emerald-400"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
                   </div>
-                  <span className="text-xs font-medium text-white/60">Funds</span>
+                  <span className="text-xs font-medium text-white/60">Investments</span>
+                </button>
+                <button
+                  onClick={() => setActiveSection("wallets")}
+                  className="flex flex-col items-center gap-2 rounded-xl border border-white/6 bg-[#0c1220] p-4 hover:border-white/15 hover:bg-[#0c1220]/80 transition-all"
+                >
+                  <div className="rounded-lg p-2.5 bg-amber-400/10">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-amber-400"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg>
+                  </div>
+                  <span className="text-xs font-medium text-white/60">My Wallet</span>
                 </button>
               </div>
 
-              {/* Pending Agreements */}
-              <PendingAgreements
-                agreements={agreements
-                  .filter(a => a.status === "pending" || a.status === "funded" || a.milestones.some(m => m.status === "pending"))
-                  .slice(0, 5)
-                  .map(a => ({
-                    id: a.id,
-                    title: a.title,
-                    counterparty: a.counterparty,
-                    amount: a.amount,
-                    status: a.status === "funded" ? "awaiting_approval" as const : "awaiting_funding" as const,
-                    type: a.type,
-                  }))}
-                onAgreementClick={(id) => { setViewingAgreement(id); setActiveSection("agreements") }}
-                onViewAll={() => setActiveSection("agreements")}
-              />
+              {/* Pending Actions */}
+              <div className="rounded-xl border border-white/10 bg-[#0c1220] p-5">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-bold text-white">Pending Actions</h3>
+                  <button onClick={() => setActiveSection("agreements")} className="text-xs text-[#f0b400] hover:underline">View all</button>
+                </div>
+                {agreements.filter(a => a.status === "pending" || a.status === "funded").length === 0 ? (
+                  <p className="text-sm text-white/50 text-center py-6">No pending actions</p>
+                ) : (
+                  <div className="space-y-2">
+                    {agreements
+                      .filter(a => a.status === "pending" || a.status === "funded")
+                      .slice(0, 4)
+                      .map(a => (
+                        <button
+                          key={a.id}
+                          onClick={() => { setViewingAgreement(a.id); setActiveSection("agreements"); }}
+                          className="flex w-full items-center justify-between rounded-lg border border-white/6 bg-white/5 p-3 hover:bg-white/8 transition-colors"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className={cn("h-2 w-2 rounded-full", a.status === "funded" ? "bg-[#f0b400]" : "bg-sky-400")} />
+                            <div className="text-left">
+                              <p className="text-sm font-medium text-white">{a.title}</p>
+                              <p className="text-xs text-white/50">{a.counterparty}</p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm font-semibold text-white">{a.amount} {a.currency}</p>
+                            <p className="text-[10px] uppercase tracking-wider text-white/40">{a.status === "funded" ? "Awaiting Approval" : "Awaiting Funding"}</p>
+                          </div>
+                        </button>
+                      ))}
+                  </div>
+                )}
+              </div>
             </div>
           )}
           
-          {/* ══════ YIELD (DeFindex) ══════ */}
-          {activeSection === "yield" && (
+          {/* ══════ INVESTMENTS (DeFindex) ══════ */}
+          {activeSection === "investments" && (
             <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 mt-6">
               <YieldSection
                 availableBalance="12,450.00"
@@ -752,27 +781,24 @@ export default function PersonalDashboardPage() {
             </div>
           )}
           
-          {/* ══════ CARDS ══════ */}
-          {activeSection === "cards" && (
-            <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 mt-6">
-              <CardsSection
-                onRequestCard={(providerId) => { console.log("[v0] Request card", providerId) }}
-              />
-            </div>
-          )}
           
-          {/* ══════ PAY SERVICES ══════ */}
+          
+          {/* ══════ SERVICES ══════ */}
           {activeSection === "services" && (
             <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 mt-6">
-              <PayServicesSection
-                userCountry="Argentina"
-                onPayService={(serviceId) => { console.log("[v0] Pay service", serviceId) }}
-              />
+              <div className="rounded-xl border border-white/10 bg-[#0c1220] p-6">
+                <h2 className="text-lg font-semibold text-white mb-2">Services</h2>
+                <p className="text-sm text-white/50 mb-4">Additional services will be available soon.</p>
+                <div className="flex items-center gap-2 text-xs text-white/30">
+                  <span className="rounded-full bg-[#f0b400]/10 px-2 py-0.5 text-[#f0b400]">Coming Soon</span>
+                  <span>Pay bills, utilities, and more</span>
+                </div>
+              </div>
             </div>
           )}
 
-          {/* ══════ THALOS BOUNTY ══════ */}
-          {activeSection === "bounty" && (
+          {/* ══════ BOUNTY (hidden from sidebar but kept for reference) ══��═══ */}
+          {activeSection === "bounty-hidden" && (
             <div className="mx-auto max-w-4xl pt-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
               <p className="mb-4 text-center text-xs text-white/40">
                 {t("dashPage.bountyComingSoon")}
@@ -821,7 +847,7 @@ export default function PersonalDashboardPage() {
             </div>
           )}
           
-          {/* ══════ ANALYTICS ══════ */}
+          {/* ═══��══ ANALYTICS ══════ */}
           {activeSection === "analytics" && (
             <div className="mx-auto max-w-5xl animate-in fade-in slide-in-from-bottom-2 duration-300">
               <h1 className="mb-6 text-2xl font-semibold text-white">{t("dashPage.analytics")}</h1>
@@ -923,142 +949,15 @@ export default function PersonalDashboardPage() {
                 </Button>
               </div>
 
-              {/* Toolbar */}
-              <div className="mb-5 flex flex-col gap-3">
-                {/* Search + Sort */}
-                <div className="flex items-center gap-3">
-                  <div className="relative flex-1">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/25">
-                      <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-                    </svg>
-                    <input
-                      value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder={t("dashPage.searchPlaceholder")}
-                      className="h-10 w-full rounded-xl border border-white/15 bg-[#0a0a0c]/50 pl-10 pr-4 text-sm text-white placeholder:text-white/25 focus:border-[#f0b400]/40 focus:outline-none focus:ring-1 focus:ring-[#f0b400]/15 transition-all"
-                    />
-                  </div>
-                  <select value={sortBy} onChange={(e) => setSortBy(e.target.value as "date" | "amount" | "title")}
-                    className="h-10 rounded-xl border border-white/15 bg-[#0a0a0c]/50 px-3 text-xs font-medium text-white/60 focus:border-[#f0b400]/40 focus:outline-none appearance-none cursor-pointer">
-                    <option value="date">{t("dashPage.sortBy")}: {t("dashPage.sortDate")}</option>
-                    <option value="amount">{t("dashPage.sortBy")}: {t("dashPage.sortAmount")}</option>
-                    <option value="title">{t("dashPage.sortBy")}: {t("dashPage.sortTitle")}</option>
-                  </select>
-                </div>
-                {/* Status filter tabs */}
-                <div className="flex items-center gap-1.5 overflow-x-auto">
-                  {(["all", "funded", "in_progress", "released"] as const).map((s) => {
-                    const labelMap = { all: "dashPage.all", funded: "dashPage.funded", in_progress: "dashPage.inProgress", released: "dashPage.releasedFilter" }
-                    const count = statusCounts[s]
-                    return (
-                      <button key={s} onClick={() => setStatusFilter(s)}
-                        className={cn("flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all whitespace-nowrap",
-                          statusFilter === s ? "bg-[#f0b400]/15 text-[#f0b400] border border-[#f0b400]/20" : "text-white/40 hover:text-white/60 hover:bg-white/[0.04] border border-transparent"
-                        )}>
-                        {t(labelMap[s])}
-                        <span className={cn("rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none",
-                          statusFilter === s ? "bg-[#f0b400]/20 text-[#f0b400]" : "bg-white/[0.06] text-white/30"
-                        )}>{count}</span>
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-
-              {/* Agreements list */}
-              {filteredAgreements.length === 0 ? (
-                <div className="flex flex-col items-center justify-center rounded-2xl border border-white/10 bg-[#0c1220] py-16 px-6 text-center shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)]">
-                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" className="text-white/15 mb-4"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                  <p className="text-sm font-medium text-white/40">{t("dashPage.noResults")}</p>
-                  <p className="mt-1 text-xs text-white/20">{t("dashPage.noResultsDesc")}</p>
-                </div>
-              ) : (
-              <>
-              <div className="flex flex-col gap-4">
-                {paginatedAgreements.map((agr) => {
-                  const allReleased = agr.milestones.every(m => m.status === "released")
-                  const effectiveStatus = allReleased ? "released" : agr.status
-                  const st = statusConfig[effectiveStatus] || statusConfig.funded
-                  const completedMs = agr.milestones.filter(m => m.status === "released").length
-                  const progressPct = (completedMs / agr.milestones.length) * 100
-                  return (
-                    <button key={agr.id} onClick={() => setViewingAgreement(agr.id)}
-                      className="flex flex-col gap-4 rounded-2xl border border-white/10 bg-[#0c1220] p-5 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)] transition-all hover:border-white/20 text-left w-full">
-                      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between w-full">
-                        <div>
-                          <p className="text-base font-semibold text-white">{agr.title}</p>
-                          <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-white/35">
-                            <span>{agr.type}</span><span className="text-white/15">|</span><span>{agr.counterparty}</span><span className="text-white/15">|</span><span>{agr.date}</span>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <span className={cn("rounded-full border px-3 py-1 text-xs font-semibold", st.color)}>{t(st.labelKey)}</span>
-                          <p className="text-lg font-bold text-white">{"$"}{agr.amount} <span className="text-xs font-normal text-white/35">USDC</span></p>
-                        </div>
-                      </div>
-                      {agr.milestones.length > 1 && (
-                        <div className="flex items-center gap-3 w-full">
-                          <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/[0.06]">
-                            <div className={cn("h-full rounded-full transition-all duration-500", allReleased ? "bg-emerald-400" : "bg-[#f0b400]")} style={{ width: `${progressPct}%` }} />
-                          </div>
-                          <span className="text-xs text-white/30">{completedMs}/{agr.milestones.length}</span>
-                        </div>
-                      )}
-                    </button>
-                  )
-                })}
-              </div>
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <div className="mt-6 flex items-center justify-between">
-                  <p className="text-xs text-white/40">
-                    Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1}-{Math.min(currentPage * ITEMS_PER_PAGE, filteredAgreements.length)} of {filteredAgreements.length}
-                  </p>
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                      disabled={currentPage === 1}
-                      className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/[0.02] text-white/50 transition-all hover:bg-white/[0.06] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
-                    >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6"/></svg>
-                    </button>
-                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                      let pageNum: number
-                      if (totalPages <= 5) {
-                        pageNum = i + 1
-                      } else if (currentPage <= 3) {
-                        pageNum = i + 1
-                      } else if (currentPage >= totalPages - 2) {
-                        pageNum = totalPages - 4 + i
-                      } else {
-                        pageNum = currentPage - 2 + i
-                      }
-                      return (
-                        <button
-                          key={pageNum}
-                          onClick={() => setCurrentPage(pageNum)}
-                          className={cn(
-                            "flex h-8 w-8 items-center justify-center rounded-lg text-xs font-semibold transition-all",
-                            currentPage === pageNum
-                              ? "bg-[#f0b400]/15 text-[#f0b400] border border-[#f0b400]/20"
-                              : "border border-white/10 bg-white/[0.02] text-white/50 hover:bg-white/[0.06] hover:text-white"
-                          )}
-                        >
-                          {pageNum}
-                        </button>
-                      )
-                    })}
-                    <button
-                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                      disabled={currentPage === totalPages}
-                      className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/[0.02] text-white/50 transition-all hover:bg-white/[0.06] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
-                    >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18l6-6-6-6"/></svg>
-                    </button>
-                  </div>
-                </div>
-              )}
-              </>
-              )}
+              {/* New Structured Agreements View */}
+              <AgreementsView
+                agreements={agreements.map(a => ({
+                  ...a,
+                  updatedAt: a.date,
+                }))}
+                onAgreementClick={(id) => setViewingAgreement(id)}
+                currentUserWallet={walletAddress}
+              />
               {/* Section: Agreements that require my attention */}
               {approverEscrows.length > 0 && (
                 <div className="mt-12">
@@ -1192,7 +1091,7 @@ export default function PersonalDashboardPage() {
 )
   })()}
 
-          {/* ══════ RAMPS (On-ramp / Off-ramp) ══════ */}
+          {/* ══════ RAMPS (On-ramp / Off-ramp) ═���════ */}
           {activeSection === "ramps" && (
             <RampsSection walletAddress={walletAddress} onOpenWalletModal={openWalletModal} />
           )}
