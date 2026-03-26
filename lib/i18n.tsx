@@ -374,10 +374,6 @@ const translations: Record<Lang, Record<string, string>> = {
     "theme.light": "Light",
     "theme.dark": "Dark",
     "dashPage.analytics": "Analytics",
-    "dashPage.home": "Home",
-    "dashPage.ramps": "Funds",
-    "dashPage.bounty": "Bounty",
-    "dashPage.moreServices": "More Services",
 
     // Dashboard page keys
     "dashPage.dashboard": "Dashboard",

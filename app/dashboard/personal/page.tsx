@@ -17,8 +17,18 @@ import { RampsSection } from "@/components/ramps/ramps-section"
 import { InlineOnramp } from "@/components/ramps/inline-onramp"
 import {
   DashboardHeader,
+  QuickActions,
+  BalanceCard,
+  PendingAgreements,
+  DashboardSidebar,
   MobileNav,
+  AgreementsList,
   YieldSection,
+  CardsSection,
+  PayServicesSection,
+  DepositWithdrawSection,
+  type QuickActionId,
+  type PendingAgreement,
 } from "@/components/dashboard"
 import { getProfileByWallet, type Profile } from "@/lib/actions/profile"
 import {
@@ -183,20 +193,19 @@ function UseCaseIcon({ icon, className }: { icon: string; className?: string }) 
   return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className={c}><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
 }
 
-/* ── Sidebar nav items (simplified) ── */
+/* ── Sidebar nav items ── */
 const sidebarItems = [
   { id: "home", label: "Home", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg> },
+  { id: "create", label: "New Agreement", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg> },
   { id: "agreements", label: "Agreements", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> },
-  { id: "ramps", label: "Funds", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 2v20M17 7l-5-5-5 5M7 17l5 5 5-5"/></svg> },
-  { id: "bounty", label: "Bounty", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> },
-  { id: "moreServices", label: "More Services", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>,
-    subItems: [
-      { id: "yield", label: "Generate Yield" },
-      { id: "cards", label: "Cards" },
-      { id: "services", label: "Pay Services" },
-    ]
-  },
-]
+  { id: "bounty", label: "Thalos Bounty", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> },
+  { id: "yield", label: "Generate Yield", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg> },
+  { id: "cards", label: "Cards", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg> },
+  { id: "services", label: "Pay Services", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg> },
+  { id: "ramps", label: "Deposit / Withdraw", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 2v20M17 7l-5-5-5 5M7 17l5 5 5-5"/></svg> },
+  { id: "wallets", label: "My Wallets", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg> },
+  { id: "analytics", label: "Analytics", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg> },
+  ]
 
 /* ── Seller Evidence Submission Component ── */
 function SellerMilestoneList({ agr, agreements, setAgreements, t }: {
@@ -559,17 +568,41 @@ export default function PersonalDashboardPage() {
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Wallet address only - no duplicate profile */}
-            {walletAddress && (
-              <button 
-                onClick={async () => { await navigator.clipboard.writeText(walletAddress); }}
-                className="flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-sm font-mono text-[#f0b400] hover:bg-white/10 transition-all"
-                title="Click to copy"
-              >
-                {walletAddress.slice(0, 6)}…{walletAddress.slice(-4)}
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-white/50"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+            {/* Profile dropdown */}
+            <div className="relative">
+              <button onClick={() => setProfileMenuOpen(!profileMenuOpen)} className="flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-sm font-medium text-white/70 hover:bg-white/10 hover:text-white transition-all">
+                {walletAddress ? (
+                  <span className="font-mono text-[11px] text-[#f0b400]">{walletAddress.slice(0, 6)}…{walletAddress.slice(-4)}</span>
+                ) : (
+                  <div className="h-6 w-6 rounded-full bg-[#f0b400]/10 flex items-center justify-center text-[#f0b400]">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  </div>
+                )}
+                <span className="hidden sm:inline">{t("dashPage.personal")}</span>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
               </button>
-            )}
+              {profileMenuOpen && (
+                <div className="absolute right-0 mt-2 w-56 rounded-xl border border-white/10 bg-[#0c1220] p-2 shadow-[0_16px_48px_rgba(0,0,0,0.6)]" onClick={() => setProfileMenuOpen(false)}>
+                  <button onClick={() => setActiveSection("dashboard")} className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-white/70 hover:bg-white/8 hover:text-white transition-colors">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                    {t("dashPage.dashboard")}
+                  </button>
+                  <button onClick={() => setActiveSection("wallets")} className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-white/70 hover:bg-white/8 hover:text-white transition-colors">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg>
+                    {t("dashPage.wallets")}
+                  </button>
+                  <button onClick={() => setActiveSection("ramps")} className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-white/70 hover:bg-white/8 hover:text-white transition-colors">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 2v20M17 7l-5-5-5 5M7 17l5 5 5-5"/></svg>
+                    {t("dashPage.ramps")}
+                  </button>
+                  <div className="my-1 h-px bg-white/6" />
+                  <Link href="/" className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-white/70 hover:bg-white/8 hover:text-white transition-colors">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                    {t("dashPage.signOut")}
+                  </Link>
+                </div>
+              )}
+            </div>
             <LanguageToggle />
             <ThemeToggle />
           </div>
@@ -577,72 +610,42 @@ export default function PersonalDashboardPage() {
       </header>
 
       <div className="relative z-10 flex min-h-[calc(100vh-80px)]">
-        {/* Sidebar - Simplified */}
+        {/* Sidebar */}
         <aside className={cn(
-          "fixed inset-y-20 left-0 z-30 w-56 bg-[#0c1220] border-r border-white/6 transition-transform duration-300 lg:sticky lg:top-20 lg:translate-x-0 lg:h-[calc(100vh-80px)]",
+          "fixed inset-y-20 left-0 z-30 w-64 bg-[#0c1220]/90 backdrop-blur-xl transition-transform duration-300 lg:sticky lg:top-20 lg:translate-x-0 lg:h-[calc(100vh-80px)]",
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}>
-          {/* Nav - Clean and simple */}
-          <nav className="flex flex-col gap-0.5 p-3 pt-4">
-            {sidebarItems.map((item) => {
-              const isActive = activeSection === item.id || (item.subItems && item.subItems.some(sub => sub.id === activeSection));
-              const hasSubItems = item.subItems && item.subItems.length > 0;
-              
-              return (
-                <div key={item.id}>
-                  <button 
-                    onClick={() => { 
-                      if (hasSubItems) {
-                        // Toggle submenu or go to first subitem
-                        if (!isActive) setActiveSection(item.subItems![0].id);
-                      } else {
-                        setActiveSection(item.id); 
-                        setSidebarOpen(false);
-                      }
-                    }}
-                    className={cn(
-                      "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
-                      isActive ? "bg-[#f0b400]/10 text-[#f0b400]" : "text-white/60 hover:bg-white/5 hover:text-white"
-                    )}
-                  >
-                    {item.icon}
-                    <span className="flex-1 text-left">{item.label}</span>
-                    {hasSubItems && (
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={cn("transition-transform", isActive && "rotate-180")}><polyline points="6 9 12 15 18 9"/></svg>
-                    )}
-                  </button>
-                  
-                  {/* Sub-items */}
-                  {hasSubItems && isActive && (
-                    <div className="ml-8 mt-1 space-y-0.5">
-                      {item.subItems!.map(sub => (
-                        <button
-                          key={sub.id}
-                          onClick={() => { setActiveSection(sub.id); setSidebarOpen(false); }}
-                          className={cn(
-                            "flex w-full items-center rounded-lg px-3 py-2 text-xs font-medium transition-colors",
-                            activeSection === sub.id ? "text-[#f0b400]" : "text-white/50 hover:text-white/80"
-                          )}
-                        >
-                          {sub.label}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+          {/* User card */}
+          <div className="border-b border-white/6 p-5">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-full bg-[#f0b400]/10 flex items-center justify-center text-[#f0b400]">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-white">{t("dashPage.personalAccount")}</p>
+                <p className="text-xs font-mono text-white/60">{walletAddress ? `${walletAddress.slice(0, 6)}…${walletAddress.slice(-4)}` : "G...AL01"}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Nav */}
+          <nav className="flex flex-col gap-1 p-3">
+            {sidebarItems.map((item) => (
+              <button key={item.id} onClick={() => { setActiveSection(item.id); setSidebarOpen(false); if (item.id === "create") resetWizard() }}
+                className={cn("flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200",
+                  activeSection === item.id ? "bg-[#f0b400]/10 text-[#f0b400]" : "text-white/70 hover:bg-white/5 hover:text-white"
+                )}>
+                {item.icon}{item.id === "bounty" ? "Thalos Bounty" : t(`dashPage.${item.id === "create" ? "newAgreement" : item.id}`)}
+              </button>
+            ))}
           </nav>
 
-          {/* Bottom section - Support */}
-          <div className="absolute bottom-0 left-0 right-0 border-t border-white/6 p-3">
-            <button 
-              onClick={() => window.open("https://thalos.app/support", "_blank")}
-              className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-white/50 hover:bg-white/5 hover:text-white transition-colors"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><circle cx="12" cy="17" r=".5"/></svg>
-              Help & Support
-            </button>
+          {/* Balance card */}
+          <div className="mt-auto border-t border-white/6 p-4">
+            <div className="rounded-xl bg-[#f0b400]/5 border border-[#f0b400]/10 p-4">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-[#f0b400]/60">{t("dashPage.totalBalance")}</p>
+              <p className="mt-1 text-xl font-bold text-[#f0b400]">15,650.50 <span className="text-xs font-normal text-white/40">USDC</span></p>
+            </div>
           </div>
         </aside>
 
@@ -666,29 +669,17 @@ export default function PersonalDashboardPage() {
           
           {/* ══════ HOME DASHBOARD - Simplified Layout ══════ */}
           {activeSection === "home" && (
-            <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 space-y-5 mt-6">
-              {/* Compact Balance Row */}
-              <div className="flex items-center justify-between rounded-xl border border-white/10 bg-[#0c1220] p-4">
-                <div className="flex items-center gap-6">
-                  <div>
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">Balance</p>
-                    <p className="text-xl font-bold text-white">15,650.50 <span className="text-sm text-white/40">USDC</span></p>
-                  </div>
-                  <div className="h-8 w-px bg-white/10" />
-                  <div>
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">In Escrow</p>
-                    <p className="text-lg font-semibold text-[#f0b400]">{agreements.reduce((sum, a) => sum + parseFloat(a.amount.replace(/,/g, "") || "0"), 0).toLocaleString()}</p>
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <button onClick={() => setActiveSection("ramps")} className="rounded-lg bg-[#f0b400] px-4 py-2 text-sm font-semibold text-[#0c1220] hover:bg-[#e5ab00] transition-colors">
-                    Deposit
-                  </button>
-                  <button onClick={() => setActiveSection("ramps")} className="rounded-lg border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10 transition-colors">
-                    Withdraw
-                  </button>
-                </div>
-              </div>
+            <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 space-y-6 mt-6">
+              {/* Balance Card */}
+              <BalanceCard
+                totalBalance="15,650.50"
+                lockedInEscrow={agreements.reduce((sum, a) => sum + parseFloat(a.amount.replace(/,/g, "") || "0"), 0).toLocaleString()}
+                availableBalance="12,450.00"
+                yieldEarned="32.50"
+                currency="USDC"
+                onDeposit={() => setActiveSection("ramps")}
+                onWithdraw={() => setActiveSection("ramps")}
+              />
 
               {/* Quick Actions - Simplified (4 main actions) */}
               <div className="grid grid-cols-4 gap-3">
@@ -730,41 +721,22 @@ export default function PersonalDashboardPage() {
                 </button>
               </div>
 
-              {/* Pending Agreements - Priority */}
-              <div className="rounded-xl border border-white/10 bg-[#0c1220] p-5">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm font-bold text-white">Pending Actions</h3>
-                  <button onClick={() => setActiveSection("agreements")} className="text-xs text-[#f0b400] hover:underline">View all</button>
-                </div>
-                {agreements.filter(a => a.status === "pending" || a.status === "funded").length === 0 ? (
-                  <p className="text-sm text-white/50 text-center py-6">No pending actions</p>
-                ) : (
-                  <div className="space-y-2">
-                    {agreements
-                      .filter(a => a.status === "pending" || a.status === "funded")
-                      .slice(0, 4)
-                      .map(a => (
-                        <button
-                          key={a.id}
-                          onClick={() => { setViewingAgreement(a.id); setActiveSection("agreements"); }}
-                          className="flex w-full items-center justify-between rounded-lg border border-white/6 bg-white/5 p-3 hover:bg-white/8 transition-colors"
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className={cn("h-2 w-2 rounded-full", a.status === "funded" ? "bg-[#f0b400]" : "bg-sky-400")} />
-                            <div className="text-left">
-                              <p className="text-sm font-medium text-white">{a.title}</p>
-                              <p className="text-xs text-white/50">{a.counterparty}</p>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-sm font-semibold text-white">{a.amount} {a.currency}</p>
-                            <p className="text-[10px] uppercase tracking-wider text-white/40">{a.status === "funded" ? "Awaiting Approval" : "Awaiting Funding"}</p>
-                          </div>
-                        </button>
-                      ))}
-                  </div>
-                )}
-              </div>
+              {/* Pending Agreements */}
+              <PendingAgreements
+                agreements={agreements
+                  .filter(a => a.status === "pending" || a.status === "funded" || a.milestones.some(m => m.status === "pending"))
+                  .slice(0, 5)
+                  .map(a => ({
+                    id: a.id,
+                    title: a.title,
+                    counterparty: a.counterparty,
+                    amount: a.amount,
+                    status: a.status === "funded" ? "awaiting_approval" as const : "awaiting_funding" as const,
+                    type: a.type,
+                  }))}
+                onAgreementClick={(id) => { setViewingAgreement(id); setActiveSection("agreements") }}
+                onViewAll={() => setActiveSection("agreements")}
+              />
             </div>
           )}
           
@@ -780,51 +752,22 @@ export default function PersonalDashboardPage() {
             </div>
           )}
           
-          {/* ══════ MORE SERVICES (Cards, Pay Services) ══════ */}
-          {activeSection === "moreServices" && (
-            <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 mt-6 space-y-6">
-              <div className="flex items-center gap-3 mb-4">
-                <h2 className="text-lg font-bold text-white">Additional Services</h2>
-                <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white/50">Coming Soon</span>
-              </div>
-              
-              <div className="grid gap-4 md:grid-cols-2">
-                {/* Cards */}
-                <div className="rounded-xl border border-white/10 bg-[#0c1220] p-5">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="rounded-lg bg-rose-400/10 p-2.5">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-rose-400"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-                    </div>
-                    <h3 className="font-semibold text-white">Cards</h3>
-                  </div>
-                  <p className="text-sm text-white/50 mb-4">Virtual and physical cards to spend your balance anywhere.</p>
-                  <p className="text-xs text-white/30">Visa, Mastercard, Apple Pay, Google Pay</p>
-                </div>
-
-                {/* Pay Services */}
-                <div className="rounded-xl border border-white/10 bg-[#0c1220] p-5">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="rounded-lg bg-teal-400/10 p-2.5">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-teal-400"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
-                    </div>
-                    <h3 className="font-semibold text-white">Pay Services</h3>
-                  </div>
-                  <p className="text-sm text-white/50 mb-4">Pay bills and services directly with your balance.</p>
-                  <p className="text-xs text-white/30">Utilities, mobile, streaming, and more</p>
-                </div>
-
-                {/* Generate Yield */}
-                <div className="rounded-xl border border-white/10 bg-[#0c1220] p-5">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="rounded-lg bg-emerald-400/10 p-2.5">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-emerald-400"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
-                    </div>
-                    <h3 className="font-semibold text-white">Generate Yield</h3>
-                  </div>
-                  <p className="text-sm text-white/50 mb-4">Earn passive income on your idle funds via DeFindex.</p>
-                  <button onClick={() => setActiveSection("yield")} className="text-xs text-[#f0b400] hover:underline">Explore Vaults</button>
-                </div>
-              </div>
+          {/* ══════ CARDS ══════ */}
+          {activeSection === "cards" && (
+            <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 mt-6">
+              <CardsSection
+                onRequestCard={(providerId) => { console.log("[v0] Request card", providerId) }}
+              />
+            </div>
+          )}
+          
+          {/* ══════ PAY SERVICES ══════ */}
+          {activeSection === "services" && (
+            <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 mt-6">
+              <PayServicesSection
+                userCountry="Argentina"
+                onPayService={(serviceId) => { console.log("[v0] Pay service", serviceId) }}
+              />
             </div>
           )}
 
