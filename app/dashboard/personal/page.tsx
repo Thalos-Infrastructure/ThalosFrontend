@@ -692,23 +692,42 @@ export default function PersonalDashboardPage() {
 
               {/* Quick Actions - Simplified (4 main actions) */}
               <div className="grid grid-cols-4 gap-3">
-                {[
-                  { id: "create", label: "New Agreement", icon: "plus", color: "text-[#f0b400]", bg: "bg-[#f0b400]/10" },
-                  { id: "agreements", label: "View Agreements", icon: "file", color: "text-sky-400", bg: "bg-sky-400/10" },
-                  { id: "bounty", label: "Bounty", icon: "star", color: "text-amber-400", bg: "bg-amber-400/10" },
-                  { id: "ramps", label: "Funds", icon: "wallet", color: "text-emerald-400", bg: "bg-emerald-400/10" },
-                ].map((action) => (
-                  <button
-                    key={action.id}
-                    onClick={() => { if (action.id === "create") { setActiveSection("create"); resetWizard(); } else setActiveSection(action.id); }}
-                    className="flex flex-col items-center gap-2 rounded-xl border border-white/6 bg-[#0c1220] p-4 hover:border-white/15 hover:bg-[#0c1220]/80 transition-all"
-                  >
-                    <div className={cn("rounded-lg p-2.5", action.bg)}>
-                      {renderIcon(action.icon, action.color)}
-                    </div>
-                    <span className="text-xs font-medium text-white/60">{action.label}</span>
-                  </button>
-                ))}
+                <button
+                  onClick={() => { setActiveSection("create"); resetWizard(); }}
+                  className="flex flex-col items-center gap-2 rounded-xl border border-white/6 bg-[#0c1220] p-4 hover:border-white/15 hover:bg-[#0c1220]/80 transition-all"
+                >
+                  <div className="rounded-lg p-2.5 bg-[#f0b400]/10">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-[#f0b400]"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+                  </div>
+                  <span className="text-xs font-medium text-white/60">New Agreement</span>
+                </button>
+                <button
+                  onClick={() => setActiveSection("agreements")}
+                  className="flex flex-col items-center gap-2 rounded-xl border border-white/6 bg-[#0c1220] p-4 hover:border-white/15 hover:bg-[#0c1220]/80 transition-all"
+                >
+                  <div className="rounded-lg p-2.5 bg-sky-400/10">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-sky-400"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                  </div>
+                  <span className="text-xs font-medium text-white/60">Agreements</span>
+                </button>
+                <button
+                  onClick={() => setActiveSection("bounty")}
+                  className="flex flex-col items-center gap-2 rounded-xl border border-white/6 bg-[#0c1220] p-4 hover:border-white/15 hover:bg-[#0c1220]/80 transition-all"
+                >
+                  <div className="rounded-lg p-2.5 bg-amber-400/10">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-amber-400"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                  </div>
+                  <span className="text-xs font-medium text-white/60">Bounty</span>
+                </button>
+                <button
+                  onClick={() => setActiveSection("ramps")}
+                  className="flex flex-col items-center gap-2 rounded-xl border border-white/6 bg-[#0c1220] p-4 hover:border-white/15 hover:bg-[#0c1220]/80 transition-all"
+                >
+                  <div className="rounded-lg p-2.5 bg-emerald-400/10">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-emerald-400"><path d="M12 2v20M17 7l-5-5-5 5M7 17l5 5 5-5"/></svg>
+                  </div>
+                  <span className="text-xs font-medium text-white/60">Funds</span>
+                </button>
               </div>
 
               {/* Pending Agreements - Priority */}
