@@ -22,6 +22,8 @@ import {
 } from "@/components/dashboard"
 import { getProfileByWallet, type Profile } from "@/lib/actions/profile"
 import { AgreementsView } from "@/components/agreements/agreements-view"
+import { ContactSelector } from "@/components/agreements/contact-selector"
+import { AgreementChat } from "@/components/agreements/agreement-chat"
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area,
 } from "recharts"
@@ -96,13 +98,13 @@ const connectedWallets = [
 const wizardStepKeys = ["wizard.escrowType", "wizard.useCase", "wizard.agreementInfo", "wizard.paymentWallets", "wizard.reviewSend"]
 
 interface Milestone { description: string; amount: string; status: "pending" | "approved" | "released" }
-interface Agreement { id: string; title: string; status: string; type: "Single Release" | "Multi Release"; counterparty: string; amount: string; date: string; releaseStrategy?: "per-milestone" | "all-at-once" | "upon-completion"; milestones: Milestone[]; receiver: string }
+interface Agreement { id: string; title: string; status: string; type: "Single Release" | "Multi Release"; counterparty: string; amount: string; currency: string; date: string; releaseStrategy?: "per-milestone" | "all-at-once" | "upon-completion"; milestones: Milestone[]; receiver: string; role?: "buyer" | "seller" }
 
 const initialAgreements: Agreement[] = SHOW_MOCKED_AGREEMENTS ? [
-  { id: "AGR-001", title: "Website Redesign", status: "funded", type: "Single Release", counterparty: "G...FRE3", amount: "2,500", date: "2026-01-15", milestones: [{ description: "Full delivery", amount: "2,500", status: "pending" }], receiver: "GBXGQJWVLWOYHFLVTKWV5FGHA3PERSONAL02" },
-  { id: "AGR-002", title: "Moving Service", status: "in_progress", type: "Multi Release", counterparty: "G...MOV7", amount: "1,800", date: "2026-01-20", releaseStrategy: "per-milestone", milestones: [{ description: "Packing & Loading", amount: "600", status: "released" }, { description: "Transport", amount: "600", status: "approved" }, { description: "Unloading & Setup", amount: "600", status: "pending" }], receiver: "GBXGQJWVLWOYHFLVTKWV5FGHA3MOV7" },
-  { id: "AGR-003", title: "Online Course Bundle", status: "released", type: "Multi Release", counterparty: "G...EDU4", amount: "1,200", date: "2025-12-10", releaseStrategy: "upon-completion", milestones: [{ description: "Module 1 - Basics", amount: "400", status: "released" }, { description: "Module 2 - Advanced", amount: "400", status: "released" }, { description: "Final Assessment", amount: "400", status: "released" }], receiver: "GBXGQJWVLWOYHFLVTKWV5FGHA3EDU4" },
-  { id: "AGR-004", title: "Coaching Sessions", status: "in_progress", type: "Multi Release", counterparty: "G...CCH1", amount: "900", date: "2026-02-01", releaseStrategy: "all-at-once", milestones: [{ description: "Session 1", amount: "300", status: "approved" }, { description: "Session 2", amount: "300", status: "approved" }, { description: "Session 3", amount: "300", status: "pending" }], receiver: "GBXGQJWVLWOYHFLVTKWV5FGHA3CCH1" },
+  { id: "AGR-001", title: "Website Redesign", status: "funded", type: "Single Release", counterparty: "G...FRE3", amount: "2,500", currency: "USDC", date: "2026-01-15", milestones: [{ description: "Full delivery", amount: "2,500", status: "pending" }], receiver: "GBXGQJWVLWOYHFLVTKWV5FGHA3PERSONAL02", role: "buyer" },
+  { id: "AGR-002", title: "Moving Service", status: "in_progress", type: "Multi Release", counterparty: "G...MOV7", amount: "1,800", currency: "USDC", date: "2026-01-20", releaseStrategy: "per-milestone", milestones: [{ description: "Packing & Loading", amount: "600", status: "released" }, { description: "Transport", amount: "600", status: "approved" }, { description: "Unloading & Setup", amount: "600", status: "pending" }], receiver: "GBXGQJWVLWOYHFLVTKWV5FGHA3MOV7", role: "buyer" },
+  { id: "AGR-003", title: "Online Course Bundle", status: "released", type: "Multi Release", counterparty: "G...EDU4", amount: "1,200", currency: "USDC", date: "2025-12-10", releaseStrategy: "upon-completion", milestones: [{ description: "Module 1 - Basics", amount: "400", status: "released" }, { description: "Module 2 - Advanced", amount: "400", status: "released" }, { description: "Final Assessment", amount: "400", status: "released" }], receiver: "GBXGQJWVLWOYHFLVTKWV5FGHA3EDU4", role: "seller" },
+  { id: "AGR-004", title: "Coaching Sessions", status: "in_progress", type: "Multi Release", counterparty: "G...CCH1", amount: "900", currency: "USDC", date: "2026-02-01", releaseStrategy: "all-at-once", milestones: [{ description: "Session 1", amount: "300", status: "approved" }, { description: "Session 2", amount: "300", status: "approved" }, { description: "Session 3", amount: "300", status: "pending" }], receiver: "GBXGQJWVLWOYHFLVTKWV5FGHA3CCH1", role: "seller" },
 ] : [];
 
 // Mix between real escrows fetched from the backend and some hardcoded ones for demo purposes
@@ -142,6 +144,7 @@ function mapEscrowToAgreement(escrow) {
     type: isMulti ? "Multi Release" : "Single Release",
     counterparty: escrow.roles.serviceProvider?.slice(0, 8) + "...",
     amount,
+    currency: "USDC",
     date: new Date(escrow.createdAt?._seconds * 1000).toISOString().split("T")[0],
     milestones: milestones.map(m => ({
       approved: m.approved,
@@ -156,6 +159,7 @@ function mapEscrowToAgreement(escrow) {
     balance: escrow.balance,
     serviceProvider: escrow.roles.serviceProvider,
     released: escrow.flags?.released ?? false,
+    role: "buyer" as const, // Default to buyer, can be determined by comparing wallet addresses
   };
 }
 
@@ -427,6 +431,7 @@ export default function PersonalDashboardPage() {
     fetchApproverEscrows();
   }, [walletAddress]);
   const [viewingAgreement, setViewingAgreement] = useState<string | null>(null)
+  const [showAgreementChat, setShowAgreementChat] = useState<string | null>(null)
 
   const approveMilestone = (agrId: string, msIdx: number) => {
     setAgreements(prev => prev.map(a => a.id === agrId ? { ...a, milestones: a.milestones.map((m, i) => i === msIdx && m.status === "pending" ? { ...m, status: "approved" as const } : m) } : a))
@@ -534,17 +539,22 @@ export default function PersonalDashboardPage() {
 
   return (
     <div className="relative min-h-screen text-foreground">
-{/* Professional Thalos logo collage background */}
-  <div className="fixed inset-0 z-0 bg-[#080a0f]">
-    <div className="absolute inset-0 grid grid-cols-6 grid-rows-4 gap-8 p-8 opacity-[0.04]">
-      {[...Array(24)].map((_, i) => (
-        <div key={i} className="flex items-center justify-center" style={{ transform: `rotate(${(i % 4) * 15 - 22.5}deg)` }}>
-          <Image src="/thalos-vertical.png" alt="" width={80} height={80} className="object-contain" style={{ filter: 'grayscale(100%) brightness(2)' }} />
-        </div>
-      ))}
-    </div>
-    <div className="absolute inset-0 bg-gradient-to-b from-[#080a0f] via-transparent to-[#080a0f]" />
-    <div className="absolute inset-0 bg-gradient-to-r from-[#080a0f] via-transparent to-[#080a0f]" />
+{/* Professional gradient background with subtle pattern */}
+  <div className="fixed inset-0 z-0 bg-[#060810]">
+    {/* Subtle gradient orbs */}
+    <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-[#f0b400]/5 rounded-full blur-[150px]" />
+    <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-[#0ea5e9]/5 rounded-full blur-[150px]" />
+    
+    {/* Subtle grid pattern */}
+    <div className="absolute inset-0 opacity-[0.015]" style={{
+      backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
+      backgroundSize: '60px 60px'
+    }} />
+    
+    {/* Noise overlay for texture */}
+    <div className="absolute inset-0 opacity-[0.02]" style={{
+      backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`
+    }} />
   </div>
 
       {/* Header */}
@@ -603,47 +613,106 @@ export default function PersonalDashboardPage() {
       </header>
 
       <div className="relative z-10 flex min-h-[calc(100vh-80px)]">
-        {/* Sidebar - Clean & Minimal */}
+        {/* Modern Sidebar */}
         <aside className={cn(
-          "fixed inset-y-20 left-0 z-30 w-56 bg-[#0c1220] border-r border-white/6 transition-transform duration-300 lg:sticky lg:top-20 lg:translate-x-0 lg:h-[calc(100vh-80px)]",
+          "fixed inset-y-20 left-0 z-30 w-64 transition-transform duration-300 lg:sticky lg:top-20 lg:translate-x-0 lg:h-[calc(100vh-80px)]",
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}>
-          {/* Main Nav */}
-          <nav className="flex flex-col gap-0.5 p-3 pt-4">
-            {sidebarItems.map((item) => (
-              <button key={item.id} onClick={() => { setActiveSection(item.id); setSidebarOpen(false); if (item.id === "create") resetWizard() }}
-                className={cn("flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
-                  activeSection === item.id ? "bg-[#f0b400]/10 text-[#f0b400]" : "text-white/60 hover:bg-white/5 hover:text-white"
-                )}>
-                {item.icon}
-                <span>{item.label}</span>
-              </button>
-            ))}
-            
-            {/* More Section Divider */}
-            <div className="my-3 h-px bg-white/6" />
-            <p className="px-3 mb-1 text-[10px] font-bold uppercase tracking-widest text-white/30">More</p>
-            
-            {moreSidebarItems.map((item) => (
-              <button key={item.id} onClick={() => { setActiveSection(item.id); setSidebarOpen(false); }}
-                className={cn("flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
-                  activeSection === item.id ? "bg-[#f0b400]/10 text-[#f0b400]" : "text-white/60 hover:bg-white/5 hover:text-white"
-                )}>
-                {item.icon}
-                <span>{item.label}</span>
-              </button>
-            ))}
-          </nav>
+          <div className="h-full flex flex-col bg-[#0a0d14]/95 backdrop-blur-xl border-r border-white/[0.06]">
+            {/* User Profile Section */}
+            <div className="p-4 border-b border-white/[0.06]">
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-[#f0b400]/10 to-transparent border border-[#f0b400]/10">
+                <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[#f0b400] to-[#f0b400]/60 flex items-center justify-center text-[#0c1220] font-bold text-sm">
+                  {walletAddress ? walletAddress.slice(0, 2).toUpperCase() : "TH"}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-white truncate">Personal Account</p>
+                  <p className="text-[11px] font-mono text-[#f0b400]/80 truncate">
+                    {walletAddress ? `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}` : "Connect Wallet"}
+                  </p>
+                </div>
+              </div>
+            </div>
 
-          {/* Bottom - Help */}
-          <div className="absolute bottom-0 left-0 right-0 border-t border-white/6 p-3">
-            <button 
-              onClick={() => window.open("https://thalos.app/support", "_blank")}
-              className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-white/50 hover:bg-white/5 hover:text-white transition-colors"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><circle cx="12" cy="17" r=".5"/></svg>
-              Help & Support
-            </button>
+            {/* Main Navigation */}
+            <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
+              {sidebarItems.map((item) => {
+                const isActive = activeSection === item.id
+                return (
+                  <button 
+                    key={item.id} 
+                    onClick={() => { setActiveSection(item.id); setSidebarOpen(false); if (item.id === "create") resetWizard() }}
+                    className={cn(
+                      "group flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-all duration-200 relative overflow-hidden",
+                      isActive 
+                        ? "bg-[#f0b400] text-[#0c1220] shadow-[0_4px_20px_rgba(240,180,0,0.25)]" 
+                        : "text-white/60 hover:bg-white/[0.04] hover:text-white"
+                    )}
+                  >
+                    {isActive && (
+                      <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent" />
+                    )}
+                    <span className={cn("relative z-10 transition-transform duration-200", isActive && "scale-110")}>
+                      {item.icon}
+                    </span>
+                    <span className="relative z-10">{item.label}</span>
+                    {isActive && (
+                      <div className="ml-auto relative z-10">
+                        <div className="h-2 w-2 rounded-full bg-[#0c1220]/40" />
+                      </div>
+                    )}
+                  </button>
+                )
+              })}
+              
+              {/* Divider */}
+              <div className="py-3">
+                <div className="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+              </div>
+              
+              {/* More Section */}
+              <p className="px-3 mb-2 text-[10px] font-bold uppercase tracking-widest text-white/30">More</p>
+              
+              {moreSidebarItems.map((item) => {
+                const isActive = activeSection === item.id
+                return (
+                  <button 
+                    key={item.id} 
+                    onClick={() => { setActiveSection(item.id); setSidebarOpen(false); }}
+                    className={cn(
+                      "group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
+                      isActive 
+                        ? "bg-white/10 text-white" 
+                        : "text-white/40 hover:bg-white/[0.04] hover:text-white/70"
+                    )}
+                  >
+                    {item.icon}
+                    <span>{item.label}</span>
+                  </button>
+                )
+              })}
+            </nav>
+
+            {/* Bottom Section */}
+            <div className="p-3 border-t border-white/[0.06] space-y-2">
+              {/* Quick Stats */}
+              <div className="p-3 rounded-xl bg-gradient-to-br from-white/[0.04] to-transparent border border-white/[0.06]">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">Balance</span>
+                  <span className="text-xs text-emerald-400">+2.4%</span>
+                </div>
+                <p className="text-lg font-bold text-white">$15,650<span className="text-sm font-normal text-white/40">.50</span></p>
+              </div>
+              
+              {/* Help Button */}
+              <button 
+                onClick={() => window.open("https://thalos.app/support", "_blank")}
+                className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-white/50 hover:bg-white/[0.04] hover:text-white transition-colors"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><circle cx="12" cy="17" r=".5"/></svg>
+                Help & Support
+              </button>
+            </div>
           </div>
         </aside>
 
@@ -1012,10 +1081,19 @@ export default function PersonalDashboardPage() {
 
             return (
               <div className="mx-auto max-w-4xl">
-                <button onClick={() => setViewingAgreement(null)} className="mb-6 flex items-center gap-2 text-sm text-white/40 hover:text-white transition-colors">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"/></svg>
-                  Back to Agreements
-                </button>
+                <div className="mb-6 flex items-center justify-between">
+                  <button onClick={() => setViewingAgreement(null)} className="flex items-center gap-2 text-sm text-white/40 hover:text-white transition-colors">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"/></svg>
+                    Back to Agreements
+                  </button>
+                  <button
+                    onClick={() => setShowAgreementChat(viewingAgreement)}
+                    className="flex items-center gap-2 rounded-lg bg-[#f0b400]/10 px-4 py-2 text-sm font-medium text-[#f0b400] hover:bg-[#f0b400]/20 transition-colors"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+                    Chat
+                  </button>
+                </div>
 
                 {/* Header */}
                 <div className="mb-6 rounded-2xl border border-white/10 bg-[#0c1220] p-6 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)]">
@@ -1261,7 +1339,17 @@ export default function PersonalDashboardPage() {
                     <div className="flex flex-col gap-6">
                       <div><h3 className="text-lg font-semibold text-white sm:text-xl">{t("wizard.paymentDetails")}</h3><p className="mt-1 text-sm text-white/35">{t("wizard.selectWalletInfo")}</p></div>
                       <FormSelect label={t("wizard.yourWallet")} value={selectedWallet} onChange={setSelectedWallet} options={connectedWallets.map(w => ({ value: w.value, label: `${t(w.labelKey)} (${w.short})` }))} info={t("wizard.connectedWallet")} required />
-                      <FormInput label={t("wizard.releaseSignerWallet")} value={signerWallet} onChange={setSignerWallet} placeholder="G...SIGNER" info={t("wizard.whoReleases")} required />
+                      
+                      {/* Counterparty Selection with Contact Selector */}
+                      <div className="flex flex-col gap-2">
+                        <label className="text-xs font-medium uppercase tracking-wider text-white/50">{t("wizard.releaseSignerWallet")} <span className="text-rose-400">*</span></label>
+                        <ContactSelector
+                          value={signerWallet}
+                          onChange={(wallet, name) => setSignerWallet(wallet)}
+                          placeholder="Select contact or enter wallet address..."
+                        />
+                        <p className="text-[11px] text-white/30">{t("wizard.whoReleases")}</p>
+                      </div>
                       {escrowType === "single" ? (
                         <FormInput label={t("wizard.amount")} value={milestones[0]?.amount || ""} onChange={(v) => updateMilestone(0, "amount", v)} placeholder="1000" type="number" info="USDC" required />
                       ) : (
@@ -1345,17 +1433,19 @@ export default function PersonalDashboardPage() {
                               setError,
                               setSubmitted,
                               onSuccess: () => {
-                                const newAgr: Agreement = {
-                                  id: `AGR-${Date.now().toString(36).toUpperCase()}`,
-                                  title: payload.title,
-                                  status: "funded",
-                                  type: payload.serviceType === "single-release" ? "Single Release" : "Multi Release",
-                                  counterparty: payload.roles.approver?.slice(0, 8) + "...",
-                                  amount: totalAmount.toLocaleString(),
-                                  date: new Date().toISOString().split("T")[0],
-                                  milestones: payload.milestones.map(m => ({ description: m.description, amount: m.amount, status: "pending" as const })),
-                                  receiver: payload.roles.receiver || walletAddress || "",
-                                }
+const newAgr: Agreement = {
+  id: `AGR-${Date.now().toString(36).toUpperCase()}`,
+  title: payload.title,
+  status: "funded",
+  type: payload.serviceType === "single-release" ? "Single Release" : "Multi Release",
+  counterparty: payload.roles.approver?.slice(0, 8) + "...",
+  amount: totalAmount.toLocaleString(),
+  currency: "USDC",
+  date: new Date().toISOString().split("T")[0],
+  milestones: payload.milestones.map(m => ({ description: m.description, amount: m.amount, status: "pending" as const })),
+  receiver: payload.roles.receiver || walletAddress || "",
+  role: "buyer",
+  }
                                 setAgreements(prev => [newAgr, ...prev])
                               },
                             });
@@ -1388,6 +1478,32 @@ export default function PersonalDashboardPage() {
 
       {/* Bottom padding for mobile nav */}
       <div className="h-20 lg:hidden" />
+
+      {/* Agreement Chat Panel */}
+      {showAgreementChat && (
+        <div className="fixed inset-y-0 right-0 z-50 w-full max-w-md bg-[#0c1220] border-l border-white/10 shadow-[-8px_0_32px_rgba(0,0,0,0.5)]">
+          <div className="flex h-full flex-col">
+            <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
+              <h3 className="text-sm font-semibold text-white">Agreement Chat</h3>
+              <button
+                onClick={() => setShowAgreementChat(null)}
+                className="p-1.5 rounded-lg text-white/40 hover:bg-white/10 hover:text-white transition-colors"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+              </button>
+            </div>
+            <div className="flex-1 overflow-hidden">
+              <AgreementChat
+                agreementId={showAgreementChat}
+                currentUserWallet={walletAddress || ""}
+                counterpartyWallet={agreements.find(a => a.id === showAgreementChat)?.receiver || ""}
+                defaultOpen={true}
+                embedded={true}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -107,17 +107,18 @@ export function ContactSelector({ value, onChange, placeholder = "Enter wallet a
       {/* Dropdown */}
       {isOpen && (
         <div className="absolute z-50 mt-2 w-full rounded-xl border border-white/10 bg-[#0c1220] shadow-[0_16px_48px_rgba(0,0,0,0.6)]">
-          {/* Search */}
+          {/* Search - by ID, wallet, name */}
           <div className="p-3 border-b border-white/6">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
               <Input
                 value={searchQuery}
                 onChange={(e) => handleSearch(e.target.value)}
-                placeholder="Search Thalos users..."
+                placeholder="Search by name, wallet, or ID..."
                 className="pl-9 bg-white/5 border-white/10 text-white placeholder:text-white/40 h-9 text-sm"
               />
             </div>
+            <p className="mt-2 text-[10px] text-white/30">Search contacts or Thalos users by name, wallet address, or user ID</p>
           </div>
 
           {/* Search Results */}

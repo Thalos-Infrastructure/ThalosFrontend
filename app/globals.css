@@ -301,9 +301,75 @@
 .light .bg-emerald-500\/10 { background-color: rgba(16, 185, 129, 0.1) !important; }
 .light .bg-amber-500\/10 { background-color: rgba(245, 158, 11, 0.1) !important; }
 
-/* ===== DASHBOARD: preserve dark mode look ===== */
-.light aside,
-.light aside * { color: inherit !important; }
+/* ===== DASHBOARD LIGHT MODE: Professional readable styling ===== */
+/* Sidebar stays dark in light mode for contrast */
+.light aside {
+  background: linear-gradient(180deg, #0f1318 0%, #0a0d12 100%) !important;
+}
+.light aside .text-white { color: #ffffff !important; }
+.light aside .text-white\/60,
+.light aside .text-white\/50,
+.light aside .text-white\/40,
+.light aside .text-white\/30 { color: rgba(255,255,255,0.6) !important; }
+.light aside .border-white\/6,
+.light aside .border-white\/\[0\.06\] { border-color: rgba(255,255,255,0.08) !important; }
+
+/* Main content area - light background with dark text */
+.light main .text-white:not(aside *):not([class*="bg-[#0c1220]"] *):not([class*="bg-\[#0"]*) {
+  color: #1e293b !important;
+}
+.light main .text-white\/60:not(aside *),
+.light main .text-white\/50:not(aside *),
+.light main .text-white\/40:not(aside *) {
+  color: #64748b !important;
+}
+
+/* Cards with dark backgrounds keep their styling */
+.light .bg-\[\#0c1220\],
+.light .bg-\[\#0a0d14\] {
+  background-color: #0c1220 !important;
+}
+.light .bg-\[\#0c1220\] .text-white,
+.light .bg-\[\#0a0d14\] .text-white,
+.light .bg-\[\#0c1220\] .text-white\/60,
+.light .bg-\[\#0c1220\] .text-white\/50,
+.light .bg-\[\#0c1220\] .text-white\/40 {
+  color: inherit !important;
+}
+
+/* Header stays dark */
+.light header.sticky {
+  background: rgba(12, 18, 32, 0.95) !important;
+}
+.light header .text-white { color: #ffffff !important; }
+.light header .text-white\/70 { color: rgba(255,255,255,0.7) !important; }
+
+/* Dashboard background - subtle light gradient */
+.light .fixed.inset-0.z-0 {
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #f1f5f9 100%) !important;
+}
+.light .fixed.inset-0.z-0 > div {
+  opacity: 0.3 !important;
+}
+
+/* Buttons and interactive elements */
+.light main button.bg-\[\#f0b400\] { 
+  background-color: #f0b400 !important;
+  color: #0c1220 !important;
+}
+.light main .border-white\/6,
+.light main .border-white\/10,
+.light main .border-white\/15 {
+  border-color: rgba(0,0,0,0.08) !important;
+}
+
+/* Input fields in light mode */
+.light main input.bg-white\/5 {
+  background-color: rgba(0,0,0,0.04) !important;
+  border-color: rgba(0,0,0,0.1) !important;
+  color: #1e293b !important;
+}
+.light main input::placeholder { color: #94a3b8 !important; }
 
 /* Global smooth transitions */
 * {
