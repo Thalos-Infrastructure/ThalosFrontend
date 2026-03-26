@@ -664,7 +664,7 @@ export default function PersonalDashboardPage() {
             />
           )}
           
-          {/* ══════ HOME DASHBOARD ══════ */}
+          {/* ══════ HOME DASHBOARD - Simplified Layout ══════ */}
           {activeSection === "home" && (
             <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 space-y-5 mt-6">
               {/* Compact Balance Row */}
