@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react"
 import { cn } from "@/lib/utils"
-import { Search, FileText, Clock, CheckCircle, AlertTriangle, ShoppingCart, Store, MessageCircle } from "lucide-react"
+import { Search, FileText, Clock, CheckCircle, AlertTriangle, ShoppingCart, Store, MessageCircle, ChevronLeft, ChevronRight, Play } from "lucide-react"
 import { Input } from "@/components/ui/input"
 
 interface Agreement {
@@ -32,11 +32,14 @@ type ViewMode = "buyer" | "seller"
 type TabType = "pending" | "active" | "completed"
 type PendingGroup = "approval" | "funding" | "review" | "dispute"
 
+const ITEMS_PER_PAGE = 10
+
 export function AgreementsView({ agreements, onAgreementClick, onOpenChat, currentUserWallet, className }: AgreementsViewProps) {
   const [viewMode, setViewMode] = useState<ViewMode>("buyer")
   const [activeTab, setActiveTab] = useState<TabType>("pending")
   const [searchQuery, setSearchQuery] = useState("")
   const [expandedGroups, setExpandedGroups] = useState<PendingGroup[]>(["approval", "funding", "review"])
+  const [currentPage, setCurrentPage] = useState(1)
 
   // Filter by view mode (buyer/seller)
   const filteredByRole = useMemo(() => {
@@ -133,17 +136,30 @@ export function AgreementsView({ agreements, onAgreementClick, onOpenChat, curre
   }
 
   const tabs = [
-    { id: "pending" as TabType, label: "Pending Your Action", count: categorized.pending.length, icon: Clock },
-    { id: "active" as TabType, label: "Active", count: categorized.active.length, icon: FileText },
-    { id: "completed" as TabType, label: "Completed", count: categorized.completed.length, icon: CheckCircle },
+    { id: "pending" as TabType, label: "Needs Action", description: "Waiting for you", count: categorized.pending.length, icon: Clock },
+    { id: "active" as TabType, label: "In Progress", description: "Work being done", count: categorized.active.length, icon: Play },
+    { id: "completed" as TabType, label: "Completed", description: "Finished", count: categorized.completed.length, icon: CheckCircle },
   ]
 
   const pendingGroupConfig = [
-    { id: "approval" as PendingGroup, label: "Waiting for your approval", icon: Clock, color: "text-amber-400", bg: "bg-amber-400/10" },
-    { id: "funding" as PendingGroup, label: "Waiting for funding", icon: AlertTriangle, color: "text-sky-400", bg: "bg-sky-400/10" },
-    { id: "review" as PendingGroup, label: "Waiting for your review", icon: FileText, color: "text-violet-400", bg: "bg-violet-400/10" },
-    { id: "dispute" as PendingGroup, label: "Disputes", icon: AlertTriangle, color: "text-rose-400", bg: "bg-rose-400/10" },
+    { id: "approval" as PendingGroup, label: "Ready for Release", description: "Approve to release funds", icon: CheckCircle, color: "text-amber-400", bg: "bg-amber-400/10" },
+    { id: "funding" as PendingGroup, label: "Awaiting Funding", description: "Deposit funds to start", icon: AlertTriangle, color: "text-sky-400", bg: "bg-sky-400/10" },
+    { id: "review" as PendingGroup, label: "Work Submitted", description: "Review completed work", icon: FileText, color: "text-violet-400", bg: "bg-violet-400/10" },
+    { id: "dispute" as PendingGroup, label: "In Dispute", description: "Requires resolution", icon: AlertTriangle, color: "text-rose-400", bg: "bg-rose-400/10" },
   ]
+
+  // Pagination
+  const totalPages = Math.ceil(filteredAgreements.length / ITEMS_PER_PAGE)
+  const paginatedAgreements = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE
+    return filteredAgreements.slice(start, start + ITEMS_PER_PAGE)
+  }, [filteredAgreements, currentPage])
+
+  // Reset page when changing tabs or search
+  const handleTabChange = (tab: TabType) => {
+    setActiveTab(tab)
+    setCurrentPage(1)
+  }
 
   return (
     <div className={cn("space-y-4", className)}>
@@ -193,51 +209,59 @@ export function AgreementsView({ agreements, onAgreementClick, onOpenChat, curre
         {tabs.map((tab) => (
           <button
             key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
+            onClick={() => handleTabChange(tab.id)}
             className={cn(
-              "flex-1 flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+              "flex-1 flex flex-col items-center justify-center gap-0.5 rounded-md px-3 py-2 transition-colors",
               activeTab === tab.id
                 ? "bg-[#f0b400]/10 text-[#f0b400]"
                 : "text-white/60 hover:text-white hover:bg-white/5"
             )}
           >
-            <tab.icon className="h-4 w-4" />
-            {tab.label}
-            {tab.count > 0 && (
-              <span className={cn(
-                "rounded-full px-1.5 py-0.5 text-[10px] font-bold",
-                activeTab === tab.id ? "bg-[#f0b400]/20" : "bg-white/10"
-              )}>
-                {tab.count}
-              </span>
-            )}
+            <div className="flex items-center gap-2">
+              <tab.icon className="h-4 w-4" />
+              <span className="text-sm font-medium">{tab.label}</span>
+              {tab.count > 0 && (
+                <span className={cn(
+                  "rounded-full px-1.5 py-0.5 text-[10px] font-bold",
+                  activeTab === tab.id ? "bg-[#f0b400]/20" : "bg-white/10"
+                )}>
+                  {tab.count}
+                </span>
+              )}
+            </div>
+            <span className="text-[10px] opacity-60">{tab.description}</span>
           </button>
         ))}
       </div>
 
       {/* Content */}
       {activeTab === "pending" ? (
-        /* Pending - Grouped View */
-        <div className="space-y-4">
+        /* Pending - Grouped View with Pagination per Group */
+        <div className="space-y-3">
           {pendingGroupConfig.map((group) => {
             const groupAgreements = pendingGroups[group.id]
             if (groupAgreements.length === 0) return null
             
             const isExpanded = expandedGroups.includes(group.id)
+            const displayedAgreements = isExpanded ? groupAgreements.slice(0, 5) : []
+            const hasMore = groupAgreements.length > 5
             
             return (
               <div key={group.id} className="rounded-xl border border-white/10 bg-[#0c1220] overflow-hidden">
-                {/* Group Header */}
+                {/* Group Header - Compact */}
                 <button
                   onClick={() => toggleGroup(group.id)}
                   className="flex w-full items-center justify-between px-4 py-3 hover:bg-white/5 transition-colors"
                 >
                   <div className="flex items-center gap-3">
-                    <div className={cn("rounded-lg p-2", group.bg)}>
+                    <div className={cn("rounded-lg p-1.5", group.bg)}>
                       <group.icon className={cn("h-4 w-4", group.color)} />
                     </div>
-                    <span className="text-sm font-medium text-white">{group.label}</span>
-                    <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-bold text-white/60">
+                    <div className="text-left">
+                      <span className="text-sm font-medium text-white">{group.label}</span>
+                      <p className="text-[10px] text-white/40">{group.description}</p>
+                    </div>
+                    <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-bold", group.bg, group.color)}>
                       {groupAgreements.length}
                     </span>
                   </div>
@@ -254,16 +278,28 @@ export function AgreementsView({ agreements, onAgreementClick, onOpenChat, curre
                   </svg>
                 </button>
 
-                {/* Group Content */}
+                {/* Group Content - Limited to 5 items */}
                 {isExpanded && (
-                  <div className="border-t border-white/6 divide-y divide-white/6">
-                    {groupAgreements.map((agreement) => (
-                      <AgreementCard
-                        key={agreement.id}
-                        agreement={agreement}
-                        onClick={() => onAgreementClick(agreement.id)}
-                      />
-                    ))}
+                  <div className="border-t border-white/6">
+                    <div className="divide-y divide-white/6">
+                      {displayedAgreements.map((agreement) => (
+                        <AgreementCard
+                          key={agreement.id}
+                          agreement={agreement}
+                          onClick={() => onAgreementClick(agreement.id)}
+                          onChat={onOpenChat ? () => onOpenChat(agreement.id) : undefined}
+                        />
+                      ))}
+                    </div>
+                    {/* Show more button */}
+                    {hasMore && (
+                      <button 
+                        onClick={() => {/* TODO: Navigate to filtered view */}}
+                        className="w-full py-2.5 text-xs font-medium text-[#f0b400] hover:bg-[#f0b400]/5 transition-colors border-t border-white/6"
+                      >
+                        View all {groupAgreements.length} agreements
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
@@ -275,21 +311,52 @@ export function AgreementsView({ agreements, onAgreementClick, onOpenChat, curre
           )}
         </div>
       ) : (
-        /* Active / Completed - List View */
-        <div className="rounded-xl border border-white/10 bg-[#0c1220] divide-y divide-white/6">
-          {filteredAgreements.length === 0 ? (
-            <EmptyState 
-              message={activeTab === "active" ? "No active agreements" : "No completed agreements"} 
-              description={activeTab === "active" ? "Create a new agreement to get started" : "Completed agreements will appear here"}
-            />
-          ) : (
-            filteredAgreements.map((agreement) => (
-              <AgreementCard
-                key={agreement.id}
-                agreement={agreement}
-                onClick={() => onAgreementClick(agreement.id)}
+        /* Active / Completed - List View with Pagination */
+        <div className="space-y-3">
+          <div className="rounded-xl border border-white/10 bg-[#0c1220] divide-y divide-white/6">
+            {paginatedAgreements.length === 0 ? (
+              <EmptyState 
+                message={activeTab === "active" ? "No active agreements" : "No completed agreements"} 
+                description={activeTab === "active" ? "Agreements with work in progress will appear here" : "Completed agreements will appear here"}
               />
-            ))
+            ) : (
+              paginatedAgreements.map((agreement) => (
+                <AgreementCard
+                  key={agreement.id}
+                  agreement={agreement}
+                  onClick={() => onAgreementClick(agreement.id)}
+                  onChat={onOpenChat ? () => onOpenChat(agreement.id) : undefined}
+                />
+              ))
+            )}
+          </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between px-4 py-3 rounded-xl border border-white/10 bg-[#0c1220]">
+              <p className="text-xs text-white/40">
+                Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1}-{Math.min(currentPage * ITEMS_PER_PAGE, filteredAgreements.length)} of {filteredAgreements.length}
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="p-1.5 rounded-lg text-white/40 hover:bg-white/10 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+                <span className="text-xs text-white/60 min-w-[60px] text-center">
+                  {currentPage} / {totalPages}
+                </span>
+                <button
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="p-1.5 rounded-lg text-white/40 hover:bg-white/10 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
           )}
         </div>
       )}

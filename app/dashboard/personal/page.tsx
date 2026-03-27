@@ -24,6 +24,7 @@ import { getProfileByWallet, type Profile } from "@/lib/actions/profile"
 import { AgreementsView } from "@/components/agreements/agreements-view"
 import { ContactSelector } from "@/components/agreements/contact-selector"
 import { AgreementChat } from "@/components/agreements/agreement-chat"
+import { ProfileEditor } from "@/components/profile/profile-editor"
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area,
 } from "recharts"
@@ -431,6 +432,7 @@ export default function PersonalDashboardPage() {
   }, [walletAddress]);
   const [viewingAgreement, setViewingAgreement] = useState<string | null>(null)
   const [showAgreementChat, setShowAgreementChat] = useState<string | null>(null)
+  const [showProfileEditor, setShowProfileEditor] = useState(false)
 
   const approveMilestone = (agrId: string, msIdx: number) => {
     setAgreements(prev => prev.map(a => a.id === agrId ? { ...a, milestones: a.milestones.map((m, i) => i === msIdx && m.status === "pending" ? { ...m, status: "approved" as const } : m) } : a))
@@ -618,19 +620,29 @@ export default function PersonalDashboardPage() {
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}>
           <div className="h-full flex flex-col bg-[#0a0d14]/95 backdrop-blur-xl border-r border-white/[0.06]">
-            {/* User Profile Section */}
+            {/* User Profile Section - Clickable to edit */}
             <div className="p-4 border-b border-white/[0.06]">
-              <div className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-[#f0b400]/10 to-transparent border border-[#f0b400]/10">
-                <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[#f0b400] to-[#f0b400]/60 flex items-center justify-center text-[#0c1220] font-bold text-sm">
-                  {walletAddress ? walletAddress.slice(0, 2).toUpperCase() : "TH"}
+              <button
+                onClick={() => setShowProfileEditor(true)}
+                className="w-full flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-[#f0b400]/10 to-transparent border border-[#f0b400]/10 hover:from-[#f0b400]/20 hover:to-[#f0b400]/5 transition-all group"
+              >
+                <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[#f0b400] to-[#f0b400]/60 flex items-center justify-center text-[#0c1220] font-bold text-sm overflow-hidden">
+                  {userProfile?.avatar ? (
+                    <img src={userProfile.avatar} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    userProfile?.displayName?.slice(0, 2).toUpperCase() || walletAddress?.slice(0, 2).toUpperCase() || "TH"
+                  )}
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-white truncate">Personal Account</p>
+                <div className="flex-1 min-w-0 text-left">
+                  <p className="text-sm font-semibold text-white truncate">{userProfile?.displayName || "Personal Account"}</p>
                   <p className="text-[11px] font-mono text-[#f0b400]/80 truncate">
                     {walletAddress ? `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}` : "Connect Wallet"}
                   </p>
                 </div>
-              </div>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-white/30 group-hover:text-white/60 transition-colors">
+                  <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+                </svg>
+              </button>
             </div>
 
             {/* Main Navigation */}
@@ -1517,6 +1529,29 @@ const newAgr: Agreement = {
           </div>
         </div>
       )}
+
+      {/* Profile Editor Modal */}
+      <ProfileEditor
+        isOpen={showProfileEditor}
+        onClose={() => setShowProfileEditor(false)}
+        profile={{
+          displayName: userProfile?.displayName || "Personal Account",
+          email: userProfile?.email || "",
+          walletAddress: walletAddress || "",
+          avatar: userProfile?.avatar,
+          bio: userProfile?.bio,
+        }}
+        onSave={async (newProfile) => {
+          setUserProfile({
+            displayName: newProfile.displayName,
+            email: newProfile.email,
+            avatar: newProfile.avatar,
+            bio: newProfile.bio,
+          })
+          // TODO: Save to database
+        }}
+        type="personal"
+      />
     </div>
   );
 }
