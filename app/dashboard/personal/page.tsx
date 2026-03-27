@@ -433,7 +433,6 @@ export default function PersonalDashboardPage() {
   const [viewingAgreement, setViewingAgreement] = useState<string | null>(null)
   const [showAgreementChat, setShowAgreementChat] = useState<string | null>(null)
   const [showProfileEditor, setShowProfileEditor] = useState(false)
-  const [userProfile, setUserProfile] = useState<{ displayName?: string; email?: string; avatar?: string; bio?: string } | null>(null)
 
   const approveMilestone = (agrId: string, msIdx: number) => {
     setAgreements(prev => prev.map(a => a.id === agrId ? { ...a, milestones: a.milestones.map((m, i) => i === msIdx && m.status === "pending" ? { ...m, status: "approved" as const } : m) } : a))
