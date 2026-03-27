@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react"
 import { cn } from "@/lib/utils"
-import { Search, FileText, Clock, CheckCircle, AlertTriangle, ShoppingCart, Store, MessageCircle } from "lucide-react"
+import { Search, FileText, Clock, CheckCircle, AlertTriangle, ShoppingCart, Store, MessageCircle, ChevronLeft, ChevronRight, Play } from "lucide-react"
 import { Input } from "@/components/ui/input"
 
 interface Agreement {
@@ -32,11 +32,14 @@ type ViewMode = "buyer" | "seller"
 type TabType = "pending" | "active" | "completed"
 type PendingGroup = "approval" | "funding" | "review" | "dispute"
 
+const ITEMS_PER_PAGE = 10
+
 export function AgreementsView({ agreements, onAgreementClick, onOpenChat, currentUserWallet, className }: AgreementsViewProps) {
   const [viewMode, setViewMode] = useState<ViewMode>("buyer")
   const [activeTab, setActiveTab] = useState<TabType>("pending")
   const [searchQuery, setSearchQuery] = useState("")
   const [expandedGroups, setExpandedGroups] = useState<PendingGroup[]>(["approval", "funding", "review"])
+  const [currentPage, setCurrentPage] = useState(1)
 
   // Filter by view mode (buyer/seller)
   const filteredByRole = useMemo(() => {
