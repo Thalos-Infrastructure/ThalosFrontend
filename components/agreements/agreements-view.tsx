@@ -247,7 +247,7 @@ export function AgreementsView({ agreements, onAgreementClick, onOpenChat, curre
             const hasMore = groupAgreements.length > 5
             
             return (
-              <div key={group.id} className="rounded-xl border border-white/10 bg-[#0c1220] overflow-hidden">
+              <div key={group.id} className="rounded-xl border border-white/10 bg-gradient-to-br from-[#0c1220] to-[#0a0e18] overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
                 {/* Group Header - Compact */}
                 <button
                   onClick={() => toggleGroup(group.id)}
@@ -313,7 +313,7 @@ export function AgreementsView({ agreements, onAgreementClick, onOpenChat, curre
       ) : (
         /* Active / Completed - List View with Pagination */
         <div className="space-y-3">
-          <div className="rounded-xl border border-white/10 bg-[#0c1220] divide-y divide-white/6">
+          <div className="rounded-xl border border-white/10 bg-gradient-to-br from-[#0c1220] to-[#0a0e18] divide-y divide-white/6 shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
             {paginatedAgreements.length === 0 ? (
               <EmptyState 
                 message={activeTab === "active" ? "No active agreements" : "No completed agreements"} 
@@ -333,7 +333,7 @@ export function AgreementsView({ agreements, onAgreementClick, onOpenChat, curre
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-between px-4 py-3 rounded-xl border border-white/10 bg-[#0c1220]">
+            <div className="flex items-center justify-between px-4 py-3 rounded-xl border border-white/10 bg-gradient-to-br from-[#0c1220] to-[#0a0e18] shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
               <p className="text-xs text-white/40">
                 Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1}-{Math.min(currentPage * ITEMS_PER_PAGE, filteredAgreements.length)} of {filteredAgreements.length}
               </p>

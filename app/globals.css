@@ -301,243 +301,181 @@
 .light .bg-emerald-500\/10 { background-color: rgba(16, 185, 129, 0.1) !important; }
 .light .bg-amber-500\/10 { background-color: rgba(245, 158, 11, 0.1) !important; }
 
-/* ===== DASHBOARD LIGHT MODE: Cards maintain dark styling ===== */
-
-/* 
- * PRINCIPLE: All cards/containers with dark backgrounds keep dark mode appearance.
- * This ensures consistent design across both themes.
+/* ===== DASHBOARD LIGHT MODE ===== */
+/*
+ * SIMPLE RULE: Dashboard cards look IDENTICAL in light and dark mode.
+ * Only the page background changes. Sidebar stays dark.
  */
 
-/* Sidebar stays dark */
+/* ===== SIDEBAR: Always dark (same as dark mode) ===== */
 .light aside {
   background: linear-gradient(180deg, #0f1318 0%, #0a0d12 100%) !important;
 }
-.light aside * { color: #ffffff !important; }
+.light aside * {
+  color: inherit !important;
+}
+.light aside .text-white { color: #ffffff !important; }
+.light aside .text-white\/60,
+.light aside .text-white\/50,
+.light aside .text-white\/40 { color: rgba(255,255,255,0.5) !important; }
+.light aside .text-\[\#f0b400\] { color: #f0b400 !important; }
+.light aside .text-\[\#3b82f6\] { color: #3b82f6 !important; }
+.light aside .border-white\/6,
+.light aside .border-white\/10 { border-color: rgba(255,255,255,0.1) !important; }
 
-/* Header stays dark */
+/* ===== HEADER: Always dark ===== */
 .light header.sticky,
 .light header[class*="bg-"] {
-  background: rgba(12, 18, 32, 0.95) !important;
+  background: rgba(12, 18, 32, 0.98) !important;
 }
-.light header * { color: #ffffff !important; }
+.light header .text-white { color: #ffffff !important; }
+.light header .text-white\/60,
+.light header .text-white\/70 { color: rgba(255,255,255,0.6) !important; }
 
-/* Dashboard background - light theme */
+/* ===== PAGE BACKGROUND: Light gradient ===== */
 .light .fixed.inset-0.z-0 {
-  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 50%, #f8fafc 100%) !important;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 50%, #e2e8f0 100%) !important;
 }
 .light .fixed.inset-0.z-0 > div {
-  opacity: 0.2 !important;
+  opacity: 0.15 !important;
 }
 
-/* ===== ALL DARK CARDS: Force dark mode styling ===== */
-/* Match any element with dark background colors */
+/* ===== DASHBOARD CARDS: Keep dark styling with subtle gradient ===== */
 .light .bg-\[\#0c1220\],
 .light .bg-\[\#0a0d14\],
 .light .bg-\[\#060810\],
-.light [class*="bg-\[#0c1220\]"],
-.light [class*="bg-\[#0a0d14\]"],
-.light [class*="bg-\[#060810\]"],
-.light .rounded-xl.border.border-white\/10,
-.light .rounded-xl.border.border-white\/6,
-.light div[class*="rounded-xl"][class*="border"][class*="bg-"] {
-  background-color: #0c1220 !important;
+.light .bg-gradient-to-br.from-\[\#0c1220\] {
+  background: linear-gradient(145deg, #0c1220 0%, #0a0e18 100%) !important;
 }
 
-/* Force white text in ALL dark card descendants */
-.light .bg-\[\#0c1220\] *,
-.light .bg-\[\#0a0d14\] *,
-.light .bg-\[\#060810\] *,
-.light [class*="bg-\[#0c1220\]"] *,
-.light [class*="bg-\[#0a0d14\]"] *,
-.light .rounded-xl.border.border-white\/10 *,
-.light .rounded-xl.border.border-white\/6 * {
+/* All text inside dark cards stays white */
+.light .bg-\[\#0c1220\] .text-white,
+.light .bg-\[\#0a0d14\] .text-white,
+.light .bg-\[\#060810\] .text-white,
+.light .bg-gradient-to-br.from-\[\#0c1220\] .text-white,
+.light [class*="rounded-xl"][class*="border"][class*="bg-gradient"] .text-white,
+.light [class*="rounded-xl"][class*="border"][class*="bg-\[\#0"] .text-white {
   color: #ffffff !important;
 }
 
-/* Restore muted text colors for hierarchy */
+/* Gradient cards text */
+.light .bg-gradient-to-br.from-\[\#0c1220\] .text-white\/50,
+.light .bg-gradient-to-br.from-\[\#0c1220\] .text-white\/40,
+.light .bg-gradient-to-br.from-\[\#0c1220\] .text-white\/60 {
+  color: rgba(255,255,255,0.5) !important;
+}
+
+/* Muted text inside cards */
 .light .bg-\[\#0c1220\] .text-white\/60,
 .light .bg-\[\#0c1220\] .text-white\/50,
 .light .bg-\[\#0c1220\] .text-white\/40,
 .light .bg-\[\#0c1220\] .text-white\/30,
-.light [class*="bg-\[#0c1220\]"] .text-white\/60,
-.light [class*="bg-\[#0c1220\]"] .text-white\/50,
-.light [class*="bg-\[#0c1220\]"] .text-white\/40,
-.light [class*="bg-\[#0c1220\]"] .text-white\/30 {
+.light .bg-\[\#0c1220\] .text-white\/35,
+.light .bg-\[\#0c1220\] .text-white\/25,
+.light .bg-\[\#0a0d14\] .text-white\/60,
+.light .bg-\[\#0a0d14\] .text-white\/50,
+.light .bg-\[\#0a0d14\] .text-white\/40 {
   color: rgba(255,255,255,0.5) !important;
 }
 
-/* Borders inside dark cards stay light/white */
+/* Borders inside cards */
 .light .bg-\[\#0c1220\] .border-white\/6,
 .light .bg-\[\#0c1220\] .border-white\/10,
-.light [class*="bg-\[#0c1220\]"] [class*="border-white"] {
+.light .bg-\[\#0c1220\] .border-white\/15,
+.light .bg-\[\#0a0d14\] .border-white\/6,
+.light .bg-\[\#0a0d14\] .border-white\/10 {
   border-color: rgba(255,255,255,0.1) !important;
 }
 
-/* ===== Status badge colors ===== */
-.light .text-\[\#f0b400\] { color: #f0b400 !important; }
-.light .text-amber-400 { color: #f59e0b !important; }
-.light .text-emerald-400 { color: #10b981 !important; }
-.light .text-sky-400 { color: #0ea5e9 !important; }
-.light .text-rose-400 { color: #f43f5e !important; }
-.light .text-violet-400 { color: #8b5cf6 !important; }
-
-/* ===== Buttons maintain proper colors ===== */
-.light button.bg-\[\#f0b400\],
-.light .bg-\[\#f0b400\] { 
-  background-color: #f0b400 !important;
-  color: #0c1220 !important;
-}
-
-/* ===== Inputs inside dark cards ===== */
+/* Inputs inside cards */
 .light .bg-\[\#0c1220\] input,
-.light [class*="bg-\[#0c1220\]"] input {
+.light .bg-\[\#0a0d14\] input {
   background-color: rgba(255,255,255,0.05) !important;
   border-color: rgba(255,255,255,0.1) !important;
   color: #ffffff !important;
 }
 .light .bg-\[\#0c1220\] input::placeholder,
-.light [class*="bg-\[#0c1220\]"] input::placeholder {
-  color: rgba(255,255,255,0.4) !important;
+.light .bg-\[\#0a0d14\] input::placeholder {
+  color: rgba(255,255,255,0.35) !important;
 }
 
-/* ===== Popups and modals ===== */
-.light [class*="fixed"][class*="z-50"] .bg-\[\#0c1220\] *,
-.light [class*="fixed"][class*="z-50"][class*="bg-\[#0c1220\]"] * {
-  color: #ffffff !important;
-}
+/* Status colors inside cards */
+.light .bg-\[\#0c1220\] .text-\[\#f0b400\],
+.light .bg-\[\#0a0d14\] .text-\[\#f0b400\] { color: #f0b400 !important; }
+.light .bg-\[\#0c1220\] .text-amber-400 { color: #fbbf24 !important; }
+.light .bg-\[\#0c1220\] .text-emerald-400 { color: #34d399 !important; }
+.light .bg-\[\#0c1220\] .text-sky-400 { color: #38bdf8 !important; }
+.light .bg-\[\#0c1220\] .text-rose-400 { color: #fb7185 !important; }
+.light .bg-\[\#0c1220\] .text-violet-400 { color: #a78bfa !important; }
+.light .bg-\[\#0c1220\] .text-\[\#3b82f6\] { color: #3b82f6 !important; }
 
-/* ===== LIGHT MODE: Elements OUTSIDE dark cards ===== */
-
-/* Main content area headings - must be dark for visibility */
-.light main h1.text-white,
-.light main h2.text-white,
-.light main h3.text-white,
-.light main .text-2xl.text-white,
-.light main .text-xl.text-white,
-.light main .text-lg.text-white {
-  color: #0f172a !important;
-}
-
-/* All text-white outside cards needs to be dark */
-.light main .text-white:not([class*="bg-[#0"]):not([class*="bg-[#0"] *):not(.rounded-xl *):not(aside *):not(header *) {
-  color: #1e293b !important;
-}
-
-/* Muted text outside cards */
-.light main .text-white\/60:not([class*="bg-[#0"] *):not(.rounded-xl *),
-.light main .text-white\/50:not([class*="bg-[#0"] *):not(.rounded-xl *),
-.light main .text-white\/40:not([class*="bg-[#0"] *):not(.rounded-xl *),
-.light main .text-white\/30:not([class*="bg-[#0"] *):not(.rounded-xl *) {
-  color: #64748b !important;
-}
-
-/* ===== BUBBLES/PILLS/BADGES outside cards ===== */
-/* Give them solid visible backgrounds in light mode */
-.light main .rounded-full:not([class*="bg-[#0"] *):not(.rounded-xl *) {
-  background-color: #e2e8f0 !important;
-  color: #334155 !important;
-}
-
-/* Active/selected pills */
-.light main .rounded-full.bg-\[\#f0b400\]\/10,
-.light main .rounded-full.bg-\[\#f0b400\]\/15,
-.light main .rounded-full.bg-\[\#f0b400\]\/20 {
-  background-color: rgba(240, 180, 0, 0.2) !important;
-  color: #92400e !important;
-}
-
-.light main .rounded-full.bg-\[\#3b82f6\]\/10,
-.light main .rounded-full.bg-\[\#3b82f6\]\/15 {
-  background-color: rgba(59, 130, 246, 0.15) !important;
-  color: #1d4ed8 !important;
-}
-
-/* Status colored pills */
-.light main .rounded-full.bg-amber-400\/10 { background-color: rgba(251, 191, 36, 0.2) !important; color: #92400e !important; }
-.light main .rounded-full.bg-sky-400\/10 { background-color: rgba(56, 189, 248, 0.2) !important; color: #0369a1 !important; }
-.light main .rounded-full.bg-violet-400\/10 { background-color: rgba(167, 139, 250, 0.2) !important; color: #6d28d9 !important; }
-.light main .rounded-full.bg-rose-400\/10 { background-color: rgba(251, 113, 133, 0.2) !important; color: #be123c !important; }
-.light main .rounded-full.bg-emerald-400\/10 { background-color: rgba(52, 211, 153, 0.2) !important; color: #047857 !important; }
-
-/* ===== TAB CONTAINERS ===== */
-/* Tabs background container */
-.light main .bg-white\/5:not([class*="bg-[#0"] *) {
-  background-color: #e2e8f0 !important;
-  border-color: #cbd5e1 !important;
-}
-
-/* Tab buttons */
-.light main .bg-white\/5 button,
-.light main .rounded-lg.bg-white\/5 button {
-  color: #475569 !important;
-}
-
-/* Active tab */
-.light main .bg-white\/5 button.bg-\[\#f0b400\]\/10,
-.light main button.bg-\[\#f0b400\]\/10 {
-  background-color: rgba(240, 180, 0, 0.2) !important;
-  color: #92400e !important;
-}
-
-.light main .bg-white\/5 button.bg-\[\#3b82f6\]\/10,
-.light main button.bg-\[\#3b82f6\]\/10 {
-  background-color: rgba(59, 130, 246, 0.2) !important;
-  color: #1d4ed8 !important;
-}
-
-/* ===== SEARCH/INPUT outside cards ===== */
-.light main input:not([class*="bg-[#0"] *):not(.rounded-xl *) {
-  background-color: #ffffff !important;
-  border-color: #cbd5e1 !important;
-  color: #1e293b !important;
-}
-.light main input::placeholder {
-  color: #94a3b8 !important;
-}
-
-/* ===== BUTTONS outside cards ===== */
-.light main button.bg-\[\#f0b400\]:not([class*="bg-[#0"] *) {
+/* Buttons inside cards */
+.light .bg-\[\#0c1220\] .bg-\[\#f0b400\],
+.light .bg-\[\#0c1220\] button.bg-\[\#f0b400\] {
   background-color: #f0b400 !important;
   color: #0c1220 !important;
 }
-
-.light main button.bg-\[\#3b82f6\]:not([class*="bg-[#0"] *) {
+.light .bg-\[\#0c1220\] .bg-\[\#3b82f6\],
+.light .bg-\[\#0c1220\] button.bg-\[\#3b82f6\] {
   background-color: #3b82f6 !important;
   color: #ffffff !important;
 }
 
-/* Ghost buttons */
-.light main button.text-white\/60:not([class*="bg-[#0"] *) {
-  color: #64748b !important;
+/* ===== MODALS/POPUPS: Keep dark ===== */
+.light [role="dialog"] .bg-\[\#0c1220\],
+.light [class*="fixed"][class*="z-50"] .bg-\[\#0c1220\] {
+  background: linear-gradient(145deg, #0c1220 0%, #0a0e18 100%) !important;
+}
+.light [role="dialog"] .text-white,
+.light [class*="fixed"][class*="z-50"] .bg-\[\#0c1220\] .text-white {
+  color: #ffffff !important;
 }
 
-/* ===== ICONS outside cards ===== */
-.light main svg:not([class*="bg-[#0"] *):not(.rounded-xl *) {
-  color: #64748b !important;
+/* ===== AGREEMENTS VIEW CARDS: Same as dark mode ===== */
+.light .rounded-xl.border.border-white\/10.bg-\[\#0c1220\],
+.light .rounded-xl.border.border-white\/6.bg-\[\#0c1220\],
+.light [class*="rounded-xl"][class*="border-white"][class*="bg-\[\#0c1220\]"] {
+  background: linear-gradient(145deg, #0c1220 0%, #0a0e18 100%) !important;
+}
+.light .rounded-xl.border.border-white\/10.bg-\[\#0c1220\] *,
+.light .rounded-xl.border.border-white\/6.bg-\[\#0c1220\] * {
+  color: inherit;
+}
+.light .rounded-xl.border.border-white\/10 .text-white,
+.light .rounded-xl.border.border-white\/6 .text-white {
+  color: #ffffff !important;
+}
+.light .rounded-xl.border.border-white\/10 .text-white\/60,
+.light .rounded-xl.border.border-white\/10 .text-white\/50,
+.light .rounded-xl.border.border-white\/10 .text-white\/40,
+.light .rounded-xl.border.border-white\/6 .text-white\/60,
+.light .rounded-xl.border.border-white\/6 .text-white\/50 {
+  color: rgba(255,255,255,0.5) !important;
 }
 
-/* Colored icons preserve their color */
-.light main svg.text-\[\#f0b400\] { color: #f0b400 !important; }
-.light main svg.text-\[\#3b82f6\] { color: #3b82f6 !important; }
-.light main svg.text-amber-400 { color: #d97706 !important; }
-.light main svg.text-emerald-400 { color: #059669 !important; }
-.light main svg.text-sky-400 { color: #0284c7 !important; }
-.light main svg.text-rose-400 { color: #e11d48 !important; }
-.light main svg.text-violet-400 { color: #7c3aed !important; }
+/* ===== DASHBOARD-ONLY RULES ===== */
+/* These apply only to dashboard pages, not landing */
 
-/* ===== VIEW MODE TOGGLE (As Buyer / As Seller) ===== */
-.light main .rounded-lg.p-1.bg-white\/5 {
-  background-color: #e2e8f0 !important;
+/* Dashboard page titles - dark on light bg */
+body:has(aside) .light main h1.text-white:not(.bg-\[\#0c1220\] *),
+body:has(aside) .light main h2.text-white:not(.bg-\[\#0c1220\] *),
+body:has(aside) .light main .text-2xl.font-semibold.text-white:not(.bg-\[\#0c1220\] *) {
+  color: #0f172a !important;
 }
 
-.light main .rounded-lg.p-1.bg-white\/5 button {
-  color: #475569 !important;
-}
-
-.light main .rounded-lg.p-1.bg-white\/5 button.bg-\[\#f0b400\],
-.light main .rounded-lg.p-1.bg-white\/5 button.bg-\[\#3b82f6\] {
+/* Dashboard action buttons */
+body:has(aside) .light main > div > button.bg-\[\#f0b400\],
+body:has(aside) .light main button.rounded-full.bg-\[\#f0b400\] {
+  background-color: #f0b400 !important;
   color: #0c1220 !important;
 }
+body:has(aside) .light main > div > button.bg-\[\#3b82f6\],
+body:has(aside) .light main button.rounded-full.bg-\[\#3b82f6\] {
+  background-color: #3b82f6 !important;
+  color: #ffffff !important;
+}
+
+/* ===== LANDING PAGE: Already handled in lines 126-165 ===== */
 
 /* ===== MOBILE RESPONSIVE ===== */
 @media (max-width: 768px) {
