@@ -10,6 +10,7 @@ import { ThalosLoader } from "@/components/thalos-loader"
 import { LanguageToggle, ThemeToggle, useLanguage } from "@/lib/i18n"
 import { Footer } from "@/components/footer"
 import { useStellarWallet } from "@/lib/stellar-wallet"
+import { getProfileByWallet, type Profile } from "@/lib/actions/profile"
 import { ProfileEditor } from "@/components/profile/profile-editor"
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area,
@@ -139,14 +140,25 @@ const sidebarItems = [
    ════════════════════════════════════════════════ */
 export default function BusinessDashboardPage() {
   const { t } = useLanguage()
-  const { openWalletModal } = useStellarWallet()
+  const { openWalletModal, walletAddress } = useStellarWallet()
   const [loading, setLoading] = useState(false)
 
   const [activeSection, setActiveSection] = useState("agreements")
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [showProfileEditor, setShowProfileEditor] = useState(false)
-  const [companyProfile, setCompanyProfile] = useState<{ displayName?: string; email?: string; avatar?: string; bio?: string; company?: string } | null>(null)
+  const [companyProfile, setCompanyProfile] = useState<Profile | null>(null)
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
+  
+  // Fetch company profile
+  useEffect(() => {
+    async function fetchProfile() {
+      if (walletAddress) {
+        const result = await getProfileByWallet(walletAddress)
+        if (result.profile) setCompanyProfile(result.profile)
+      }
+    }
+    fetchProfile()
+  }, [walletAddress])
   const [agreements, setAgreements] = useState<Agreement[]>(initialAgreements)
   const [viewingAgreement, setViewingAgreement] = useState<string | null>(null)
   const [disputedMs, setDisputedMs] = useState<Set<string>>(new Set())
@@ -413,15 +425,17 @@ export default function BusinessDashboardPage() {
                 className="w-full flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-[#3b82f6]/10 to-transparent border border-[#3b82f6]/10 hover:from-[#3b82f6]/20 hover:to-[#3b82f6]/5 transition-all group"
               >
                 <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[#3b82f6] to-[#3b82f6]/60 flex items-center justify-center text-white font-bold text-sm overflow-hidden">
-                  {companyProfile?.avatar ? (
-                    <img src={companyProfile.avatar} alt="" className="h-full w-full object-cover" />
+                  {companyProfile?.avatar_url ? (
+                    <img src={companyProfile.avatar_url} alt="" className="h-full w-full object-cover" />
                   ) : (
-                    companyProfile?.displayName?.slice(0, 2).toUpperCase() || "EN"
+                    companyProfile?.display_name?.slice(0, 2).toUpperCase() || walletAddress?.slice(0, 2).toUpperCase() || "EN"
                   )}
                 </div>
                 <div className="flex-1 min-w-0 text-left">
-                  <p className="text-sm font-semibold text-white truncate">{companyProfile?.displayName || t("dashPage.enterpriseAccount")}</p>
-                  <p className="text-[11px] font-mono text-[#3b82f6]/80 truncate">G...SE01</p>
+                  <p className="text-sm font-semibold text-white truncate">{companyProfile?.display_name || t("dashPage.enterpriseAccount")}</p>
+                  <p className="text-[11px] font-mono text-[#3b82f6]/80 truncate">
+                    {walletAddress ? `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}` : "Connect Wallet"}
+                  </p>
                 </div>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-white/30 group-hover:text-white/60 transition-colors">
                   <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
@@ -1295,22 +1309,25 @@ export default function BusinessDashboardPage() {
         isOpen={showProfileEditor}
         onClose={() => setShowProfileEditor(false)}
         profile={{
-          displayName: companyProfile?.displayName || "Enterprise Account",
+          displayName: companyProfile?.display_name || t("dashPage.enterpriseAccount"),
           email: companyProfile?.email || "",
-          walletAddress: "G...SE01",
-          avatar: companyProfile?.avatar,
-          bio: companyProfile?.bio,
-          company: companyProfile?.company,
+          walletAddress: walletAddress || "",
+          avatar: companyProfile?.avatar_url || undefined,
         }}
         onSave={async (newProfile) => {
-          setCompanyProfile({
-            displayName: newProfile.displayName,
-            email: newProfile.email,
-            avatar: newProfile.avatar,
-            bio: newProfile.bio,
-            company: newProfile.company,
-          })
-          // TODO: Save to database
+          // Update profile in database
+          const { updateProfile } = await import("@/lib/actions/profile")
+          if (walletAddress) {
+            const result = await updateProfile(walletAddress, {
+              display_name: newProfile.displayName,
+              email: newProfile.email,
+              avatar_url: newProfile.avatar,
+              account_type: "enterprise",
+            })
+            if (result.profile) {
+              setCompanyProfile(result.profile)
+            }
+          }
         }}
         type="enterprise"
       />
