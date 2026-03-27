@@ -406,9 +406,63 @@
   color: #ffffff !important;
 }
 
-/* ===== Main area elements outside cards (if any light bg exists) ===== */
-.light main .text-white:not(.bg-\[\#0c1220\] *):not([class*="bg-\[#0"] *):not(.rounded-xl *) {
+/* ===== Elements OUTSIDE dark cards need dark text in light mode ===== */
+
+/* Bubbles/badges/pills outside cards - give them visible backgrounds */
+.light main > div > .rounded-full,
+.light main .flex > .rounded-full:not(.bg-\[\#0c1220\] *) {
+  background-color: rgba(15, 23, 42, 0.08) !important;
+}
+
+/* Text outside dark cards must be dark for visibility */
+.light main > .text-white,
+.light main > div > .text-white:not(.bg-\[\#0c1220\] .text-white):not(.rounded-xl .text-white) {
   color: #1e293b !important;
+}
+
+/* Muted text outside cards */
+.light main > .text-white\/60,
+.light main > div > .text-white\/60:not(.bg-\[\#0c1220\] *),
+.light main > .text-white\/50,
+.light main > div > .text-white\/50:not(.bg-\[\#0c1220\] *),
+.light main > .text-white\/40,
+.light main > div > .text-white\/40:not(.bg-\[\#0c1220\] *) {
+  color: #64748b !important;
+}
+
+/* Tabs/Buttons container outside cards */
+.light main .bg-white\/5:not(.bg-\[\#0c1220\] *) {
+  background-color: rgba(15, 23, 42, 0.06) !important;
+}
+
+/* Tab buttons outside cards */
+.light main .bg-white\/5 button {
+  color: #475569 !important;
+}
+.light main .bg-white\/5 button.bg-\[\#f0b400\]\/10 {
+  background-color: rgba(240, 180, 0, 0.15) !important;
+  color: #b45309 !important;
+}
+
+/* Search input outside cards */
+.light main .bg-white\/5:not(.bg-\[\#0c1220\] *) input {
+  background-color: white !important;
+  border-color: rgba(0, 0, 0, 0.1) !important;
+  color: #1e293b !important;
+}
+
+/* View toggle buttons outside cards */
+.light main .rounded-lg.bg-white\/5 button {
+  color: #475569 !important;
+}
+.light main .rounded-lg.bg-white\/5 button.bg-\[\#f0b400\] {
+  background-color: #f0b400 !important;
+  color: #0c1220 !important;
+}
+
+/* Icons outside cards */
+.light main svg.text-white\/40:not(.bg-\[\#0c1220\] *) {
+  color: #94a3b8 !important;
 }
 
 /* Global smooth transitions */
