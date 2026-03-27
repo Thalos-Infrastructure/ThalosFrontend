@@ -10,11 +10,19 @@ import { ThalosLoader } from "@/components/thalos-loader"
 import { LanguageToggle, ThemeToggle, useLanguage } from "@/lib/i18n"
 import { Footer } from "@/components/footer"
 import { useStellarWallet } from "@/lib/stellar-wallet"
+import { useCurrentAddress } from "@/lib/use-current-address"
+import { useAuthStore } from "@/lib/auth-store"
+import { WalletAddress } from "@/components/ui/wallet-address"
 import { getProfileByWallet, type Profile } from "@/lib/actions/profile"
 import { ProfileEditor } from "@/components/profile/profile-editor"
+import { AgreementsView } from "@/components/agreements/agreements-view"
+import { ContactSelector } from "@/components/agreements/contact-selector"
+import { AgreementChat } from "@/components/agreements/agreement-chat"
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area,
 } from "recharts"
+import { createAgreement, sendTransaction, AgreementPayload, approveMilestone } from "@/services/trustlessworkService"
+import { STELLAR_EXPLORER_BASE_URL, TRUSTLINE_USDC, SHOW_MOCKED_AGREEMENTS } from "@/lib/config"
 
 /* ── Enterprise Use-Cases ── */
 const useCases = [
@@ -23,7 +31,6 @@ const useCases = [
   { id: "dealership", labelKey: "useCase.dealership", icon: "tag", suggestedTitle: "Vehicle Purchase Agreement", suggestedDesc: "Describe the vehicle make/model/year, VIN, agreed price, financing terms, and delivery conditions." },
   { id: "rental-platform", labelKey: "useCase.rentalPlatform", icon: "home", suggestedTitle: "Short-Term Rental Agreement", suggestedDesc: "Describe the property, booking dates, house rules, deposit amount, and checkout procedures." },
 { id: "event", labelKey: "useCase.event", icon: "calendar", suggestedTitle: "Event Management Agreement", suggestedDesc: "Describe the event type, venue, date, services included, setup requirements, and payment milestones." },
-  { id: "bounty", labelKey: "useCase.bounty", icon: "star", suggestedTitle: "Thalos Bounty", suggestedDesc: "Create a bounty for tasks that can be completed by multiple validators. Share the bounty link publicly." },
   { id: "other", labelKey: "useCase.other", icon: "plus", suggestedTitle: "", suggestedDesc: "" },
   ]
 
@@ -161,8 +168,42 @@ export default function BusinessDashboardPage() {
   }, [walletAddress])
   const [agreements, setAgreements] = useState<Agreement[]>(initialAgreements)
   const [viewingAgreement, setViewingAgreement] = useState<string | null>(null)
+  const [showAgreementChat, setShowAgreementChat] = useState<string | null>(null)
   const [disputedMs, setDisputedMs] = useState<Set<string>>(new Set())
   const [showDisputeConfirm, setShowDisputeConfirm] = useState<{ agrId: string; msIdx: number } | null>(null)
+  const [approverEscrows, setApproverEscrows] = useState<Agreement[]>([])
+  const [approverLoading, setApproverLoading] = useState(false)
+  
+  // Fetch approver escrows
+  useEffect(() => {
+    if (!walletAddress) return
+    async function fetchApproverEscrows() {
+      setApproverLoading(true)
+      try {
+        const { getEscrowsByRole } = await import("@/services/trustlessworkService")
+        const res = await getEscrowsByRole({ role: "approver", roleAddress: walletAddress })
+        if (res.success && Array.isArray(res.data)) {
+          setApproverEscrows(res.data.map((e: Record<string, unknown>) => ({
+            id: e.contractId as string || `escrow-${Date.now()}`,
+            title: e.title as string || "Escrow Agreement",
+            counterparty: ((e.serviceProvider as string) || "").slice(0, 8) + "...",
+            status: e.status as string || "pending",
+            amount: String(e.amount || "0"),
+            currency: "USDC",
+            type: "Single Release" as const,
+            date: e.createdAt as string || new Date().toISOString(),
+            milestones: (e.milestones as Array<{status: string}>) || [{ status: "pending" }],
+            role: "buyer" as const,
+          })))
+        }
+      } catch (err) {
+        console.error("Error fetching approver escrows:", err)
+        setApproverEscrows([])
+      }
+      setApproverLoading(false)
+    }
+    fetchApproverEscrows()
+  }, [walletAddress])
 
   const approveMilestone = (agrId: string, msIdx: number) => {
     setAgreements(prev => prev.map(a => a.id === agrId ? { ...a, milestones: a.milestones.map((m, i) => i === msIdx && m.status === "pending" ? { ...m, status: "approved" as const } : m) } : a))
@@ -673,91 +714,35 @@ export default function BusinessDashboardPage() {
               {/* Header */}
               <div className="mb-6 flex items-center justify-between">
                 <h1 className="text-2xl font-semibold text-white">{t("dashPage.enterpriseAgreements")}</h1>
-                <Button onClick={() => { setActiveSection("create"); resetWizard() }} className="rounded-full bg-[#f0b400] px-6 text-sm font-semibold text-background hover:bg-[#d4a000] shadow-[0_4px_16px_rgba(240,180,0,0.25)]">+ {t("dashPage.newAgreement")}</Button>
+                <Button onClick={() => { setActiveSection("create"); resetWizard() }} className="rounded-full bg-[#3b82f6] px-6 text-sm font-semibold text-white hover:bg-[#2563eb] shadow-[0_4px_16px_rgba(59,130,246,0.25)]">+ {t("dashPage.newAgreement")}</Button>
               </div>
 
-              {/* Toolbar */}
-              <div className="mb-5 flex flex-col gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="relative flex-1">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/25">
-                      <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-                    </svg>
-                    <input
-                      value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder={t("dashPage.searchPlaceholder")}
-                      className="h-10 w-full rounded-xl border border-white/15 bg-[#0c1220]/80 pl-10 pr-4 text-sm text-white placeholder:text-white/25 focus:border-[#3b82f6]/40 focus:outline-none focus:ring-1 focus:ring-[#3b82f6]/15 transition-all"
-                    />
-                  </div>
-                  <select value={sortBy} onChange={(e) => setSortBy(e.target.value as "date" | "amount" | "title")}
-                    className="h-10 rounded-xl border border-white/15 bg-[#0c1220]/80 px-3 text-xs font-medium text-white/60 focus:border-[#3b82f6]/40 focus:outline-none appearance-none cursor-pointer">
-                    <option value="date">{t("dashPage.sortBy")}: {t("dashPage.sortDate")}</option>
-                    <option value="amount">{t("dashPage.sortBy")}: {t("dashPage.sortAmount")}</option>
-                    <option value="title">{t("dashPage.sortBy")}: {t("dashPage.sortTitle")}</option>
-                  </select>
-                </div>
-                <div className="flex items-center gap-1.5 overflow-x-auto">
-                  {(["all", "funded", "in_progress", "released"] as const).map((s) => {
-                    const labelMap = { all: "dashPage.all", funded: "dashPage.funded", in_progress: "dashPage.inProgress", released: "dashPage.releasedFilter" }
-                    const count = statusCounts[s]
-                    return (
-                      <button key={s} onClick={() => setStatusFilter(s)}
-                        className={cn("flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all whitespace-nowrap",
-                          statusFilter === s ? "bg-[#3b82f6]/15 text-[#3b82f6] border border-[#3b82f6]/20" : "text-white/40 hover:text-white/60 hover:bg-white/[0.04] border border-transparent"
-                        )}>
-                        {t(labelMap[s])}
-                        <span className={cn("rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none",
-                          statusFilter === s ? "bg-[#3b82f6]/20 text-[#3b82f6]" : "bg-white/[0.06] text-white/30"
-                        )}>{count}</span>
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-
-              {/* Agreements list */}
-              {filteredAgreements.length === 0 ? (
-                <div className="flex flex-col items-center justify-center rounded-2xl border border-white/10 bg-[#0c1220] py-16 px-6 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)] text-center">
-                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" className="text-white/15 mb-4"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                  <p className="text-sm font-medium text-white/40">{t("dashPage.noResults")}</p>
-                  <p className="mt-1 text-xs text-white/20">{t("dashPage.noResultsDesc")}</p>
-                </div>
-              ) : (
-              <div className="flex flex-col gap-4">
-                {filteredAgreements.map((agr) => {
-                  const allReleased = agr.milestones.every(m => m.status === "released")
-                  const effectiveStatus = allReleased ? "released" : agr.status
-                  const st = statusConfig[effectiveStatus] || statusConfig.funded
-                  const completedMs = agr.milestones.filter(m => m.status === "released").length
-                  const progressPct = (completedMs / agr.milestones.length) * 100
-                  return (
-                    <button key={agr.id} onClick={() => setViewingAgreement(agr.id)}
-                      className="flex flex-col gap-4 rounded-2xl border border-white/10 bg-[#0c1220] p-5 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)] transition-all hover:border-white/20 text-left w-full">
-                      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between w-full">
-                        <div>
-                          <p className="text-base font-semibold text-white">{agr.title}</p>
-                          <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-white/35">
-                            <span>{agr.type}</span><span className="text-white/15">|</span><span>{agr.counterparty}</span><span className="text-white/15">|</span><span>{agr.date}</span>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <span className={cn("rounded-full border px-3 py-1 text-xs font-semibold", st.color)}>{t(st.labelKey)}</span>
-                          <p className="text-lg font-bold text-white">{"$"}{agr.amount} <span className="text-xs font-normal text-white/35">USDC</span></p>
-                        </div>
-                      </div>
-                      {agr.milestones.length > 1 && (
-                        <div className="flex items-center gap-3 w-full">
-                          <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/[0.06]">
-                            <div className={cn("h-full rounded-full transition-all duration-500", allReleased ? "bg-emerald-400" : "bg-[#3b82f6]")} style={{ width: `${progressPct}%` }} />
-                          </div>
-                          <span className="text-xs text-white/30">{completedMs}/{agr.milestones.length}</span>
-                        </div>
-                      )}
-                    </button>
-                  )
-                })}
-              </div>
-              )}
+              {/* Structured Agreements View with filters */}
+              <AgreementsView
+                agreements={[
+                  // Regular agreements
+                  ...agreements.map(a => ({
+                    ...a,
+                    updatedAt: a.date,
+                  })),
+                  // Approver escrows
+                  ...approverEscrows.map(e => ({
+                    id: e.id,
+                    title: e.title,
+                    counterparty: e.counterparty,
+                    status: e.status,
+                    amount: e.amount,
+                    currency: "USDC",
+                    type: e.type,
+                    updatedAt: e.date,
+                    milestones: e.milestones,
+                    role: e.role,
+                  }))
+                ]}
+                onAgreementClick={(id) => setViewingAgreement(id)}
+                onOpenChat={(id) => setShowAgreementChat(id)}
+                currentUserWallet={walletAddress || undefined}
+              />
             </div>
           )}
 
@@ -1217,7 +1202,17 @@ export default function BusinessDashboardPage() {
                     <div className="flex flex-col gap-6">
                       <div><h3 className="text-lg font-semibold text-white sm:text-xl">{t("wizard.paymentDetails")}</h3><p className="mt-1 text-sm text-white/35">{t("wizard.selectWalletInfo")}</p></div>
                       <FormSelect label={t("wizard.yourWallet")} value={selectedWallet} onChange={setSelectedWallet} options={connectedWallets.map(w => ({ value: w.value, label: `${t(w.labelKey)} (${w.short})` }))} info={t("wizard.connectedWallet")} required />
-                      <FormInput label={t("wizard.releaseSignerWallet")} value={signerWallet} onChange={setSignerWallet} placeholder="G...SIGNER" info={t("wizard.whoReleases")} required />
+                      
+                      {/* Counterparty Selection with Contact Selector */}
+                      <div className="flex flex-col gap-2">
+                        <label className="text-xs font-medium uppercase tracking-wider text-white/50">{t("wizard.releaseSignerWallet")} <span className="text-rose-400">*</span></label>
+                        <ContactSelector
+                          value={signerWallet}
+                          onChange={(wallet) => setSignerWallet(wallet)}
+                          placeholder="Select contact or enter wallet address..."
+                        />
+                        <p className="text-[11px] text-white/30">{t("wizard.whoReleases")}</p>
+                      </div>
                       {escrowType === "single" ? (
                         <FormInput label={t("wizard.amount")} value={milestones[0]?.amount || ""} onChange={(v) => updateMilestone(0, "amount", v)} placeholder="50000" type="number" info="USDC" required />
                       ) : (
@@ -1331,6 +1326,40 @@ export default function BusinessDashboardPage() {
         }}
         type="enterprise"
       />
+
+      {/* Agreement Chat - Floating Popup */}
+      {showAgreementChat && (
+        <div className="fixed bottom-6 right-6 z-50 w-96 h-[500px] bg-[#0c1220] rounded-2xl border border-white/10 shadow-[0_16px_64px_rgba(0,0,0,0.5)] overflow-hidden animate-in slide-in-from-bottom-4 duration-300">
+          <div className="flex h-full flex-col">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-white/10 px-4 py-3 bg-[#0a0d14]">
+              <div className="flex items-center gap-2">
+                <div className="h-2 w-2 rounded-full bg-[#3b82f6] animate-pulse" />
+                <h3 className="text-sm font-semibold text-white">Agreement Chat</h3>
+              </div>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setShowAgreementChat(null)}
+                  className="p-1.5 rounded-lg text-white/40 hover:bg-white/10 hover:text-white transition-colors"
+                  title="Close chat"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                </button>
+              </div>
+            </div>
+            {/* Chat Content */}
+            <div className="flex-1 overflow-hidden">
+              <AgreementChat
+                agreementId={showAgreementChat}
+                currentUserWallet={walletAddress || ""}
+                counterpartyWallet={agreements.find(a => a.id === showAgreementChat)?.receiver || ""}
+                defaultOpen={true}
+                embedded={true}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
