@@ -406,63 +406,218 @@
   color: #ffffff !important;
 }
 
-/* ===== Elements OUTSIDE dark cards need dark text in light mode ===== */
+/* ===== LIGHT MODE: Elements OUTSIDE dark cards ===== */
 
-/* Bubbles/badges/pills outside cards - give them visible backgrounds */
-.light main > div > .rounded-full,
-.light main .flex > .rounded-full:not(.bg-\[\#0c1220\] *) {
-  background-color: rgba(15, 23, 42, 0.08) !important;
+/* Main content area headings - must be dark for visibility */
+.light main h1.text-white,
+.light main h2.text-white,
+.light main h3.text-white,
+.light main .text-2xl.text-white,
+.light main .text-xl.text-white,
+.light main .text-lg.text-white {
+  color: #0f172a !important;
 }
 
-/* Text outside dark cards must be dark for visibility */
-.light main > .text-white,
-.light main > div > .text-white:not(.bg-\[\#0c1220\] .text-white):not(.rounded-xl .text-white) {
+/* All text-white outside cards needs to be dark */
+.light main .text-white:not([class*="bg-[#0"]):not([class*="bg-[#0"] *):not(.rounded-xl *):not(aside *):not(header *) {
   color: #1e293b !important;
 }
 
 /* Muted text outside cards */
-.light main > .text-white\/60,
-.light main > div > .text-white\/60:not(.bg-\[\#0c1220\] *),
-.light main > .text-white\/50,
-.light main > div > .text-white\/50:not(.bg-\[\#0c1220\] *),
-.light main > .text-white\/40,
-.light main > div > .text-white\/40:not(.bg-\[\#0c1220\] *) {
+.light main .text-white\/60:not([class*="bg-[#0"] *):not(.rounded-xl *),
+.light main .text-white\/50:not([class*="bg-[#0"] *):not(.rounded-xl *),
+.light main .text-white\/40:not([class*="bg-[#0"] *):not(.rounded-xl *),
+.light main .text-white\/30:not([class*="bg-[#0"] *):not(.rounded-xl *) {
   color: #64748b !important;
 }
 
-/* Tabs/Buttons container outside cards */
-.light main .bg-white\/5:not(.bg-\[\#0c1220\] *) {
-  background-color: rgba(15, 23, 42, 0.06) !important;
+/* ===== BUBBLES/PILLS/BADGES outside cards ===== */
+/* Give them solid visible backgrounds in light mode */
+.light main .rounded-full:not([class*="bg-[#0"] *):not(.rounded-xl *) {
+  background-color: #e2e8f0 !important;
+  color: #334155 !important;
 }
 
-/* Tab buttons outside cards */
-.light main .bg-white\/5 button {
-  color: #475569 !important;
-}
-.light main .bg-white\/5 button.bg-\[\#f0b400\]\/10 {
-  background-color: rgba(240, 180, 0, 0.15) !important;
-  color: #b45309 !important;
-}
-
-/* Search input outside cards */
-.light main .bg-white\/5:not(.bg-\[\#0c1220\] *) input {
-  background-color: white !important;
-  border-color: rgba(0, 0, 0, 0.1) !important;
-  color: #1e293b !important;
+/* Active/selected pills */
+.light main .rounded-full.bg-\[\#f0b400\]\/10,
+.light main .rounded-full.bg-\[\#f0b400\]\/15,
+.light main .rounded-full.bg-\[\#f0b400\]\/20 {
+  background-color: rgba(240, 180, 0, 0.2) !important;
+  color: #92400e !important;
 }
 
-/* View toggle buttons outside cards */
+.light main .rounded-full.bg-\[\#3b82f6\]\/10,
+.light main .rounded-full.bg-\[\#3b82f6\]\/15 {
+  background-color: rgba(59, 130, 246, 0.15) !important;
+  color: #1d4ed8 !important;
+}
+
+/* Status colored pills */
+.light main .rounded-full.bg-amber-400\/10 { background-color: rgba(251, 191, 36, 0.2) !important; color: #92400e !important; }
+.light main .rounded-full.bg-sky-400\/10 { background-color: rgba(56, 189, 248, 0.2) !important; color: #0369a1 !important; }
+.light main .rounded-full.bg-violet-400\/10 { background-color: rgba(167, 139, 250, 0.2) !important; color: #6d28d9 !important; }
+.light main .rounded-full.bg-rose-400\/10 { background-color: rgba(251, 113, 133, 0.2) !important; color: #be123c !important; }
+.light main .rounded-full.bg-emerald-400\/10 { background-color: rgba(52, 211, 153, 0.2) !important; color: #047857 !important; }
+
+/* ===== TAB CONTAINERS ===== */
+/* Tabs background container */
+.light main .bg-white\/5:not([class*="bg-[#0"] *) {
+  background-color: #e2e8f0 !important;
+  border-color: #cbd5e1 !important;
+}
+
+/* Tab buttons */
+.light main .bg-white\/5 button,
 .light main .rounded-lg.bg-white\/5 button {
   color: #475569 !important;
 }
-.light main .rounded-lg.bg-white\/5 button.bg-\[\#f0b400\] {
+
+/* Active tab */
+.light main .bg-white\/5 button.bg-\[\#f0b400\]\/10,
+.light main button.bg-\[\#f0b400\]\/10 {
+  background-color: rgba(240, 180, 0, 0.2) !important;
+  color: #92400e !important;
+}
+
+.light main .bg-white\/5 button.bg-\[\#3b82f6\]\/10,
+.light main button.bg-\[\#3b82f6\]\/10 {
+  background-color: rgba(59, 130, 246, 0.2) !important;
+  color: #1d4ed8 !important;
+}
+
+/* ===== SEARCH/INPUT outside cards ===== */
+.light main input:not([class*="bg-[#0"] *):not(.rounded-xl *) {
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  color: #1e293b !important;
+}
+.light main input::placeholder {
+  color: #94a3b8 !important;
+}
+
+/* ===== BUTTONS outside cards ===== */
+.light main button.bg-\[\#f0b400\]:not([class*="bg-[#0"] *) {
   background-color: #f0b400 !important;
   color: #0c1220 !important;
 }
 
-/* Icons outside cards */
-.light main svg.text-white\/40:not(.bg-\[\#0c1220\] *) {
-  color: #94a3b8 !important;
+.light main button.bg-\[\#3b82f6\]:not([class*="bg-[#0"] *) {
+  background-color: #3b82f6 !important;
+  color: #ffffff !important;
+}
+
+/* Ghost buttons */
+.light main button.text-white\/60:not([class*="bg-[#0"] *) {
+  color: #64748b !important;
+}
+
+/* ===== ICONS outside cards ===== */
+.light main svg:not([class*="bg-[#0"] *):not(.rounded-xl *) {
+  color: #64748b !important;
+}
+
+/* Colored icons preserve their color */
+.light main svg.text-\[\#f0b400\] { color: #f0b400 !important; }
+.light main svg.text-\[\#3b82f6\] { color: #3b82f6 !important; }
+.light main svg.text-amber-400 { color: #d97706 !important; }
+.light main svg.text-emerald-400 { color: #059669 !important; }
+.light main svg.text-sky-400 { color: #0284c7 !important; }
+.light main svg.text-rose-400 { color: #e11d48 !important; }
+.light main svg.text-violet-400 { color: #7c3aed !important; }
+
+/* ===== VIEW MODE TOGGLE (As Buyer / As Seller) ===== */
+.light main .rounded-lg.p-1.bg-white\/5 {
+  background-color: #e2e8f0 !important;
+}
+
+.light main .rounded-lg.p-1.bg-white\/5 button {
+  color: #475569 !important;
+}
+
+.light main .rounded-lg.p-1.bg-white\/5 button.bg-\[\#f0b400\],
+.light main .rounded-lg.p-1.bg-white\/5 button.bg-\[\#3b82f6\] {
+  color: #0c1220 !important;
+}
+
+/* ===== MOBILE RESPONSIVE ===== */
+@media (max-width: 768px) {
+  /* Sidebar hidden by default on mobile */
+  aside {
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+  }
+  
+  aside.open {
+    transform: translateX(0);
+  }
+  
+  /* Main content full width */
+  main {
+    padding: 1rem !important;
+  }
+  
+  /* Cards stack vertically */
+  .grid-cols-2,
+  .grid-cols-3,
+  .grid-cols-4 {
+    grid-template-columns: 1fr !important;
+  }
+  
+  /* Tab buttons wrap */
+  .flex.gap-1 {
+    flex-wrap: wrap;
+  }
+  
+  /* Smaller text on mobile */
+  h1 { font-size: 1.5rem !important; }
+  h2 { font-size: 1.25rem !important; }
+  
+  /* Pills/badges smaller */
+  .rounded-full {
+    padding: 0.25rem 0.5rem !important;
+    font-size: 0.65rem !important;
+  }
+  
+  /* Buttons full width on mobile */
+  button.rounded-full {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  /* Chat popup smaller on mobile */
+  .fixed.bottom-6.right-6 {
+    bottom: 0 !important;
+    right: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 60vh !important;
+    border-radius: 1rem 1rem 0 0 !important;
+  }
+  
+  /* Profile editor modal full screen on mobile */
+  [class*="fixed"][class*="z-50"] > div {
+    max-width: 100% !important;
+    max-height: 100% !important;
+    border-radius: 0 !important;
+  }
+}
+
+@media (max-width: 640px) {
+  /* Even smaller padding on very small screens */
+  main {
+    padding: 0.75rem !important;
+  }
+  
+  /* Stack tab buttons vertically */
+  .flex.p-1.rounded-lg {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  
+  /* View toggle buttons full width */
+  .rounded-lg.p-1 button {
+    width: 100%;
+  }
 }
 
 /* Global smooth transitions */
