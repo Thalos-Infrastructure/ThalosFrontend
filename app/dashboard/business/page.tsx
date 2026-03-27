@@ -452,6 +452,32 @@ export default function BusinessDashboardPage() {
 
             {/* Bottom Section */}
             <div className="p-3 border-t border-white/[0.06] space-y-2">
+              {/* Referral Button */}
+              <button 
+                onClick={async () => {
+                  const referralLink = `https://thalos.app/invite?ref=enterprise-${Date.now().toString(36)}`
+                  if (navigator.share) {
+                    try {
+                      await navigator.share({
+                        title: "Join Thalos for Business",
+                        text: "We use Thalos for secure enterprise agreements. Join us!",
+                        url: referralLink,
+                      })
+                    } catch {
+                      await navigator.clipboard.writeText(referralLink)
+                      alert("Referral link copied!")
+                    }
+                  } else {
+                    await navigator.clipboard.writeText(referralLink)
+                    alert("Referral link copied to clipboard!")
+                  }
+                }}
+                className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium bg-gradient-to-r from-[#3b82f6]/20 to-[#3b82f6]/10 border border-[#3b82f6]/20 text-[#3b82f6] hover:from-[#3b82f6]/30 hover:to-[#3b82f6]/20 transition-all"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+                Invite Partners
+              </button>
+
               {/* Quick Stats */}
               <div className="p-3 rounded-xl bg-gradient-to-br from-white/[0.04] to-transparent border border-white/[0.06]">
                 <div className="flex items-center justify-between mb-2">

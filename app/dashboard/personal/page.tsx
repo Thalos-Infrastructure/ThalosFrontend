@@ -694,6 +694,32 @@ export default function PersonalDashboardPage() {
 
             {/* Bottom Section */}
             <div className="p-3 border-t border-white/[0.06] space-y-2">
+              {/* Referral Button - Prominent */}
+              <button 
+                onClick={async () => {
+                  const referralLink = `https://thalos.app/invite?ref=${walletAddress?.slice(0, 8) || Date.now().toString(36)}`
+                  if (navigator.share) {
+                    try {
+                      await navigator.share({
+                        title: "Join Thalos",
+                        text: "I'm using Thalos for secure P2P agreements. Join me and get started!",
+                        url: referralLink,
+                      })
+                    } catch {
+                      await navigator.clipboard.writeText(referralLink)
+                      alert("Referral link copied!")
+                    }
+                  } else {
+                    await navigator.clipboard.writeText(referralLink)
+                    alert("Referral link copied to clipboard!")
+                  }
+                }}
+                className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium bg-gradient-to-r from-[#f0b400]/20 to-[#f0b400]/10 border border-[#f0b400]/20 text-[#f0b400] hover:from-[#f0b400]/30 hover:to-[#f0b400]/20 transition-all"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+                Invite Friends
+              </button>
+
               {/* Quick Stats */}
               <div className="p-3 rounded-xl bg-gradient-to-br from-white/[0.04] to-transparent border border-white/[0.06]">
                 <div className="flex items-center justify-between mb-2">
@@ -1017,52 +1043,32 @@ export default function PersonalDashboardPage() {
                 </Button>
               </div>
 
-              {/* New Structured Agreements View */}
+              {/* Structured Agreements View - includes all agreements and approver escrows */}
               <AgreementsView
-                agreements={agreements.map(a => ({
-                  ...a,
-                  updatedAt: a.date,
-                }))}
+                agreements={[
+                  // Regular agreements with role
+                  ...agreements.map(a => ({
+                    ...a,
+                    updatedAt: a.date,
+                  })),
+                  // Approver escrows (these are agreements where user is approver)
+                  ...approverEscrows.map(e => ({
+                    id: e.id,
+                    title: e.title,
+                    counterparty: e.serviceProvider?.slice(0, 8) + "..." || "Unknown",
+                    status: e.status || "pending",
+                    amount: typeof e.amount === "number" ? e.amount.toLocaleString() : e.amount || "0",
+                    currency: "USDC",
+                    type: "Single Release" as const,
+                    updatedAt: e.date,
+                    milestones: e.milestones || [{ status: "pending" }],
+                    role: "buyer" as const, // As approver, user is typically the buyer
+                  }))
+                ]}
                 onAgreementClick={(id) => setViewingAgreement(id)}
+                onOpenChat={(id) => setShowAgreementChat(id)}
                 currentUserWallet={walletAddress}
               />
-              {/* Section: Agreements that require my attention */}
-              {approverEscrows.length > 0 && (
-                <div className="mt-12">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <h2 className="text-xl font-semibold text-white">{t("dashPage.pendingAction")}</h2>
-                      <span className="rounded-full bg-[#f0b400]/15 px-2.5 py-0.5 text-xs font-bold text-[#f0b400]">
-                        {approverEscrows.length}
-                      </span>
-                    </div>
-                  </div>
-                  {approverLoading ? (
-                    <div className="text-white/40 text-sm">{t("dashPage.loadingEscrows")}</div>
-                  ) : (
-                    <div className="flex flex-col gap-3">
-                      {approverEscrows.slice(0, 5).map((agr) => (
-                        <ApproverAgreementDetail
-                          key={agr.id}
-                          agr={agr}
-                          walletAddress={walletAddress}
-                        />
-                      ))}
-                      {approverEscrows.length > 5 && (
-                        <button 
-                          className="flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.02] py-3 text-sm font-medium text-white/50 hover:bg-white/[0.04] hover:text-white/70 transition-all"
-                          onClick={() => {/* TODO: Show all pending */}}
-                        >
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M6 9l6 6 6-6"/>
-                          </svg>
-                          View all {approverEscrows.length} pending agreements
-                        </button>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
             </div>
           )}
 
