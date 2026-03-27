@@ -137,7 +137,7 @@ const sidebarItems = [
   { id: "create", labelKey: "dashPage.newAgreement", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg> },
   { id: "agreements", labelKey: "dashPage.agreements", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> },
   { id: "templates", labelKey: "dashPage.templates", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg> },
-  { id: "bounty", labelKey: "dashPage.thalosBounty", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v12"/><path d="M15 9.5c0-1.5-1.5-2.5-3-2.5s-3 1-3 2.5 1.5 2 3 2.5 3 1 3 2.5-1.5 2.5-3 2.5-3-1-3-2.5"/></svg> },
+  
   { id: "wallets", labelKey: "dashPage.wallets", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg> },
   { id: "analytics", labelKey: "dashPage.analytics", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg> },
   ]
@@ -389,11 +389,12 @@ export default function BusinessDashboardPage() {
 
   return (
     <div className="relative min-h-screen text-foreground">
-{/* Professional gradient background with subtle pattern */}
-  <div className="fixed inset-0 z-0 bg-[#060810]">
-    {/* Subtle gradient orbs - Enterprise blue theme */}
-    <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-[#3b82f6]/5 rounded-full blur-[150px]" />
-    <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-[#f0b400]/5 rounded-full blur-[150px]" />
+{/* Professional gradient background - neutral dark */}
+  <div className="fixed inset-0 z-0 bg-[#0a0c10]">
+    {/* Subtle gradient orbs - toned down, less blue */}
+    <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-[#1e293b]/20 rounded-full blur-[180px]" />
+    <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-[#3b82f6]/3 rounded-full blur-[180px]" />
+    <div className="absolute top-1/2 right-1/3 w-[400px] h-[400px] bg-[#f0b400]/2 rounded-full blur-[150px]" />
     
     {/* Subtle grid pattern */}
     <div className="absolute inset-0 opacity-[0.015]" style={{
@@ -506,7 +507,7 @@ export default function BusinessDashboardPage() {
                       {item.icon}
                     </span>
                     <span className="relative z-10">
-                      {item.id === "bounty" ? "Thalos Bounty" : t(`dashPage.${item.id === "create" ? "newAgreement" : item.id === "templates" ? "templates" : item.id}`)}
+                      {t(`dashPage.${item.id === "create" ? "newAgreement" : item.id === "templates" ? "templates" : item.id}`)}
                     </span>
                     {isActive && (
                       <div className="ml-auto relative z-10">
@@ -571,55 +572,7 @@ export default function BusinessDashboardPage() {
 
         {/* Main content */}
         <main className="flex-1 overflow-y-auto p-4 lg:p-8">
-          {/* ══════ THALOS BOUNTY ══════ */}
-          {activeSection === "bounty" && (
-            <div className="mx-auto max-w-4xl pt-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
-              <p className="mb-4 text-center text-xs text-white/40">
-                {t("dashPage.bountyComingSoon")}
-              </p>
-              
-              <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#0c1220] p-8 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)]">
-{/* Background collage pattern */}
-                <div className="absolute inset-0 z-0 grid grid-cols-4 grid-rows-2 gap-0.5 opacity-25">
-                  {[...Array(8)].map((_, i) => (
-                    <div key={i} className="relative overflow-hidden">
-                      <Image src="/thalos-bounty-bg.gif" alt="" fill className="object-cover scale-110" />
-                    </div>
-                  ))}
-                </div>
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0c1220] via-[#0c1220]/80 to-[#0c1220]/50" />
-                
-                <div className="relative z-10 flex flex-col items-center text-center">
-                  <p className="mb-6 max-w-md text-sm text-white/80">
-                    {t("dashPage.bountyDescEnterprise")}
-                  </p>
-                  <div className="flex flex-wrap items-center justify-center gap-3">
-                    <Button className="rounded-lg bg-[#f0b400] px-6 py-2 text-sm font-semibold text-[#0c1220] hover:bg-[#e5ab00] shadow-[0_2px_8px_rgba(240,180,0,0.25)]">
-                      {t("dashPage.createBounty")}
-                    </Button>
-                    <Button variant="outline" className="rounded-lg border-white/15 bg-white/5 px-6 py-2 text-sm font-semibold text-white hover:bg-white/10">
-                      {t("dashPage.viewBounties")}
-                    </Button>
-                  </div>
-                </div>
-                
-                <div className="relative z-10 mt-8 grid gap-4 md:grid-cols-3">
-                  <div className="rounded-xl border border-white/10 bg-[#0c1220]/80 p-4 text-center backdrop-blur-sm">
-                    <p className="text-2xl font-bold text-[#f0b400]">0</p>
-                    <p className="text-xs text-white/50">{t("dashPage.activeBounties")}</p>
-                  </div>
-                  <div className="rounded-xl border border-white/10 bg-[#0c1220]/80 p-4 text-center backdrop-blur-sm">
-                    <p className="text-2xl font-bold text-white">$0</p>
-                    <p className="text-xs text-white/50">{t("dashPage.totalRewards")}</p>
-                  </div>
-                  <div className="rounded-xl border border-white/10 bg-[#0c1220]/80 p-4 text-center backdrop-blur-sm">
-                    <p className="text-2xl font-bold text-white">0</p>
-                    <p className="text-xs text-white/50">{t("dashPage.completed")}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
+          
 
           {/* ══════ ANALYTICS ══════ */}
           {activeSection === "analytics" && (
