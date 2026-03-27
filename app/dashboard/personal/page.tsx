@@ -627,14 +627,14 @@ export default function PersonalDashboardPage() {
                 className="w-full flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-[#f0b400]/10 to-transparent border border-[#f0b400]/10 hover:from-[#f0b400]/20 hover:to-[#f0b400]/5 transition-all group"
               >
                 <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[#f0b400] to-[#f0b400]/60 flex items-center justify-center text-[#0c1220] font-bold text-sm overflow-hidden">
-                  {userProfile?.avatar ? (
-                    <img src={userProfile.avatar} alt="" className="h-full w-full object-cover" />
+                  {userProfile?.avatar_url ? (
+                    <img src={userProfile.avatar_url} alt="" className="h-full w-full object-cover" />
                   ) : (
-                    userProfile?.displayName?.slice(0, 2).toUpperCase() || walletAddress?.slice(0, 2).toUpperCase() || "TH"
+                    userProfile?.display_name?.slice(0, 2).toUpperCase() || walletAddress?.slice(0, 2).toUpperCase() || "TH"
                   )}
                 </div>
                 <div className="flex-1 min-w-0 text-left">
-                  <p className="text-sm font-semibold text-white truncate">{userProfile?.displayName || "Personal Account"}</p>
+                  <p className="text-sm font-semibold text-white truncate">{userProfile?.display_name || "Personal Account"}</p>
                   <p className="text-[11px] font-mono text-[#f0b400]/80 truncate">
                     {walletAddress ? `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}` : "Connect Wallet"}
                   </p>
@@ -1535,20 +1535,25 @@ const newAgr: Agreement = {
         isOpen={showProfileEditor}
         onClose={() => setShowProfileEditor(false)}
         profile={{
-          displayName: userProfile?.displayName || "Personal Account",
+          displayName: userProfile?.display_name || "Personal Account",
           email: userProfile?.email || "",
           walletAddress: walletAddress || "",
-          avatar: userProfile?.avatar,
-          bio: userProfile?.bio,
+          avatar: userProfile?.avatar_url || undefined,
         }}
         onSave={async (newProfile) => {
-          setUserProfile({
-            displayName: newProfile.displayName,
-            email: newProfile.email,
-            avatar: newProfile.avatar,
-            bio: newProfile.bio,
-          })
-          // TODO: Save to database
+          // Update profile in database
+          const { updateProfile } = await import("@/lib/actions/profile")
+          if (walletAddress) {
+            const result = await updateProfile(walletAddress, {
+              display_name: newProfile.displayName,
+              email: newProfile.email,
+              avatar_url: newProfile.avatar,
+              account_type: "personal",
+            })
+            if (result.profile) {
+              setUserProfile(result.profile)
+            }
+          }
         }}
         type="personal"
       />
