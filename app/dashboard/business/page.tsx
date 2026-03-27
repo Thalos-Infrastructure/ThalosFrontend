@@ -140,7 +140,7 @@ const sidebarItems = [
    ════════════════════════════════════════════════ */
 export default function BusinessDashboardPage() {
   const { t } = useLanguage()
-  const { openWalletModal } = useStellarWallet()
+  const { openWalletModal, walletAddress } = useStellarWallet()
   const [loading, setLoading] = useState(false)
 
   const [activeSection, setActiveSection] = useState("agreements")
