@@ -6,6 +6,7 @@ import {
   signToken,
   type AuthUser,
 } from "@/lib/auth/utils";
+import { activateAndAddTrustline } from "@/lib/stellar/trustline";
 
 function validateEmail(email: unknown): email is string {
   return typeof email === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -51,6 +52,16 @@ export async function POST(req: Request) {
   const password_hash = await hashPassword(password);
   const keypair = Keypair.random();
   const wallet_public_key = keypair.publicKey();
+  const wallet_secret_key = keypair.secret();
+
+  // Activate wallet and add USDC trustline before saving
+  // This ensures the custodial wallet can receive USDC payments
+  const trustlineResult = await activateAndAddTrustline(wallet_public_key, wallet_secret_key);
+  if (!trustlineResult.success) {
+    console.warn("Failed to activate wallet/trustline:", trustlineResult.error);
+    // Continue with registration even if trustline fails
+    // User can add trustline later
+  }
 
   const { data: inserted, error } = await supabase
     .from("auth_users")
