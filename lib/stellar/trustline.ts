@@ -11,8 +11,8 @@ const NETWORK_PASSPHRASE = STELLAR_NETWORK === "MAINNET"
   ? "Public Global Stellar Network ; September 2015"
   : "Test SDF Network ; September 2015";
 
-// Funding wallet for activating new accounts (needs XLM)
-const FUNDING_SECRET = process.env.STELLAR_FUNDING_SECRET;
+// Friendbot URL for testnet activation (free)
+const FRIENDBOT_URL = "https://friendbot.stellar.org";
 
 interface TrustlineResult {
   success: boolean;
@@ -27,7 +27,6 @@ export async function checkUsdcTrustline(publicKey: string): Promise<boolean> {
   try {
     const response = await fetch(`${HORIZON_URL}/accounts/${publicKey}`);
     if (!response.ok) {
-      // Account doesn't exist yet (not activated)
       return false;
     }
     
@@ -58,92 +57,67 @@ export async function checkWalletActivated(publicKey: string): Promise<boolean> 
 }
 
 /**
- * Get the unsigned XDR for adding USDC trustline
- * This needs to be signed by the wallet owner
+ * Activate wallet using Friendbot (TESTNET only - free)
  */
-export async function getAddTrustlineXdr(publicKey: string): Promise<{ xdr: string; error?: string }> {
+async function activateWithFriendbot(publicKey: string): Promise<boolean> {
+  if (STELLAR_NETWORK === "MAINNET") {
+    return false; // Friendbot only works on testnet
+  }
+  
   try {
-    // Dynamic import to avoid bundling issues
-    const StellarSdk = await import("@stellar/stellar-sdk");
-    const server = new StellarSdk.Horizon.Server(HORIZON_URL);
-    
-    // Load the account
-    const account = await server.loadAccount(publicKey);
-    
-    // Create the USDC asset
-    const usdcAsset = new StellarSdk.Asset(TRUSTLINE_USDC.symbol, TRUSTLINE_USDC.address);
-    
-    // Build the transaction
-    const transaction = new StellarSdk.TransactionBuilder(account, {
-      fee: StellarSdk.BASE_FEE,
-      networkPassphrase: NETWORK_PASSPHRASE,
-    })
-      .addOperation(StellarSdk.Operation.changeTrust({
-        asset: usdcAsset,
-        limit: "1000000000", // 1 billion USDC max
-      }))
-      .setTimeout(180)
-      .build();
-    
-    return { xdr: transaction.toXDR() };
+    const response = await fetch(`${FRIENDBOT_URL}?addr=${publicKey}`);
+    return response.ok;
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Failed to create trustline transaction";
-    return { xdr: "", error: message };
+    console.error("Friendbot error:", error);
+    return false;
   }
 }
 
 /**
- * Activate a new wallet and add USDC trustline using the funding wallet
- * This is for custodial wallets where we have the secret key
+ * Activate wallet and add USDC trustline for custodial wallets
+ * Uses Friendbot for testnet (free), requires manual funding for mainnet
  */
 export async function activateAndAddTrustline(
   publicKey: string, 
   secretKey: string
 ): Promise<TrustlineResult> {
-  if (!FUNDING_SECRET) {
-    return { success: false, error: "Funding wallet not configured" };
-  }
-
   try {
     const StellarSdk = await import("@stellar/stellar-sdk");
     const server = new StellarSdk.Horizon.Server(HORIZON_URL);
     
     // Check if account is already activated
-    const isActivated = await checkWalletActivated(publicKey);
+    let isActivated = await checkWalletActivated(publicKey);
     
     if (!isActivated) {
-      // Step 1: Fund the new account from funding wallet
-      const fundingKeypair = StellarSdk.Keypair.fromSecret(FUNDING_SECRET);
-      const fundingAccount = await server.loadAccount(fundingKeypair.publicKey());
-      
-      // Create account with minimum balance (1.5 XLM = 1 base + 0.5 per trustline)
-      const createAccountTx = new StellarSdk.TransactionBuilder(fundingAccount, {
-        fee: StellarSdk.BASE_FEE,
-        networkPassphrase: NETWORK_PASSPHRASE,
-      })
-        .addOperation(StellarSdk.Operation.createAccount({
-          destination: publicKey,
-          startingBalance: "2", // 2 XLM to cover base reserve + trustline + some for fees
-        }))
-        .setTimeout(180)
-        .build();
-      
-      createAccountTx.sign(fundingKeypair);
-      await server.submitTransaction(createAccountTx);
+      if (STELLAR_NETWORK === "TESTNET") {
+        // Use Friendbot for testnet (free)
+        const friendbotSuccess = await activateWithFriendbot(publicKey);
+        if (!friendbotSuccess) {
+          return { success: false, error: "Failed to activate wallet with Friendbot" };
+        }
+        isActivated = true;
+      } else {
+        // For mainnet, wallet needs to be funded externally
+        return { 
+          success: false, 
+          error: "Wallet not activated. For mainnet, the wallet needs XLM to be activated." 
+        };
+      }
     }
     
-    // Step 2: Add USDC trustline
+    // Check if trustline already exists
     const hasTrustline = await checkUsdcTrustline(publicKey);
     if (hasTrustline) {
       return { success: true };
     }
     
-    const newAccountKeypair = StellarSdk.Keypair.fromSecret(secretKey);
-    const newAccount = await server.loadAccount(publicKey);
+    // Add USDC trustline
+    const keypair = StellarSdk.Keypair.fromSecret(secretKey);
+    const account = await server.loadAccount(publicKey);
     
     const usdcAsset = new StellarSdk.Asset(TRUSTLINE_USDC.symbol, TRUSTLINE_USDC.address);
     
-    const trustlineTx = new StellarSdk.TransactionBuilder(newAccount, {
+    const transaction = new StellarSdk.TransactionBuilder(account, {
       fee: StellarSdk.BASE_FEE,
       networkPassphrase: NETWORK_PASSPHRASE,
     })
@@ -154,12 +128,12 @@ export async function activateAndAddTrustline(
       .setTimeout(180)
       .build();
     
-    trustlineTx.sign(newAccountKeypair);
-    const result = await server.submitTransaction(trustlineTx);
+    transaction.sign(keypair);
+    const result = await server.submitTransaction(transaction);
     
     return { success: true, txHash: result.hash };
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Failed to activate wallet";
+    const message = error instanceof Error ? error.message : "Failed to add trustline";
     console.error("Trustline error:", error);
     return { success: false, error: message };
   }

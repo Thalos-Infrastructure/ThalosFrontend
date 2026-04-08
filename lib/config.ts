@@ -16,17 +16,4 @@ export const HORIZON_URL = STELLAR_NETWORK === "MAINNET"
   ? "https://horizon.stellar.org"
   : "https://horizon-testnet.stellar.org";
 
-/**
- * STELLAR_FUNDING_SECRET - Required for custodial wallet activation
- * 
- * This is the secret key of a Stellar wallet that will fund new custodial accounts.
- * The funding wallet needs to have XLM to:
- * - Activate new accounts (1 XLM base reserve)
- * - Cover trustline reserves (0.5 XLM per trustline)
- * 
- * For TESTNET: Create a wallet at https://laboratory.stellar.org/#account-creator
- * For MAINNET: Use a secure, funded Stellar wallet
- * 
- * Add to environment variables:
- * STELLAR_FUNDING_SECRET=SXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
- */
+// Friendbot is used for testnet wallet activation (free, no funding required)
