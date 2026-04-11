@@ -9,3 +9,11 @@ export const TRUSTLINE_USDC = {
 
 // show mocked agreements in the UI, set to false to hide them
 export const SHOW_MOCKED_AGREEMENTS = process.env.NEXT_PUBLIC_SHOW_MOCKED_AGREEMENTS !== "false";
+
+// Stellar Network Configuration
+export const STELLAR_NETWORK = process.env.NEXT_PUBLIC_STELLAR_NETWORK || "TESTNET";
+export const HORIZON_URL = STELLAR_NETWORK === "MAINNET" 
+  ? "https://horizon.stellar.org"
+  : "https://horizon-testnet.stellar.org";
+
+// Friendbot is used for testnet wallet activation (free, no funding required)

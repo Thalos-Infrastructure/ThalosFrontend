@@ -240,12 +240,30 @@ function buildAgreementBody(payload: AgreementPayload) {
 export async function createAgreement(
   payload: AgreementPayload
 ): Promise<AgreementResponse> {
+  // Validate receiver wallet has USDC trustline before creating escrow
+  const receiverWallet = payload.roles.receiver;
+  if (receiverWallet) {
+    try {
+      const { validateWalletForEscrow } = await import("@/lib/stellar/trustline");
+      const validation = await validateWalletForEscrow(receiverWallet);
+      if (!validation.valid) {
+        return {
+          success: false,
+          error: validation.error || "Receiver wallet cannot receive USDC. Please ensure the wallet has USDC trustline configured.",
+        };
+      }
+    } catch (e) {
+      console.warn("Could not validate receiver trustline:", e);
+      // Continue anyway - Trustless Work will catch it if invalid
+    }
+  }
+  
   const body = buildAgreementBody(payload);
-
+  
   const url =
-    payload.serviceType === "multi-release"
-      ? endpoints.deployer.multi
-      : endpoints.deployer.single;
+  payload.serviceType === "multi-release"
+  ? endpoints.deployer.multi
+  : endpoints.deployer.single;
 
   return safeFetch(url, {
     method: "POST",

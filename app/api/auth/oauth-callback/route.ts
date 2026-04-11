@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { signToken, type AuthUser } from "@/lib/auth/utils";
 import { Keypair } from "stellar-sdk";
+import { activateAndAddTrustline } from "@/lib/stellar/trustline";
 
 export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}));
@@ -45,6 +46,15 @@ export async function POST(req: Request) {
   } else {
     const keypair = Keypair.random();
     walletPublicKey = keypair.publicKey();
+    const walletSecretKey = keypair.secret();
+    
+    // Activate wallet and add USDC trustline before saving
+    const trustlineResult = await activateAndAddTrustline(walletPublicKey, walletSecretKey);
+    if (!trustlineResult.success) {
+      console.warn("Failed to activate wallet/trustline for OAuth user:", trustlineResult.error);
+      // Continue with registration even if trustline fails
+    }
+    
     const { data: inserted, error: insertError } = await db
       .from("auth_users")
       .insert({
