@@ -9,7 +9,9 @@ import { cn } from "@/lib/utils"
 import { ThalosLoader } from "@/components/thalos-loader"
 import { useLanguage } from "@/lib/i18n"
 import { useStellarWallet } from "@/lib/stellar-wallet"
+import { useAuthStore } from "@/lib/auth-store"
 import { updateProfile, type ProfileUpdateInput } from "@/lib/actions/profile"
+import { LinkedWallets } from "@/components/profile/linked-wallets"
 
 /* ── Form Components ── */
 function FormInput({ label, value, onChange, placeholder, type = "text", disabled = false, info }: {
@@ -55,6 +57,7 @@ export default function ProfilePage() {
   const { t } = useLanguage()
   const router = useRouter()
   const { address, profile, refreshProfile, disconnect } = useStellarWallet()
+  const { user } = useAuthStore()
   
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
@@ -285,6 +288,13 @@ export default function ProfilePage() {
                 </div>
               </div>
             </div>
+
+            {{/* Linked Wallets Section */}
+            {user?.id && (
+              <div className="mt-8">
+                <LinkedWallets userId={user.id} />
+              </div>
+            )}
 
             {/* Stats Section */}
             <div className="mt-8 grid gap-4 sm:grid-cols-3">

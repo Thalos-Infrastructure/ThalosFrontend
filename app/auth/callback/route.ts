@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
-import { signToken, type AuthUser } from "@/lib/auth/utils";
+import { signToken } from "@/lib/auth/utils";
 import { Keypair } from "stellar-sdk";
+import { activateAndAddTrustline } from "@/lib/stellar/trustline";
 
 /**
  * Server-side OAuth callback. The code verifier is in the request cookies
@@ -47,13 +48,34 @@ export async function GET(req: Request) {
     let walletPublicKey: string;
     let userName: string | undefined = name;
 
+    let accountType: string | null = null;
+    
     if (existing) {
       userId = existing.id;
       walletPublicKey = existing.wallet_public_key;
       if (existing.name) userName = existing.name;
+      
+      // Check if user has a profile with account_type
+      const { data: profile } = await db
+        .from("profiles")
+        .select("account_type")
+        .eq("wallet_address", walletPublicKey)
+        .maybeSingle();
+      
+      if (profile?.account_type) {
+        accountType = profile.account_type;
+      }
     } else {
       const keypair = Keypair.random();
       walletPublicKey = keypair.publicKey();
+      const walletSecretKey = keypair.secret();
+      
+      // Activate wallet and add USDC trustline for new users
+      const trustlineResult = await activateAndAddTrustline(walletPublicKey, walletSecretKey);
+      if (!trustlineResult.success) {
+        console.warn("Failed to activate wallet/trustline for OAuth user:", trustlineResult.error);
+      }
+      
       const { data: inserted, error: insertError } = await db
         .from("auth_users")
         .insert({
@@ -75,10 +97,16 @@ export async function GET(req: Request) {
       if (inserted.name) userName = inserted.name;
     }
 
+    // Determine redirect: if user has account_type, go to dashboard; otherwise select-profile
+    let finalRedirect = next;
+    if (next === "/auth/select-profile" && accountType) {
+      finalRedirect = accountType === "business" ? "/dashboard/business" : "/dashboard/personal";
+    }
+
     const token = signToken({ sub: userId, email });
     const successUrl = new URL("/auth/callback/success", base);
     successUrl.searchParams.set("token", token);
-    successUrl.searchParams.set("next", next);
+    successUrl.searchParams.set("next", finalRedirect);
     return NextResponse.redirect(successUrl.toString());
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
