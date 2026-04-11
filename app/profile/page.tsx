@@ -289,7 +289,7 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            {{/* Linked Wallets Section */}
+            {/* Linked Wallets Section */}
             {user?.id && (
               <div className="mt-8">
                 <LinkedWallets userId={user.id} />
