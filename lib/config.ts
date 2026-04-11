@@ -1,5 +1,13 @@
 // Thalos Global Configuration Constants
 
+// App URLs
+export const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://www.thalosplatform.xyz";
+export const APP_NAME = "Thalos";
+
+// Email Configuration (Resend)
+export const EMAIL_FROM = process.env.EMAIL_FROM || "Thalos <notifications@thalosplatform.xyz>";
+export const EMAIL_REPLY_TO = process.env.EMAIL_REPLY_TO || "support@thalosplatform.xyz";
+
 export const STELLAR_EXPLORER_BASE_URL = process.env.NEXT_PUBLIC_STELLAR_EXPLORER_URL || "https://stellar.expert/explorer/testnet/contract/";
 
 export const TRUSTLINE_USDC = {
