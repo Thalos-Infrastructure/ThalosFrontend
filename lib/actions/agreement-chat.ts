@@ -1,23 +1,22 @@
 "use server"
 
-import { createClient } from "@/lib/supabase/server"
+import { createServiceClient } from "@/lib/supabase/service"
 
 export interface AgreementMessage {
   id: string
   agreement_id: string
-  sender_id: string
   sender_wallet: string
   message: string
   created_at: string
+  read_at: string | null
 }
 
 export async function getAgreementMessages(agreementId: string): Promise<{ messages: AgreementMessage[]; error: string | null }> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  
-  if (!user) {
-    return { messages: [], error: "Not authenticated" }
+  if (!agreementId) {
+    return { messages: [], error: "Agreement ID is required" }
   }
+
+  const supabase = createServiceClient()
 
   const { data, error } = await supabase
     .from("agreement_messages")
@@ -37,22 +36,24 @@ export async function sendAgreementMessage(
   message: string,
   senderWallet: string
 ): Promise<{ message: AgreementMessage | null; error: string | null }> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  
-  if (!user) {
-    return { message: null, error: "Not authenticated" }
+  if (!agreementId) {
+    return { message: null, error: "Agreement ID is required" }
+  }
+
+  if (!senderWallet) {
+    return { message: null, error: "Sender wallet is required" }
   }
 
   if (!message.trim()) {
     return { message: null, error: "Message cannot be empty" }
   }
 
+  const supabase = createServiceClient()
+
   const { data, error } = await supabase
     .from("agreement_messages")
     .insert({
       agreement_id: agreementId,
-      sender_id: user.id,
       sender_wallet: senderWallet,
       message: message.trim(),
     })

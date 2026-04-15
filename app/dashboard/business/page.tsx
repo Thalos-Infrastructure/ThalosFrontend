@@ -174,7 +174,79 @@ export default function BusinessDashboardPage() {
   const [approverEscrows, setApproverEscrows] = useState<Agreement[]>([])
   const [approverLoading, setApproverLoading] = useState(false)
   
-  // Fetch approver escrows
+  // Helper to map escrow to agreement format
+  const mapEscrowToAgreement = (e: Record<string, unknown>): Agreement => {
+    const milestones = e.milestones as Array<{ description?: string; amount?: number; approved?: boolean; released?: boolean; status?: string }> || [];
+    const isMulti = (e.type as string) === "multi-release" || milestones.length > 1;
+    const amount = isMulti 
+      ? milestones.reduce((sum, m) => sum + (m.amount || 0), 0).toString()
+      : String(e.amount || "0");
+    
+    return {
+      id: e.contractId as string || `escrow-${Date.now()}`,
+      title: e.title as string || "Escrow Agreement",
+      counterparty: ((e.serviceProvider as string) || (e.receiver as string) || "").slice(0, 8) + "...",
+      status: e.status as string || "pending",
+      amount,
+      currency: "USDC",
+      type: isMulti ? "Multi Release" : "Single Release",
+      date: e.createdAt as string || new Date().toISOString(),
+      milestones: milestones.map(m => ({
+        description: m.description || "Milestone",
+        amount: String(m.amount || 0),
+        status: m.released ? "released" : m.approved ? "approved" : "pending" as "pending" | "approved" | "released",
+      })),
+      receiver: e.receiver as string || "",
+      role: walletAddress === e.serviceProvider ? "seller" : "buyer",
+    };
+  };
+
+  // Fetch all escrows where user has any role
+  const fetchedEscrowsRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!walletAddress) return;
+    if (fetchedEscrowsRef.current === walletAddress) return;
+    fetchedEscrowsRef.current = walletAddress;
+    
+    async function fetchAllEscrows() {
+      const { getEscrowsBySigner, getEscrowsByRole } = await import("@/services/trustlessworkService");
+      const seenIds = new Set<string>();
+      const allAgreements: Agreement[] = [];
+      
+      // Fetch escrows by signer
+      const signerRes = await getEscrowsBySigner(walletAddress);
+      if (signerRes.success && Array.isArray(signerRes.data)) {
+        signerRes.data.forEach(escrow => {
+          if (!seenIds.has(escrow.contractId)) {
+            seenIds.add(escrow.contractId);
+            allAgreements.push(mapEscrowToAgreement(escrow as unknown as Record<string, unknown>));
+          }
+        });
+      }
+      
+      // Fetch by each role
+      const roles = ["receiver", "serviceProvider", "releaseSigner"];
+      for (const role of roles) {
+        const res = await getEscrowsByRole({ role, roleAddress: walletAddress });
+        if (res.success && Array.isArray(res.data)) {
+          res.data.forEach(escrow => {
+            if (!seenIds.has(escrow.contractId)) {
+              seenIds.add(escrow.contractId);
+              allAgreements.push(mapEscrowToAgreement(escrow as unknown as Record<string, unknown>));
+            }
+          });
+        }
+      }
+      
+      if (allAgreements.length > 0) {
+        setAgreements(allAgreements);
+      }
+    }
+    
+    fetchAllEscrows();
+  }, [walletAddress]);
+
+  // Fetch approver escrows (for approver tab)
   useEffect(() => {
     if (!walletAddress) return
     async function fetchApproverEscrows() {
@@ -183,18 +255,7 @@ export default function BusinessDashboardPage() {
         const { getEscrowsByRole } = await import("@/services/trustlessworkService")
         const res = await getEscrowsByRole({ role: "approver", roleAddress: walletAddress })
         if (res.success && Array.isArray(res.data)) {
-          setApproverEscrows(res.data.map((e: Record<string, unknown>) => ({
-            id: e.contractId as string || `escrow-${Date.now()}`,
-            title: e.title as string || "Escrow Agreement",
-            counterparty: ((e.serviceProvider as string) || "").slice(0, 8) + "...",
-            status: e.status as string || "pending",
-            amount: String(e.amount || "0"),
-            currency: "USDC",
-            type: "Single Release" as const,
-            date: e.createdAt as string || new Date().toISOString(),
-            milestones: (e.milestones as Array<{status: string}>) || [{ status: "pending" }],
-            role: "buyer" as const,
-          })))
+          setApproverEscrows(res.data.map((e: Record<string, unknown>) => mapEscrowToAgreement(e)))
         }
       } catch (err) {
         console.error("Error fetching approver escrows:", err)

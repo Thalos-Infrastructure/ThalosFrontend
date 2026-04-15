@@ -11,12 +11,25 @@ const _inter = Inter({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'Thalos - Escrow & Secure Payments on Stellar',
-  description: 'Build secure payment platforms with programmable escrows, protected funds, and staged releases on Stellar.',
+  title: 'Thalos - Secure Payment Agreements',
+  description: 'Create secure payment agreements with protected funds and staged releases. Simple, transparent, and reliable.',
   generator: 'v0.app',
+  metadataBase: new URL('https://www.thalosplatform.xyz'),
   icons: {
     icon: '/thalos-icon.png',
     apple: '/thalos-icon.png',
+  },
+  openGraph: {
+    title: 'Thalos - Secure Payment Agreements',
+    description: 'Create secure payment agreements with protected funds and staged releases.',
+    url: 'https://www.thalosplatform.xyz',
+    siteName: 'Thalos',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Thalos - Secure Payment Agreements',
+    description: 'Create secure payment agreements with protected funds and staged releases.',
   },
 }
 

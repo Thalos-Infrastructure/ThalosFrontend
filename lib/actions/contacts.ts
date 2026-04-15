@@ -1,33 +1,31 @@
 "use server"
 
-import { createClient } from "@/lib/supabase/server"
+import { createServiceClient } from "@/lib/supabase/service"
 
 export interface Contact {
   id: string
-  user_id: string
-  contact_user_id: string | null
-  name: string
-  email: string | null
-  phone: string | null
-  wallet_address: string | null
-  status: "pending" | "active"
+  owner_wallet: string
+  contact_wallet: string | null
+  contact_name: string
+  contact_email: string | null
+  contact_phone: string | null
+  status: "pending" | "active" | "invited"
   created_at: string
   updated_at: string
 }
 
-export async function getContacts(): Promise<{ contacts: Contact[]; error: string | null }> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  
-  if (!user) {
-    return { contacts: [], error: "Not authenticated" }
+export async function getContacts(ownerWallet: string): Promise<{ contacts: Contact[]; error: string | null }> {
+  if (!ownerWallet) {
+    return { contacts: [], error: "Wallet address is required" }
   }
+
+  const supabase = createServiceClient()
 
   const { data, error } = await supabase
     .from("contacts")
     .select("*")
-    .eq("user_id", user.id)
-    .order("name", { ascending: true })
+    .eq("owner_wallet", ownerWallet)
+    .order("contact_name", { ascending: true })
 
   if (error) {
     return { contacts: [], error: error.message }
@@ -36,108 +34,90 @@ export async function getContacts(): Promise<{ contacts: Contact[]; error: strin
   return { contacts: data || [], error: null }
 }
 
-export async function addContact(data: {
-  name: string
-  email?: string
-  phone?: string
-  wallet_address?: string
-}): Promise<{ contact: Contact | null; inviteLink: string | null; error: string | null }> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  
-  if (!user) {
-    return { contact: null, inviteLink: null, error: "Not authenticated" }
+export async function addContact(
+  ownerWallet: string,
+  data: {
+    name: string
+    email?: string
+    phone?: string
+    wallet_address?: string
+    notes?: string
+  }
+): Promise<{ contact: Contact | null; error: string | null }> {
+  if (!ownerWallet) {
+    return { contact: null, error: "Wallet address is required" }
   }
 
-  // Check if contact already exists by email or wallet
-  if (data.email) {
-    const { data: existingByEmail } = await supabase
-      .from("profiles")
-      .select("id, wallet_address")
-      .eq("email", data.email)
-      .single()
+  const supabase = createServiceClient()
 
-    if (existingByEmail) {
-      // User exists on Thalos, create active contact
-      const { data: contact, error } = await supabase
-        .from("contacts")
-        .insert({
-          user_id: user.id,
-          contact_user_id: existingByEmail.id,
-          name: data.name,
-          email: data.email,
-          wallet_address: existingByEmail.wallet_address,
-          status: "active",
-        })
-        .select()
-        .single()
+  // Check if contact already exists
+  if (data.wallet_address) {
+    const { data: existing } = await supabase
+      .from("contacts")
+      .select("id")
+      .eq("owner_wallet", ownerWallet)
+      .eq("contact_wallet", data.wallet_address)
+      .maybeSingle()
 
-      if (error) {
-        return { contact: null, inviteLink: null, error: error.message }
-      }
-
-      return { contact, inviteLink: null, error: null }
+    if (existing) {
+      return { contact: null, error: "Contact already exists" }
     }
   }
 
-  // User doesn't exist, create pending contact and generate invite link
   const { data: contact, error } = await supabase
     .from("contacts")
     .insert({
-      user_id: user.id,
-      name: data.name,
-      email: data.email || null,
-      phone: data.phone || null,
-      wallet_address: data.wallet_address || null,
-      status: "pending",
+      owner_wallet: ownerWallet,
+      contact_wallet: data.wallet_address || null,
+      contact_name: data.name,
+      contact_email: data.email || null,
+      contact_phone: data.phone || null,
+      status: "active",
     })
     .select()
     .single()
 
   if (error) {
-    return { contact: null, inviteLink: null, error: error.message }
+    return { contact: null, error: error.message }
   }
 
-  // Generate invite link
-  const inviteLink = `${process.env.NEXT_PUBLIC_APP_URL || "https://thalos.app"}/invite?ref=${user.id}&contact=${contact.id}`
-
-  return { contact, inviteLink, error: null }
+  return { contact, error: null }
 }
 
-export async function searchThalosUsers(query: string): Promise<{ users: Array<{ id: string; name: string; email: string; wallet_address: string }>; error: string | null }> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  
-  if (!user) {
-    return { users: [], error: "Not authenticated" }
+export async function searchThalosUsers(
+  query: string,
+  excludeWallet?: string
+): Promise<{ users: Array<{ id: string; name: string; email: string; wallet_address: string }>; error: string | null }> {
+  if (!query || query.length < 2) {
+    return { users: [], error: null }
   }
+
+  const supabase = createServiceClient()
 
   // Sanitize query for safe use
   const sanitizedQuery = query.replace(/[%_]/g, "")
   
-  // Check if it looks like a UUID (user ID)
-  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(query)
+  // Check if it looks like a wallet address (starts with G)
+  const isWalletAddress = query.startsWith("G") && query.length >= 10
   
   let data
   let error
   
-  if (isUUID) {
-    // Search by exact ID match
+  if (isWalletAddress) {
+    // Search by wallet address prefix
     const result = await supabase
       .from("profiles")
       .select("id, display_name, email, wallet_address")
-      .eq("id", query)
-      .neq("id", user.id)
-      .limit(1)
+      .ilike("wallet_address", `${sanitizedQuery}%`)
+      .limit(10)
     data = result.data
     error = result.error
   } else {
-    // Search by name, email, or wallet address
+    // Search by name or email
     const result = await supabase
       .from("profiles")
       .select("id, display_name, email, wallet_address")
-      .neq("id", user.id)
-      .or(`display_name.ilike.%${sanitizedQuery}%,email.ilike.%${sanitizedQuery}%,wallet_address.ilike.%${sanitizedQuery}%`)
+      .or(`display_name.ilike.%${sanitizedQuery}%,email.ilike.%${sanitizedQuery}%`)
       .limit(10)
     data = result.data
     error = result.error
@@ -147,8 +127,13 @@ export async function searchThalosUsers(query: string): Promise<{ users: Array<{
     return { users: [], error: error.message }
   }
 
+  // Filter out the exclude wallet if provided
+  const filtered = excludeWallet 
+    ? (data || []).filter(u => u.wallet_address !== excludeWallet)
+    : (data || [])
+
   return {
-    users: (data || []).map(u => ({
+    users: filtered.map(u => ({
       id: u.id,
       name: u.display_name || "Unknown",
       email: u.email || "",
@@ -158,76 +143,59 @@ export async function searchThalosUsers(query: string): Promise<{ users: Array<{
   }
 }
 
-export async function deleteContact(contactId: string): Promise<{ error: string | null }> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  
-  if (!user) {
-    return { error: "Not authenticated" }
+export async function deleteContact(ownerWallet: string, contactId: string): Promise<{ error: string | null }> {
+  if (!ownerWallet || !contactId) {
+    return { error: "Wallet and contact ID are required" }
   }
+
+  const supabase = createServiceClient()
 
   const { error } = await supabase
     .from("contacts")
     .delete()
     .eq("id", contactId)
-    .eq("user_id", user.id)
+    .eq("owner_wallet", ownerWallet)
 
   return { error: error?.message || null }
 }
 
 /**
- * Creates a mutual contact relationship when a user signs up via referral
- * This ensures both the referrer and the new user have each other as contacts
+ * Update an existing contact
  */
-export async function createContactFromReferral(
-  referrerId: string, 
-  newUserId: string, 
-  newUserProfile: { display_name?: string; email?: string; wallet_address?: string }
-): Promise<{ success: boolean; error: string | null }> {
-  const supabase = await createClient()
+export async function updateContact(
+  ownerWallet: string,
+  contactId: string, 
+  data: {
+    name?: string
+    email?: string
+    phone?: string
+    wallet_address?: string
+    notes?: string
+  }
+): Promise<{ contact: Contact | null; error: string | null }> {
+  if (!ownerWallet || !contactId) {
+    return { contact: null, error: "Wallet and contact ID are required" }
+  }
 
-  // Get referrer's profile
-  const { data: referrerProfile, error: referrerError } = await supabase
-    .from("profiles")
-    .select("display_name, email, wallet_address")
-    .eq("id", referrerId)
+  const supabase = createServiceClient()
+
+  const updateData: Record<string, string | null> = {}
+  if (data.name !== undefined) updateData.contact_name = data.name
+  if (data.email !== undefined) updateData.contact_email = data.email || null
+  if (data.phone !== undefined) updateData.contact_phone = data.phone || null
+  if (data.wallet_address !== undefined) updateData.contact_wallet = data.wallet_address || null
+
+  const { data: contact, error } = await supabase
+    .from("contacts")
+    .update(updateData)
+    .eq("id", contactId)
+    .eq("owner_wallet", ownerWallet)
+    .select()
     .single()
 
-  if (referrerError || !referrerProfile) {
-    return { success: false, error: "Referrer not found" }
+  if (error) {
+    return { contact: null, error: error.message }
   }
 
-  // Create contact for the referrer (the new user as their contact)
-  const { error: error1 } = await supabase
-    .from("contacts")
-    .upsert({
-      user_id: referrerId,
-      contact_user_id: newUserId,
-      name: newUserProfile.display_name || "New Contact",
-      email: newUserProfile.email,
-      wallet_address: newUserProfile.wallet_address,
-      status: "active",
-    }, { onConflict: "user_id,contact_user_id" })
-
-  if (error1) {
-    console.error("Error creating contact for referrer:", error1)
-  }
-
-  // Create contact for the new user (the referrer as their contact)
-  const { error: error2 } = await supabase
-    .from("contacts")
-    .upsert({
-      user_id: newUserId,
-      contact_user_id: referrerId,
-      name: referrerProfile.display_name || "Referrer",
-      email: referrerProfile.email,
-      wallet_address: referrerProfile.wallet_address,
-      status: "active",
-    }, { onConflict: "user_id,contact_user_id" })
-
-  if (error2) {
-    console.error("Error creating contact for new user:", error2)
-  }
-
-  return { success: !error1 && !error2, error: error1?.message || error2?.message || null }
+  return { contact, error: null }
 }
