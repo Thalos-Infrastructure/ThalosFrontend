@@ -21,6 +21,7 @@ export async function POST(req: Request) {
   const email = body.email;
   const password = body.password;
   const name = typeof body.name === "string" ? body.name : undefined;
+  const accountType = body.accountType === "enterprise" ? "enterprise" : "personal";
 
   if (!validateEmail(email)) {
     return NextResponse.json(
@@ -96,6 +97,20 @@ export async function POST(req: Request) {
   if (linkError) {
     console.warn("Failed to auto-link custodial wallet:", linkError);
     // Continue anyway - user can link it manually
+  }
+
+  // Create profile with account_type
+  const { error: profileError } = await supabase
+    .from("profiles")
+    .upsert({
+      wallet_address: wallet_public_key,
+      email: email.trim().toLowerCase(),
+      display_name: name,
+      account_type: accountType,
+    }, { onConflict: "wallet_address" });
+
+  if (profileError) {
+    console.warn("Failed to create profile:", profileError);
   }
 
   const user: AuthUser = {

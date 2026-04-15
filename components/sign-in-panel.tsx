@@ -86,7 +86,12 @@ export function SignInPanel({ open, onClose }: SignInPanelProps) {
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: emailForm.email, password: emailForm.password, name: emailForm.name }),
+        body: JSON.stringify({ 
+          email: emailForm.email, 
+          password: emailForm.password, 
+          name: emailForm.name,
+          accountType: profileType === "business" ? "enterprise" : "personal"
+        }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || "Registration failed")
@@ -94,7 +99,7 @@ export function SignInPanel({ open, onClose }: SignInPanelProps) {
       setToken(data.token)
       toast.success("Account created!")
       onClose()
-      router.push("/auth/select-profile")
+      router.push(dashboardHref)
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Registration failed")
     } finally {
