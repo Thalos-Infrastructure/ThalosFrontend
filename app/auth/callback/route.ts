@@ -95,6 +95,17 @@ export async function GET(req: Request) {
       }
       userId = inserted.id;
       if (inserted.name) userName = inserted.name;
+      
+      // Auto-link the custodial wallet for new OAuth users
+      await db
+        .from("linked_wallets")
+        .insert({
+          user_id: userId,
+          wallet_address: walletPublicKey,
+          wallet_type: "custodial",
+          label: "Email Wallet",
+          is_primary: true,
+        });
     }
 
     // Determine redirect: if user has account_type, go to dashboard; otherwise select-profile

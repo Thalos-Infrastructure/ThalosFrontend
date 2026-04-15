@@ -9,10 +9,10 @@ import { useAuthStore } from "@/lib/auth-store"
 interface LinkedWallet {
   id: string
   wallet_address: string
-  wallet_type: "custodial" | "freighter" | "albedo" | "rabet" | "other"
+  wallet_type: "custodial" | "freighter" | "albedo" | "rabet" | "xbull" | "other"
   label: string | null
   is_primary: boolean
-  created_at: string
+  linked_at: string
 }
 
 const walletTypeLabels: Record<string, { label: string; icon: JSX.Element }> = {

@@ -408,15 +408,49 @@ export default function PersonalDashboardPage() {
     // Only fetch if we haven't already for this address
     if (fetchedEscrowsRef.current === walletAddress) return;
     fetchedEscrowsRef.current = walletAddress;
-    async function fetchEscrows() {
-      const res = await getEscrowsBySigner(walletAddress);
-      if (res.success && Array.isArray(res.data)) {
-        const realAgreements = res.data.map(mapEscrowToAgreement);
-        setAgreements(prev => [...prev, ...realAgreements]);
+    
+    async function fetchAllEscrows() {
+      const { getEscrowsByRole } = await import("@/services/trustlessworkService");
+      const seenIds = new Set<string>();
+      const allAgreements: Agreement[] = [];
+      
+      // Fetch escrows by signer (main method)
+      const signerRes = await getEscrowsBySigner(walletAddress);
+      if (signerRes.success && Array.isArray(signerRes.data)) {
+        signerRes.data.forEach(escrow => {
+          if (!seenIds.has(escrow.contractId)) {
+            seenIds.add(escrow.contractId);
+            allAgreements.push(mapEscrowToAgreement(escrow));
+          }
+        });
       }
+      
+      // Fetch by each role to ensure we get all escrows
+      const roles = ["receiver", "serviceProvider", "releaseSigner"];
+      for (const role of roles) {
+        const res = await getEscrowsByRole({ role, roleAddress: walletAddress });
+        if (res.success && Array.isArray(res.data)) {
+          res.data.forEach(escrow => {
+            if (!seenIds.has(escrow.contractId)) {
+              seenIds.add(escrow.contractId);
+              allAgreements.push(mapEscrowToAgreement(escrow));
+            }
+          });
+        }
+      }
+      
+      setAgreements(prev => {
+        // Merge with any existing mock agreements
+        const existingIds = new Set(prev.filter(a => !a.id.startsWith("AGR-")).map(a => a.id));
+        const mockAgreements = prev.filter(a => a.id.startsWith("AGR-"));
+        const newReal = allAgreements.filter(a => !existingIds.has(a.id));
+        return [...mockAgreements, ...newReal];
+      });
     }
-    fetchEscrows();
-    // Fetch escrows where user is approver
+    
+    fetchAllEscrows();
+    
+    // Fetch escrows where user is approver (for approver tab)
     async function fetchApproverEscrows() {
       setApproverLoading(true);
       const { getEscrowsByRole } = await import("@/services/trustlessworkService");

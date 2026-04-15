@@ -82,6 +82,22 @@ export async function POST(req: Request) {
     );
   }
 
+  // Auto-link the custodial wallet to the user's linked_wallets
+  const { error: linkError } = await supabase
+    .from("linked_wallets")
+    .insert({
+      user_id: inserted.id,
+      wallet_address: wallet_public_key,
+      wallet_type: "custodial",
+      label: "Email Wallet",
+      is_primary: true,
+    });
+
+  if (linkError) {
+    console.warn("Failed to auto-link custodial wallet:", linkError);
+    // Continue anyway - user can link it manually
+  }
+
   const user: AuthUser = {
     id: inserted.id,
     email: inserted.email,
