@@ -2,6 +2,7 @@
 
 // App URLs
 export const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://www.thalosplatform.xyz";
+export const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 export const APP_NAME = "Thalos";
 
 // Email Configuration (Resend)
