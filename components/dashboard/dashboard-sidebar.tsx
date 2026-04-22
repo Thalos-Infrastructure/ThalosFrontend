@@ -15,11 +15,14 @@ import {
   TrendingUp,
   ChevronRight,
   X,
+  Users,
+  MessageSquare,
 } from "lucide-react"
 
 export type SidebarSection = 
   | "home" 
   | "agreements" 
+  | "contacts"
   | "finances" 
   | "payments" 
   | "bounty"
@@ -48,6 +51,11 @@ const navSections: { title: string; titleKey: string; items: NavItem[] }[] = [
         labelKey: "sidebar.agreements",
         icon: <FileText className="h-5 w-5" />,
         badge: 3,
+      },
+      {
+        id: "contacts",
+        labelKey: "sidebar.contacts",
+        icon: <Users className="h-5 w-5" />,
       },
       {
         id: "bounty",
