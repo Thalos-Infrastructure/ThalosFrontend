@@ -4,7 +4,9 @@ import { useState, useEffect } from "react"
 import { cn } from "@/lib/utils"
 import { useAuthStore } from "@/lib/auth-store"
 import { useStellarWallet } from "@/lib/stellar-wallet"
+import { useCurrentAddress } from "@/lib/use-current-address"
 import { getWalletsWithBalances, type WalletWithBalance } from "@/lib/api/wallets"
+import { API_URL } from "@/lib/config"
 
 interface WalletSelectorProps {
   selectedWallet: string | null
@@ -15,25 +17,74 @@ interface WalletSelectorProps {
 export function WalletSelector({ selectedWallet, onWalletChange, className }: WalletSelectorProps) {
   const { token } = useAuthStore()
   const { address: connectedWallet } = useStellarWallet()
+  const currentAddress = useCurrentAddress()
   const [wallets, setWallets] = useState<WalletWithBalance[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (token) {
-      loadWallets()
-    }
-  }, [token])
+    loadWallets()
+  }, [token, currentAddress])
 
   const loadWallets = async () => {
-    if (!token) return
     setIsLoading(true)
+    setError(null)
+    
+    // If no token, try to use connected wallet directly
+    if (!token) {
+      if (currentAddress) {
+        // Create a mock wallet entry for the connected wallet
+        setWallets([{
+          id: "connected",
+          user_id: "",
+          wallet_address: currentAddress,
+          wallet_type: "external" as const,
+          label: "Connected Wallet",
+          is_primary: true,
+          created_at: new Date().toISOString(),
+          balance: { xlm: "0", usdc: "0" },
+          agreements_count: 0,
+        }])
+      }
+      setIsLoading(false)
+      return
+    }
+    
     try {
       const result = await getWalletsWithBalances(token)
-      if (result.success && result.data) {
+      if (result.success && result.data && result.data.length > 0) {
         setWallets(result.data)
+      } else if (currentAddress) {
+        // Fallback to connected wallet if no wallets from API
+        setWallets([{
+          id: "connected",
+          user_id: "",
+          wallet_address: currentAddress,
+          wallet_type: "external" as const,
+          label: "Connected Wallet",
+          is_primary: true,
+          created_at: new Date().toISOString(),
+          balance: { xlm: "0", usdc: "0" },
+          agreements_count: 0,
+        }])
       }
     } catch (err) {
       console.error("Failed to load wallets:", err)
+      setError("Could not load wallets")
+      // Fallback to connected wallet on error
+      if (currentAddress) {
+        setWallets([{
+          id: "connected",
+          user_id: "",
+          wallet_address: currentAddress,
+          wallet_type: "external" as const,
+          label: "Connected Wallet",
+          is_primary: true,
+          created_at: new Date().toISOString(),
+          balance: { xlm: "0", usdc: "0" },
+          agreements_count: 0,
+        }])
+      }
     } finally {
       setIsLoading(false)
     }
@@ -44,13 +95,9 @@ export function WalletSelector({ selectedWallet, onWalletChange, className }: Wa
     return `${addr.slice(0, 6)}...${addr.slice(-4)}`
   }
 
+  // Don't show loading forever - show nothing if taking too long
   if (isLoading) {
-    return (
-      <div className={cn("flex items-center gap-2", className)}>
-        <div className="h-4 w-4 animate-spin rounded-full border-2 border-[#f0b400] border-t-transparent" />
-        <span className="text-xs text-muted-foreground">Loading wallets...</span>
-      </div>
-    )
+    return null
   }
 
   if (wallets.length <= 1) {

@@ -19,6 +19,7 @@ import {
   DashboardHeader,
   MobileNav,
   YieldSection,
+  ContactsSection,
 } from "@/components/dashboard"
 import { getProfileByWallet, type Profile } from "@/lib/actions/profile"
 import { AgreementsView } from "@/components/agreements/agreements-view"
@@ -1293,6 +1294,29 @@ const [currentPage, setCurrentPage] = useState(1)
                 <p className="text-xs text-white/40 leading-relaxed">All wallets require a USDC trustline on the Stellar network to participate in Thalos escrow agreements. You can add the trustline from your wallet provider.</p>
                 <p className="mt-2 text-xs text-white/25 font-mono break-all">{TRUSTLINE_USDC.address}</p>
               </div>
+            </div>
+          )}
+
+          {/* ══════ CONTACTS ══════ */}
+          {activeSection === "contacts" && (
+            <div className="mx-auto max-w-6xl animate-in fade-in slide-in-from-bottom-2 duration-300">
+              <ContactsSection 
+                onCreateAgreementWith={(contact) => {
+                  // Pre-fill signer wallet with contact's wallet and go to create
+                  setSignerWallet(contact.wallet_address)
+                  setActiveSection("create")
+                }}
+                onChatWith={(contact) => {
+                  // Find an agreement with this contact and open chat
+                  const agreementWithContact = agreements.find(a => 
+                    a.receiver === contact.wallet_address || 
+                    a.counterparty === contact.wallet_address
+                  )
+                  if (agreementWithContact) {
+                    setShowAgreementChat(agreementWithContact.id)
+                  }
+                }}
+              />
             </div>
           )}
 
