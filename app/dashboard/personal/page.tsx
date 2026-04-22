@@ -25,6 +25,7 @@ import { AgreementsView } from "@/components/agreements/agreements-view"
 import { ContactSelector } from "@/components/agreements/contact-selector"
 import { AgreementChat } from "@/components/agreements/agreement-chat"
 import { ProfileEditor } from "@/components/profile/profile-editor"
+import { WalletSelector } from "@/components/dashboard/wallet-selector"
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area,
 } from "recharts"
@@ -350,13 +351,25 @@ export default function PersonalDashboardPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState<"all" | "funded" | "in_progress" | "released">("all")
   const [sortBy, setSortBy] = useState<"date" | "amount" | "title">("date")
-  const [currentPage, setCurrentPage] = useState(1)
+const [currentPage, setCurrentPage] = useState(1)
+  const [walletFilter, setWalletFilter] = useState<string | null>(null)
   const ITEMS_PER_PAGE = 10
-
+  
   const filteredAgreements = useMemo(() => {
-    let filtered = [...agreements]
-    // Status filter
-    if (statusFilter !== "all") {
+  let filtered = [...agreements]
+  
+  // Wallet filter - filter by agreements where the selected wallet is involved
+  if (walletFilter) {
+    filtered = filtered.filter(a => {
+      // Check if wallet is involved in the agreement (as sender, receiver, serviceProvider, etc.)
+      return a.receiver === walletFilter || 
+             a.id.includes(walletFilter.slice(0, 8)) || // Check if wallet created it
+             (a as unknown as { serviceProvider?: string }).serviceProvider === walletFilter
+    })
+  }
+  
+  // Status filter
+  if (statusFilter !== "all") {
       filtered = filtered.filter(agr => {
         const allReleased = agr.milestones.every(m => m.status === "released")
         const effectiveStatus = allReleased ? "released" : agr.status
@@ -1080,16 +1093,23 @@ export default function PersonalDashboardPage() {
           {/* ══════ AGREEMENTS ══════ */}
           {activeSection === "agreements" && !viewingAgreement && (
             <div className="mx-auto max-w-4xl animate-in fade-in slide-in-from-bottom-2 duration-300">
-              {/* Header */}
-              <div className="mb-6 flex items-center justify-between">
-                <h1 className="text-2xl font-semibold text-white">{t("dashPage.myAgreements")}</h1>
-                <Button onClick={() => { setActiveSection("create"); resetWizard() }}
-                  className="rounded-full bg-[#f0b400] px-6 text-sm font-semibold text-background hover:bg-[#d4a000] shadow-[0_4px_16px_rgba(240,180,0,0.25)]">
-                  + {t("dashPage.newAgreement")}
-                </Button>
-              </div>
-
-              {/* Structured Agreements View - includes all agreements and approver escrows */}
+{/* Header */}
+  <div className="mb-6 flex items-center justify-between">
+  <h1 className="text-2xl font-semibold text-white">{t("dashPage.myAgreements")}</h1>
+  <Button onClick={() => { setActiveSection("create"); resetWizard() }}
+  className="rounded-full bg-[#f0b400] px-6 text-sm font-semibold text-background hover:bg-[#d4a000] shadow-[0_4px_16px_rgba(240,180,0,0.25)]">
+  + {t("dashPage.newAgreement")}
+  </Button>
+  </div>
+  
+  {/* Wallet Selector - only shows if user has multiple wallets */}
+  <WalletSelector 
+    selectedWallet={walletFilter} 
+    onWalletChange={setWalletFilter}
+    className="mb-6"
+  />
+  
+  {/* Structured Agreements View - includes all agreements and approver escrows */}
               <AgreementsView
                 agreements={[
                   // Regular agreements with role
