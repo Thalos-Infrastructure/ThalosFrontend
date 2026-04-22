@@ -10,8 +10,11 @@ export interface LinkedWallet {
 }
 
 export interface WalletWithBalance extends LinkedWallet {
-  balance_xlm: string
-  balance_usdc: string
+  balance: {
+    xlm: string
+    usdc: string
+  }
+  agreements_count: number
 }
 
 export interface WalletWithAgreements extends LinkedWallet {

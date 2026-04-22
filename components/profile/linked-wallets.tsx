@@ -326,10 +326,14 @@ export function LinkedWallets({ onWalletSelect, selectedWallet, showBalances = t
               {/* Balance Section */}
               {showBalances && (
                 <div className="mt-3 pt-3 border-t border-border/30 grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">XLM Balance</p>
-                    <p className="text-sm font-medium text-foreground">{formatBalance(wallet.balance_xlm)} XLM</p>
-                  </div>
+<div>
+  <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">XLM Balance</p>
+  <p className="text-sm font-medium text-foreground">{formatBalance(wallet.balance?.xlm || "0")} XLM</p>
+  </div>
+  <div>
+  <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">USDC Balance</p>
+  <p className="text-sm font-medium text-[#f0b400]">${formatBalance(wallet.balance?.usdc || "0")}</p>
+  </div>
                   <div>
                     <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">USDC Balance</p>
                     <p className="text-sm font-medium text-[#f0b400]">${formatBalance(wallet.balance_usdc)}</p>
