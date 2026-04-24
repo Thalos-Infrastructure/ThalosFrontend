@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { useEffect, useState, useRef, useCallback } from "react"
 import { useLanguage } from "@/lib/i18n"
-import { Play, ChevronDown } from "lucide-react"
+import { ChevronDown, Shield, FileCheck, Wallet, Users } from "lucide-react"
 
 interface HeroSectionProps {
   onNavigate: (section: string) => void
@@ -21,74 +21,46 @@ const TYPEWRITER_TEXT = {
   es: "[Pagos seguros]"
 }
 
-// Story pages content
-const STORY_PAGES = {
-  en: [
-    { 
-      id: 1, 
-      type: "intro",
-      headline: "Clear agreements.",
-      subheadline: "Define conditions between parties and ensure payments are only released when they are met."
-    },
-    { 
-      id: 2, 
-      type: "image",
-      image: "/images/hero-login.png",
-      caption: "Start in seconds",
-      alt: "Thalos login screen"
-    },
-    { 
-      id: 3, 
-      type: "image",
-      image: "/images/hero-dashboard.png",
-      caption: "Manage your agreements",
-      alt: "Thalos agreements dashboard"
-    },
-    { 
-      id: 4, 
-      type: "video",
-      caption: "Conditions are met. Payments are released."
-    },
-    {
-      id: 5,
-      type: "final",
-      headline: "Trust at every step",
-      subheadline: "Every transaction protected. Every agreement honored."
-    }
-  ],
-  es: [
-    { 
-      id: 1, 
-      type: "intro",
-      headline: "Acuerdos claros.",
-      subheadline: "Define condiciones entre partes y asegura que el pago solo se libere cuando se cumplan."
-    },
-    { 
-      id: 2, 
-      type: "image",
-      image: "/images/hero-login.png",
-      caption: "Empieza en segundos",
-      alt: "Pantalla de inicio de Thalos"
-    },
-    { 
-      id: 3, 
-      type: "image",
-      image: "/images/hero-dashboard.png",
-      caption: "Gestiona tus acuerdos",
-      alt: "Panel de acuerdos de Thalos"
-    },
-    { 
-      id: 4, 
-      type: "video",
-      caption: "Se cumplen las condiciones. Se libera el pago."
-    },
-    {
-      id: 5,
-      type: "final",
-      headline: "Confianza en cada paso",
-      subheadline: "Cada transacción protegida. Cada acuerdo cumplido."
-    }
-  ]
+// Content translations
+const CONTENT = {
+  en: {
+    badge: "Digital Agreement Platform",
+    headline: "Thalos protects your",
+    headlineHighlight: "transactions",
+    description: "We are the bridge between trust and payments. Create secure digital agreements where funds are only released when conditions are verified by both parties.",
+    features: [
+      { icon: Shield, text: "Protected funds until conditions are met" },
+      { icon: FileCheck, text: "Clear milestones and deliverables" },
+      { icon: Wallet, text: "Instant release when approved" },
+      { icon: Users, text: "Dispute resolution included" },
+    ],
+    cta: "Create Agreement",
+    ctaSecondary: "See how it works",
+    imageCaption1: "Start in seconds",
+    imageCaption2: "Manage your agreements",
+    videoCaption: "See it in action",
+    finalHeadline: "Trust at every step",
+    finalSubheadline: "Every transaction protected. Every agreement honored.",
+  },
+  es: {
+    badge: "Plataforma de Acuerdos Digitales",
+    headline: "Thalos protege tus",
+    headlineHighlight: "transacciones",
+    description: "Somos el puente entre la confianza y los pagos. Crea acuerdos digitales seguros donde los fondos solo se liberan cuando las condiciones son verificadas por ambas partes.",
+    features: [
+      { icon: Shield, text: "Fondos protegidos hasta cumplir condiciones" },
+      { icon: FileCheck, text: "Hitos y entregables claros" },
+      { icon: Wallet, text: "Liberacion instantanea al aprobar" },
+      { icon: Users, text: "Resolucion de disputas incluida" },
+    ],
+    cta: "Crear Acuerdo",
+    ctaSecondary: "Ver como funciona",
+    imageCaption1: "Empieza en segundos",
+    imageCaption2: "Gestiona tus acuerdos",
+    videoCaption: "Velo en accion",
+    finalHeadline: "Confianza en cada paso",
+    finalSubheadline: "Cada transaccion protegida. Cada acuerdo cumplido.",
+  }
 }
 
 // Typewriter hook
@@ -128,7 +100,7 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const totalPages = 5
 
-  const pages = STORY_PAGES[language as keyof typeof STORY_PAGES] || STORY_PAGES.en
+  const content = CONTENT[language as keyof typeof CONTENT] || CONTENT.en
   const typewriterText = TYPEWRITER_TEXT[language as keyof typeof TYPEWRITER_TEXT] || TYPEWRITER_TEXT.en
   const { displayText, isTyping } = useTypewriter(typewriterText, currentPage === 0)
 
@@ -137,17 +109,17 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
     return () => clearTimeout(t1)
   }, [onIntroComplete])
 
-  // Scroll-based page transitions - faster scroll (0.7vh per page instead of 1vh)
+  // Scroll-based page transitions
   const onScroll = useCallback(() => {
     if (!containerRef.current) return
     
     const scrollY = window.scrollY
     const vh = window.innerHeight
-    const scrollPerPage = vh * 0.7 // Faster scroll - 70% of viewport per page
+    const scrollPerPage = vh * 0.6 // 60% of viewport per page - faster scroll
     const heroHeight = scrollPerPage * totalPages
     
     // Hide fixed content when scrolled past hero
-    setIsHeroVisible(scrollY < heroHeight - scrollPerPage * 0.5)
+    setIsHeroVisible(scrollY < heroHeight - scrollPerPage)
     
     // Calculate current page based on scroll position
     const progress = Math.min(scrollY / heroHeight, 1)
@@ -174,22 +146,22 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
 
   const scrollToNextPage = () => {
     const vh = window.innerHeight
-    const scrollPerPage = vh * 0.7
+    const scrollPerPage = vh * 0.6
     const targetScroll = (currentPage + 1) * scrollPerPage
     window.scrollTo({ top: targetScroll, behavior: "smooth" })
   }
 
-  // Calculate hero height - shorter for faster scroll
-  const heroHeightVh = totalPages * 70 // 70vh per page instead of 100vh
+  // Hero height - 60vh per page
+  const heroHeightVh = totalPages * 60
 
   return (
     <section id="hero" ref={containerRef} className="relative" style={{ height: `${heroHeightVh}vh` }}>
       {/* Subtle top gradient line */}
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#f0b400]/20 to-transparent" aria-hidden="true" />
 
-      {/* Vertical THALOS letters - desktop only, fades on scroll */}
+      {/* Vertical THALOS letters - desktop only, positioned at middle */}
       <div
-        className={`pointer-events-none fixed right-0 top-0 bottom-0 z-20 hidden select-none md:flex md:flex-col md:items-end md:justify-center lg:right-4 xl:right-8 transition-opacity duration-300 ${isHeroVisible ? 'opacity-100' : 'opacity-0'}`}
+        className={`pointer-events-none fixed right-0 top-[45%] -translate-y-1/2 z-20 hidden select-none md:flex md:flex-col md:items-end lg:right-4 xl:right-8 transition-opacity duration-300 ${isHeroVisible ? 'opacity-100' : 'opacity-0'}`}
         aria-hidden="true"
       >
         {LETTERS.map((letter, i) => (
@@ -199,7 +171,7 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
             style={{
               opacity: letterOpacities[i],
               transition: "opacity 100ms ease-out",
-              fontSize: "clamp(10rem, 19vh, 24rem)",
+              fontSize: "clamp(6rem, 12vh, 14rem)",
               letterSpacing: "-0.04em",
             }}
           >
@@ -210,221 +182,311 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
 
       {/* Fixed viewport container for story pages */}
       <div className={`fixed inset-0 z-10 overflow-hidden transition-opacity duration-300 ${isHeroVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-        {/* Page 1: Intro */}
+        
+        {/* Page 1: Intro - Two column layout */}
         <div 
-          className="absolute inset-0 flex items-center justify-center px-4 sm:px-6 lg:px-16 transition-all duration-500 ease-out"
+          className="absolute inset-0 flex items-center transition-all duration-500 ease-out"
           style={{
             opacity: currentPage === 0 ? 1 : 0,
-            transform: currentPage === 0 ? "translateY(0) scale(1)" : "translateY(-20px) scale(0.98)",
+            transform: currentPage === 0 ? "translateY(0)" : "translateY(-30px)",
             pointerEvents: currentPage === 0 ? "auto" : "none",
           }}
         >
-          <div className="max-w-4xl mx-auto text-center">
-            {/* Mobile THALOS */}
-            <div className="flex md:hidden justify-center mb-6 gap-0.5">
-              {LETTERS.map((letter, i) => (
-                <span
-                  key={i}
-                  className="thalos-letter animate-fade-in-up text-5xl sm:text-6xl font-black text-white/90"
-                  style={{ animationDelay: `${i * 80}ms`, animationFillMode: "both" }}
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
+            <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+              {/* Left column - Text content */}
+              <div className="text-left max-w-xl">
+                {/* Badge */}
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#f0b400]/10 border border-[#f0b400]/20 mb-6 animate-fade-in-up">
+                  <div className="w-2 h-2 rounded-full bg-[#f0b400] animate-pulse" />
+                  <span className="text-xs font-medium text-[#f0b400] uppercase tracking-wider">{content.badge}</span>
+                </div>
+
+                {/* Mobile THALOS */}
+                <div className="flex md:hidden mb-4 gap-0.5">
+                  {LETTERS.map((letter, i) => (
+                    <span
+                      key={i}
+                      className="thalos-letter animate-fade-in-up text-4xl sm:text-5xl font-black text-white/90"
+                      style={{ animationDelay: `${i * 80}ms`, animationFillMode: "both" }}
+                    >
+                      {letter}
+                    </span>
+                  ))}
+                </div>
+
+                {/* Headlines */}
+                <h1 className="animate-fade-in-up text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold tracking-tight text-white">
+                  {content.headline}
+                </h1>
+                
+                {/* Typewriter effect */}
+                <div className="mt-2 min-h-[1.3em] animate-fade-in-up animation-delay-200">
+                  <p className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold tracking-tight text-[#f0b400] font-mono">
+                    {displayText}
+                    {isTyping && <span className="animate-pulse ml-0.5">|</span>}
+                  </p>
+                </div>
+                
+                {/* Description */}
+                <p className="mt-6 text-base sm:text-lg text-white/70 leading-relaxed animate-fade-in-up animation-delay-300">
+                  {content.description}
+                </p>
+
+                {/* Features list */}
+                <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3 animate-fade-in-up animation-delay-400">
+                  {content.features.map((feature, i) => (
+                    <div key={i} className="flex items-center gap-2 text-sm text-white/60">
+                      <feature.icon className="w-4 h-4 text-[#f0b400] flex-shrink-0" />
+                      <span>{feature.text}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* CTAs */}
+                <div className="mt-8 flex flex-col sm:flex-row gap-3 animate-fade-in-up animation-delay-500">
+                  <Button
+                    size="lg"
+                    onClick={() => onNavigate("sign-in")}
+                    className="h-12 rounded-lg bg-[#f0b400] px-8 text-sm font-bold text-[#0c1220] hover:bg-[#d9a300] active:scale-[0.98] transition-all duration-200 shadow-[0_0_30px_rgba(240,180,0,0.3)]"
+                  >
+                    {content.cta}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="lg"
+                    onClick={() => onNavigate("how-it-works")}
+                    className="h-12 rounded-lg border border-white/20 bg-white/5 backdrop-blur-sm px-8 text-sm font-bold text-white hover:bg-white/10 hover:border-white/30 active:scale-[0.98] transition-all duration-200"
+                  >
+                    {content.ctaSecondary}
+                  </Button>
+                </div>
+
+                {/* Scroll indicator */}
+                <button 
+                  onClick={scrollToNextPage}
+                  className="mt-8 animate-bounce text-white/40 hover:text-white/60 transition-colors"
+                  aria-label="Scroll to next section"
                 >
-                  {letter}
-                </span>
-              ))}
-            </div>
+                  <ChevronDown className="h-6 w-6" />
+                </button>
+              </div>
 
-            <h1 className="animate-fade-in-up text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tight text-white text-balance">
-              {pages[0].headline}
-            </h1>
-            
-            {/* Typewriter effect with brackets - more spacing */}
-            <div className="mt-4 md:mt-6 min-h-[1.3em] animate-fade-in-up animation-delay-200">
-              <p className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tight text-[#f0b400] font-mono">
-                {displayText}
-                {isTyping && <span className="animate-pulse ml-0.5">|</span>}
-              </p>
+              {/* Right column - Floating images preview */}
+              <div className="hidden lg:flex items-center justify-center relative">
+                <div className="relative w-full max-w-md">
+                  {/* Back image - dashboard */}
+                  <div 
+                    className="absolute top-8 right-0 transform rotate-3 transition-transform hover:rotate-1 hover:scale-105 duration-500"
+                    style={{ 
+                      filter: "drop-shadow(0 25px 50px rgba(0,0,0,0.5))",
+                    }}
+                  >
+                    <div className="rounded-[1.5rem] overflow-hidden border border-white/10 bg-black/20 backdrop-blur-sm">
+                      <img 
+                        src="/images/hero-dashboard.png" 
+                        alt="Dashboard"
+                        className="w-[200px] xl:w-[240px] h-auto"
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* Front image - login */}
+                  <div 
+                    className="relative z-10 transform -rotate-3 transition-transform hover:rotate-0 hover:scale-105 duration-500"
+                    style={{ 
+                      filter: "drop-shadow(0 30px 60px rgba(0,0,0,0.6))",
+                    }}
+                  >
+                    <div className="rounded-[1.5rem] overflow-hidden border border-white/10 bg-black/20 backdrop-blur-sm">
+                      <img 
+                        src="/images/hero-login.png" 
+                        alt="Login"
+                        className="w-[220px] xl:w-[260px] h-auto"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-            
-            <p className="mt-8 md:mt-10 max-w-xl md:max-w-2xl mx-auto animate-fade-in-up animation-delay-400 text-base sm:text-lg md:text-xl text-white/70 text-pretty leading-relaxed px-2">
-              {pages[0].subheadline}
-            </p>
-
-            {/* CTAs */}
-            <div className="mt-8 md:mt-10 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 animate-fade-in-up animation-delay-600">
-              <Button
-                size="lg"
-                onClick={() => onNavigate("sign-in")}
-                className="w-full sm:w-auto h-12 rounded-lg bg-[#f0b400] px-8 text-sm font-bold text-[#0c1220] hover:bg-[#d9a300] active:scale-[0.98] transition-all duration-200 shadow-[0_0_30px_rgba(240,180,0,0.3)]"
-              >
-                {language === "es" ? "Crear acuerdo" : "Create Agreement"}
-              </Button>
-              <Button
-                variant="ghost"
-                size="lg"
-                onClick={() => onNavigate("how-it-works")}
-                className="w-full sm:w-auto h-12 rounded-lg border border-white/20 bg-white/5 backdrop-blur-sm px-8 text-sm font-bold text-white hover:bg-white/10 hover:border-white/30 active:scale-[0.98] transition-all duration-200"
-              >
-                {language === "es" ? "Ver cómo funciona" : "See how it works"}
-              </Button>
-            </div>
-
-            {/* Scroll indicator */}
-            <button 
-              onClick={scrollToNextPage}
-              className="mt-10 md:mt-12 animate-bounce text-white/40 hover:text-white/60 transition-colors"
-              aria-label="Scroll to next section"
-            >
-              <ChevronDown className="h-6 w-6 sm:h-8 sm:w-8" />
-            </button>
           </div>
         </div>
 
-        {/* Page 2: Login Image */}
+        {/* Page 2: Login Image - Floating effect */}
         <div 
-          className="absolute inset-0 flex items-center justify-center px-4 sm:px-6 lg:px-16 transition-all duration-500 ease-out"
+          className="absolute inset-0 flex items-center justify-center px-4 transition-all duration-500 ease-out"
           style={{
             opacity: currentPage === 1 ? 1 : 0,
-            transform: currentPage === 1 ? "translateY(0) scale(1)" : currentPage < 1 ? "translateY(40px) scale(0.95)" : "translateY(-40px) scale(0.95)",
+            transform: currentPage === 1 ? "translateY(0) scale(1)" : currentPage < 1 ? "translateY(50px) scale(0.9)" : "translateY(-50px) scale(0.9)",
             pointerEvents: currentPage === 1 ? "auto" : "none",
           }}
         >
           <div className="text-center">
-            {/* Phone mockup with glow */}
-            <div className="relative inline-block">
-              <div className="absolute -inset-6 sm:-inset-8 bg-[#f0b400]/10 blur-2xl sm:blur-3xl rounded-full" />
-              <div className="relative rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden shadow-2xl shadow-black/50 border border-white/10">
+            {/* Floating phone mockup */}
+            <div 
+              className="relative inline-block animate-float"
+              style={{ 
+                filter: "drop-shadow(0 40px 80px rgba(0,0,0,0.6)) drop-shadow(0 15px 30px rgba(240,180,0,0.1))",
+              }}
+            >
+              <div className="relative rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden border border-white/10 bg-black/20 backdrop-blur-sm transform hover:scale-[1.02] transition-transform duration-500">
                 <img 
                   src="/images/hero-login.png" 
-                  alt={pages[1].alt}
-                  className="w-[220px] sm:w-[260px] md:w-[300px] lg:w-[340px] h-auto"
+                  alt="Thalos login screen"
+                  className="w-[260px] sm:w-[300px] md:w-[340px] lg:w-[380px] h-auto"
                 />
               </div>
             </div>
             
-            <p className="mt-6 sm:mt-8 text-xl sm:text-2xl md:text-3xl font-semibold text-white">
-              {pages[1].caption}
+            <p className="mt-8 text-xl sm:text-2xl md:text-3xl font-semibold text-white">
+              {content.imageCaption1}
             </p>
-            <div className="mt-2 h-1 w-12 sm:w-16 mx-auto bg-gradient-to-r from-transparent via-[#f0b400] to-transparent rounded-full" />
+            <div className="mt-2 h-1 w-16 mx-auto bg-gradient-to-r from-transparent via-[#f0b400] to-transparent rounded-full" />
           </div>
         </div>
 
-        {/* Page 3: Dashboard Image */}
+        {/* Page 3: Dashboard Image - Floating effect */}
         <div 
-          className="absolute inset-0 flex items-center justify-center px-4 sm:px-6 lg:px-16 transition-all duration-500 ease-out"
+          className="absolute inset-0 flex items-center justify-center px-4 transition-all duration-500 ease-out"
           style={{
             opacity: currentPage === 2 ? 1 : 0,
-            transform: currentPage === 2 ? "translateY(0) scale(1)" : currentPage < 2 ? "translateY(40px) scale(0.95)" : "translateY(-40px) scale(0.95)",
+            transform: currentPage === 2 ? "translateY(0) scale(1)" : currentPage < 2 ? "translateY(50px) scale(0.9)" : "translateY(-50px) scale(0.9)",
             pointerEvents: currentPage === 2 ? "auto" : "none",
           }}
         >
           <div className="text-center">
-            {/* Phone mockup with glow */}
-            <div className="relative inline-block">
-              <div className="absolute -inset-6 sm:-inset-8 bg-[#f0b400]/10 blur-2xl sm:blur-3xl rounded-full" />
-              <div className="relative rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden shadow-2xl shadow-black/50 border border-white/10">
+            {/* Floating phone mockup */}
+            <div 
+              className="relative inline-block animate-float"
+              style={{ 
+                filter: "drop-shadow(0 40px 80px rgba(0,0,0,0.6)) drop-shadow(0 15px 30px rgba(240,180,0,0.1))",
+                animationDelay: "0.5s"
+              }}
+            >
+              <div className="relative rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden border border-white/10 bg-black/20 backdrop-blur-sm transform hover:scale-[1.02] transition-transform duration-500">
                 <img 
                   src="/images/hero-dashboard.png" 
-                  alt={pages[2].alt}
-                  className="w-[220px] sm:w-[260px] md:w-[300px] lg:w-[340px] h-auto"
+                  alt="Thalos agreements dashboard"
+                  className="w-[260px] sm:w-[300px] md:w-[340px] lg:w-[380px] h-auto"
                 />
               </div>
             </div>
             
-            <p className="mt-6 sm:mt-8 text-xl sm:text-2xl md:text-3xl font-semibold text-white">
-              {pages[2].caption}
+            <p className="mt-8 text-xl sm:text-2xl md:text-3xl font-semibold text-white">
+              {content.imageCaption2}
             </p>
-            <div className="mt-2 h-1 w-12 sm:w-16 mx-auto bg-gradient-to-r from-transparent via-[#f0b400] to-transparent rounded-full" />
+            <div className="mt-2 h-1 w-16 mx-auto bg-gradient-to-r from-transparent via-[#f0b400] to-transparent rounded-full" />
           </div>
         </div>
 
-        {/* Page 4: Video - proportional phone size */}
+        {/* Page 4: Video - Horizontal, not too large */}
         <div 
-          className="absolute inset-0 flex items-center justify-center px-4 sm:px-6 lg:px-16 transition-all duration-500 ease-out"
+          className="absolute inset-0 flex items-center justify-center px-4 transition-all duration-500 ease-out"
           style={{
             opacity: currentPage === 3 ? 1 : 0,
-            transform: currentPage === 3 ? "translateY(0) scale(1)" : currentPage < 3 ? "translateY(40px) scale(0.95)" : "translateY(-40px) scale(0.95)",
+            transform: currentPage === 3 ? "translateY(0) scale(1)" : currentPage < 3 ? "translateY(50px) scale(0.9)" : "translateY(-50px) scale(0.9)",
             pointerEvents: currentPage === 3 ? "auto" : "none",
           }}
         >
-          <div className="text-center">
-            {/* Video in phone frame - same size as other mockups */}
-            <div className="relative inline-block">
-              <div className="absolute -inset-6 sm:-inset-8 bg-[#f0b400]/10 blur-2xl sm:blur-3xl rounded-full" />
-              <div className="relative rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden shadow-2xl shadow-black/50 border border-white/10 bg-black">
+          <div className="text-center w-full max-w-3xl mx-auto">
+            {/* Video container - horizontal 16:9 */}
+            <div 
+              className="relative inline-block w-full"
+              style={{ 
+                filter: "drop-shadow(0 40px 80px rgba(0,0,0,0.6)) drop-shadow(0 15px 30px rgba(240,180,0,0.1))",
+              }}
+            >
+              <div className="relative rounded-2xl overflow-hidden border border-white/10 bg-black">
                 {currentPage >= 2 ? (
                   <iframe
                     src={`https://www.youtube-nocookie.com/embed/${YOUTUBE_VIDEO_ID}?autoplay=1&mute=1&loop=1&playlist=${YOUTUBE_VIDEO_ID}&controls=0&showinfo=0&rel=0&modestbranding=1&iv_load_policy=3&disablekb=1&fs=0&playsinline=1&vq=hd1080&hd=1`}
-                    className="w-[220px] sm:w-[260px] md:w-[300px] lg:w-[340px] aspect-[9/16] pointer-events-none"
+                    className="w-full aspect-video pointer-events-none"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     title="Thalos Demo Video"
                     style={{ border: 0 }}
                   />
                 ) : (
-                  <div className="w-[220px] sm:w-[260px] md:w-[300px] lg:w-[340px] aspect-[9/16] bg-black/80 flex items-center justify-center">
-                    <Play className="h-12 w-12 sm:h-16 sm:w-16 text-white/30" />
+                  <div className="w-full aspect-video bg-black/80 flex items-center justify-center">
+                    <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center">
+                      <div className="w-0 h-0 border-l-[20px] border-l-white/50 border-t-[12px] border-t-transparent border-b-[12px] border-b-transparent ml-1" />
+                    </div>
                   </div>
                 )}
               </div>
             </div>
             
-            <p className="mt-6 sm:mt-8 text-xl sm:text-2xl md:text-3xl font-semibold text-white">
-              {pages[3].caption}
+            <p className="mt-8 text-xl sm:text-2xl md:text-3xl font-semibold text-white">
+              {content.videoCaption}
             </p>
-            <div className="mt-2 h-1 w-12 sm:w-16 mx-auto bg-gradient-to-r from-transparent via-[#f0b400] to-transparent rounded-full" />
+            <div className="mt-2 h-1 w-16 mx-auto bg-gradient-to-r from-transparent via-[#f0b400] to-transparent rounded-full" />
           </div>
         </div>
 
-        {/* Page 5: Final - Trust message */}
+        {/* Page 5: Final - Trust message with more spacing */}
         <div 
-          className="absolute inset-0 flex items-center justify-center px-4 sm:px-6 lg:px-16 transition-all duration-500 ease-out"
+          className="absolute inset-0 flex items-center justify-center px-4 transition-all duration-500 ease-out"
           style={{
             opacity: currentPage === 4 ? 1 : 0,
-            transform: currentPage === 4 ? "translateY(0) scale(1)" : currentPage < 4 ? "translateY(40px) scale(0.95)" : "translateY(-40px) scale(0.95)",
+            transform: currentPage === 4 ? "translateY(0) scale(1)" : currentPage < 4 ? "translateY(50px) scale(0.9)" : "translateY(-50px) scale(0.9)",
             pointerEvents: currentPage === 4 ? "auto" : "none",
           }}
         >
           <div className="max-w-3xl mx-auto text-center">
             {/* Checkmark icon with glow */}
-            <div className="relative inline-flex items-center justify-center mb-6 sm:mb-8">
-              <div className="absolute inset-0 bg-[#f0b400]/20 blur-2xl rounded-full scale-150" />
-              <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-[#f0b400]/10 border border-[#f0b400]/30 flex items-center justify-center">
-                <svg className="w-8 h-8 sm:w-10 sm:h-10 text-[#f0b400]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <div className="relative inline-flex items-center justify-center mb-8">
+              <div className="absolute inset-0 bg-[#f0b400]/20 blur-3xl rounded-full scale-150" />
+              <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-[#f0b400]/10 border border-[#f0b400]/30 flex items-center justify-center">
+                <svg className="w-10 h-10 sm:w-12 sm:h-12 text-[#f0b400]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                 </svg>
               </div>
             </div>
             
-            <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 sm:mb-6">
-              {pages[4].headline}
+            <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6">
+              {content.finalHeadline}
             </h2>
             
             <p className="text-lg sm:text-xl md:text-2xl text-white/70 max-w-xl mx-auto">
-              {pages[4].subheadline}
+              {content.finalSubheadline}
             </p>
             
-            <div className="mt-3 sm:mt-4 h-1 w-20 sm:w-24 mx-auto bg-gradient-to-r from-transparent via-[#f0b400] to-transparent rounded-full" />
+            <div className="mt-4 h-1 w-24 mx-auto bg-gradient-to-r from-transparent via-[#f0b400] to-transparent rounded-full" />
           </div>
         </div>
 
         {/* Page indicators */}
-        <div className={`fixed bottom-6 sm:bottom-8 left-1/2 -translate-x-1/2 z-30 flex items-center gap-1.5 sm:gap-2 transition-opacity duration-300 ${isHeroVisible ? 'opacity-100' : 'opacity-0'}`}>
+        <div className={`fixed bottom-8 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 transition-opacity duration-300 ${isHeroVisible ? 'opacity-100' : 'opacity-0'}`}>
           {[0, 1, 2, 3, 4].map((i) => (
             <button
               key={i}
               onClick={() => {
-                const scrollPerPage = window.innerHeight * 0.7
+                const scrollPerPage = window.innerHeight * 0.6
                 window.scrollTo({ top: i * scrollPerPage, behavior: "smooth" })
               }}
               className={`transition-all duration-300 rounded-full ${
                 currentPage === i 
-                  ? "w-6 sm:w-8 h-1.5 sm:h-2 bg-[#f0b400]" 
-                  : "w-1.5 sm:w-2 h-1.5 sm:h-2 bg-white/30 hover:bg-white/50"
+                  ? "w-8 h-2 bg-[#f0b400]" 
+                  : "w-2 h-2 bg-white/30 hover:bg-white/50"
               }`}
               aria-label={`Go to page ${i + 1}`}
             />
           ))}
         </div>
       </div>
+
+      {/* Spacer to ensure no collision with next section */}
+      <div className="absolute bottom-0 left-0 right-0 h-32" />
+
+      {/* CSS for floating animation */}
+      <style jsx>{`
+        @keyframes float {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-10px); }
+        }
+        .animate-float {
+          animation: float 4s ease-in-out infinite;
+        }
+      `}</style>
     </section>
   )
 }
