@@ -118,25 +118,15 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
     
     const scrollY = window.scrollY
     const vh = window.innerHeight
-    const scrollPerPage = vh * 0.55 // Faster scroll - 55vh per page
-    const heroTotalHeight = scrollPerPage * totalPages
+    const scrollPerPage = vh * 0.5 // 50vh per page for faster scroll
+    const heroEndScroll = scrollPerPage * (totalPages - 1) + scrollPerPage * 0.6 // End slightly after page 5 starts
     
     // Calculate current page (0-4)
     const pageIndex = Math.min(Math.floor(scrollY / scrollPerPage), totalPages - 1)
     setCurrentPage(pageIndex)
     
-    // Hide fixed content when reaching end of hero - smooth fade out
-    const fadeOutStart = heroTotalHeight - vh * 0.8
-    const fadeOutEnd = heroTotalHeight - vh * 0.2
-    
-    if (scrollY < fadeOutStart) {
-      setIsHeroVisible(true)
-    } else if (scrollY >= fadeOutEnd) {
-      setIsHeroVisible(false)
-    } else {
-      // Gradual fade
-      setIsHeroVisible(true)
-    }
+    // Hide fixed content earlier - when past 60% of page 5
+    setIsHeroVisible(scrollY < heroEndScroll)
 
     // Letter fade effect
     const newOpacities = LETTERS.map((_, i) => {
@@ -158,13 +148,13 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
 
   const scrollToNextPage = () => {
     const vh = window.innerHeight
-    const scrollPerPage = vh * 0.55
+    const scrollPerPage = vh * 0.5
     const targetScroll = (currentPage + 1) * scrollPerPage
     window.scrollTo({ top: targetScroll, behavior: "smooth" })
   }
 
-  // Height for hero section (5 pages at 55vh each + buffer for smooth transition)
-  const heroHeightVh = totalPages * 55 + 30
+  // Height for hero section - compact to avoid collision
+  const heroHeightVh = totalPages * 50 + 10
 
   return (
     <section id="hero" ref={containerRef} className="relative" style={{ height: `${heroHeightVh}vh` }}>
@@ -410,7 +400,7 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
               key={i}
               onClick={() => {
                 const vh = window.innerHeight
-                const scrollPerPage = vh * 0.55
+                const scrollPerPage = vh * 0.5
                 window.scrollTo({ top: i * scrollPerPage, behavior: "smooth" })
               }}
               className={`w-2 h-2 rounded-full transition-all duration-300 ${
