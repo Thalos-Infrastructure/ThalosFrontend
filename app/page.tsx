@@ -101,7 +101,7 @@ export default function Home() {
             transform: introComplete ? "translateY(0)" : "translateY(40px)",
           }}
         >
-          <div ref={setRef("how-it-works")} className="mt-12">
+          <div ref={setRef("how-it-works")} className="mt-48 sm:mt-56 lg:mt-64">
             <HowItWorks />
           </div>
 
