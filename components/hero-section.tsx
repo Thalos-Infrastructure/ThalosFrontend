@@ -21,7 +21,7 @@ const TYPEWRITER_PHRASES = {
   es: ["transacciones", "acuerdos", "negocios", "futuro"]
 }
 
-// Content translations
+// Content translations - ALL content translated
 const CONTENT = {
   en: {
     headline: "Protect your",
@@ -37,14 +37,14 @@ const CONTENT = {
   },
   es: {
     headline: "Protege tus",
-    description: "Somos el puente entre la confianza y los pagos. Crea acuerdos digitales donde los fondos estan protegidos hasta cumplir condiciones, con hitos claros, liberacion instantanea al aprobar, y resolucion de disputas incluida.",
+    description: "Somos el puente entre la confianza y los pagos. Crea acuerdos digitales donde los fondos están protegidos hasta cumplir condiciones, con hitos claros, liberación instantánea al aprobar, y resolución de disputas incluida.",
     cta: "Comenzar",
-    ctaSecondary: "Ver como funciona",
+    ctaSecondary: "Ver cómo funciona",
     imageCaption1: "Empieza en segundos",
     imageCaption2: "Gestiona tus acuerdos",
-    videoCaption: "Velo en accion",
+    videoCaption: "Míralo en acción",
     finalHeadline: "Confianza en cada paso",
-    finalSubheadline: "Cada transaccion protegida. Cada acuerdo cumplido.",
+    finalSubheadline: "Cada transacción protegida. Cada acuerdo cumplido.",
     finalCta: "Comenzar ahora",
   }
 }
@@ -68,23 +68,19 @@ function useRotatingTypewriter(phrases: string[], isActive: boolean) {
 
     const interval = setInterval(() => {
       if (!isDeleting) {
-        // Typing
         if (currentIndex <= currentPhrase.length) {
           setDisplayText(currentPhrase.slice(0, currentIndex))
           currentIndex++
         } else {
-          // Wait before deleting
           setTimeout(() => {
             isDeleting = true
           }, 2000)
         }
       } else {
-        // Deleting
         if (currentIndex > 0) {
           currentIndex--
           setDisplayText(currentPhrase.slice(0, currentIndex))
         } else {
-          // Move to next phrase
           isDeleting = false
           setPhraseIndex((prev) => (prev + 1) % phrases.length)
           clearInterval(interval)
@@ -104,7 +100,9 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
   const [letterOpacities, setLetterOpacities] = useState<number[]>([1, 1, 1, 1, 1, 1])
   const [isHeroVisible, setIsHeroVisible] = useState(true)
   const containerRef = useRef<HTMLDivElement>(null)
-  const totalPages = 5
+  
+  // Only 4 pages are fixed, the 5th (Trust) is in normal flow
+  const fixedPages = 4
 
   const content = CONTENT[language as keyof typeof CONTENT] || CONTENT.en
   const typewriterPhrases = TYPEWRITER_PHRASES[language as keyof typeof TYPEWRITER_PHRASES] || TYPEWRITER_PHRASES.en
@@ -121,18 +119,17 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
     
     const scrollY = window.scrollY
     const vh = window.innerHeight
-    const scrollPerPage = vh * 0.8 // Each page = 80vh of scroll
-    const heroHeight = scrollPerPage * totalPages + vh // Extra space for final page
+    const scrollPerPage = vh * 0.85
+    const fixedSectionHeight = scrollPerPage * fixedPages
     
-    // Hide fixed content when scrolled past hero
-    setIsHeroVisible(scrollY < heroHeight)
+    // Hide fixed content after 4 pages
+    setIsHeroVisible(scrollY < fixedSectionHeight)
     
-    // Calculate current page based on scroll position
-    const progress = Math.min(scrollY / heroHeight, 1)
-    const pageIndex = Math.min(Math.floor(progress * totalPages), totalPages - 1)
+    // Calculate current page (0-3 for fixed pages)
+    const pageIndex = Math.min(Math.floor(scrollY / scrollPerPage), fixedPages - 1)
     setCurrentPage(pageIndex)
 
-    // Letter fade effect (only on first page)
+    // Letter fade effect
     const newOpacities = LETTERS.map((_, i) => {
       const fadeStart = vh * 0.03 + i * vh * 0.04
       const fadeEnd = fadeStart + vh * 0.1
@@ -142,7 +139,7 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
       return raw * raw
     })
     setLetterOpacities(newOpacities)
-  }, [totalPages])
+  }, [fixedPages])
 
   useEffect(() => {
     window.addEventListener("scroll", onScroll, { passive: true })
@@ -152,20 +149,23 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
 
   const scrollToNextPage = () => {
     const vh = window.innerHeight
-    const scrollPerPage = vh * 0.8
+    const scrollPerPage = vh * 0.85
     const targetScroll = (currentPage + 1) * scrollPerPage
     window.scrollTo({ top: targetScroll, behavior: "smooth" })
   }
 
-  // Hero height - 5 pages at 80vh + extra 100vh for final section visibility
-  const heroHeightVh = totalPages * 80 + 100
+  // Height for the fixed pages only (4 pages at 85vh each)
+  const fixedSectionHeightVh = fixedPages * 85
 
   return (
-    <section id="hero" ref={containerRef} className="relative" style={{ height: `${heroHeightVh}vh` }}>
+    <section id="hero" ref={containerRef} className="relative">
+      {/* Fixed section spacer */}
+      <div style={{ height: `${fixedSectionHeightVh}vh` }} />
+      
       {/* Subtle top gradient line */}
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#f0b400]/20 to-transparent" aria-hidden="true" />
 
-      {/* Vertical THALOS letters - desktop only, original size */}
+      {/* Vertical THALOS letters - desktop only */}
       <div
         className={`pointer-events-none fixed right-0 top-1/2 -translate-y-1/2 z-20 hidden select-none md:flex md:flex-col md:items-end lg:right-4 xl:right-8 transition-opacity duration-300 ${isHeroVisible ? 'opacity-100' : 'opacity-0'}`}
         aria-hidden="true"
@@ -186,10 +186,10 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
         ))}
       </div>
 
-      {/* Fixed viewport container for story pages */}
+      {/* Fixed viewport container for pages 1-4 */}
       <div className={`fixed inset-0 z-10 overflow-hidden transition-opacity duration-300 ${isHeroVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
         
-        {/* Page 1: Intro - Text centered */}
+        {/* Page 1: Intro */}
         <div 
           className="absolute inset-0 flex items-center transition-all duration-500 ease-out"
           style={{
@@ -213,12 +213,12 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
                 ))}
               </div>
 
-              {/* Headlines - bigger and more impactful */}
+              {/* Headlines */}
               <h1 className="animate-fade-in-up text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-bold tracking-tight text-foreground leading-[0.95]">
                 {content.headline}
               </h1>
               
-              {/* Typewriter effect - rotating words */}
+              {/* Typewriter effect */}
               <div className="mt-2 sm:mt-4 min-h-[1.3em] animate-fade-in-up animation-delay-200">
                 <p className="text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-bold tracking-tight text-[#f0b400]">
                   [{displayText}
@@ -262,7 +262,7 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
           </div>
         </div>
 
-        {/* Page 2: Login Image - Floating effect */}
+        {/* Page 2: Login Image */}
         <div 
           className="absolute inset-0 flex items-center justify-center px-4 transition-all duration-500 ease-out"
           style={{
@@ -272,12 +272,9 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
           }}
         >
           <div className="text-center">
-            {/* Floating phone mockup */}
             <div 
               className="relative inline-block animate-float"
-              style={{ 
-                filter: "drop-shadow(0 50px 100px rgba(0,0,0,0.5)) drop-shadow(0 20px 40px rgba(240,180,0,0.1))",
-              }}
+              style={{ filter: "drop-shadow(0 50px 100px rgba(0,0,0,0.5)) drop-shadow(0 20px 40px rgba(240,180,0,0.1))" }}
             >
               <div className="relative rounded-[2.5rem] sm:rounded-[3rem] overflow-hidden border-2 border-border/20 bg-card/30 backdrop-blur-sm transform hover:scale-[1.02] transition-transform duration-500">
                 <img 
@@ -295,7 +292,7 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
           </div>
         </div>
 
-        {/* Page 3: Dashboard Image - Floating effect */}
+        {/* Page 3: Dashboard Image */}
         <div 
           className="absolute inset-0 flex items-center justify-center px-4 transition-all duration-500 ease-out"
           style={{
@@ -305,13 +302,9 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
           }}
         >
           <div className="text-center">
-            {/* Floating phone mockup */}
             <div 
               className="relative inline-block animate-float"
-              style={{ 
-                filter: "drop-shadow(0 50px 100px rgba(0,0,0,0.5)) drop-shadow(0 20px 40px rgba(240,180,0,0.1))",
-                animationDelay: "0.5s"
-              }}
+              style={{ filter: "drop-shadow(0 50px 100px rgba(0,0,0,0.5)) drop-shadow(0 20px 40px rgba(240,180,0,0.1))", animationDelay: "0.5s" }}
             >
               <div className="relative rounded-[2.5rem] sm:rounded-[3rem] overflow-hidden border-2 border-border/20 bg-card/30 backdrop-blur-sm transform hover:scale-[1.02] transition-transform duration-500">
                 <img 
@@ -329,7 +322,7 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
           </div>
         </div>
 
-        {/* Page 4: Video - Horizontal, proper size */}
+        {/* Page 4: Video - Horizontal */}
         <div 
           className="absolute inset-0 flex items-center justify-center px-4 sm:px-6 transition-all duration-500 ease-out"
           style={{
@@ -339,13 +332,7 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
           }}
         >
           <div className="text-center w-full max-w-3xl mx-auto">
-            {/* Video container - horizontal 16:9 */}
-            <div 
-              className="relative inline-block w-full"
-              style={{ 
-                filter: "drop-shadow(0 50px 100px rgba(0,0,0,0.5)) drop-shadow(0 20px 40px rgba(240,180,0,0.1))",
-              }}
-            >
+            <div style={{ filter: "drop-shadow(0 50px 100px rgba(0,0,0,0.5)) drop-shadow(0 20px 40px rgba(240,180,0,0.1))" }}>
               <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden border-2 border-border/20 bg-black">
                 {currentPage >= 2 ? (
                   <iframe
@@ -372,52 +359,14 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
           </div>
         </div>
 
-        {/* Page 5: Final - Trust at every step */}
-        <div 
-          className="absolute inset-0 flex items-center justify-center px-4 transition-all duration-500 ease-out"
-          style={{
-            opacity: currentPage === 4 ? 1 : 0,
-            transform: currentPage === 4 ? "translateY(0) scale(1)" : currentPage < 4 ? "translateY(50px) scale(0.9)" : "translateY(-50px) scale(0.9)",
-            pointerEvents: currentPage === 4 ? "auto" : "none",
-          }}
-        >
-          <div className="max-w-3xl mx-auto text-center">
-            {/* Checkmark icon with glow */}
-            <div className="relative inline-flex items-center justify-center mb-10">
-              <div className="absolute inset-0 bg-[#f0b400]/20 blur-3xl rounded-full scale-150" />
-              <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-[#f0b400]/10 border-2 border-[#f0b400]/30 flex items-center justify-center">
-                <svg className="w-12 h-12 sm:w-14 sm:h-14 text-[#f0b400]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-            </div>
-            
-            <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold text-foreground tracking-tight">
-              {content.finalHeadline}
-            </h2>
-            <p className="mt-6 text-xl sm:text-2xl text-muted-foreground font-medium">
-              {content.finalSubheadline}
-            </p>
-            
-            {/* CTA Button */}
-            <Button
-              size="lg"
-              onClick={() => onNavigate("sign-in")}
-              className="mt-10 h-14 rounded-xl bg-[#f0b400] px-12 text-base font-bold text-[#0c1220] hover:bg-[#d9a300] active:scale-[0.98] transition-all duration-200 shadow-[0_0_40px_rgba(240,180,0,0.3)]"
-            >
-              {content.finalCta}
-            </Button>
-          </div>
-        </div>
-
-        {/* Page indicators */}
+        {/* Page indicators (only for fixed pages) */}
         <div className={`fixed bottom-8 left-1/2 -translate-x-1/2 z-30 flex gap-2 transition-opacity duration-300 ${isHeroVisible ? 'opacity-100' : 'opacity-0'}`}>
-          {Array.from({ length: totalPages }).map((_, i) => (
+          {Array.from({ length: fixedPages }).map((_, i) => (
             <button
               key={i}
               onClick={() => {
                 const vh = window.innerHeight
-                const scrollPerPage = vh * 0.8
+                const scrollPerPage = vh * 0.85
                 window.scrollTo({ top: i * scrollPerPage, behavior: "smooth" })
               }}
               className={`w-2 h-2 rounded-full transition-all duration-300 ${
@@ -428,6 +377,37 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
               aria-label={`Go to page ${i + 1}`}
             />
           ))}
+        </div>
+      </div>
+
+      {/* Page 5: Trust at every step - IN NORMAL FLOW (not fixed) */}
+      <div className="relative z-20 bg-background py-24 sm:py-32 border-t border-border/10">
+        <div className="max-w-3xl mx-auto text-center px-4">
+          {/* Checkmark icon with glow */}
+          <div className="relative inline-flex items-center justify-center mb-10">
+            <div className="absolute inset-0 bg-[#f0b400]/20 blur-3xl rounded-full scale-150" />
+            <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-[#f0b400]/10 border-2 border-[#f0b400]/30 flex items-center justify-center">
+              <svg className="w-12 h-12 sm:w-14 sm:h-14 text-[#f0b400]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+          </div>
+          
+          <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold text-foreground tracking-tight">
+            {content.finalHeadline}
+          </h2>
+          <p className="mt-6 text-xl sm:text-2xl text-muted-foreground font-medium">
+            {content.finalSubheadline}
+          </p>
+          
+          {/* CTA Button */}
+          <Button
+            size="lg"
+            onClick={() => onNavigate("sign-in")}
+            className="mt-10 h-14 rounded-xl bg-[#f0b400] px-12 text-base font-bold text-[#0c1220] hover:bg-[#d9a300] active:scale-[0.98] transition-all duration-200 shadow-[0_0_40px_rgba(240,180,0,0.3)]"
+          >
+            {content.finalCta}
+          </Button>
         </div>
       </div>
 
