@@ -119,13 +119,13 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
     const scrollY = window.scrollY
     const vh = window.innerHeight
     const scrollPerPage = vh * 0.5 // 50vh per page for faster scroll
-    const heroEndScroll = scrollPerPage * (totalPages - 1) + scrollPerPage * 0.6 // End slightly after page 5 starts
+    const heroEndScroll = scrollPerPage * totalPages - vh * 0.3 // End before reaching the next section
     
     // Calculate current page (0-4)
     const pageIndex = Math.min(Math.floor(scrollY / scrollPerPage), totalPages - 1)
     setCurrentPage(pageIndex)
     
-    // Hide fixed content earlier - when past 60% of page 5
+    // Hide fixed content before it collides with next section
     setIsHeroVisible(scrollY < heroEndScroll)
 
     // Letter fade effect
