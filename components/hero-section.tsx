@@ -121,11 +121,11 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
     
     const scrollY = window.scrollY
     const vh = window.innerHeight
-    const scrollPerPage = vh * 0.7 // Each page = 70vh of scroll
-    const heroHeight = scrollPerPage * totalPages
+    const scrollPerPage = vh * 0.8 // Each page = 80vh of scroll
+    const heroHeight = scrollPerPage * totalPages + vh // Extra space for final page
     
     // Hide fixed content when scrolled past hero
-    setIsHeroVisible(scrollY < heroHeight - vh)
+    setIsHeroVisible(scrollY < heroHeight)
     
     // Calculate current page based on scroll position
     const progress = Math.min(scrollY / heroHeight, 1)
@@ -152,13 +152,13 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
 
   const scrollToNextPage = () => {
     const vh = window.innerHeight
-    const scrollPerPage = vh * 0.7
+    const scrollPerPage = vh * 0.8
     const targetScroll = (currentPage + 1) * scrollPerPage
     window.scrollTo({ top: targetScroll, behavior: "smooth" })
   }
 
-  // Hero height - 5 pages at 70vh + extra 50vh for final section visibility
-  const heroHeightVh = totalPages * 70 + 50
+  // Hero height - 5 pages at 80vh + extra 100vh for final section visibility
+  const heroHeightVh = totalPages * 80 + 100
 
   return (
     <section id="hero" ref={containerRef} className="relative" style={{ height: `${heroHeightVh}vh` }}>
@@ -417,7 +417,7 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
               key={i}
               onClick={() => {
                 const vh = window.innerHeight
-                const scrollPerPage = vh * 0.7
+                const scrollPerPage = vh * 0.8
                 window.scrollTo({ top: i * scrollPerPage, behavior: "smooth" })
               }}
               className={`w-2 h-2 rounded-full transition-all duration-300 ${
