@@ -15,6 +15,12 @@ const LETTERS = ["T", "h", "a", "l", "o", "s"]
 // YouTube video ID
 const YOUTUBE_VIDEO_ID = "pKIizFs0dO4"
 
+// Typewriter text with brackets
+const TYPEWRITER_TEXT = {
+  en: "[Secure payments]",
+  es: "[Pagos seguros]"
+}
+
 // Story pages content
 const STORY_PAGES = {
   en: [
@@ -22,7 +28,6 @@ const STORY_PAGES = {
       id: 1, 
       type: "intro",
       headline: "Clear agreements.",
-      headline2: "Secure payments.",
       subheadline: "Define conditions between parties and ensure payments are only released when they are met.",
       poweredBy: "Powered by secure and transparent technology"
     },
@@ -44,13 +49,6 @@ const STORY_PAGES = {
       id: 4, 
       type: "video",
       caption: "Conditions are met. Payments are released."
-    },
-    { 
-      id: 5, 
-      type: "final",
-      headline: "Trust at every step",
-      subheadline: "Every transaction protected. Every agreement honored.",
-      cta: "Get Started"
     }
   ],
   es: [
@@ -58,7 +56,6 @@ const STORY_PAGES = {
       id: 1, 
       type: "intro",
       headline: "Acuerdos claros.",
-      headline2: "Pagos seguros.",
       subheadline: "Define condiciones entre partes y asegura que el pago solo se libere cuando se cumplan.",
       poweredBy: "Impulsado por tecnología segura y transparente"
     },
@@ -80,15 +77,37 @@ const STORY_PAGES = {
       id: 4, 
       type: "video",
       caption: "Se cumplen las condiciones. Se libera el pago."
-    },
-    { 
-      id: 5, 
-      type: "final",
-      headline: "Confianza en cada paso",
-      subheadline: "Cada transacción protegida. Cada acuerdo cumplido.",
-      cta: "Comenzar ahora"
     }
   ]
+}
+
+// Typewriter hook
+function useTypewriter(text: string, isActive: boolean) {
+  const [displayText, setDisplayText] = useState("")
+  const [isTyping, setIsTyping] = useState(false)
+
+  useEffect(() => {
+    if (!isActive) {
+      setDisplayText("")
+      return
+    }
+
+    setIsTyping(true)
+    let currentIndex = 0
+    const interval = setInterval(() => {
+      if (currentIndex <= text.length) {
+        setDisplayText(text.slice(0, currentIndex))
+        currentIndex++
+      } else {
+        setIsTyping(false)
+        clearInterval(interval)
+      }
+    }, 80)
+
+    return () => clearInterval(interval)
+  }, [text, isActive])
+
+  return { displayText, isTyping }
 }
 
 export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
@@ -97,9 +116,11 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
   const [letterOpacities, setLetterOpacities] = useState<number[]>([1, 1, 1, 1, 1, 1])
   const [isHeroVisible, setIsHeroVisible] = useState(true)
   const containerRef = useRef<HTMLDivElement>(null)
-  const totalPages = 5
+  const totalPages = 4 // Reduced to 4 pages (removed final page)
 
   const pages = STORY_PAGES[language as keyof typeof STORY_PAGES] || STORY_PAGES.en
+  const typewriterText = TYPEWRITER_TEXT[language as keyof typeof TYPEWRITER_TEXT] || TYPEWRITER_TEXT.en
+  const { displayText, isTyping } = useTypewriter(typewriterText, currentPage === 0)
 
   useEffect(() => {
     const t1 = setTimeout(() => { onIntroComplete?.() }, 2000)
@@ -112,11 +133,10 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
     
     const scrollY = window.scrollY
     const vh = window.innerHeight
-    const heroHeight = vh * (totalPages - 0.5) // Slightly less than full height
+    const heroHeight = vh * totalPages // Total scrollable height for hero
     
     // Hide fixed content when scrolled past hero
-    const heroEnd = heroHeight
-    setIsHeroVisible(scrollY < heroEnd)
+    setIsHeroVisible(scrollY < heroHeight - vh * 0.3)
     
     // Calculate current page based on scroll position
     const progress = Math.min(scrollY / heroHeight, 1)
@@ -148,13 +168,13 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
   }
 
   return (
-    <section id="hero" ref={containerRef} className="relative" style={{ height: `${(totalPages - 0.5) * 100}vh` }}>
+    <section id="hero" ref={containerRef} className="relative" style={{ height: `${totalPages * 100}vh` }}>
       {/* Subtle top gradient line */}
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#f0b400]/20 to-transparent" aria-hidden="true" />
 
       {/* Vertical THALOS letters - desktop only, fades on scroll */}
       <div
-        className={`pointer-events-none fixed right-0 top-0 bottom-0 z-20 hidden select-none md:flex md:flex-col md:items-end md:justify-center lg:right-4 xl:right-8 transition-opacity duration-500 ${isHeroVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+        className={`pointer-events-none fixed right-0 top-0 bottom-0 z-20 hidden select-none md:flex md:flex-col md:items-end md:justify-center lg:right-4 xl:right-8 transition-opacity duration-500 ${isHeroVisible ? 'opacity-100' : 'opacity-0'}`}
         aria-hidden="true"
       >
         {LETTERS.map((letter, i) => (
@@ -201,9 +221,14 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
             <h1 className="animate-fade-in-up text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tight text-white text-balance">
               {pages[0].headline}
             </h1>
-            <p className="mt-2 animate-fade-in-up animation-delay-200 text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tight text-[#f0b400]">
-              {pages[0].headline2}
-            </p>
+            
+            {/* Typewriter effect with brackets */}
+            <div className="mt-2 h-[1.2em] animate-fade-in-up animation-delay-200">
+              <p className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tight text-[#f0b400] font-mono">
+                {displayText}
+                {isTyping && <span className="animate-pulse">|</span>}
+              </p>
+            </div>
             
             <p className="mt-8 max-w-2xl mx-auto animate-fade-in-up animation-delay-400 text-lg md:text-xl text-white/70 text-pretty leading-relaxed">
               {pages[0].subheadline}
@@ -302,7 +327,7 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
           </div>
         </div>
 
-        {/* Page 4: Video */}
+        {/* Page 4: Video - proportional size like images */}
         <div 
           className="absolute inset-0 flex items-center justify-center px-6 lg:px-16 transition-all duration-700 ease-out"
           style={{
@@ -311,81 +336,37 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
             pointerEvents: currentPage === 3 ? "auto" : "none",
           }}
         >
-          <div className="max-w-5xl w-full mx-auto text-center">
-            {/* Video container with glow - clean embed without YouTube branding */}
-            <div className="relative">
-              <div className="absolute -inset-8 bg-[#f0b400]/8 blur-3xl rounded-3xl" />
-              <div className="relative rounded-2xl overflow-hidden shadow-2xl shadow-black/50 border border-white/10">
+          <div className="max-w-5xl mx-auto text-center">
+            {/* Video container - same size as phone mockups */}
+            <div className="relative inline-block">
+              <div className="absolute -inset-8 bg-[#f0b400]/10 blur-3xl rounded-full" />
+              <div className="relative rounded-[2rem] overflow-hidden shadow-2xl shadow-black/50 border border-white/10">
                 {currentPage >= 2 ? (
                   <iframe
-                    src={`https://www.youtube-nocookie.com/embed/${YOUTUBE_VIDEO_ID}?autoplay=1&mute=1&loop=1&playlist=${YOUTUBE_VIDEO_ID}&controls=0&showinfo=0&rel=0&modestbranding=1&iv_load_policy=3&disablekb=1&fs=0&playsinline=1&vq=hd1080`}
-                    className="w-full aspect-video pointer-events-none"
+                    src={`https://www.youtube-nocookie.com/embed/${YOUTUBE_VIDEO_ID}?autoplay=1&mute=1&loop=1&playlist=${YOUTUBE_VIDEO_ID}&controls=0&showinfo=0&rel=0&modestbranding=1&iv_load_policy=3&disablekb=1&fs=0&playsinline=1&vq=hd1080&hd=1`}
+                    className="w-[320px] md:w-[400px] lg:w-[480px] aspect-[9/16] pointer-events-none"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     title="Thalos Demo Video"
                     style={{ border: 0 }}
                   />
                 ) : (
-                  <div className="w-full aspect-video bg-black/80 flex items-center justify-center">
+                  <div className="w-[320px] md:w-[400px] lg:w-[480px] aspect-[9/16] bg-black/80 flex items-center justify-center">
                     <Play className="h-16 w-16 text-white/30" />
                   </div>
                 )}
               </div>
             </div>
             
-            <p className="mt-8 text-2xl md:text-3xl font-semibold text-white">
+            <p className="mt-10 text-2xl md:text-3xl font-semibold text-white">
               {pages[3].caption}
             </p>
             <div className="mt-2 h-1 w-16 mx-auto bg-gradient-to-r from-transparent via-[#f0b400] to-transparent rounded-full" />
           </div>
         </div>
 
-        {/* Page 5: Final - Trust */}
-        <div 
-          className="absolute inset-0 flex items-center justify-center px-6 lg:px-16 transition-all duration-700 ease-out"
-          style={{
-            opacity: currentPage === 4 ? 1 : 0,
-            transform: currentPage === 4 ? "translateY(0) scale(1)" : "translateY(50px) scale(0.95)",
-            pointerEvents: currentPage === 4 ? "auto" : "none",
-          }}
-        >
-          <div className="max-w-3xl mx-auto text-center">
-            {/* Success glow effect */}
-            <div className="relative">
-              <div className="absolute inset-0 -top-20 bg-gradient-radial from-[#f0b400]/20 via-transparent to-transparent blur-3xl" />
-              
-              <div className="relative">
-                {/* Checkmark icon */}
-                <div className="mb-8 inline-flex items-center justify-center w-20 h-20 rounded-full bg-[#f0b400]/10 border border-[#f0b400]/30">
-                  <svg className="w-10 h-10 text-[#f0b400]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                  </svg>
-                </div>
-
-                <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-white">
-                  {pages[4].headline}
-                </h2>
-                <p className="mt-4 text-xl md:text-2xl text-white/60">
-                  {pages[4].subheadline}
-                </p>
-
-                {/* Final CTAs */}
-                <div className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-4">
-                  <Button
-                    size="lg"
-                    onClick={() => onNavigate("sign-in")}
-                    className="h-12 rounded-lg bg-[#f0b400] px-8 text-sm font-bold text-[#0c1220] hover:bg-[#d9a300] active:scale-[0.98] transition-all duration-200 shadow-[0_0_30px_rgba(240,180,0,0.3)]"
-                  >
-                    {language === "es" ? "Comenzar ahora" : "Get Started"}
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
         {/* Page indicators */}
-        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2">
-          {[0, 1, 2, 3, 4].map((i) => (
+        <div className={`fixed bottom-8 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 transition-opacity duration-500 ${isHeroVisible ? 'opacity-100' : 'opacity-0'}`}>
+          {[0, 1, 2, 3].map((i) => (
             <button
               key={i}
               onClick={() => window.scrollTo({ top: i * window.innerHeight, behavior: "smooth" })}
