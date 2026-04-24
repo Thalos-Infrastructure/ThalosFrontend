@@ -112,14 +112,14 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
     return () => clearTimeout(t1)
   }, [onIntroComplete])
 
-  // Scroll-based page transitions - responsive
+  // Scroll-based page transitions - fast and responsive
   const onScroll = useCallback(() => {
     if (!containerRef.current) return
     
     const scrollY = window.scrollY
     const vh = window.innerHeight
-    const scrollPerPage = vh * 0.5 // 50vh per page for faster scroll
-    const heroEndScroll = scrollPerPage * totalPages - vh * 0.3 // End before reaching the next section
+    const scrollPerPage = vh * 0.35 // 35vh per page - much faster scroll
+    const heroEndScroll = scrollPerPage * totalPages - vh * 0.2
     
     // Calculate current page (0-4)
     const pageIndex = Math.min(Math.floor(scrollY / scrollPerPage), totalPages - 1)
@@ -148,13 +148,13 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
 
   const scrollToNextPage = () => {
     const vh = window.innerHeight
-    const scrollPerPage = vh * 0.5
+    const scrollPerPage = vh * 0.35
     const targetScroll = (currentPage + 1) * scrollPerPage
     window.scrollTo({ top: targetScroll, behavior: "smooth" })
   }
 
   // Height for hero section - compact to avoid collision
-  const heroHeightVh = totalPages * 50 + 10
+  const heroHeightVh = totalPages * 35 + 15
 
   return (
     <section id="hero" ref={containerRef} className="relative" style={{ height: `${heroHeightVh}vh` }}>
@@ -400,7 +400,7 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
               key={i}
               onClick={() => {
                 const vh = window.innerHeight
-                const scrollPerPage = vh * 0.5
+                const scrollPerPage = vh * 0.35
                 window.scrollTo({ top: i * scrollPerPage, behavior: "smooth" })
               }}
               className={`w-2 h-2 rounded-full transition-all duration-300 ${
