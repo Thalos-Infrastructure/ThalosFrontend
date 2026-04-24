@@ -101,8 +101,7 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
   const [isHeroVisible, setIsHeroVisible] = useState(true)
   const containerRef = useRef<HTMLDivElement>(null)
   
-  // Only 4 pages are fixed, the 5th (Trust) is in normal flow
-  const fixedPages = 4
+  const totalPages = 5
 
   const content = CONTENT[language as keyof typeof CONTENT] || CONTENT.en
   const typewriterPhrases = TYPEWRITER_PHRASES[language as keyof typeof TYPEWRITER_PHRASES] || TYPEWRITER_PHRASES.en
@@ -120,14 +119,24 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
     const scrollY = window.scrollY
     const vh = window.innerHeight
     const scrollPerPage = vh * 0.85
-    const fixedSectionHeight = scrollPerPage * fixedPages
+    const heroTotalHeight = scrollPerPage * totalPages
     
-    // Hide fixed content after 4 pages
-    setIsHeroVisible(scrollY < fixedSectionHeight)
-    
-    // Calculate current page (0-3 for fixed pages)
-    const pageIndex = Math.min(Math.floor(scrollY / scrollPerPage), fixedPages - 1)
+    // Calculate current page (0-4)
+    const pageIndex = Math.min(Math.floor(scrollY / scrollPerPage), totalPages - 1)
     setCurrentPage(pageIndex)
+    
+    // Hide fixed content when scrolled past the hero section completely
+    const fadeOutStart = heroTotalHeight - vh * 0.5
+    const fadeOutEnd = heroTotalHeight
+    
+    if (scrollY < fadeOutStart) {
+      setIsHeroVisible(true)
+    } else if (scrollY > fadeOutEnd) {
+      setIsHeroVisible(false)
+    } else {
+      // Gradual fade out during the last portion
+      setIsHeroVisible(true)
+    }
 
     // Letter fade effect
     const newOpacities = LETTERS.map((_, i) => {
@@ -139,7 +148,7 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
       return raw * raw
     })
     setLetterOpacities(newOpacities)
-  }, [fixedPages])
+  }, [totalPages])
 
   useEffect(() => {
     window.addEventListener("scroll", onScroll, { passive: true })
@@ -154,20 +163,17 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
     window.scrollTo({ top: targetScroll, behavior: "smooth" })
   }
 
-  // Height for the fixed pages only (4 pages at 85vh each)
-  const fixedSectionHeightVh = fixedPages * 85
+  // Height for hero section (5 pages at 85vh each)
+  const heroHeightVh = totalPages * 85
 
   return (
-    <section id="hero" ref={containerRef} className="relative">
-      {/* Fixed section spacer */}
-      <div style={{ height: `${fixedSectionHeightVh}vh` }} />
-      
+    <section id="hero" ref={containerRef} className="relative" style={{ height: `${heroHeightVh}vh` }}>
       {/* Subtle top gradient line */}
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#f0b400]/20 to-transparent" aria-hidden="true" />
 
       {/* Vertical THALOS letters - desktop only */}
       <div
-        className={`pointer-events-none fixed right-0 top-1/2 -translate-y-1/2 z-20 hidden select-none md:flex md:flex-col md:items-end lg:right-4 xl:right-8 transition-opacity duration-300 ${isHeroVisible ? 'opacity-100' : 'opacity-0'}`}
+        className={`pointer-events-none fixed right-0 top-1/2 -translate-y-1/2 z-20 hidden select-none md:flex md:flex-col md:items-end lg:right-4 xl:right-8 transition-opacity duration-500 ${isHeroVisible ? 'opacity-100' : 'opacity-0'}`}
         aria-hidden="true"
       >
         {LETTERS.map((letter, i) => (
@@ -186,8 +192,8 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
         ))}
       </div>
 
-      {/* Fixed viewport container for pages 1-4 */}
-      <div className={`fixed inset-0 z-10 overflow-hidden transition-opacity duration-300 ${isHeroVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+      {/* Fixed viewport container for all pages */}
+      <div className={`fixed inset-0 z-10 overflow-hidden transition-opacity duration-500 ${isHeroVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
         
         {/* Page 1: Intro */}
         <div 
@@ -359,9 +365,47 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
           </div>
         </div>
 
-        {/* Page indicators (only for fixed pages) */}
+        {/* Page 5: Trust at every step */}
+        <div 
+          className="absolute inset-0 flex items-center justify-center px-4 transition-all duration-500 ease-out"
+          style={{
+            opacity: currentPage === 4 ? 1 : 0,
+            transform: currentPage === 4 ? "translateY(0) scale(1)" : currentPage < 4 ? "translateY(50px) scale(0.9)" : "translateY(-50px) scale(0.9)",
+            pointerEvents: currentPage === 4 ? "auto" : "none",
+          }}
+        >
+          <div className="max-w-3xl mx-auto text-center">
+            {/* Checkmark icon with glow */}
+            <div className="relative inline-flex items-center justify-center mb-10">
+              <div className="absolute inset-0 bg-[#f0b400]/20 blur-3xl rounded-full scale-150" />
+              <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-[#f0b400]/10 border-2 border-[#f0b400]/30 flex items-center justify-center">
+                <svg className="w-12 h-12 sm:w-14 sm:h-14 text-[#f0b400]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+            </div>
+            
+            <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold text-foreground tracking-tight">
+              {content.finalHeadline}
+            </h2>
+            <p className="mt-6 text-xl sm:text-2xl text-muted-foreground font-medium">
+              {content.finalSubheadline}
+            </p>
+            
+            {/* CTA Button */}
+            <Button
+              size="lg"
+              onClick={() => onNavigate("sign-in")}
+              className="mt-10 h-14 rounded-xl bg-[#f0b400] px-12 text-base font-bold text-[#0c1220] hover:bg-[#d9a300] active:scale-[0.98] transition-all duration-200 shadow-[0_0_40px_rgba(240,180,0,0.3)]"
+            >
+              {content.finalCta}
+            </Button>
+          </div>
+        </div>
+
+        {/* Page indicators */}
         <div className={`fixed bottom-8 left-1/2 -translate-x-1/2 z-30 flex gap-2 transition-opacity duration-300 ${isHeroVisible ? 'opacity-100' : 'opacity-0'}`}>
-          {Array.from({ length: fixedPages }).map((_, i) => (
+          {Array.from({ length: totalPages }).map((_, i) => (
             <button
               key={i}
               onClick={() => {
@@ -377,37 +421,6 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
               aria-label={`Go to page ${i + 1}`}
             />
           ))}
-        </div>
-      </div>
-
-      {/* Page 5: Trust at every step - IN NORMAL FLOW (not fixed) */}
-      <div className="relative z-20 bg-background py-24 sm:py-32 border-t border-border/10">
-        <div className="max-w-3xl mx-auto text-center px-4">
-          {/* Checkmark icon with glow */}
-          <div className="relative inline-flex items-center justify-center mb-10">
-            <div className="absolute inset-0 bg-[#f0b400]/20 blur-3xl rounded-full scale-150" />
-            <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-[#f0b400]/10 border-2 border-[#f0b400]/30 flex items-center justify-center">
-              <svg className="w-12 h-12 sm:w-14 sm:h-14 text-[#f0b400]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-          </div>
-          
-          <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold text-foreground tracking-tight">
-            {content.finalHeadline}
-          </h2>
-          <p className="mt-6 text-xl sm:text-2xl text-muted-foreground font-medium">
-            {content.finalSubheadline}
-          </p>
-          
-          {/* CTA Button */}
-          <Button
-            size="lg"
-            onClick={() => onNavigate("sign-in")}
-            className="mt-10 h-14 rounded-xl bg-[#f0b400] px-12 text-base font-bold text-[#0c1220] hover:bg-[#d9a300] active:scale-[0.98] transition-all duration-200 shadow-[0_0_40px_rgba(240,180,0,0.3)]"
-          >
-            {content.finalCta}
-          </Button>
         </div>
       </div>
 
