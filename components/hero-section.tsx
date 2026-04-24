@@ -12,6 +12,9 @@ interface HeroSectionProps {
 
 const LETTERS = ["T", "h", "a", "l", "o", "s"]
 
+// YouTube video ID
+const YOUTUBE_VIDEO_ID = "pKIizFs0dO4"
+
 // Story pages content
 const STORY_PAGES = {
   en: [
@@ -40,14 +43,14 @@ const STORY_PAGES = {
     { 
       id: 4, 
       type: "video",
-      videoUrl: "https://www.youtube.com/embed/pKIizFs0dO4?autoplay=1&mute=1&loop=1&playlist=pKIizFs0dO4&controls=0&showinfo=0",
       caption: "Conditions are met. Payments are released."
     },
     { 
       id: 5, 
       type: "final",
       headline: "Trust at every step",
-      subheadline: "Every transaction protected. Every agreement honored."
+      subheadline: "Every transaction protected. Every agreement honored.",
+      cta: "Get Started"
     }
   ],
   es: [
@@ -76,14 +79,14 @@ const STORY_PAGES = {
     { 
       id: 4, 
       type: "video",
-      videoUrl: "https://www.youtube.com/embed/pKIizFs0dO4?autoplay=1&mute=1&loop=1&playlist=pKIizFs0dO4&controls=0&showinfo=0",
       caption: "Se cumplen las condiciones. Se libera el pago."
     },
     { 
       id: 5, 
       type: "final",
       headline: "Confianza en cada paso",
-      subheadline: "Cada transacción protegida. Cada acuerdo cumplido."
+      subheadline: "Cada transacción protegida. Cada acuerdo cumplido.",
+      cta: "Comenzar ahora"
     }
   ]
 }
@@ -92,7 +95,7 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
   const { language } = useLanguage()
   const [currentPage, setCurrentPage] = useState(0)
   const [letterOpacities, setLetterOpacities] = useState<number[]>([1, 1, 1, 1, 1, 1])
-  const [isVideoPlaying, setIsVideoPlaying] = useState(false)
+  const [isHeroVisible, setIsHeroVisible] = useState(true)
   const containerRef = useRef<HTMLDivElement>(null)
   const totalPages = 5
 
@@ -109,7 +112,11 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
     
     const scrollY = window.scrollY
     const vh = window.innerHeight
-    const heroHeight = vh * totalPages // Total scrollable height for hero
+    const heroHeight = vh * (totalPages - 0.5) // Slightly less than full height
+    
+    // Hide fixed content when scrolled past hero
+    const heroEnd = heroHeight
+    setIsHeroVisible(scrollY < heroEnd)
     
     // Calculate current page based on scroll position
     const progress = Math.min(scrollY / heroHeight, 1)
@@ -141,13 +148,13 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
   }
 
   return (
-    <section id="hero" ref={containerRef} className="relative" style={{ height: `${totalPages * 100}vh` }}>
+    <section id="hero" ref={containerRef} className="relative" style={{ height: `${(totalPages - 0.5) * 100}vh` }}>
       {/* Subtle top gradient line */}
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#f0b400]/20 to-transparent" aria-hidden="true" />
 
       {/* Vertical THALOS letters - desktop only, fades on scroll */}
       <div
-        className="pointer-events-none fixed right-0 top-0 bottom-0 z-20 hidden select-none md:flex md:flex-col md:items-end md:justify-center lg:right-4 xl:right-8"
+        className={`pointer-events-none fixed right-0 top-0 bottom-0 z-20 hidden select-none md:flex md:flex-col md:items-end md:justify-center lg:right-4 xl:right-8 transition-opacity duration-500 ${isHeroVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
         aria-hidden="true"
       >
         {LETTERS.map((letter, i) => (
@@ -167,7 +174,7 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
       </div>
 
       {/* Fixed viewport container for story pages */}
-      <div className="fixed inset-0 z-10 overflow-hidden">
+      <div className={`fixed inset-0 z-10 overflow-hidden transition-opacity duration-500 ${isHeroVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
         {/* Page 1: Intro */}
         <div 
           className="absolute inset-0 flex items-center justify-center px-6 lg:px-16 transition-all duration-700 ease-out"
@@ -304,18 +311,18 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
             pointerEvents: currentPage === 3 ? "auto" : "none",
           }}
         >
-          <div className="max-w-4xl mx-auto text-center">
-            {/* Video container with glow */}
+          <div className="max-w-5xl w-full mx-auto text-center">
+            {/* Video container with glow - clean embed without YouTube branding */}
             <div className="relative">
-              <div className="absolute -inset-6 bg-[#f0b400]/5 blur-2xl rounded-3xl" />
-              <div className="relative rounded-2xl overflow-hidden shadow-2xl shadow-black/50 border border-white/10 bg-black/50 backdrop-blur-sm">
-                {currentPage === 3 ? (
+              <div className="absolute -inset-8 bg-[#f0b400]/8 blur-3xl rounded-3xl" />
+              <div className="relative rounded-2xl overflow-hidden shadow-2xl shadow-black/50 border border-white/10">
+                {currentPage >= 2 ? (
                   <iframe
-                    src={pages[3].videoUrl}
-                    className="w-full aspect-video"
+                    src={`https://www.youtube-nocookie.com/embed/${YOUTUBE_VIDEO_ID}?autoplay=1&mute=1&loop=1&playlist=${YOUTUBE_VIDEO_ID}&controls=0&showinfo=0&rel=0&modestbranding=1&iv_load_policy=3&disablekb=1&fs=0&playsinline=1&vq=hd1080`}
+                    className="w-full aspect-video pointer-events-none"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
                     title="Thalos Demo Video"
+                    style={{ border: 0 }}
                   />
                 ) : (
                   <div className="w-full aspect-video bg-black/80 flex items-center justify-center">
@@ -325,7 +332,7 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
               </div>
             </div>
             
-            <p className="mt-10 text-2xl md:text-3xl font-semibold text-white">
+            <p className="mt-8 text-2xl md:text-3xl font-semibold text-white">
               {pages[3].caption}
             </p>
             <div className="mt-2 h-1 w-16 mx-auto bg-gradient-to-r from-transparent via-[#f0b400] to-transparent rounded-full" />
