@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { useEffect, useState, useRef, useCallback } from "react"
 import { useLanguage } from "@/lib/i18n"
-import { ChevronLeft, ChevronRight, Shield, CheckCircle2, ArrowRight } from "lucide-react"
+import { Play, ChevronDown } from "lucide-react"
 
 interface HeroSectionProps {
   onNavigate: (section: string) => void
@@ -15,337 +15,416 @@ const LETTERS = ["T", "h", "a", "l", "o", "s"]
 // YouTube video ID
 const YOUTUBE_VIDEO_ID = "pKIizFs0dO4"
 
-// Content translations
-const HERO_CONTENT = {
-  en: {
-    tagline: "Digital Agreement Platform",
-    headline1: "Clear agreements.",
-    headline2: "Secure payments.",
-    description: "Thalos is a platform where parties define conditions for a transaction and payments are only released when those conditions are verified.",
-    features: [
-      "Define clear conditions between parties",
-      "Funds held securely until conditions met",
-      "Transparent verification process",
-      "Instant release when approved"
-    ],
-    cta: "Create Agreement",
-    ctaSecondary: "See how it works",
-    trustLine: "Trust at every step",
-    trustSub: "Every transaction protected. Every agreement honored.",
-    slides: [
-      { label: "Login", caption: "Start in seconds" },
-      { label: "Dashboard", caption: "Manage agreements" },
-      { label: "Demo", caption: "See it in action" }
-    ]
-  },
-  es: {
-    tagline: "Plataforma de Acuerdos Digitales",
-    headline1: "Acuerdos claros.",
-    headline2: "Pagos seguros.",
-    description: "Thalos es una plataforma donde las partes definen condiciones para una transaccion y los pagos solo se liberan cuando se verifican.",
-    features: [
-      "Define condiciones claras entre partes",
-      "Fondos retenidos hasta cumplir condiciones",
-      "Proceso de verificacion transparente",
-      "Liberacion instantanea al aprobar"
-    ],
-    cta: "Crear Acuerdo",
-    ctaSecondary: "Ver como funciona",
-    trustLine: "Confianza en cada paso",
-    trustSub: "Cada transaccion protegida. Cada acuerdo cumplido.",
-    slides: [
-      { label: "Inicio", caption: "Empieza en segundos" },
-      { label: "Panel", caption: "Gestiona acuerdos" },
-      { label: "Demo", caption: "Mira como funciona" }
-    ]
-  }
+// Typewriter text with brackets
+const TYPEWRITER_TEXT = {
+  en: "[Secure payments]",
+  es: "[Pagos seguros]"
 }
 
-// Slides data
-const SLIDES = [
-  { type: "image", src: "/images/hero-login.png", alt: "Thalos Login" },
-  { type: "image", src: "/images/hero-dashboard.png", alt: "Thalos Dashboard" },
-  { type: "video", videoId: YOUTUBE_VIDEO_ID }
-]
+// Story pages content
+const STORY_PAGES = {
+  en: [
+    { 
+      id: 1, 
+      type: "intro",
+      headline: "Clear agreements.",
+      subheadline: "Define conditions between parties and ensure payments are only released when they are met."
+    },
+    { 
+      id: 2, 
+      type: "image",
+      image: "/images/hero-login.png",
+      caption: "Start in seconds",
+      alt: "Thalos login screen"
+    },
+    { 
+      id: 3, 
+      type: "image",
+      image: "/images/hero-dashboard.png",
+      caption: "Manage your agreements",
+      alt: "Thalos agreements dashboard"
+    },
+    { 
+      id: 4, 
+      type: "video",
+      caption: "Conditions are met. Payments are released."
+    },
+    {
+      id: 5,
+      type: "final",
+      headline: "Trust at every step",
+      subheadline: "Every transaction protected. Every agreement honored."
+    }
+  ],
+  es: [
+    { 
+      id: 1, 
+      type: "intro",
+      headline: "Acuerdos claros.",
+      subheadline: "Define condiciones entre partes y asegura que el pago solo se libere cuando se cumplan."
+    },
+    { 
+      id: 2, 
+      type: "image",
+      image: "/images/hero-login.png",
+      caption: "Empieza en segundos",
+      alt: "Pantalla de inicio de Thalos"
+    },
+    { 
+      id: 3, 
+      type: "image",
+      image: "/images/hero-dashboard.png",
+      caption: "Gestiona tus acuerdos",
+      alt: "Panel de acuerdos de Thalos"
+    },
+    { 
+      id: 4, 
+      type: "video",
+      caption: "Se cumplen las condiciones. Se libera el pago."
+    },
+    {
+      id: 5,
+      type: "final",
+      headline: "Confianza en cada paso",
+      subheadline: "Cada transacción protegida. Cada acuerdo cumplido."
+    }
+  ]
+}
 
 // Typewriter hook
-function useTypewriter(text: string, delay: number = 80) {
+function useTypewriter(text: string, isActive: boolean) {
   const [displayText, setDisplayText] = useState("")
-  const [isComplete, setIsComplete] = useState(false)
+  const [isTyping, setIsTyping] = useState(false)
 
   useEffect(() => {
-    setDisplayText("")
-    setIsComplete(false)
+    if (!isActive) {
+      setDisplayText("")
+      return
+    }
+
+    setIsTyping(true)
     let currentIndex = 0
-    
     const interval = setInterval(() => {
       if (currentIndex <= text.length) {
         setDisplayText(text.slice(0, currentIndex))
         currentIndex++
       } else {
-        setIsComplete(true)
+        setIsTyping(false)
         clearInterval(interval)
       }
-    }, delay)
+    }, 80)
 
     return () => clearInterval(interval)
-  }, [text, delay])
+  }, [text, isActive])
 
-  return { displayText, isComplete }
+  return { displayText, isTyping }
 }
 
 export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
   const { language } = useLanguage()
-  const content = HERO_CONTENT[language as keyof typeof HERO_CONTENT] || HERO_CONTENT.en
-  
-  const [currentSlide, setCurrentSlide] = useState(0)
-  const [isAutoPlaying, setIsAutoPlaying] = useState(true)
+  const [currentPage, setCurrentPage] = useState(0)
   const [letterOpacities, setLetterOpacities] = useState<number[]>([1, 1, 1, 1, 1, 1])
+  const [isHeroVisible, setIsHeroVisible] = useState(true)
   const containerRef = useRef<HTMLDivElement>(null)
-  const autoPlayRef = useRef<NodeJS.Timeout | null>(null)
+  const totalPages = 5
 
-  const { displayText, isComplete } = useTypewriter(content.headline2, 70)
+  const pages = STORY_PAGES[language as keyof typeof STORY_PAGES] || STORY_PAGES.en
+  const typewriterText = TYPEWRITER_TEXT[language as keyof typeof TYPEWRITER_TEXT] || TYPEWRITER_TEXT.en
+  const { displayText, isTyping } = useTypewriter(typewriterText, currentPage === 0)
 
-  // Auto-advance slides (magazine effect - left to right)
   useEffect(() => {
-    if (isAutoPlaying) {
-      autoPlayRef.current = setInterval(() => {
-        setCurrentSlide(prev => (prev + 1) % SLIDES.length)
-      }, 4000)
-    }
-    return () => {
-      if (autoPlayRef.current) clearInterval(autoPlayRef.current)
-    }
-  }, [isAutoPlaying])
-
-  // Intro complete callback
-  useEffect(() => {
-    const t = setTimeout(() => onIntroComplete?.(), 1500)
-    return () => clearTimeout(t)
+    const t1 = setTimeout(() => { onIntroComplete?.() }, 2000)
+    return () => clearTimeout(t1)
   }, [onIntroComplete])
 
-  // Scroll effect for THALOS letters
+  // Scroll-based page transitions - faster scroll (0.7vh per page instead of 1vh)
+  const onScroll = useCallback(() => {
+    if (!containerRef.current) return
+    
+    const scrollY = window.scrollY
+    const vh = window.innerHeight
+    const scrollPerPage = vh * 0.7 // Faster scroll - 70% of viewport per page
+    const heroHeight = scrollPerPage * totalPages
+    
+    // Hide fixed content when scrolled past hero
+    setIsHeroVisible(scrollY < heroHeight - scrollPerPage * 0.5)
+    
+    // Calculate current page based on scroll position
+    const progress = Math.min(scrollY / heroHeight, 1)
+    const pageIndex = Math.min(Math.floor(progress * totalPages), totalPages - 1)
+    setCurrentPage(pageIndex)
+
+    // Letter fade effect (only on first page)
+    const newOpacities = LETTERS.map((_, i) => {
+      const fadeStart = vh * 0.03 + i * vh * 0.04
+      const fadeEnd = fadeStart + vh * 0.1
+      if (scrollY < fadeStart) return 1
+      if (scrollY > fadeEnd) return 0
+      const raw = 1 - (scrollY - fadeStart) / (fadeEnd - fadeStart)
+      return raw * raw
+    })
+    setLetterOpacities(newOpacities)
+  }, [totalPages])
+
   useEffect(() => {
-    const handleScroll = () => {
-      const scrollY = window.scrollY
-      const vh = window.innerHeight
-      
-      const newOpacities = LETTERS.map((_, i) => {
-        const fadeStart = vh * 0.1 + i * vh * 0.05
-        const fadeEnd = fadeStart + vh * 0.15
-        if (scrollY < fadeStart) return 1
-        if (scrollY > fadeEnd) return 0
-        return 1 - (scrollY - fadeStart) / (fadeEnd - fadeStart)
-      })
-      setLetterOpacities(newOpacities)
-    }
+    window.addEventListener("scroll", onScroll, { passive: true })
+    onScroll()
+    return () => window.removeEventListener("scroll", onScroll)
+  }, [onScroll])
 
-    window.addEventListener("scroll", handleScroll, { passive: true })
-    return () => window.removeEventListener("scroll", handleScroll)
-  }, [])
-
-  const goToSlide = (index: number) => {
-    setCurrentSlide(index)
-    setIsAutoPlaying(false)
-    setTimeout(() => setIsAutoPlaying(true), 8000)
+  const scrollToNextPage = () => {
+    const vh = window.innerHeight
+    const scrollPerPage = vh * 0.7
+    const targetScroll = (currentPage + 1) * scrollPerPage
+    window.scrollTo({ top: targetScroll, behavior: "smooth" })
   }
 
-  const nextSlide = () => goToSlide((currentSlide + 1) % SLIDES.length)
-  const prevSlide = () => goToSlide((currentSlide - 1 + SLIDES.length) % SLIDES.length)
+  // Calculate hero height - shorter for faster scroll
+  const heroHeightVh = totalPages * 70 // 70vh per page instead of 100vh
 
   return (
-    <section id="hero" ref={containerRef} className="relative overflow-hidden">
-      {/* Background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-background via-background to-background/95" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(240,180,0,0.06),transparent_50%)]" />
-      
-      {/* Subtle grid */}
-      <div className="absolute inset-0 opacity-[0.015]" style={{
-        backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
-        backgroundSize: '80px 80px'
-      }} />
+    <section id="hero" ref={containerRef} className="relative" style={{ height: `${heroHeightVh}vh` }}>
+      {/* Subtle top gradient line */}
+      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#f0b400]/20 to-transparent" aria-hidden="true" />
 
-      {/* Vertical THALOS - positioned at bottom half */}
+      {/* Vertical THALOS letters - desktop only, fades on scroll */}
       <div
-        className="pointer-events-none absolute right-2 top-[50%] bottom-[10%] z-20 hidden select-none lg:flex lg:flex-col lg:items-end lg:justify-start xl:right-6"
+        className={`pointer-events-none fixed right-0 top-0 bottom-0 z-20 hidden select-none md:flex md:flex-col md:items-end md:justify-center lg:right-4 xl:right-8 transition-opacity duration-300 ${isHeroVisible ? 'opacity-100' : 'opacity-0'}`}
         aria-hidden="true"
       >
         {LETTERS.map((letter, i) => (
           <span
             key={i}
-            className="text-[3rem] xl:text-[4rem] 2xl:text-[5rem] font-black tracking-tight leading-[0.8] text-white/[0.03]"
-            style={{ opacity: letterOpacities[i], transition: "opacity 150ms ease-out" }}
+            className="thalos-letter block font-black leading-[0.72] text-white"
+            style={{
+              opacity: letterOpacities[i],
+              transition: "opacity 100ms ease-out",
+              fontSize: "clamp(10rem, 19vh, 24rem)",
+              letterSpacing: "-0.04em",
+            }}
           >
             {letter}
           </span>
         ))}
       </div>
 
-      {/* Main content - split layout */}
-      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="min-h-screen flex items-center py-20 lg:py-0">
-          <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 xl:gap-16 items-center w-full">
+      {/* Fixed viewport container for story pages */}
+      <div className={`fixed inset-0 z-10 overflow-hidden transition-opacity duration-300 ${isHeroVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+        {/* Page 1: Intro */}
+        <div 
+          className="absolute inset-0 flex items-center justify-center px-4 sm:px-6 lg:px-16 transition-all duration-500 ease-out"
+          style={{
+            opacity: currentPage === 0 ? 1 : 0,
+            transform: currentPage === 0 ? "translateY(0) scale(1)" : "translateY(-20px) scale(0.98)",
+            pointerEvents: currentPage === 0 ? "auto" : "none",
+          }}
+        >
+          <div className="max-w-4xl mx-auto text-center">
+            {/* Mobile THALOS */}
+            <div className="flex md:hidden justify-center mb-6 gap-0.5">
+              {LETTERS.map((letter, i) => (
+                <span
+                  key={i}
+                  className="thalos-letter animate-fade-in-up text-5xl sm:text-6xl font-black text-white/90"
+                  style={{ animationDelay: `${i * 80}ms`, animationFillMode: "both" }}
+                >
+                  {letter}
+                </span>
+              ))}
+            </div>
+
+            <h1 className="animate-fade-in-up text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tight text-white text-balance">
+              {pages[0].headline}
+            </h1>
             
-            {/* Left side - Content */}
-            <div className="order-2 lg:order-1 text-center lg:text-left">
-              {/* Tagline badge */}
-              <div className="inline-flex items-center gap-2 rounded-full border border-[#f0b400]/30 bg-[#f0b400]/10 px-4 py-1.5 mb-6 lg:mb-8">
-                <Shield className="h-4 w-4 text-[#f0b400]" />
-                <span className="text-xs sm:text-sm font-medium text-[#f0b400]">{content.tagline}</span>
-              </div>
-
-              {/* Headlines with spacing */}
-              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-5xl xl:text-6xl font-bold text-white leading-[1.1]">
-                {content.headline1}
-              </h1>
-              
-              {/* Typewriter headline - more spacing */}
-              <div className="mt-3 sm:mt-4 md:mt-5 min-h-[1.2em]">
-                <p className="text-3xl sm:text-4xl md:text-5xl lg:text-5xl xl:text-6xl font-bold text-[#f0b400]">
-                  [{displayText}
-                  <span className={`${isComplete ? 'animate-pulse' : ''} opacity-80`}>|</span>]
-                </p>
-              </div>
-
-              {/* Description - more spacing */}
-              <p className="mt-6 sm:mt-8 text-base sm:text-lg text-white/70 leading-relaxed max-w-xl mx-auto lg:mx-0">
-                {content.description}
+            {/* Typewriter effect with brackets - more spacing */}
+            <div className="mt-4 md:mt-6 min-h-[1.3em] animate-fade-in-up animation-delay-200">
+              <p className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tight text-[#f0b400] font-mono">
+                {displayText}
+                {isTyping && <span className="animate-pulse ml-0.5">|</span>}
               </p>
+            </div>
+            
+            <p className="mt-8 md:mt-10 max-w-xl md:max-w-2xl mx-auto animate-fade-in-up animation-delay-400 text-base sm:text-lg md:text-xl text-white/70 text-pretty leading-relaxed px-2">
+              {pages[0].subheadline}
+            </p>
 
-              {/* Features list */}
-              <ul className="mt-6 sm:mt-8 space-y-2 sm:space-y-3 max-w-xl mx-auto lg:mx-0">
-                {content.features.map((feature, i) => (
-                  <li key={i} className="flex items-center gap-3 text-white/80 justify-center lg:justify-start">
-                    <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-[#f0b400] shrink-0" />
-                    <span className="text-sm sm:text-base">{feature}</span>
-                  </li>
-                ))}
-              </ul>
-
-              {/* CTAs */}
-              <div className="mt-8 sm:mt-10 flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center lg:justify-start">
-                <Button
-                  onClick={() => onNavigate("sign-in")}
-                  className="bg-[#f0b400] text-background hover:bg-[#d4a000] px-6 sm:px-8 py-3 text-sm sm:text-base font-semibold rounded-full shadow-[0_4px_20px_rgba(240,180,0,0.3)] transition-all"
-                >
-                  {content.cta}
-                  <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => onNavigate("how-it-works")}
-                  className="border-white/20 text-white hover:bg-white/10 px-6 sm:px-8 py-3 text-sm sm:text-base rounded-full"
-                >
-                  {content.ctaSecondary}
-                </Button>
-              </div>
+            {/* CTAs */}
+            <div className="mt-8 md:mt-10 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 animate-fade-in-up animation-delay-600">
+              <Button
+                size="lg"
+                onClick={() => onNavigate("sign-in")}
+                className="w-full sm:w-auto h-12 rounded-lg bg-[#f0b400] px-8 text-sm font-bold text-[#0c1220] hover:bg-[#d9a300] active:scale-[0.98] transition-all duration-200 shadow-[0_0_30px_rgba(240,180,0,0.3)]"
+              >
+                {language === "es" ? "Crear acuerdo" : "Create Agreement"}
+              </Button>
+              <Button
+                variant="ghost"
+                size="lg"
+                onClick={() => onNavigate("how-it-works")}
+                className="w-full sm:w-auto h-12 rounded-lg border border-white/20 bg-white/5 backdrop-blur-sm px-8 text-sm font-bold text-white hover:bg-white/10 hover:border-white/30 active:scale-[0.98] transition-all duration-200"
+              >
+                {language === "es" ? "Ver cómo funciona" : "See how it works"}
+              </Button>
             </div>
 
-            {/* Right side - Magazine carousel */}
-            <div className="order-1 lg:order-2">
-              <div className="relative max-w-lg mx-auto lg:max-w-none">
-                {/* Glow effect */}
-                <div className="absolute -inset-4 sm:-inset-6 bg-[#f0b400]/8 blur-3xl rounded-3xl" />
-                
-                {/* Carousel container - horizontal video size */}
-                <div className="relative rounded-xl sm:rounded-2xl overflow-hidden border border-white/10 bg-black/50 backdrop-blur-sm shadow-2xl">
-                  {/* Slides - horizontal aspect ratio */}
-                  <div className="relative aspect-[16/10] sm:aspect-[16/9] overflow-hidden">
-                    {SLIDES.map((slide, index) => (
-                      <div
-                        key={index}
-                        className="absolute inset-0 transition-all duration-700 ease-out"
-                        style={{
-                          transform: `translateX(${(index - currentSlide) * 100}%)`,
-                          opacity: index === currentSlide ? 1 : 0,
-                        }}
-                      >
-                        {slide.type === "image" ? (
-                          <img
-                            src={slide.src}
-                            alt={slide.alt}
-                            className="w-full h-full object-cover object-center"
-                          />
-                        ) : (
-                          <iframe
-                            src={`https://www.youtube-nocookie.com/embed/${slide.videoId}?autoplay=${currentSlide === index ? 1 : 0}&mute=1&loop=1&playlist=${slide.videoId}&controls=0&showinfo=0&rel=0&modestbranding=1&iv_load_policy=3&playsinline=1&vq=hd1080`}
-                            className="w-full h-full"
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                            title="Thalos Demo"
-                            style={{ border: 0 }}
-                          />
-                        )}
-                      </div>
-                    ))}
+            {/* Scroll indicator */}
+            <button 
+              onClick={scrollToNextPage}
+              className="mt-10 md:mt-12 animate-bounce text-white/40 hover:text-white/60 transition-colors"
+              aria-label="Scroll to next section"
+            >
+              <ChevronDown className="h-6 w-6 sm:h-8 sm:w-8" />
+            </button>
+          </div>
+        </div>
 
-                    {/* Navigation arrows */}
-                    <button
-                      onClick={prevSlide}
-                      className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 p-1.5 sm:p-2 rounded-full bg-black/50 hover:bg-black/70 text-white/80 hover:text-white transition-all z-10"
-                      aria-label="Previous slide"
-                    >
-                      <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5" />
-                    </button>
-                    <button
-                      onClick={nextSlide}
-                      className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 p-1.5 sm:p-2 rounded-full bg-black/50 hover:bg-black/70 text-white/80 hover:text-white transition-all z-10"
-                      aria-label="Next slide"
-                    >
-                      <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5" />
-                    </button>
-                  </div>
-
-                  {/* Slide indicators with labels */}
-                  <div className="flex items-center justify-center gap-2 sm:gap-3 py-3 sm:py-4 bg-black/60">
-                    {content.slides.map((slide, index) => (
-                      <button
-                        key={index}
-                        onClick={() => goToSlide(index)}
-                        className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-[10px] sm:text-xs font-medium transition-all ${
-                          index === currentSlide
-                            ? "bg-[#f0b400] text-background"
-                            : "bg-white/10 text-white/60 hover:bg-white/20"
-                        }`}
-                      >
-                        <span className={`w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full ${index === currentSlide ? 'bg-background' : 'bg-white/40'}`} />
-                        {slide.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Caption below carousel */}
-                <p className="mt-3 sm:mt-4 text-center text-sm sm:text-base text-white/60">
-                  {content.slides[currentSlide].caption}
-                </p>
+        {/* Page 2: Login Image */}
+        <div 
+          className="absolute inset-0 flex items-center justify-center px-4 sm:px-6 lg:px-16 transition-all duration-500 ease-out"
+          style={{
+            opacity: currentPage === 1 ? 1 : 0,
+            transform: currentPage === 1 ? "translateY(0) scale(1)" : currentPage < 1 ? "translateY(40px) scale(0.95)" : "translateY(-40px) scale(0.95)",
+            pointerEvents: currentPage === 1 ? "auto" : "none",
+          }}
+        >
+          <div className="text-center">
+            {/* Phone mockup with glow */}
+            <div className="relative inline-block">
+              <div className="absolute -inset-6 sm:-inset-8 bg-[#f0b400]/10 blur-2xl sm:blur-3xl rounded-full" />
+              <div className="relative rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden shadow-2xl shadow-black/50 border border-white/10">
+                <img 
+                  src="/images/hero-login.png" 
+                  alt={pages[1].alt}
+                  className="w-[220px] sm:w-[260px] md:w-[300px] lg:w-[340px] h-auto"
+                />
               </div>
             </div>
+            
+            <p className="mt-6 sm:mt-8 text-xl sm:text-2xl md:text-3xl font-semibold text-white">
+              {pages[1].caption}
+            </p>
+            <div className="mt-2 h-1 w-12 sm:w-16 mx-auto bg-gradient-to-r from-transparent via-[#f0b400] to-transparent rounded-full" />
           </div>
         </div>
-      </div>
 
-      {/* Trust section - with generous spacing */}
-      <div className="relative z-10 py-20 sm:py-24 lg:py-32 border-t border-white/5">
-        <div className="mx-auto max-w-3xl px-4 text-center">
-          {/* Checkmark icon */}
-          <div className="inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-[#f0b400]/10 border border-[#f0b400]/30 mb-6 sm:mb-8">
-            <CheckCircle2 className="h-7 w-7 sm:h-8 sm:w-8 text-[#f0b400]" />
+        {/* Page 3: Dashboard Image */}
+        <div 
+          className="absolute inset-0 flex items-center justify-center px-4 sm:px-6 lg:px-16 transition-all duration-500 ease-out"
+          style={{
+            opacity: currentPage === 2 ? 1 : 0,
+            transform: currentPage === 2 ? "translateY(0) scale(1)" : currentPage < 2 ? "translateY(40px) scale(0.95)" : "translateY(-40px) scale(0.95)",
+            pointerEvents: currentPage === 2 ? "auto" : "none",
+          }}
+        >
+          <div className="text-center">
+            {/* Phone mockup with glow */}
+            <div className="relative inline-block">
+              <div className="absolute -inset-6 sm:-inset-8 bg-[#f0b400]/10 blur-2xl sm:blur-3xl rounded-full" />
+              <div className="relative rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden shadow-2xl shadow-black/50 border border-white/10">
+                <img 
+                  src="/images/hero-dashboard.png" 
+                  alt={pages[2].alt}
+                  className="w-[220px] sm:w-[260px] md:w-[300px] lg:w-[340px] h-auto"
+                />
+              </div>
+            </div>
+            
+            <p className="mt-6 sm:mt-8 text-xl sm:text-2xl md:text-3xl font-semibold text-white">
+              {pages[2].caption}
+            </p>
+            <div className="mt-2 h-1 w-12 sm:w-16 mx-auto bg-gradient-to-r from-transparent via-[#f0b400] to-transparent rounded-full" />
           </div>
-          
-          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-3 sm:mb-4">
-            {content.trustLine}
-          </h2>
-          
-          <p className="text-base sm:text-lg md:text-xl text-white/60">
-            {content.trustSub}
-          </p>
-          
-          <div className="mt-4 sm:mt-6 h-1 w-16 sm:w-20 mx-auto bg-gradient-to-r from-transparent via-[#f0b400] to-transparent rounded-full" />
+        </div>
+
+        {/* Page 4: Video - proportional phone size */}
+        <div 
+          className="absolute inset-0 flex items-center justify-center px-4 sm:px-6 lg:px-16 transition-all duration-500 ease-out"
+          style={{
+            opacity: currentPage === 3 ? 1 : 0,
+            transform: currentPage === 3 ? "translateY(0) scale(1)" : currentPage < 3 ? "translateY(40px) scale(0.95)" : "translateY(-40px) scale(0.95)",
+            pointerEvents: currentPage === 3 ? "auto" : "none",
+          }}
+        >
+          <div className="text-center">
+            {/* Video in phone frame - same size as other mockups */}
+            <div className="relative inline-block">
+              <div className="absolute -inset-6 sm:-inset-8 bg-[#f0b400]/10 blur-2xl sm:blur-3xl rounded-full" />
+              <div className="relative rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden shadow-2xl shadow-black/50 border border-white/10 bg-black">
+                {currentPage >= 2 ? (
+                  <iframe
+                    src={`https://www.youtube-nocookie.com/embed/${YOUTUBE_VIDEO_ID}?autoplay=1&mute=1&loop=1&playlist=${YOUTUBE_VIDEO_ID}&controls=0&showinfo=0&rel=0&modestbranding=1&iv_load_policy=3&disablekb=1&fs=0&playsinline=1&vq=hd1080&hd=1`}
+                    className="w-[220px] sm:w-[260px] md:w-[300px] lg:w-[340px] aspect-[9/16] pointer-events-none"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    title="Thalos Demo Video"
+                    style={{ border: 0 }}
+                  />
+                ) : (
+                  <div className="w-[220px] sm:w-[260px] md:w-[300px] lg:w-[340px] aspect-[9/16] bg-black/80 flex items-center justify-center">
+                    <Play className="h-12 w-12 sm:h-16 sm:w-16 text-white/30" />
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            <p className="mt-6 sm:mt-8 text-xl sm:text-2xl md:text-3xl font-semibold text-white">
+              {pages[3].caption}
+            </p>
+            <div className="mt-2 h-1 w-12 sm:w-16 mx-auto bg-gradient-to-r from-transparent via-[#f0b400] to-transparent rounded-full" />
+          </div>
+        </div>
+
+        {/* Page 5: Final - Trust message */}
+        <div 
+          className="absolute inset-0 flex items-center justify-center px-4 sm:px-6 lg:px-16 transition-all duration-500 ease-out"
+          style={{
+            opacity: currentPage === 4 ? 1 : 0,
+            transform: currentPage === 4 ? "translateY(0) scale(1)" : currentPage < 4 ? "translateY(40px) scale(0.95)" : "translateY(-40px) scale(0.95)",
+            pointerEvents: currentPage === 4 ? "auto" : "none",
+          }}
+        >
+          <div className="max-w-3xl mx-auto text-center">
+            {/* Checkmark icon with glow */}
+            <div className="relative inline-flex items-center justify-center mb-6 sm:mb-8">
+              <div className="absolute inset-0 bg-[#f0b400]/20 blur-2xl rounded-full scale-150" />
+              <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-[#f0b400]/10 border border-[#f0b400]/30 flex items-center justify-center">
+                <svg className="w-8 h-8 sm:w-10 sm:h-10 text-[#f0b400]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+            </div>
+            
+            <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 sm:mb-6">
+              {pages[4].headline}
+            </h2>
+            
+            <p className="text-lg sm:text-xl md:text-2xl text-white/70 max-w-xl mx-auto">
+              {pages[4].subheadline}
+            </p>
+            
+            <div className="mt-3 sm:mt-4 h-1 w-20 sm:w-24 mx-auto bg-gradient-to-r from-transparent via-[#f0b400] to-transparent rounded-full" />
+          </div>
+        </div>
+
+        {/* Page indicators */}
+        <div className={`fixed bottom-6 sm:bottom-8 left-1/2 -translate-x-1/2 z-30 flex items-center gap-1.5 sm:gap-2 transition-opacity duration-300 ${isHeroVisible ? 'opacity-100' : 'opacity-0'}`}>
+          {[0, 1, 2, 3, 4].map((i) => (
+            <button
+              key={i}
+              onClick={() => {
+                const scrollPerPage = window.innerHeight * 0.7
+                window.scrollTo({ top: i * scrollPerPage, behavior: "smooth" })
+              }}
+              className={`transition-all duration-300 rounded-full ${
+                currentPage === i 
+                  ? "w-6 sm:w-8 h-1.5 sm:h-2 bg-[#f0b400]" 
+                  : "w-1.5 sm:w-2 h-1.5 sm:h-2 bg-white/30 hover:bg-white/50"
+              }`}
+              aria-label={`Go to page ${i + 1}`}
+            />
+          ))}
         </div>
       </div>
-
-      {/* Bottom spacing before next section */}
-      <div className="h-16 sm:h-20 lg:h-24" />
     </section>
   )
 }
