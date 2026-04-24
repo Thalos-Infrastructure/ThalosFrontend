@@ -28,8 +28,7 @@ const STORY_PAGES = {
       id: 1, 
       type: "intro",
       headline: "Clear agreements.",
-      subheadline: "Define conditions between parties and ensure payments are only released when they are met.",
-      poweredBy: "Powered by secure and transparent technology"
+      subheadline: "Define conditions between parties and ensure payments are only released when they are met."
     },
     { 
       id: 2, 
@@ -49,6 +48,12 @@ const STORY_PAGES = {
       id: 4, 
       type: "video",
       caption: "Conditions are met. Payments are released."
+    },
+    {
+      id: 5,
+      type: "final",
+      headline: "Trust at every step",
+      subheadline: "Every transaction protected. Every agreement honored."
     }
   ],
   es: [
@@ -56,8 +61,7 @@ const STORY_PAGES = {
       id: 1, 
       type: "intro",
       headline: "Acuerdos claros.",
-      subheadline: "Define condiciones entre partes y asegura que el pago solo se libere cuando se cumplan.",
-      poweredBy: "Impulsado por tecnología segura y transparente"
+      subheadline: "Define condiciones entre partes y asegura que el pago solo se libere cuando se cumplan."
     },
     { 
       id: 2, 
@@ -77,6 +81,12 @@ const STORY_PAGES = {
       id: 4, 
       type: "video",
       caption: "Se cumplen las condiciones. Se libera el pago."
+    },
+    {
+      id: 5,
+      type: "final",
+      headline: "Confianza en cada paso",
+      subheadline: "Cada transacción protegida. Cada acuerdo cumplido."
     }
   ]
 }
@@ -116,7 +126,7 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
   const [letterOpacities, setLetterOpacities] = useState<number[]>([1, 1, 1, 1, 1, 1])
   const [isHeroVisible, setIsHeroVisible] = useState(true)
   const containerRef = useRef<HTMLDivElement>(null)
-  const totalPages = 4 // Reduced to 4 pages (removed final page)
+  const totalPages = 5
 
   const pages = STORY_PAGES[language as keyof typeof STORY_PAGES] || STORY_PAGES.en
   const typewriterText = TYPEWRITER_TEXT[language as keyof typeof TYPEWRITER_TEXT] || TYPEWRITER_TEXT.en
@@ -127,16 +137,17 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
     return () => clearTimeout(t1)
   }, [onIntroComplete])
 
-  // Scroll-based page transitions
+  // Scroll-based page transitions - faster scroll (0.7vh per page instead of 1vh)
   const onScroll = useCallback(() => {
     if (!containerRef.current) return
     
     const scrollY = window.scrollY
     const vh = window.innerHeight
-    const heroHeight = vh * totalPages // Total scrollable height for hero
+    const scrollPerPage = vh * 0.7 // Faster scroll - 70% of viewport per page
+    const heroHeight = scrollPerPage * totalPages
     
     // Hide fixed content when scrolled past hero
-    setIsHeroVisible(scrollY < heroHeight - vh * 0.3)
+    setIsHeroVisible(scrollY < heroHeight - scrollPerPage * 0.5)
     
     // Calculate current page based on scroll position
     const progress = Math.min(scrollY / heroHeight, 1)
@@ -145,8 +156,8 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
 
     // Letter fade effect (only on first page)
     const newOpacities = LETTERS.map((_, i) => {
-      const fadeStart = vh * 0.05 + i * vh * 0.06
-      const fadeEnd = fadeStart + vh * 0.15
+      const fadeStart = vh * 0.03 + i * vh * 0.04
+      const fadeEnd = fadeStart + vh * 0.1
       if (scrollY < fadeStart) return 1
       if (scrollY > fadeEnd) return 0
       const raw = 1 - (scrollY - fadeStart) / (fadeEnd - fadeStart)
@@ -163,18 +174,22 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
 
   const scrollToNextPage = () => {
     const vh = window.innerHeight
-    const targetScroll = (currentPage + 1) * vh
+    const scrollPerPage = vh * 0.7
+    const targetScroll = (currentPage + 1) * scrollPerPage
     window.scrollTo({ top: targetScroll, behavior: "smooth" })
   }
 
+  // Calculate hero height - shorter for faster scroll
+  const heroHeightVh = totalPages * 70 // 70vh per page instead of 100vh
+
   return (
-    <section id="hero" ref={containerRef} className="relative" style={{ height: `${totalPages * 100}vh` }}>
+    <section id="hero" ref={containerRef} className="relative" style={{ height: `${heroHeightVh}vh` }}>
       {/* Subtle top gradient line */}
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#f0b400]/20 to-transparent" aria-hidden="true" />
 
       {/* Vertical THALOS letters - desktop only, fades on scroll */}
       <div
-        className={`pointer-events-none fixed right-0 top-0 bottom-0 z-20 hidden select-none md:flex md:flex-col md:items-end md:justify-center lg:right-4 xl:right-8 transition-opacity duration-500 ${isHeroVisible ? 'opacity-100' : 'opacity-0'}`}
+        className={`pointer-events-none fixed right-0 top-0 bottom-0 z-20 hidden select-none md:flex md:flex-col md:items-end md:justify-center lg:right-4 xl:right-8 transition-opacity duration-300 ${isHeroVisible ? 'opacity-100' : 'opacity-0'}`}
         aria-hidden="true"
       >
         {LETTERS.map((letter, i) => (
@@ -183,7 +198,7 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
             className="thalos-letter block font-black leading-[0.72] text-white"
             style={{
               opacity: letterOpacities[i],
-              transition: "opacity 120ms cubic-bezier(0.25, 0.1, 0.25, 1)",
+              transition: "opacity 100ms ease-out",
               fontSize: "clamp(10rem, 19vh, 24rem)",
               letterSpacing: "-0.04em",
             }}
@@ -194,23 +209,23 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
       </div>
 
       {/* Fixed viewport container for story pages */}
-      <div className={`fixed inset-0 z-10 overflow-hidden transition-opacity duration-500 ${isHeroVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+      <div className={`fixed inset-0 z-10 overflow-hidden transition-opacity duration-300 ${isHeroVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
         {/* Page 1: Intro */}
         <div 
-          className="absolute inset-0 flex items-center justify-center px-6 lg:px-16 transition-all duration-700 ease-out"
+          className="absolute inset-0 flex items-center justify-center px-4 sm:px-6 lg:px-16 transition-all duration-500 ease-out"
           style={{
             opacity: currentPage === 0 ? 1 : 0,
-            transform: currentPage === 0 ? "translateY(0) scale(1)" : "translateY(-30px) scale(0.98)",
+            transform: currentPage === 0 ? "translateY(0) scale(1)" : "translateY(-20px) scale(0.98)",
             pointerEvents: currentPage === 0 ? "auto" : "none",
           }}
         >
           <div className="max-w-4xl mx-auto text-center">
             {/* Mobile THALOS */}
-            <div className="flex md:hidden justify-center mb-8 gap-0.5">
+            <div className="flex md:hidden justify-center mb-6 gap-0.5">
               {LETTERS.map((letter, i) => (
                 <span
                   key={i}
-                  className="thalos-letter animate-fade-in-up text-6xl font-black text-white/90"
+                  className="thalos-letter animate-fade-in-up text-5xl sm:text-6xl font-black text-white/90"
                   style={{ animationDelay: `${i * 80}ms`, animationFillMode: "both" }}
                 >
                   {letter}
@@ -218,28 +233,28 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
               ))}
             </div>
 
-            <h1 className="animate-fade-in-up text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tight text-white text-balance">
+            <h1 className="animate-fade-in-up text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tight text-white text-balance">
               {pages[0].headline}
             </h1>
             
-            {/* Typewriter effect with brackets */}
-            <div className="mt-2 h-[1.2em] animate-fade-in-up animation-delay-200">
-              <p className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tight text-[#f0b400] font-mono">
+            {/* Typewriter effect with brackets - more spacing */}
+            <div className="mt-4 md:mt-6 min-h-[1.3em] animate-fade-in-up animation-delay-200">
+              <p className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tight text-[#f0b400] font-mono">
                 {displayText}
-                {isTyping && <span className="animate-pulse">|</span>}
+                {isTyping && <span className="animate-pulse ml-0.5">|</span>}
               </p>
             </div>
             
-            <p className="mt-8 max-w-2xl mx-auto animate-fade-in-up animation-delay-400 text-lg md:text-xl text-white/70 text-pretty leading-relaxed">
+            <p className="mt-8 md:mt-10 max-w-xl md:max-w-2xl mx-auto animate-fade-in-up animation-delay-400 text-base sm:text-lg md:text-xl text-white/70 text-pretty leading-relaxed px-2">
               {pages[0].subheadline}
             </p>
 
             {/* CTAs */}
-            <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in-up animation-delay-600">
+            <div className="mt-8 md:mt-10 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 animate-fade-in-up animation-delay-600">
               <Button
                 size="lg"
                 onClick={() => onNavigate("sign-in")}
-                className="h-12 rounded-lg bg-[#f0b400] px-8 text-sm font-bold text-[#0c1220] hover:bg-[#d9a300] active:scale-[0.98] transition-all duration-200 shadow-[0_0_30px_rgba(240,180,0,0.3)]"
+                className="w-full sm:w-auto h-12 rounded-lg bg-[#f0b400] px-8 text-sm font-bold text-[#0c1220] hover:bg-[#d9a300] active:scale-[0.98] transition-all duration-200 shadow-[0_0_30px_rgba(240,180,0,0.3)]"
               >
                 {language === "es" ? "Crear acuerdo" : "Create Agreement"}
               </Button>
@@ -247,133 +262,163 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
                 variant="ghost"
                 size="lg"
                 onClick={() => onNavigate("how-it-works")}
-                className="h-12 rounded-lg border border-white/20 bg-white/5 backdrop-blur-sm px-8 text-sm font-bold text-white hover:bg-white/10 hover:border-white/30 active:scale-[0.98] transition-all duration-200"
+                className="w-full sm:w-auto h-12 rounded-lg border border-white/20 bg-white/5 backdrop-blur-sm px-8 text-sm font-bold text-white hover:bg-white/10 hover:border-white/30 active:scale-[0.98] transition-all duration-200"
               >
                 {language === "es" ? "Ver cómo funciona" : "See how it works"}
               </Button>
             </div>
 
-            {/* Powered by */}
-            <p className="mt-12 animate-fade-in-up animation-delay-800 text-xs uppercase tracking-[0.2em] text-white/40">
-              {pages[0].poweredBy}
-            </p>
-
             {/* Scroll indicator */}
             <button 
               onClick={scrollToNextPage}
-              className="mt-8 animate-bounce text-white/40 hover:text-white/60 transition-colors"
+              className="mt-10 md:mt-12 animate-bounce text-white/40 hover:text-white/60 transition-colors"
               aria-label="Scroll to next section"
             >
-              <ChevronDown className="h-8 w-8" />
+              <ChevronDown className="h-6 w-6 sm:h-8 sm:w-8" />
             </button>
           </div>
         </div>
 
         {/* Page 2: Login Image */}
         <div 
-          className="absolute inset-0 flex items-center justify-center px-6 lg:px-16 transition-all duration-700 ease-out"
+          className="absolute inset-0 flex items-center justify-center px-4 sm:px-6 lg:px-16 transition-all duration-500 ease-out"
           style={{
             opacity: currentPage === 1 ? 1 : 0,
-            transform: currentPage === 1 ? "translateY(0) scale(1)" : currentPage < 1 ? "translateY(50px) scale(0.95)" : "translateY(-50px) scale(0.95)",
+            transform: currentPage === 1 ? "translateY(0) scale(1)" : currentPage < 1 ? "translateY(40px) scale(0.95)" : "translateY(-40px) scale(0.95)",
             pointerEvents: currentPage === 1 ? "auto" : "none",
           }}
         >
-          <div className="max-w-5xl mx-auto text-center">
+          <div className="text-center">
             {/* Phone mockup with glow */}
             <div className="relative inline-block">
-              <div className="absolute -inset-8 bg-[#f0b400]/10 blur-3xl rounded-full" />
-              <div className="relative rounded-[2.5rem] overflow-hidden shadow-2xl shadow-black/50 border border-white/10">
+              <div className="absolute -inset-6 sm:-inset-8 bg-[#f0b400]/10 blur-2xl sm:blur-3xl rounded-full" />
+              <div className="relative rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden shadow-2xl shadow-black/50 border border-white/10">
                 <img 
                   src="/images/hero-login.png" 
                   alt={pages[1].alt}
-                  className="w-[280px] md:w-[320px] lg:w-[360px] h-auto"
+                  className="w-[220px] sm:w-[260px] md:w-[300px] lg:w-[340px] h-auto"
                 />
               </div>
             </div>
             
-            <p className="mt-10 text-2xl md:text-3xl font-semibold text-white">
+            <p className="mt-6 sm:mt-8 text-xl sm:text-2xl md:text-3xl font-semibold text-white">
               {pages[1].caption}
             </p>
-            <div className="mt-2 h-1 w-16 mx-auto bg-gradient-to-r from-transparent via-[#f0b400] to-transparent rounded-full" />
+            <div className="mt-2 h-1 w-12 sm:w-16 mx-auto bg-gradient-to-r from-transparent via-[#f0b400] to-transparent rounded-full" />
           </div>
         </div>
 
         {/* Page 3: Dashboard Image */}
         <div 
-          className="absolute inset-0 flex items-center justify-center px-6 lg:px-16 transition-all duration-700 ease-out"
+          className="absolute inset-0 flex items-center justify-center px-4 sm:px-6 lg:px-16 transition-all duration-500 ease-out"
           style={{
             opacity: currentPage === 2 ? 1 : 0,
-            transform: currentPage === 2 ? "translateY(0) scale(1)" : currentPage < 2 ? "translateY(50px) scale(0.95)" : "translateY(-50px) scale(0.95)",
+            transform: currentPage === 2 ? "translateY(0) scale(1)" : currentPage < 2 ? "translateY(40px) scale(0.95)" : "translateY(-40px) scale(0.95)",
             pointerEvents: currentPage === 2 ? "auto" : "none",
           }}
         >
-          <div className="max-w-5xl mx-auto text-center">
+          <div className="text-center">
             {/* Phone mockup with glow */}
             <div className="relative inline-block">
-              <div className="absolute -inset-8 bg-[#f0b400]/10 blur-3xl rounded-full" />
-              <div className="relative rounded-[2.5rem] overflow-hidden shadow-2xl shadow-black/50 border border-white/10">
+              <div className="absolute -inset-6 sm:-inset-8 bg-[#f0b400]/10 blur-2xl sm:blur-3xl rounded-full" />
+              <div className="relative rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden shadow-2xl shadow-black/50 border border-white/10">
                 <img 
                   src="/images/hero-dashboard.png" 
                   alt={pages[2].alt}
-                  className="w-[280px] md:w-[320px] lg:w-[360px] h-auto"
+                  className="w-[220px] sm:w-[260px] md:w-[300px] lg:w-[340px] h-auto"
                 />
               </div>
             </div>
             
-            <p className="mt-10 text-2xl md:text-3xl font-semibold text-white">
+            <p className="mt-6 sm:mt-8 text-xl sm:text-2xl md:text-3xl font-semibold text-white">
               {pages[2].caption}
             </p>
-            <div className="mt-2 h-1 w-16 mx-auto bg-gradient-to-r from-transparent via-[#f0b400] to-transparent rounded-full" />
+            <div className="mt-2 h-1 w-12 sm:w-16 mx-auto bg-gradient-to-r from-transparent via-[#f0b400] to-transparent rounded-full" />
           </div>
         </div>
 
-        {/* Page 4: Video - proportional size like images */}
+        {/* Page 4: Video - proportional phone size */}
         <div 
-          className="absolute inset-0 flex items-center justify-center px-6 lg:px-16 transition-all duration-700 ease-out"
+          className="absolute inset-0 flex items-center justify-center px-4 sm:px-6 lg:px-16 transition-all duration-500 ease-out"
           style={{
             opacity: currentPage === 3 ? 1 : 0,
-            transform: currentPage === 3 ? "translateY(0) scale(1)" : currentPage < 3 ? "translateY(50px) scale(0.95)" : "translateY(-50px) scale(0.95)",
+            transform: currentPage === 3 ? "translateY(0) scale(1)" : currentPage < 3 ? "translateY(40px) scale(0.95)" : "translateY(-40px) scale(0.95)",
             pointerEvents: currentPage === 3 ? "auto" : "none",
           }}
         >
-          <div className="max-w-5xl mx-auto text-center">
-            {/* Video container - same size as phone mockups */}
+          <div className="text-center">
+            {/* Video in phone frame - same size as other mockups */}
             <div className="relative inline-block">
-              <div className="absolute -inset-8 bg-[#f0b400]/10 blur-3xl rounded-full" />
-              <div className="relative rounded-[2rem] overflow-hidden shadow-2xl shadow-black/50 border border-white/10">
+              <div className="absolute -inset-6 sm:-inset-8 bg-[#f0b400]/10 blur-2xl sm:blur-3xl rounded-full" />
+              <div className="relative rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden shadow-2xl shadow-black/50 border border-white/10 bg-black">
                 {currentPage >= 2 ? (
                   <iframe
                     src={`https://www.youtube-nocookie.com/embed/${YOUTUBE_VIDEO_ID}?autoplay=1&mute=1&loop=1&playlist=${YOUTUBE_VIDEO_ID}&controls=0&showinfo=0&rel=0&modestbranding=1&iv_load_policy=3&disablekb=1&fs=0&playsinline=1&vq=hd1080&hd=1`}
-                    className="w-[320px] md:w-[400px] lg:w-[480px] aspect-[9/16] pointer-events-none"
+                    className="w-[220px] sm:w-[260px] md:w-[300px] lg:w-[340px] aspect-[9/16] pointer-events-none"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     title="Thalos Demo Video"
                     style={{ border: 0 }}
                   />
                 ) : (
-                  <div className="w-[320px] md:w-[400px] lg:w-[480px] aspect-[9/16] bg-black/80 flex items-center justify-center">
-                    <Play className="h-16 w-16 text-white/30" />
+                  <div className="w-[220px] sm:w-[260px] md:w-[300px] lg:w-[340px] aspect-[9/16] bg-black/80 flex items-center justify-center">
+                    <Play className="h-12 w-12 sm:h-16 sm:w-16 text-white/30" />
                   </div>
                 )}
               </div>
             </div>
             
-            <p className="mt-10 text-2xl md:text-3xl font-semibold text-white">
+            <p className="mt-6 sm:mt-8 text-xl sm:text-2xl md:text-3xl font-semibold text-white">
               {pages[3].caption}
             </p>
-            <div className="mt-2 h-1 w-16 mx-auto bg-gradient-to-r from-transparent via-[#f0b400] to-transparent rounded-full" />
+            <div className="mt-2 h-1 w-12 sm:w-16 mx-auto bg-gradient-to-r from-transparent via-[#f0b400] to-transparent rounded-full" />
+          </div>
+        </div>
+
+        {/* Page 5: Final - Trust message */}
+        <div 
+          className="absolute inset-0 flex items-center justify-center px-4 sm:px-6 lg:px-16 transition-all duration-500 ease-out"
+          style={{
+            opacity: currentPage === 4 ? 1 : 0,
+            transform: currentPage === 4 ? "translateY(0) scale(1)" : currentPage < 4 ? "translateY(40px) scale(0.95)" : "translateY(-40px) scale(0.95)",
+            pointerEvents: currentPage === 4 ? "auto" : "none",
+          }}
+        >
+          <div className="max-w-3xl mx-auto text-center">
+            {/* Checkmark icon with glow */}
+            <div className="relative inline-flex items-center justify-center mb-6 sm:mb-8">
+              <div className="absolute inset-0 bg-[#f0b400]/20 blur-2xl rounded-full scale-150" />
+              <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-[#f0b400]/10 border border-[#f0b400]/30 flex items-center justify-center">
+                <svg className="w-8 h-8 sm:w-10 sm:h-10 text-[#f0b400]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+            </div>
+            
+            <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 sm:mb-6">
+              {pages[4].headline}
+            </h2>
+            
+            <p className="text-lg sm:text-xl md:text-2xl text-white/70 max-w-xl mx-auto">
+              {pages[4].subheadline}
+            </p>
+            
+            <div className="mt-3 sm:mt-4 h-1 w-20 sm:w-24 mx-auto bg-gradient-to-r from-transparent via-[#f0b400] to-transparent rounded-full" />
           </div>
         </div>
 
         {/* Page indicators */}
-        <div className={`fixed bottom-8 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 transition-opacity duration-500 ${isHeroVisible ? 'opacity-100' : 'opacity-0'}`}>
-          {[0, 1, 2, 3].map((i) => (
+        <div className={`fixed bottom-6 sm:bottom-8 left-1/2 -translate-x-1/2 z-30 flex items-center gap-1.5 sm:gap-2 transition-opacity duration-300 ${isHeroVisible ? 'opacity-100' : 'opacity-0'}`}>
+          {[0, 1, 2, 3, 4].map((i) => (
             <button
               key={i}
-              onClick={() => window.scrollTo({ top: i * window.innerHeight, behavior: "smooth" })}
+              onClick={() => {
+                const scrollPerPage = window.innerHeight * 0.7
+                window.scrollTo({ top: i * scrollPerPage, behavior: "smooth" })
+              }}
               className={`transition-all duration-300 rounded-full ${
                 currentPage === i 
-                  ? "w-8 h-2 bg-[#f0b400]" 
-                  : "w-2 h-2 bg-white/30 hover:bg-white/50"
+                  ? "w-6 sm:w-8 h-1.5 sm:h-2 bg-[#f0b400]" 
+                  : "w-1.5 sm:w-2 h-1.5 sm:h-2 bg-white/30 hover:bg-white/50"
               }`}
               aria-label={`Go to page ${i + 1}`}
             />
