@@ -6,9 +6,19 @@ import { useLanguage } from "@/lib/i18n"
 import { useSectionReveal } from "@/hooks/use-section-reveal"
 import { cn } from "@/lib/utils"
 
-export function Footer() {
+export function Footer({ onNavigate }: { onNavigate?: (section: string) => void }) {
   const { t } = useLanguage()
   const { ref, isVisible } = useSectionReveal(0.05)
+  
+  const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, section: string) => {
+    e.preventDefault()
+    if (onNavigate) {
+      onNavigate(section)
+    } else {
+      const el = document.getElementById(section)
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" })
+    }
+  }
   return (
     <footer ref={ref}>
       <div className={cn("mx-auto max-w-7xl px-6 py-12 section-reveal", isVisible && "is-visible")}>
@@ -40,8 +50,8 @@ export function Footer() {
             <div>
               <p className="mb-3 text-xs font-bold uppercase tracking-widest text-[#f0b400]">{t("footer.platform")}</p>
               <ul className="flex flex-col gap-2.5">
-                <li><a href="#how-it-works" className="text-sm font-medium text-white/60 transition-colors hover:text-white">{t("nav.howItWorks")}</a></li>
-                <li><a href="#profiles" className="text-sm font-medium text-white/60 transition-colors hover:text-white">{t("nav.solutions")}</a></li>
+                <li><a href="#how-it-works" onClick={(e) => handleNavClick(e, "how-it-works")} className="text-sm font-medium text-white/60 transition-colors hover:text-white cursor-pointer">{t("nav.howItWorks")}</a></li>
+                <li><a href="#profiles" onClick={(e) => handleNavClick(e, "profiles")} className="text-sm font-medium text-white/60 transition-colors hover:text-white cursor-pointer">{t("nav.solutions")}</a></li>
               </ul>
             </div>
             <div>
