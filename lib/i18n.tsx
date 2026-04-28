@@ -1683,7 +1683,8 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
 }
 
 export function useLanguage() {
-  return useContext(LanguageContext)
+  const ctx = useContext(LanguageContext)
+  return { ...ctx, language: ctx.lang }
 }
 
 /** Small globe toggle button */
