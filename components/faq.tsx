@@ -24,10 +24,14 @@ function FAQItem({ q, a, open, toggle }: { q: string; a: string; open: boolean; 
         </svg>
       </button>
       <div
-        className="overflow-hidden transition-all duration-400"
-        style={{ maxHeight: open ? "300px" : "0px", opacity: open ? 1 : 0 }}
+        className={cn(
+          "grid transition-all duration-300 ease-in-out",
+          open ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+        )}
       >
-        <p className="pb-5 text-sm font-medium leading-relaxed text-white/70">{a}</p>
+        <div className="overflow-hidden">
+          <p className="pb-5 text-sm font-medium leading-relaxed text-white/70">{a}</p>
+        </div>
       </div>
     </div>
   )

@@ -12,11 +12,12 @@ export function Footer({ onNavigate }: { onNavigate?: (section: string) => void 
   
   const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, section: string) => {
     e.preventDefault()
-    if (onNavigate) {
-      onNavigate(section)
-    } else {
-      const el = document.getElementById(section)
-      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" })
+    const el = document.getElementById(section)
+    if (el) {
+      const headerOffset = 80
+      const elementPosition = el.getBoundingClientRect().top
+      const offsetPosition = elementPosition + window.scrollY - headerOffset
+      window.scrollTo({ top: offsetPosition, behavior: "smooth" })
     }
   }
   return (
