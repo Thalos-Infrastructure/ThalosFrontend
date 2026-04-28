@@ -16,6 +16,7 @@
 
 import { API_URL } from "@/lib/config"
 import * as originalService from "./trustlessworkService"
+import * as escrowApi from "@/lib/api/escrow"
 
 // Feature flags - set to false to disable migration for specific endpoints
 const MIGRATION_FLAGS = {
@@ -31,12 +32,13 @@ const MIGRATION_FLAGS = {
   sendTransaction: false,
 }
 
-// Helper to make backend calls
-async function backendFetch(endpoint: string, options: RequestInit = {}) {
+// Helper to make backend calls with authentication
+async function backendFetch(endpoint: string, token: string, options: RequestInit = {}) {
   const response = await fetch(`${API_URL}${endpoint}`, {
     ...options,
     headers: {
       "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`,
       ...options.headers,
     },
   })
@@ -53,14 +55,18 @@ async function backendFetch(endpoint: string, options: RequestInit = {}) {
 // MIGRATION #1: getEscrowsBySigner
 // ============================================================================
 
-export async function getEscrowsBySigner(signerAddress: string): Promise<{
+export async function getEscrowsBySigner(
+  signerAddress: string,
+  token?: string
+): Promise<{
   success: boolean
   data?: unknown[]
   error?: string
   source: "backend" | "original"
 }> {
-  if (!MIGRATION_FLAGS.getEscrowsBySigner) {
-    console.log("[v0] MIGRATION: getEscrowsBySigner DISABLED, using original")
+  // If no token or flag disabled, use original
+  if (!token || !MIGRATION_FLAGS.getEscrowsBySigner) {
+    console.log("[v0] MIGRATION: getEscrowsBySigner - using original (no token or disabled)")
     const result = await originalService.getEscrowsBySigner(signerAddress)
     return { ...result, source: "original" }
   }
@@ -68,13 +74,16 @@ export async function getEscrowsBySigner(signerAddress: string): Promise<{
   try {
     console.log("[v0] MIGRATION: Attempting BACKEND for getEscrowsBySigner", { signerAddress })
     
-    const data = await backendFetch(`/escrow/by-signer/${signerAddress}`)
+    const result = await escrowApi.getEscrowsBySigner(signerAddress, token)
     
-    console.log("[v0] MIGRATION: SUCCESS using BACKEND for getEscrowsBySigner", { 
-      count: Array.isArray(data) ? data.length : "N/A" 
-    })
+    if (result.success && result.data) {
+      console.log("[v0] MIGRATION: SUCCESS using BACKEND for getEscrowsBySigner", { 
+        count: result.data.length 
+      })
+      return { success: true, data: result.data, source: "backend" }
+    }
     
-    return { success: true, data, source: "backend" }
+    throw new Error(result.error || "Backend returned no data")
   } catch (error) {
     console.warn("[v0] MIGRATION: FALLBACK to original for getEscrowsBySigner", { 
       error: error instanceof Error ? error.message : "Unknown error" 
@@ -93,16 +102,21 @@ interface GetEscrowsByRoleParams {
   address: string
   role: "sender" | "receiver" | "approver" | "service_provider"
   status?: string
+  type?: "single-release" | "multi-release"
 }
 
-export async function getEscrowsByRole(params: GetEscrowsByRoleParams): Promise<{
+export async function getEscrowsByRole(
+  params: GetEscrowsByRoleParams,
+  token?: string
+): Promise<{
   success: boolean
   data?: unknown[]
   error?: string
   source: "backend" | "original"
 }> {
-  if (!MIGRATION_FLAGS.getEscrowsByRole) {
-    console.log("[v0] MIGRATION: getEscrowsByRole DISABLED, using original")
+  // If no token or flag disabled, use original
+  if (!token || !MIGRATION_FLAGS.getEscrowsByRole) {
+    console.log("[v0] MIGRATION: getEscrowsByRole - using original (no token or disabled)")
     const result = await originalService.getEscrowsByRole(params)
     return { ...result, source: "original" }
   }
@@ -110,19 +124,16 @@ export async function getEscrowsByRole(params: GetEscrowsByRoleParams): Promise<
   try {
     console.log("[v0] MIGRATION: Attempting BACKEND for getEscrowsByRole", params)
     
-    const queryParams = new URLSearchParams({
-      address: params.address,
-      role: params.role,
-      ...(params.status && { status: params.status }),
-    })
+    const result = await escrowApi.getEscrowsByRole(params, token)
     
-    const data = await backendFetch(`/escrow/by-role?${queryParams}`)
+    if (result.success && result.data) {
+      console.log("[v0] MIGRATION: SUCCESS using BACKEND for getEscrowsByRole", { 
+        count: result.data.length 
+      })
+      return { success: true, data: result.data, source: "backend" }
+    }
     
-    console.log("[v0] MIGRATION: SUCCESS using BACKEND for getEscrowsByRole", { 
-      count: Array.isArray(data) ? data.length : "N/A" 
-    })
-    
-    return { success: true, data, source: "backend" }
+    throw new Error(result.error || "Backend returned no data")
   } catch (error) {
     console.warn("[v0] MIGRATION: FALLBACK to original for getEscrowsByRole", { 
       error: error instanceof Error ? error.message : "Unknown error" 

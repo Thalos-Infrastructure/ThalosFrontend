@@ -110,7 +110,8 @@ const initialAgreements: Agreement[] = SHOW_MOCKED_AGREEMENTS ? [
 ] : [];
 
 // Mix between real escrows fetched from the backend and some hardcoded ones for demo purposes
-import { getEscrowsBySigner } from "@/services/trustlessworkService";
+// MIGRATION: Using escrowMigration wrapper to gradually migrate to backend
+import { getEscrowsBySigner } from "@/services/escrowMigration";
 
 function mapEscrowToAgreement(escrow) {
   const isMulti = escrow.type === "multi-release";
@@ -423,8 +424,9 @@ const [currentPage, setCurrentPage] = useState(1)
     if (fetchedEscrowsRef.current === walletAddress) return;
     fetchedEscrowsRef.current = walletAddress;
     
-    async function fetchAllEscrows() {
-      const { getEscrowsByRole } = await import("@/services/trustlessworkService");
+async function fetchAllEscrows() {
+// MIGRATION: Using escrowMigration wrapper
+const { getEscrowsByRole } = await import("@/services/escrowMigration");
       const seenIds = new Set<string>();
       const allAgreements: Agreement[] = [];
       
@@ -440,9 +442,9 @@ const [currentPage, setCurrentPage] = useState(1)
       }
       
       // Fetch by each role to ensure we get all escrows
-      const roles = ["receiver", "serviceProvider", "releaseSigner"];
-      for (const role of roles) {
-        const res = await getEscrowsByRole({ role, roleAddress: walletAddress });
+const roles = ["receiver", "service_provider", "approver"] as const;
+for (const role of roles) {
+const res = await getEscrowsByRole({ role, address: walletAddress });
         if (res.success && Array.isArray(res.data)) {
           res.data.forEach(escrow => {
             if (!seenIds.has(escrow.contractId)) {
@@ -466,9 +468,10 @@ const [currentPage, setCurrentPage] = useState(1)
     
     // Fetch escrows where user is approver (for approver tab)
     async function fetchApproverEscrows() {
-      setApproverLoading(true);
-      const { getEscrowsByRole } = await import("@/services/trustlessworkService");
-      const res = await getEscrowsByRole({ role: "approver", roleAddress: walletAddress });
+setApproverLoading(true);
+// MIGRATION: Using escrowMigration wrapper
+const { getEscrowsByRole } = await import("@/services/escrowMigration");
+const res = await getEscrowsByRole({ role: "approver", address: walletAddress });
       if (res.success && Array.isArray(res.data)) {
         setApproverEscrows(res.data.map(mapEscrowToAgreement));
       } else {

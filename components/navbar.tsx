@@ -7,21 +7,37 @@ import { cn } from "@/lib/utils"
 import { useLanguage, LanguageToggle, ThemeToggle } from "@/lib/i18n"
 import { SocialAuthModal } from "@/components/social-auth-modal"
 
-const useCaseCategories: { label: string; items: string[] }[] = [
-  { label: "Digital Economy", items: ["Freelancers", "Agencies", "Developers", "Creators"] },
-  { label: "Commerce & Trade", items: ["Import/Export", "Wholesale", "Marketplaces"] },
-  { label: "Real Estate", items: ["Property Sales", "Rental Agreements", "Leasing"] },
-  { label: "Automotive", items: ["Dealerships", "Peer-to-Peer Sales", "Rentals"] },
-  { label: "Events & Services", items: ["Event Planners", "Weddings", "Catering"] },
-  { label: "Education", items: ["Online Academies", "Coaching", "Tutors"] },
-  { label: "Agriculture", items: ["Crop Pre-Sales", "Equipment Leasing"] },
-  { label: "Construction", items: ["Contractor Agreements", "Subcontractors"] },
-  { label: "Tourism", items: ["Travel Agencies", "Vacation Rentals", "Tours"] },
-  { label: "Enterprise", items: ["Vendor Agreements", "B2B Services"] },
-]
+const useCaseCategories = {
+  en: [
+    { label: "Digital Economy", items: ["Freelancers", "Agencies", "Developers", "Creators"] },
+    { label: "Commerce & Trade", items: ["Import/Export", "Wholesale", "Marketplaces"] },
+    { label: "Real Estate", items: ["Property Sales", "Rental Agreements", "Leasing"] },
+    { label: "Automotive", items: ["Dealerships", "Peer-to-Peer Sales", "Rentals"] },
+    { label: "Events & Services", items: ["Event Planners", "Weddings", "Catering"] },
+    { label: "Education", items: ["Online Academies", "Coaching", "Tutors"] },
+    { label: "Agriculture", items: ["Crop Pre-Sales", "Equipment Leasing"] },
+    { label: "Construction", items: ["Contractor Agreements", "Subcontractors"] },
+    { label: "Tourism", items: ["Travel Agencies", "Vacation Rentals", "Tours"] },
+    { label: "Enterprise", items: ["Vendor Agreements", "B2B Services"] },
+  ],
+  es: [
+    { label: "Economía Digital", items: ["Freelancers", "Agencias", "Desarrolladores", "Creadores"] },
+    { label: "Comercio", items: ["Importación/Exportación", "Mayoristas", "Marketplaces"] },
+    { label: "Bienes Raíces", items: ["Venta de Propiedades", "Contratos de Alquiler", "Arrendamiento"] },
+    { label: "Automotriz", items: ["Concesionarios", "Ventas P2P", "Alquileres"] },
+    { label: "Eventos y Servicios", items: ["Organizadores", "Bodas", "Catering"] },
+    { label: "Educación", items: ["Academias Online", "Coaching", "Tutores"] },
+    { label: "Agricultura", items: ["Pre-venta de Cosechas", "Alquiler de Equipos"] },
+    { label: "Construcción", items: ["Contratos", "Subcontratistas"] },
+    { label: "Turismo", items: ["Agencias de Viaje", "Alquileres Vacacionales", "Tours"] },
+    { label: "Empresas", items: ["Acuerdos con Proveedores", "Servicios B2B"] },
+  ],
+}
 
 export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }) {
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
+  const categories = useCaseCategories[language as keyof typeof useCaseCategories] || useCaseCategories.en
+  const useCasesLabel = language === "es" ? "Casos de Uso" : "Use Cases"
   const [mobileOpen, setMobileOpen] = useState(false)
   const [showAuthModal, setShowAuthModal] = useState<"login" | "signup" | null>(null)
   const [visible, setVisible] = useState(true)
@@ -107,13 +123,13 @@ export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }
                 onClick={() => setUseCaseOpen(!useCaseOpen)}
                 className="flex items-center gap-1.5 text-base font-bold text-white/70 transition-all duration-300 hover:text-white"
               >
-                Use Cases
+                {useCasesLabel}
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={cn("transition-transform duration-200", useCaseOpen && "rotate-180")}><path d="M6 9l6 6 6-6" /></svg>
               </button>
               {useCaseOpen && (
                 <div className="absolute top-full left-1/2 z-50 mt-3 -translate-x-1/2 w-64 rounded-xl border border-white/15 bg-[#0c0c0e]/95 p-2 backdrop-blur-xl shadow-[0_12px_40px_rgba(0,0,0,0.4)]" style={{ scrollbarWidth: "none" }}>
                   <div className="max-h-[460px] overflow-y-auto" style={{ scrollbarWidth: "none" }}>
-                    {useCaseCategories.map((cat) => (
+                    {categories.map((cat) => (
                       <div key={cat.label}>
                         <button
                           onClick={() => setExpandedCat(expandedCat === cat.label ? null : cat.label)}

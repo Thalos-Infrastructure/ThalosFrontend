@@ -208,8 +208,9 @@ export default function BusinessDashboardPage() {
     if (fetchedEscrowsRef.current === walletAddress) return;
     fetchedEscrowsRef.current = walletAddress;
     
-    async function fetchAllEscrows() {
-      const { getEscrowsBySigner, getEscrowsByRole } = await import("@/services/trustlessworkService");
+async function fetchAllEscrows() {
+// MIGRATION: Using escrowMigration wrapper
+const { getEscrowsBySigner, getEscrowsByRole } = await import("@/services/escrowMigration");
       const seenIds = new Set<string>();
       const allAgreements: Agreement[] = [];
       
@@ -224,10 +225,10 @@ export default function BusinessDashboardPage() {
         });
       }
       
-      // Fetch by each role
-      const roles = ["receiver", "serviceProvider", "releaseSigner"];
-      for (const role of roles) {
-        const res = await getEscrowsByRole({ role, roleAddress: walletAddress });
+// Fetch by each role
+const roles = ["receiver", "service_provider", "approver"] as const;
+for (const role of roles) {
+const res = await getEscrowsByRole({ role, address: walletAddress });
         if (res.success && Array.isArray(res.data)) {
           res.data.forEach(escrow => {
             if (!seenIds.has(escrow.contractId)) {
@@ -250,10 +251,11 @@ export default function BusinessDashboardPage() {
   useEffect(() => {
     if (!walletAddress) return
     async function fetchApproverEscrows() {
-      setApproverLoading(true)
-      try {
-        const { getEscrowsByRole } = await import("@/services/trustlessworkService")
-        const res = await getEscrowsByRole({ role: "approver", roleAddress: walletAddress })
+setApproverLoading(true)
+try {
+// MIGRATION: Using escrowMigration wrapper
+const { getEscrowsByRole } = await import("@/services/escrowMigration")
+const res = await getEscrowsByRole({ role: "approver", address: walletAddress })
         if (res.success && Array.isArray(res.data)) {
           setApproverEscrows(res.data.map((e: Record<string, unknown>) => mapEscrowToAgreement(e)))
         }

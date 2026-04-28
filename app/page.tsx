@@ -122,7 +122,7 @@ export default function Home() {
           </div>
 
           <div className="mt-14 pb-24">
-            <Footer />
+            <Footer onNavigate={handleNavigate} />
           </div>
         </div>
       </main>
