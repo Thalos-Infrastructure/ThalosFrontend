@@ -157,9 +157,9 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
   const heroHeightVh = totalPages * 35 + 15
 
   return (
-    <section id="hero" ref={containerRef} className="relative" style={{ height: `${heroHeightVh}vh` }}>
+    <section id="hero" ref={containerRef} className="relative pt-16" style={{ height: `${heroHeightVh}vh` }}>
       {/* Subtle top gradient line */}
-      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#f0b400]/20 to-transparent" aria-hidden="true" />
+      <div className="absolute top-16 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#f0b400]/20 to-transparent" aria-hidden="true" />
 
       {/* Vertical THALOS letters - desktop only */}
       <div
