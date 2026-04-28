@@ -168,3 +168,43 @@ export async function getEscrowBalance(
     token
   )
 }
+
+// ============================================================================
+// NEW ENDPOINTS - Migration from trustlessworkService
+// ============================================================================
+
+// Get escrows where user is a signer
+export async function getEscrowsBySigner(
+  address: string,
+  token: string
+): Promise<ApiResponse<Escrow[]>> {
+  return apiRequest<Escrow[]>(
+    `/escrows/by-signer/${address}`,
+    { method: "GET" },
+    token
+  )
+}
+
+// Get escrows by role with filters
+export interface GetEscrowsByRoleParams {
+  address: string
+  role?: "sender" | "receiver" | "approver" | "service_provider"
+  status?: string
+  type?: "single-release" | "multi-release"
+}
+
+export async function getEscrowsByRole(
+  params: GetEscrowsByRoleParams,
+  token: string
+): Promise<ApiResponse<Escrow[]>> {
+  const queryParams = new URLSearchParams({ address: params.address })
+  if (params.role) queryParams.set("role", params.role)
+  if (params.status) queryParams.set("status", params.status)
+  if (params.type) queryParams.set("type", params.type)
+  
+  return apiRequest<Escrow[]>(
+    `/escrows/by-role?${queryParams.toString()}`,
+    { method: "GET" },
+    token
+  )
+}
