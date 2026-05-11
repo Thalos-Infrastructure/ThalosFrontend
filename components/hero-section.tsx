@@ -12,56 +12,74 @@ interface HeroSectionProps {
 
 const LETTERS = ["T", "h", "a", "l", "o", "s"]
 
-// YouTube video ID
-const YOUTUBE_VIDEO_ID = "pKIizFs0dO4"
+// Video URL from Supabase Storage
+const VIDEO_URL = "https://cpkjclwvgnxgadiaoaei.supabase.co/storage/v1/object/public/Video%20Thalos/demo%20landing.mp4"
 
-// Typewriter phrases - rotating
+// Typewriter phrases - rotating with correct article (tu/tus in Spanish)
 const TYPEWRITER_PHRASES = {
-  en: ["transactions", "agreements", "business", "future"],
-  es: ["transacciones", "acuerdos", "negocios", "futuro"]
+  en: [
+    { text: "transactions", article: "your" },
+    { text: "agreements", article: "your" },
+    { text: "business", article: "your" },
+    { text: "future", article: "your" }
+  ],
+  es: [
+    { text: "transacciones", article: "tus" },
+    { text: "acuerdos", article: "tus" },
+    { text: "negocios", article: "tus" },
+    { text: "futuro", article: "tu" } // "tu futuro" not "tus futuro"
+  ]
 }
 
 // Content translations - ALL content translated
 const CONTENT = {
   en: {
-    headline: "Protect your",
+    headlinePrefix: "Protect",
     description: "We are the bridge between trust and payments. Create digital agreements where funds are protected until conditions are met, with clear milestones, instant release upon approval, and built-in dispute resolution.",
     cta: "Get Started",
     ctaSecondary: "See how it works",
-    imageCaption1: "Start in seconds",
-    imageCaption2: "Manage your agreements",
-    videoCaption: "See it in action",
+    page2: "Get started in seconds",
+    page3: "Manage your agreements",
+    page4: "Watch it in action",
     finalHeadline: "Trust at every step",
     finalSubheadline: "Every transaction protected. Every agreement honored.",
-    finalCta: "Start now",
+    finalCta: "Start now"
   },
   es: {
-    headline: "Protege tus",
-    description: "Somos el puente entre la confianza y los pagos. Crea acuerdos digitales donde los fondos están protegidos hasta cumplir condiciones, con hitos claros, liberación instantánea al aprobar, y resolución de disputas incluida.",
+    headlinePrefix: "Protege",
+    description: "Somos el puente entre la confianza y los pagos. Crea acuerdos digitales donde los fondos están protegidos hasta cumplir las condiciones, con hitos claros, liberación instantánea al aprobar, y resolución de disputas incluida.",
     cta: "Comenzar",
     ctaSecondary: "Ver cómo funciona",
-    imageCaption1: "Empieza en segundos",
-    imageCaption2: "Gestiona tus acuerdos",
-    videoCaption: "Míralo en acción",
+    page2: "Empieza en segundos",
+    page3: "Gestiona tus acuerdos",
+    page4: "Míralo en acción",
     finalHeadline: "Confianza en cada paso",
     finalSubheadline: "Cada transacción protegida. Cada acuerdo cumplido.",
-    finalCta: "Comenzar ahora",
+    finalCta: "Comenzar ahora"
   }
 }
 
 // Typewriter hook with rotating phrases
-function useRotatingTypewriter(phrases: string[], isActive: boolean) {
+interface TypewriterPhrase {
+  text: string
+  article: string
+}
+
+function useRotatingTypewriter(phrases: TypewriterPhrase[], isActive: boolean) {
   const [displayText, setDisplayText] = useState("")
+  const [currentArticle, setCurrentArticle] = useState(phrases[0]?.article || "")
   const [isTyping, setIsTyping] = useState(false)
   const [phraseIndex, setPhraseIndex] = useState(0)
-
+  
   useEffect(() => {
-    if (!isActive) {
-      setDisplayText("")
-      return
-    }
-
-    const currentPhrase = phrases[phraseIndex]
+  if (!isActive) {
+  setDisplayText("")
+  return
+  }
+  
+  const currentPhraseObj = phrases[phraseIndex]
+  const currentPhrase = currentPhraseObj.text
+  setCurrentArticle(currentPhraseObj.article)
     let currentIndex = 0
     let isDeleting = false
     setIsTyping(true)
@@ -91,8 +109,8 @@ function useRotatingTypewriter(phrases: string[], isActive: boolean) {
     return () => clearInterval(interval)
   }, [phrases, phraseIndex, isActive])
 
-  return { displayText, isTyping }
-}
+return { displayText, isTyping, currentArticle }
+  }
 
 export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
   const { language } = useLanguage()
@@ -105,7 +123,7 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
 
   const content = CONTENT[language as keyof typeof CONTENT] || CONTENT.en
   const typewriterPhrases = TYPEWRITER_PHRASES[language as keyof typeof TYPEWRITER_PHRASES] || TYPEWRITER_PHRASES.en
-  const { displayText, isTyping } = useRotatingTypewriter(typewriterPhrases, currentPage === 0)
+  const { displayText, isTyping, currentArticle } = useRotatingTypewriter(typewriterPhrases, currentPage === 0)
 
   useEffect(() => {
     const t1 = setTimeout(() => { onIntroComplete?.() }, 2000)
@@ -162,8 +180,9 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
       <div className="absolute top-16 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#f0b400]/20 to-transparent" aria-hidden="true" />
 
       {/* Vertical THALOS letters - desktop only */}
+      {isHeroVisible && (
       <div
-        className={`pointer-events-none fixed right-0 top-1/2 -translate-y-1/2 z-20 hidden select-none md:flex md:flex-col md:items-end lg:right-4 xl:right-8 transition-opacity duration-500 ${isHeroVisible ? 'opacity-100' : 'opacity-0'}`}
+        className="pointer-events-none fixed right-0 top-1/2 -translate-y-1/2 z-20 hidden select-none md:flex md:flex-col md:items-end lg:right-4 xl:right-8"
         aria-hidden="true"
       >
         {LETTERS.map((letter, i) => (
@@ -181,9 +200,11 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
           </span>
         ))}
       </div>
+      )}
 
-      {/* Fixed viewport container for all pages */}
-      <div className={`fixed inset-0 z-10 overflow-hidden transition-opacity duration-500 ${isHeroVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+      {/* Fixed viewport container for all pages - top-16 to account for header */}
+      {isHeroVisible && (
+      <div className="fixed inset-x-0 top-16 bottom-0 z-10 overflow-hidden">
         
         {/* Page 1: Intro */}
         <div 
@@ -211,7 +232,7 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
 
               {/* Headlines */}
               <h1 className="animate-fade-in-up text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-bold tracking-tight text-foreground leading-[0.95]">
-                {content.headline}
+                {content.headlinePrefix} {currentArticle}
               </h1>
               
               {/* Typewriter effect */}
@@ -330,21 +351,16 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
           <div className="text-center w-full max-w-3xl mx-auto">
             <div style={{ filter: "drop-shadow(0 50px 100px rgba(0,0,0,0.5)) drop-shadow(0 20px 40px rgba(240,180,0,0.1))" }}>
               <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden border-2 border-border/20 bg-black">
-                {currentPage >= 2 ? (
-                  <iframe
-                    src={`https://www.youtube-nocookie.com/embed/${YOUTUBE_VIDEO_ID}?autoplay=1&mute=1&loop=1&playlist=${YOUTUBE_VIDEO_ID}&controls=0&showinfo=0&rel=0&modestbranding=1&iv_load_policy=3&disablekb=1&fs=0&playsinline=1&vq=hd1080&hd=1`}
-                    className="w-full aspect-video pointer-events-none"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    title="Thalos Demo Video"
-                    style={{ border: 0 }}
-                  />
-                ) : (
-                  <div className="w-full aspect-video bg-black/80 flex items-center justify-center">
-                    <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center">
-                      <div className="w-0 h-0 border-l-[20px] border-l-white/50 border-t-[12px] border-t-transparent border-b-[12px] border-b-transparent ml-1" />
-                    </div>
-                  </div>
-                )}
+                <video
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  className="w-full aspect-video object-cover"
+                >
+                  <source src={VIDEO_URL} type="video/mp4" />
+                  Tu navegador no soporta el elemento de video.
+                </video>
               </div>
             </div>
             
@@ -394,7 +410,7 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
         </div>
 
         {/* Page indicators */}
-        <div className={`fixed bottom-8 left-1/2 -translate-x-1/2 z-30 flex gap-2 transition-opacity duration-300 ${isHeroVisible ? 'opacity-100' : 'opacity-0'}`}>
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-30 flex gap-2">
           {Array.from({ length: totalPages }).map((_, i) => (
             <button
               key={i}
@@ -413,6 +429,7 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
           ))}
         </div>
       </div>
+      )}
 
       {/* CSS for floating animation */}
       <style jsx>{`

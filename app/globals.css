@@ -695,21 +695,28 @@ main {
 .animation-delay-600 { animation-delay: 600ms; }
 .animation-delay-800 { animation-delay: 800ms; }
 
-/* Section reveal transitions - bidirectional with elegant easing */
+/* Section reveal transitions - smooth and modern */
 .section-reveal {
   opacity: 0;
-  transform: translateY(40px);
-  transition: opacity 0.9s cubic-bezier(0.16, 1, 0.3, 1), transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: opacity, transform;
+  transform: translateY(80px);
+  filter: blur(4px);
+  transition: 
+    opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 1s cubic-bezier(0.22, 1, 0.36, 1),
+    filter 0.6s ease-out;
+  will-change: opacity, transform, filter;
 }
 .section-reveal.is-visible {
   opacity: 1;
   transform: translateY(0);
+  filter: blur(0);
 }
 .section-reveal-child {
   opacity: 0;
-  transform: translateY(24px);
-  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  transform: translateY(40px);
+  transition: 
+    opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.85s cubic-bezier(0.22, 1, 0.36, 1);
   will-change: opacity, transform;
 }
 .section-reveal.is-visible .section-reveal-child {
@@ -729,8 +736,10 @@ main {
 /* Slide from left variant */
 .section-reveal-left {
   opacity: 0;
-  transform: translateX(-30px);
-  transition: opacity 0.9s cubic-bezier(0.16, 1, 0.3, 1), transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+  transform: translateX(-50px);
+  transition: 
+    opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1), 
+    transform 1s cubic-bezier(0.22, 1, 0.36, 1);
   will-change: opacity, transform;
 }
 .section-reveal-left.is-visible {
@@ -738,14 +747,33 @@ main {
   transform: translateX(0);
 }
 
+/* Slide from right variant */
+.section-reveal-right {
+  opacity: 0;
+  transform: translateX(50px);
+  transition: 
+    opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1), 
+    transform 1s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity, transform;
+}
+.section-reveal-right.is-visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+
 /* Scale up variant */
 .section-reveal-scale {
   opacity: 0;
-  transform: scale(0.95);
-  transition: opacity 0.9s cubic-bezier(0.16, 1, 0.3, 1), transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: opacity, transform;
+  transform: scale(0.9);
+  filter: blur(2px);
+  transition: 
+    opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1), 
+    transform 1s cubic-bezier(0.22, 1, 0.36, 1),
+    filter 0.6s ease-out;
+  will-change: opacity, transform, filter;
 }
 .section-reveal-scale.is-visible {
   opacity: 1;
   transform: scale(1);
+  filter: blur(0);
 }

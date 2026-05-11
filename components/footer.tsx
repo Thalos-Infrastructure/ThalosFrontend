@@ -57,7 +57,7 @@ export function Footer({ onNavigate }: { onNavigate?: (section: string) => void 
                   <button 
                     type="button"
                     onClick={() => scrollToSection("how-it-works")} 
-                    className="text-sm font-medium text-white/60 transition-colors hover:text-white cursor-pointer"
+                    className="text-sm font-medium text-foreground/60 transition-colors hover:text-foreground cursor-pointer"
                   >
                     {t("nav.howItWorks")}
                   </button>
@@ -66,7 +66,7 @@ export function Footer({ onNavigate }: { onNavigate?: (section: string) => void 
                   <button 
                     type="button"
                     onClick={() => scrollToSection("profiles")} 
-                    className="text-sm font-medium text-white/60 transition-colors hover:text-white cursor-pointer"
+                    className="text-sm font-medium text-foreground/60 transition-colors hover:text-foreground cursor-pointer"
                   >
                     {t("nav.solutions")}
                   </button>

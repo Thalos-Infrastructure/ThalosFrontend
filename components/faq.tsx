@@ -13,21 +13,24 @@ function FAQItem({ q, a, isOpen, onToggle }: { q: string; a: string; isOpen: boo
       <button
         type="button"
         onClick={onToggle}
-        className="flex w-full items-center justify-between gap-4 py-5 text-left"
+        className="flex w-full items-center justify-between gap-4 py-5 text-left transition-colors hover:text-[#f0b400]"
       >
         <span className="text-base font-semibold text-white">{q}</span>
         <ChevronDown 
           className={cn(
-            "h-5 w-5 shrink-0 text-[#f0b400] transition-transform duration-200",
+            "h-5 w-5 shrink-0 text-[#f0b400] transition-transform duration-300 ease-out",
             isOpen && "rotate-180"
           )} 
         />
       </button>
-      {isOpen && (
-        <div className="pb-5">
-          <p className="text-sm font-medium leading-relaxed text-white/70">{a}</p>
-        </div>
-      )}
+      <div 
+        className={cn(
+          "overflow-hidden transition-all duration-300 ease-out",
+          isOpen ? "max-h-96 opacity-100 pb-5" : "max-h-0 opacity-0"
+        )}
+      >
+        <p className="text-sm font-medium leading-relaxed text-white/70">{a}</p>
+      </div>
     </div>
   )
 }

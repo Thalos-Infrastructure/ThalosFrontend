@@ -1,7 +1,7 @@
 "use client"
 
 import React, { createContext, useContext, useState, useCallback, useEffect } from "react"
-import { getKit, clearKit } from "@/lib/stellar-wallet-kit"
+import { getKit, clearKit, isFreighterAvailable } from "@/lib/stellar-wallet-kit"
 import { getOrCreateProfile, type Profile } from "@/lib/actions/profile"
 
 const STELLAR_WALLET_KEY = "thalos_stellar_address"
@@ -57,10 +57,18 @@ export function StellarWalletProvider({ children }: { children: React.ReactNode 
       setIsConnecting(true)
       setWalletError(null)
       try {
+        // Clear any existing kit instance to force fresh detection
         clearKit();
+        
+        // Get kit - this will wait for Freighter to be available
         const kit = await getKit();
         if (!kit) {
-          setWalletError("Stellar Wallets Kit no disponible.");
+          // Check if Freighter is specifically the issue
+          if (!isFreighterAvailable()) {
+            setWalletError("No se detectó una wallet. Por favor, abre tu extensión de Freighter y vuelve a intentar.");
+          } else {
+            setWalletError("Stellar Wallets Kit no disponible.");
+          }
           return;
         }
         await kit.openModal({
