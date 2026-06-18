@@ -260,8 +260,6 @@ const translations: Record<Lang, Record<string, string>> = {
     "getInvolved.repo": "View Repository",
 
     // Partners
-    "partners.builtOn": "Built on",
-    "partners.escrowsBy": "Escrows by",
 
     // Auth Section
     "auth.getStarted": "Get Started",
@@ -338,33 +336,19 @@ const translations: Record<Lang, Record<string, string>> = {
     "linkedWallets.walletCount": "{count} wallet(s)",
 
     // Status labels
-    "status.funded": "Funded",
-    "status.inProgress": "In Progress",
-    "status.awaitingApproval": "Awaiting Approval",
-    "status.released": "Released",
-    "status.pending": "Pending",
-    "status.approved": "Approved",
 
     // Wallet labels
-    "wallet.corporate": "Corporate Wallet",
-    "wallet.operations": "Operations Wallet",
-    "wallet.treasury": "Treasury Wallet",
     "wallet.personal": "Personal Wallet",
     "wallet.savings": "Savings Wallet",
 
     // Use-case labels
-    "useCase.carRental": "Car Rental Company",
-    "useCase.travel": "Travel Agency Package",
-    "useCase.dealership": "Car Dealership Sale",
-    "useCase.rentalPlatform": "Short-Term Rental Platform",
-    "useCase.event": "Event Management Contract",
-    "useCase.other": "Other",
     "useCase.freelance": "Freelance Work",
     "useCase.marketplace": "Marketplace Purchase",
     "useCase.realEstate": "Real Estate",
     "useCase.service": "Service Agreement",
 
     // Wizard steps & labels
+<<<<<<< HEAD
     "wizard.escrowType": "Escrow Type",
     "wizard.useCase": "Use Case",
     "wizard.agreementInfo": "Agreement Info",
@@ -411,6 +395,8 @@ const translations: Record<Lang, Record<string, string>> = {
     "wizard.back": "Back",
     "wizard.continue": "Continue",
     "wizard.createNotify": "Create & Notify Signer",
+=======
+>>>>>>> c8a46c6 (feat: implement role-based access control for business accounts (#21))
     "wizard.agreementCreated": "Agreement Created",
     "wizard.agreementCreatedDesc": "Your escrow has been submitted. The Release Signer has been notified.",
     "wizard.scanQR": "Scan to access on mobile",
@@ -454,7 +440,6 @@ const translations: Record<Lang, Record<string, string>> = {
     "dashPage.active": "Active",
     "dashPage.totalVolume": "Total Volume",
     "dashPage.yieldEarned": "Yield Earned",
-    "dashPage.completed": "Completed",
     "dashPage.monthlyAgreements": "Monthly Agreements",
     "dashPage.volume": "Volume (USDC)",
     "dashPage.recentAgreements": "Recent Agreements",
@@ -514,6 +499,7 @@ const translations: Record<Lang, Record<string, string>> = {
     "dashPage.loadingEscrows": "Loading escrows...",
     "dashPage.noEscrows": "No escrows require your attention",
     "dashPage.templates": "Templates",
+    "dashPage.team": "Team",
     "dashPage.templatesSub": "Reusable templates for recurring agreements",
     "dashPage.newTemplate": "New Template",
     "dashPage.useTemplate": "Use Template",
@@ -587,7 +573,6 @@ const translations: Record<Lang, Record<string, string>> = {
     "wizard.description": "Description",
     "wizard.senderWallet": "Sender Wallet",
     "wizard.counterpartyWallet": "Counterparty / Signer Wallet",
-    "wizard.milestoneDesc": "Milestone Description",
     "wizard.amount": "Amount (USDC)",
     "wizard.addMilestone": "Add Milestone",
     "wizard.releaseStrategy": "Release Strategy",
@@ -604,7 +589,6 @@ const translations: Record<Lang, Record<string, string>> = {
     "wizard.createAgreement": "Create Agreement",
     "wizard.createAnother": "Create Another",
     "wizard.success": "Agreement Created Successfully",
-    "wizard.back": "Back",
     "wizard.next": "Next",
     "wizard.step": "Step",
     "wizard.of": "of",
@@ -656,10 +640,6 @@ const translations: Record<Lang, Record<string, string>> = {
     "dashPage.noAgreementsDesc": "Create your first agreement to get started.",
 
     // Ramps (On-ramp / Off-ramp)
-    "ramps.title": "Deposit & Withdraw",
-    "ramps.subtitle": "Convert between fiat and crypto using regulated Stellar anchors",
-    "ramps.deposit": "Deposit",
-    "ramps.withdraw": "Withdraw",
     "ramps.depositTitle": "Deposit Fiat to Crypto",
     "ramps.depositDesc": "Convert your fiat currency (USD, EUR, etc.) into USDC on Stellar through regulated anchor services.",
     "ramps.withdrawTitle": "Withdraw Crypto to Fiat",
@@ -1073,8 +1053,6 @@ const translations: Record<Lang, Record<string, string>> = {
     "getInvolved.repo": "Ver Repositorio",
 
     // Partners
-    "partners.builtOn": "Construido en",
-    "partners.escrowsBy": "Escrows por",
 
     // Auth Section
     "auth.getStarted": "Comenzar",
@@ -1151,72 +1129,18 @@ const translations: Record<Lang, Record<string, string>> = {
     "linkedWallets.walletCount": "{count} billetera(s)",
 
     // Status labels
-    "status.funded": "Financiado",
-    "status.inProgress": "En Progreso",
-    "status.awaitingApproval": "Esperando Aprobacion",
-    "status.released": "Liberado",
-    "status.pending": "Pendiente",
-    "status.approved": "Aprobado",
 
     // Wallet labels
-    "wallet.corporate": "Billetera Corporativa",
-    "wallet.operations": "Billetera de Operaciones",
-    "wallet.treasury": "Billetera de Tesoreria",
     "wallet.personal": "Billetera Personal",
     "wallet.savings": "Billetera de Ahorros",
 
     // Use-case labels
-    "useCase.carRental": "Empresa de Alquiler de Autos",
-    "useCase.travel": "Paquete de Agencia de Viajes",
-    "useCase.dealership": "Venta de Concesionaria",
-    "useCase.rentalPlatform": "Plataforma de Alquiler Temporal",
-    "useCase.event": "Contrato de Gestion de Eventos",
-    "useCase.other": "Otro",
     "useCase.freelance": "Trabajo Freelance",
     "useCase.marketplace": "Compra en Marketplace",
     "useCase.realEstate": "Bienes Raices",
     "useCase.service": "Acuerdo de Servicio",
 
   // Evidence & flow
-    "flow.sellerView": "Vista del Vendedor",
-    "flow.buyerView": "Vista del Comprador",
-    "flow.submitEvidence": "Enviar Evidencia",
-    "flow.evidenceSubmitted": "Evidencia Enviada",
-    "flow.evidenceDesc": "Adjunta prueba del trabajo completado para este hito.",
-    "flow.evidenceLink": "Link de evidencia (URL o descripcion)",
-    "flow.evidencePlaceholder": "ej. https://drive.google.com/... o descripcion del entregable",
-    "flow.submit": "Enviar",
-    "flow.awaitingEvidence": "Esperando evidencia del vendedor",
-    "flow.evidenceReady": "Evidencia enviada - Lista para revision",
-    "flow.pendingFunding": "Pendiente de Fondeo",
-    "flow.pendingFundingDesc": "Esperando que el comprador fondee el escrow.",
-    "flow.fundEscrow": "Fondear Escrow",
-    "flow.funding": "Fondeando...",
-    "flow.funded": "Fondeado",
-    "flow.approveMs": "Aprobar",
-    "flow.approving": "Aprobando...",
-    "flow.releaseAll": "Liberar Fondos",
-    "flow.releasing": "Liberando...",
-    "flow.released": "Liberado",
-    "flow.allFundsReleased": "Todos los Fondos Liberados",
-    "flow.allFundsReleasedDesc": "Este acuerdo ha sido completado y todos los fondos han sido enviados al receptor.",
-    "flow.backToAgreements": "Volver a Acuerdos",
-    "flow.milestones": "hitos",
-    "flow.counterparty": "Contraparte",
-    "flow.receiverWallet": "Wallet del receptor",
-    "flow.releaseStrategy": "Estrategia de liberacion",
-    "flow.perMilestone": "Liberar fondos por hito a medida que cada uno sea aprobado.",
-    "flow.allAtOnce": "Liberar todos los fondos de una vez cuando todos los hitos sean aprobados.",
-    "flow.uponCompletion": "Liberar todos los fondos juntos al completar todo.",
-    "flow.releaseActions": "Acciones de Liberacion",
-    "flow.approveAgreement": "Aprobar Acuerdo",
-    "flow.releaseAllFunds": "Liberar Todos los Fondos",
-    "flow.releaseAllApproved": "Liberar Todos los Aprobados",
-    "flow.approveReleaseAll": "Aprobar y Liberar Todo",
-    "flow.stepFund": "1. Fondear",
-    "flow.stepReview": "2. Revisar",
-    "flow.stepRelease": "3. Liberar",
-    "flow.viewEvidence": "Ver Evidencia",
 
   // Dispute
     "dispute.raiseDispute": "Abrir Disputa",
@@ -1230,7 +1154,7 @@ const translations: Record<Lang, Record<string, string>> = {
     "dispute.awaitingResolution": "Esperando resolucion del mediador",
 
     // Wizard steps & labels
-  "wizard.escrowType": "Tipo de Escrow",
+    "wizard.escrowType": "Tipo de Escrow",
     "wizard.useCase": "Caso de Uso",
     "wizard.agreementInfo": "Info del Acuerdo",
     "wizard.paymentWallets": "Pago y Billeteras",
@@ -1308,7 +1232,6 @@ const translations: Record<Lang, Record<string, string>> = {
     "dashPage.active": "Activos",
     "dashPage.totalVolume": "Volumen Total",
     "dashPage.yieldEarned": "Rendimiento Ganado",
-    "dashPage.completed": "Completados",
     "dashPage.monthlyAgreements": "Acuerdos Mensuales",
     "dashPage.volume": "Volumen (USDC)",
     "dashPage.recentAgreements": "Acuerdos Recientes",
@@ -1368,6 +1291,7 @@ const translations: Record<Lang, Record<string, string>> = {
     "dashPage.loadingEscrows": "Cargando escrows...",
     "dashPage.noEscrows": "No hay escrows que requieran tu atencion",
     "dashPage.templates": "Plantillas",
+    "dashPage.team": "Equipo",
     "dashPage.templatesSub": "Plantillas reutilizables para acuerdos recurrentes",
     "dashPage.newTemplate": "Nueva Plantilla",
     "dashPage.useTemplate": "Usar Plantilla",
@@ -1441,7 +1365,6 @@ const translations: Record<Lang, Record<string, string>> = {
     "wizard.description": "Descripcion",
     "wizard.senderWallet": "Billetera del Remitente",
     "wizard.counterpartyWallet": "Billetera Contraparte / Firmante",
-    "wizard.milestoneDesc": "Descripcion del Hito",
     "wizard.amount": "Monto (USDC)",
     "wizard.addMilestone": "Agregar Hito",
     "wizard.releaseStrategy": "Estrategia de Liberacion",
@@ -1458,7 +1381,6 @@ const translations: Record<Lang, Record<string, string>> = {
     "wizard.createAgreement": "Crear Acuerdo",
     "wizard.createAnother": "Crear Otro",
     "wizard.success": "Acuerdo Creado Exitosamente",
-    "wizard.back": "Atras",
     "wizard.next": "Siguiente",
     "wizard.step": "Paso",
     "wizard.of": "de",
@@ -1510,10 +1432,6 @@ const translations: Record<Lang, Record<string, string>> = {
     "dashPage.noAgreementsDesc": "Crea tu primer acuerdo para comenzar.",
 
     // Ramps (On-ramp / Off-ramp)
-    "ramps.title": "Depositar y Retirar",
-    "ramps.subtitle": "Convierte entre fiat y crypto usando anchors regulados de Stellar",
-    "ramps.deposit": "Depositar",
-    "ramps.withdraw": "Retirar",
     "ramps.depositTitle": "Depositar Fiat a Crypto",
     "ramps.depositDesc": "Convierte tu moneda fiat (USD, EUR, etc.) a USDC en Stellar a traves de servicios de anchor regulados.",
     "ramps.withdrawTitle": "Retirar Crypto a Fiat",
