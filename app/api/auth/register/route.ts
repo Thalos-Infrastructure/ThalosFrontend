@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
-import { Keypair } from "stellar-sdk";
+
 import { createServiceClient } from "@/lib/supabase/service";
 import {
   hashPassword,
   signToken,
   type AuthUser,
 } from "@/lib/auth/utils";
-import { activateAndAddTrustline } from "@/lib/stellar/trustline";
+
 
 function validateEmail(email: unknown): email is string {
   return typeof email === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -51,26 +51,13 @@ export async function POST(req: Request) {
   }
 
   const password_hash = await hashPassword(password);
-  const keypair = Keypair.random();
-  const wallet_public_key = keypair.publicKey();
-  const wallet_secret_key = keypair.secret();
-
-  // Activate wallet and add USDC trustline before saving
-  // This ensures the custodial wallet can receive USDC payments
-  const trustlineResult = await activateAndAddTrustline(wallet_public_key, wallet_secret_key);
-  if (!trustlineResult.success) {
-    console.warn("Failed to activate wallet/trustline:", trustlineResult.error);
-    // Continue with registration even if trustline fails
-    // User can add trustline later
-  }
-
   const { data: inserted, error } = await supabase
     .from("auth_users")
     .insert({
       email: email.trim().toLowerCase(),
       password_hash,
       name: name ?? null,
-      wallet_public_key,
+      wallet_public_key: null,
     })
     .select("id, email, name, wallet_public_key")
     .single();
@@ -83,41 +70,11 @@ export async function POST(req: Request) {
     );
   }
 
-  // Auto-link the custodial wallet to the user's linked_wallets
-  const { error: linkError } = await supabase
-    .from("linked_wallets")
-    .insert({
-      user_id: inserted.id,
-      wallet_address: wallet_public_key,
-      wallet_type: "custodial",
-      label: "Email Wallet",
-      is_primary: true,
-    });
-
-  if (linkError) {
-    console.warn("Failed to auto-link custodial wallet:", linkError);
-    // Continue anyway - user can link it manually
-  }
-
-  // Create profile with account_type
-  const { error: profileError } = await supabase
-    .from("profiles")
-    .upsert({
-      wallet_address: wallet_public_key,
-      email: email.trim().toLowerCase(),
-      display_name: name,
-      account_type: accountType,
-    }, { onConflict: "wallet_address" });
-
-  if (profileError) {
-    console.warn("Failed to create profile:", profileError);
-  }
-
   const user: AuthUser = {
     id: inserted.id,
     email: inserted.email,
     name: inserted.name ?? undefined,
-    wallet: { publicKey: inserted.wallet_public_key, type: "embedded" },
+    wallet: undefined,
   };
   const token = signToken({ sub: inserted.id, email: inserted.email });
   return NextResponse.json({ user, token });

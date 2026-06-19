@@ -8,7 +8,7 @@ export interface AuthUser {
   id: string;
   email: string;
   name?: string;
-  wallet: { publicKey: string; type?: string };
+  wallet?: { publicKey: string; type?: string };
 }
 
 export interface AuthResponse {

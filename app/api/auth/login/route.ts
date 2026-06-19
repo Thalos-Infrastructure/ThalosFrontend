@@ -61,7 +61,7 @@ export async function POST(req: Request) {
     id: row.id,
     email: row.email,
     name: row.name ?? undefined,
-    wallet: { publicKey: row.wallet_public_key, type: "embedded" },
+    wallet: row.wallet_public_key ? { publicKey: row.wallet_public_key, type: "embedded" } : undefined,
   };
   const token = signToken({ sub: row.id, email: row.email });
   return NextResponse.json({ user, token });
