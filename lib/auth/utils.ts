@@ -1,5 +1,5 @@
 import * as bcrypt from "bcryptjs";
-import * as jose from "jose";
+import { jwtVerify } from "jose";
 import * as jwt from "jsonwebtoken";
 
 export const SALT_ROUNDS = 10;
@@ -52,15 +52,9 @@ export async function verifySupabaseToken(
   const secret = process.env.SUPABASE_JWT_SECRET;
   if (!secret) return null;
   const encoder = new TextEncoder();
-  const key = await jose.importKey(
-    "raw",
-    encoder.encode(secret),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["verify"],
-  );
+  const key = encoder.encode(secret);
   try {
-    const { payload } = await jose.jwtVerify(accessToken, key);
+    const { payload } = await jwtVerify(accessToken, key);
     const sub = payload.sub as string;
     if (!sub) return null;
     return {

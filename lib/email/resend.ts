@@ -1,8 +1,6 @@
 import { Resend } from 'resend';
 import { EMAIL_FROM, EMAIL_REPLY_TO, APP_URL, APP_NAME } from '@/lib/config';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 export interface SendEmailOptions {
   to: string;
   subject: string;
@@ -15,6 +13,8 @@ export async function sendEmail({ to, subject, html, replyTo }: SendEmailOptions
     console.warn('[Email] RESEND_API_KEY not configured, skipping email send');
     return { success: false, error: 'Email not configured' };
   }
+
+  const resend = new Resend(process.env.RESEND_API_KEY);
 
   try {
     const { data, error } = await resend.emails.send({

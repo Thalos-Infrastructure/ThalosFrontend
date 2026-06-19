@@ -6,6 +6,8 @@ export interface LinkedWallet {
   wallet_type: "custodial" | "freighter" | "lobstr" | "xbull" | "albedo" | "other"
   label: string | null
   is_primary: boolean
+  is_verified: boolean
+  verified_at: string | null
   linked_at: string
 }
 
@@ -98,12 +100,27 @@ export async function getWalletBalance(
   )
 }
 
-// Link a new wallet
+// Request a SEP-0043 challenge that must be signed before linking/verifying an external wallet.
+export async function requestWalletChallenge(
+  userId: string,
+  walletAddress: string,
+): Promise<ApiResponse<{ signed_message: string; expires_at: string }>> {
+  const params = new URLSearchParams({ userId, walletAddress })
+  return apiRequest<{ signed_message: string; expires_at: string }>(
+    `/api/wallets/challenge?${params}`,
+    { method: "GET" },
+  )
+}
+
+// Link a new wallet.
+// External (non-custodial) wallets require signed_message + signature from a SEP-0043 challenge.
 export async function linkWallet(
   data: {
     wallet_address: string
     wallet_type: LinkedWallet["wallet_type"]
     label?: string
+    signed_message?: string
+    signature?: string
   },
   token: string
 ): Promise<ApiResponse<LinkedWallet>> {
@@ -114,6 +131,22 @@ export async function linkWallet(
       body: JSON.stringify(data),
     },
     token
+  )
+}
+
+// Verify an already-linked external wallet using a SEP-0043 challenge proof.
+export async function verifyWallet(
+  walletId: string,
+  data: { userId: string; signed_message: string; signature: string },
+  token: string,
+): Promise<ApiResponse<LinkedWallet>> {
+  return apiRequest<LinkedWallet>(
+    `/wallets/${walletId}/verify`,
+    {
+      method: "POST",
+      body: JSON.stringify(data),
+    },
+    token,
   )
 }
 

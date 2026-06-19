@@ -85,7 +85,6 @@ function FormSelect({ label, value, onChange, options, info, required = false }:
 /* ── Constants ── */
 const PLATFORM_ADDRESS = "GBXGQJWVLWOYHFLVTKWV5FGHA3LNYY2JQKM7OAVRWPLXS"
 const DISPUTE_RESOLVER = "GBXGQJWVLWOYHFLVTKWV5FGHA3LNYY2JQKM7OAVDISPUTE"
-const TRUSTLINE_USDC = { symbol: "USDC", address: "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5" }
 
 const connectedWallets = [
   { value: "GBXGQJWVLWOYHFLVTKWV5FGHA3ENTERPRISE01", labelKey: "wallet.corporate", short: "G...SE01", balance: "245,000.00" },
