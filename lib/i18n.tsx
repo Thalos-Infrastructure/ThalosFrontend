@@ -275,6 +275,15 @@ const translations: Record<Lang, Record<string, string>> = {
     "auth.connectStellarWallet": "Connect Stellar Wallet",
     "auth.securelyConnect": "Securely connect your wallet to access escrow features.",
 
+    // Auth Errors
+    "auth.error.invalidCredentials": "Invalid credentials. Please check your email and password and try again.",
+    "auth.error.oauthOnly": "This account uses Google or GitHub sign-in. Try connecting with one of those providers.",
+    "auth.error.duplicateEmail": "An account with this email already exists. Try signing in or use a different email.",
+    "auth.error.invalidEmail": "Invalid or missing email address.",
+    "auth.error.passwordTooShort": "Password must be at least 8 characters.",
+    "auth.error.registrationFailed": "Registration failed. Please try again later.",
+    "auth.error.generic": "Authentication error. Please try again.",
+
     // Status labels
     "status.funded": "Funded",
     "status.inProgress": "In Progress",
@@ -1061,6 +1070,15 @@ const translations: Record<Lang, Record<string, string>> = {
     "auth.continueEmail": "Continuar con Email",
     "auth.connectStellarWallet": "Conectar Billetera Stellar",
     "auth.securelyConnect": "Conecta tu billetera de forma segura para acceder a las funciones de escrow.",
+
+    // Auth Errors
+    "auth.error.invalidCredentials": "Credenciales invalidas. Verifica tu correo y contrasena e intenta de nuevo.",
+    "auth.error.oauthOnly": "Esta cuenta usa inicio de sesion con Google o GitHub. Intenta conectarte con uno de esos proveedores.",
+    "auth.error.duplicateEmail": "Ya existe una cuenta con este correo electronico. Intenta iniciar sesion o usa otro correo.",
+    "auth.error.invalidEmail": "Correo electronico invalido o faltante.",
+    "auth.error.passwordTooShort": "La contrasena debe tener al menos 8 caracteres.",
+    "auth.error.registrationFailed": "Error en el registro. Intenta de nuevo mas tarde.",
+    "auth.error.generic": "Error de autenticacion. Intenta de nuevo.",
 
     // Status labels
     "status.funded": "Financiado",
