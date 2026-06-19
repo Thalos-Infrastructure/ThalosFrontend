@@ -11,7 +11,8 @@ import { ThalosLoader } from "@/components/thalos-loader"
 import { LanguageToggle, ThemeToggle, useLanguage } from "@/lib/i18n"
 import { Footer } from "@/components/footer"
 import { useStellarWallet } from "@/lib/stellar-wallet"
-import { useCurrentAddress } from "@/lib/use-current-address"
+import { useCurrentAddress, useWalletType } from "@/lib/use-current-address"
+import { WalletGuard, WalletPrompt } from "@/components/shared/wallet-guard"
 import { useAuthStore } from "@/lib/auth-store"
 import { WalletAddress } from "@/components/ui/wallet-address"
 import { getProfileByWallet, type Profile } from "@/lib/actions/profile"
@@ -241,6 +242,8 @@ export default function BusinessDashboardPage() {
   const { t, theme } = useLanguage()
   const isLight = theme === "light"
   const { openWalletModal, address: walletAddress } = useStellarWallet()
+  const walletType = useWalletType()
+  const isExternalWallet = walletType === "external"
   const [loading, setLoading] = useState(false)
 
   const [activeSection, setActiveSection] = useState("agreements")
@@ -1128,13 +1131,19 @@ export default function BusinessDashboardPage() {
                         <div className="flex items-center gap-3">
                           <p className="text-lg font-bold text-white">{"$"}{ms.amount} <span className="text-xs font-normal text-white/35">USDC</span></p>
                           {ms.status === "pending" && !allReleased && activePermissions.approve && (
-                            <Button size="sm" onClick={() => approveMilestone(agr.id, idx)}
+                            <Button size="sm" onClick={() => {
+                              if (!isExternalWallet) { openWalletModal(); return }
+                              approveMilestone(agr.id, idx)
+                            }}
                               className="rounded-full bg-white/10 px-4 text-xs font-semibold text-white hover:bg-white/20">
                               Approve
                             </Button>
                           )}
                           {ms.status === "approved" && agr.releaseStrategy === "per-milestone" && activePermissions.release && (
-                            <Button size="sm" onClick={() => releaseMilestone(agr.id, idx)}
+                            <Button size="sm" onClick={() => {
+                              if (!isExternalWallet) { openWalletModal(); return }
+                              releaseMilestone(agr.id, idx)
+                            }}
                               className="rounded-full bg-[#3b82f6] px-4 text-xs font-semibold text-white hover:bg-[#2563eb] shadow-[0_2px_8px_rgba(59,130,246,0.2)]">
                               Release Funds
                             </Button>
@@ -1142,7 +1151,10 @@ export default function BusinessDashboardPage() {
                           {ms.status !== "released" && !disputedMs.has(`${agr.id}-${idx}`) && (
                             <Button 
                               size="sm" 
-                              onClick={() => setShowDisputeConfirm({ agrId: agr.id, msIdx: idx })}
+                              onClick={() => {
+                                if (!isExternalWallet) { openWalletModal(); return }
+                                setShowDisputeConfirm({ agrId: agr.id, msIdx: idx })
+                              }}
                               className="rounded-full bg-red-500/10 px-3 text-xs font-semibold text-red-400 hover:bg-red-500/20 border border-red-500/20"
                             >
                               <AlertTriangle className="h-3 w-3 mr-1" />
@@ -1158,30 +1170,42 @@ export default function BusinessDashboardPage() {
                   ))}
                 </div>
 
-                {!allReleased && (activePermissions.approve || activePermissions.release) && (
+                {!allReleased && (activePermissions.approve || activePermissions.release) && isExternalWallet && (
                   <div className="rounded-2xl border border-white/10 bg-[#0c1220] p-6 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)]">
                     <h3 className="mb-4 text-sm font-bold uppercase tracking-wider text-white/40">Release Actions</h3>
                     <div className="flex flex-wrap gap-3">
                       {agr.type === "Single Release" && agr.milestones[0]?.status === "pending" && activePermissions.approve && (
-                        <Button onClick={() => approveMilestone(agr.id, 0)}
+                        <Button onClick={() => {
+                          if (!isExternalWallet) { openWalletModal(); return }
+                          approveMilestone(agr.id, 0)
+                        }}
                           className="rounded-full bg-white/10 px-6 text-sm font-semibold text-white hover:bg-white/20">
                           Approve Agreement
                         </Button>
                       )}
                       {agr.type === "Single Release" && agr.milestones[0]?.status === "approved" && activePermissions.release && (
-                        <Button onClick={() => releaseMilestone(agr.id, 0)}
+                        <Button onClick={() => {
+                          if (!isExternalWallet) { openWalletModal(); return }
+                          releaseMilestone(agr.id, 0)
+                        }}
                           className="rounded-full bg-[#3b82f6] px-6 text-sm font-semibold text-white hover:bg-[#2563eb] shadow-[0_4px_16px_rgba(59,130,246,0.25)]">
                           Release All Funds
                         </Button>
                       )}
                       {agr.type === "Multi Release" && hasApproved && activePermissions.release && (
-                        <Button onClick={() => releaseAllApproved(agr.id)}
+                        <Button onClick={() => {
+                          if (!isExternalWallet) { openWalletModal(); return }
+                          releaseAllApproved(agr.id)
+                        }}
                           className="rounded-full bg-[#3b82f6] px-6 text-sm font-semibold text-white hover:bg-[#2563eb] shadow-[0_4px_16px_rgba(59,130,246,0.25)]">
                           Release All Approved
                         </Button>
                       )}
                       {agr.type === "Multi Release" && !allApproved && activePermissions.approve && activePermissions.release && (
-                        <Button onClick={() => approveAndReleaseAll(agr.id)}
+                        <Button onClick={() => {
+                          if (!isExternalWallet) { openWalletModal(); return }
+                          approveAndReleaseAll(agr.id)
+                        }}
                           className="rounded-full bg-emerald-600 px-6 text-sm font-semibold text-white hover:bg-emerald-700 shadow-[0_4px_16px_rgba(16,185,129,0.2)]">
                           Approve & Release All
                         </Button>
@@ -1189,6 +1213,11 @@ export default function BusinessDashboardPage() {
                     </div>
                     <p className="mt-3 text-xs text-white/25">Receiver wallet: <span className="font-mono">{agr.receiver.substring(0, 8)}...{agr.receiver.substring(agr.receiver.length - 6)}</span></p>
                   </div>
+                )}
+                {!allReleased && (activePermissions.approve || activePermissions.release) && !isExternalWallet && (
+                  <WalletPrompt
+                    message="Connect and verify a wallet to approve or release funds on this agreement."
+                  />
                 )}
 
                 {allReleased && (
@@ -1410,6 +1439,14 @@ export default function BusinessDashboardPage() {
           {/* ══════ CREATE AGREEMENT ══════ */}
           {activeSection === "create" && activePermissions.create && (
             <div className="mx-auto max-w-4xl animate-in fade-in slide-in-from-bottom-2 duration-300">
+              {!isExternalWallet && !submitted ? (
+                <div className="pt-8">
+                  <WalletPrompt
+                    message="Connect and verify a wallet to operate escrow agreements on Thalos."
+                  />
+                </div>
+              ) : (
+              <>
               <div className="mb-6 flex items-center justify-between">
                 <h1 className="text-2xl font-semibold text-white">New Agreement</h1>
                 <Button onClick={() => { setActiveSection("agreements"); resetWizard() }} className="rounded-full bg-white/10 px-6 text-sm font-semibold text-white/70 hover:bg-white/15 hover:text-white">View Agreements</Button>
@@ -1611,6 +1648,8 @@ export default function BusinessDashboardPage() {
                     )}
                   </div>
                 </div>
+              )}
+              </>
               )}
             </div>
           )}
