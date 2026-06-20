@@ -25,7 +25,9 @@ export async function GET(req: Request) {
     id: row.id,
     email: row.email,
     name: row.name ?? undefined,
-    wallet: { publicKey: row.wallet_public_key, type: "embedded" },
+    wallet: row.wallet_public_key
+      ? { publicKey: row.wallet_public_key, type: "embedded" }
+      : { publicKey: null },
   };
   return NextResponse.json({ user });
 }

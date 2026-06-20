@@ -16,7 +16,7 @@ export async function GET(req: Request) {
     .select("*")
     .eq("user_id", userId)
     .order("is_primary", { ascending: false })
-    .order("created_at", { ascending: true })
+    .order("linked_at", { ascending: true })
 
   if (error) {
     console.error("Error fetching linked wallets:", error)
