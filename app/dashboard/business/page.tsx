@@ -188,11 +188,43 @@ const permissions = {
   },
 }
 
+function ChartTooltip({ active, payload, label }: {
+  active?: boolean; payload?: Array<{ name: string; value: number; color?: string; dataKey?: string }>; label?: string
+}) {
+  if (active && payload && payload.length) {
+    const item = payload[0]
+    const displayVal = item.dataKey === "volume" 
+      ? `$${item.value.toLocaleString()}` 
+      : String(item.value)
+
+    const isDark = typeof document !== "undefined" && document.documentElement.classList.contains("dark")
+
+    return (
+      <div style={{
+        borderRadius: "12px",
+        border: "1px solid rgba(15,23,42,0.12)",
+        backgroundColor: isDark ? "#0f172a" : "#ffffff",
+        padding: "10px 14px",
+        boxShadow: isDark ? "0 4px 24px rgba(0,0,0,0.5)" : "0 4px 24px rgba(0,0,0,0.1)",
+        textAlign: "left" as const,
+        minWidth: 90,
+      }}>
+        <p style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.1em", color: isDark ? "rgba(255,255,255,0.45)" : "#737373", margin: 0 }}>{label}</p>
+        <p style={{ marginTop: 4, fontSize: 14, fontWeight: 700, color: isDark ? "#f8fafc" : "#1a1a1a", margin: "4px 0 0" }}>
+          {displayVal}
+        </p>
+      </div>
+    )
+  }
+  return null
+}
+
 /* ════════════════════════════════════════════════
    PAGE
    ════════════════════════════════════════════════ */
 export default function BusinessDashboardPage() {
-  const { t } = useLanguage()
+  const { t, theme } = useLanguage()
+  const isLight = theme === "light"
   const { openWalletModal, walletAddress } = useStellarWallet()
   const [loading, setLoading] = useState(false)
 
@@ -674,7 +706,13 @@ export default function BusinessDashboardPage() {
 
           <div className="flex items-center gap-3">
             <div className="relative">
-              <button onClick={() => setProfileMenuOpen(!profileMenuOpen)} className="flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-sm font-medium text-white/70 hover:bg-white/10 hover:text-white transition-all">
+              <button onClick={() => setProfileMenuOpen(!profileMenuOpen)}
+                className="flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-medium transition-all"
+                style={{
+                  background: isLight ? "rgba(15,23,42,0.06)" : "rgba(255,255,255,0.05)",
+                  borderColor: isLight ? "rgba(15,23,42,0.15)" : "rgba(255,255,255,0.15)",
+                  color: isLight ? "#1a1a2e" : "rgba(255,255,255,0.7)",
+                }}>
                 <div className="h-6 w-6 rounded-full bg-[#3b82f6]/10 flex items-center justify-center text-[#3b82f6]">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>
                 </div>
@@ -892,7 +930,7 @@ export default function BusinessDashboardPage() {
                         <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
                         <XAxis dataKey="month" tick={{ fill: "rgba(255,255,255,0.3)", fontSize: 12 }} axisLine={false} tickLine={false} />
                         <YAxis tick={{ fill: "rgba(255,255,255,0.3)", fontSize: 12 }} axisLine={false} tickLine={false} />
-                        <Tooltip contentStyle={{ backgroundColor: "rgba(15,15,18,0.95)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "12px", color: "#fff", fontSize: 13 }} />
+                        <Tooltip content={<ChartTooltip />} />
                         <Bar dataKey="agreements" fill="#3b82f6" radius={[6, 6, 0, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
@@ -914,7 +952,7 @@ export default function BusinessDashboardPage() {
                         <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
                         <XAxis dataKey="month" tick={{ fill: "rgba(255,255,255,0.3)", fontSize: 12 }} axisLine={false} tickLine={false} />
                         <YAxis tick={{ fill: "rgba(255,255,255,0.3)", fontSize: 12 }} axisLine={false} tickLine={false} tickFormatter={(v: number) => `$${(v / 1000).toFixed(0)}k`} />
-                        <Tooltip contentStyle={{ backgroundColor: "rgba(15,15,18,0.95)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "12px", color: "#fff", fontSize: 13 }} formatter={(value: number) => [`$${value.toLocaleString()}`, "Volume"]} />
+                        <Tooltip content={<ChartTooltip />} />
                         <Area type="monotone" dataKey="volume" stroke="#3b82f6" fill="url(#volGradE)" strokeWidth={2} />
                       </AreaChart>
                     </ResponsiveContainer>
@@ -1336,7 +1374,12 @@ export default function BusinessDashboardPage() {
                 ))}
                 <button 
                   onClick={() => openWalletModal()}
-                  className="flex items-center justify-center gap-3 rounded-2xl border border-dashed border-white/10 bg-[#0c1220]/60 p-8 text-white/70 hover:border-[#3b82f6]/30 hover:text-[#3b82f6] hover:bg-[#0c1220]/80 transition-all"
+                  className="flex items-center justify-center gap-3 rounded-2xl border border-dashed p-8 transition-all hover:border-[#3b82f6]/40"
+                  style={{
+                    background: isLight ? "rgba(15,23,42,0.04)" : "rgba(12,18,32,0.6)",
+                    borderColor: isLight ? "rgba(15,23,42,0.2)" : "rgba(255,255,255,0.1)",
+                    color: isLight ? "#374151" : "rgba(255,255,255,0.7)",
+                  }}
                 >
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                   <span className="text-sm font-medium">{t("dashPage.connectWallet")}</span>

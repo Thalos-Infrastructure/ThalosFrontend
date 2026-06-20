@@ -35,7 +35,8 @@ const useCaseCategories = {
 }
 
 export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }) {
-  const { t, language } = useLanguage()
+  const { t, language, theme } = useLanguage()
+  const isLight = theme === "light"
   const categories = useCaseCategories[language as keyof typeof useCaseCategories] || useCaseCategories.en
   const useCasesLabel = language === "es" ? "Casos de Uso" : "Use Cases"
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -188,9 +189,9 @@ export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }
             onClick={() => setMobileOpen(!mobileOpen)}
             aria-label="Toggle menu"
           >
-            <span className={`block h-0.5 w-5 bg-white transition-transform ${mobileOpen ? "translate-y-2 rotate-45" : ""}`} />
-            <span className={`block h-0.5 w-5 bg-white transition-opacity ${mobileOpen ? "opacity-0" : ""}`} />
-            <span className={`block h-0.5 w-5 bg-white transition-transform ${mobileOpen ? "-translate-y-2 -rotate-45" : ""}`} />
+            <span className={`block h-0.5 w-5 transition-transform ${mobileOpen ? "translate-y-2 rotate-45" : ""}`} style={{ backgroundColor: isLight ? "#262626" : "#ffffff" }} />
+            <span className={`block h-0.5 w-5 transition-opacity ${mobileOpen ? "opacity-0" : ""}`} style={{ backgroundColor: isLight ? "#262626" : "#ffffff" }} />
+            <span className={`block h-0.5 w-5 transition-transform ${mobileOpen ? "-translate-y-2 -rotate-45" : ""}`} style={{ backgroundColor: isLight ? "#262626" : "#ffffff" }} />
           </button>
         </nav>
 

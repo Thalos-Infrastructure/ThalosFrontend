@@ -1659,11 +1659,17 @@ export function useLanguage() {
 
 /** Small globe toggle button */
 export function LanguageToggle({ className }: { className?: string }) {
-  const { lang, setLang } = useLanguage()
+  const { lang, setLang, theme } = useLanguage()
+  const isLight = theme === "light"
   return (
   <button
   onClick={() => setLang(lang === "en" ? "es" : "en")}
-  className={`flex items-center gap-1.5 rounded-full border border-white/15 bg-[#0a0a0c]/60 px-3 py-1.5 text-xs font-bold text-white transition-all duration-300 hover:bg-[#f0b400]/15 hover:text-[#f0b400] hover:border-[#f0b400]/30 ${className || ""}`}
+  className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-bold transition-all duration-300 hover:border-[#f0b400]/30 ${className || ""}`}
+  style={{
+    background: isLight ? "rgba(15,23,42,0.06)" : "rgba(10,10,12,0.6)",
+    borderColor: isLight ? "rgba(15,23,42,0.15)" : "rgba(255,255,255,0.15)",
+    color: isLight ? "#1a1a2e" : "#ffffff",
+  }}
   aria-label={lang === "en" ? "Cambiar a Espanol" : "Switch to English"}
   title={lang === "en" ? "Cambiar a Espanol" : "Switch to English"}
   >
@@ -1680,10 +1686,16 @@ export function LanguageToggle({ className }: { className?: string }) {
 /** Sun/Moon theme toggle */
 export function ThemeToggle({ className }: { className?: string }) {
   const { theme, toggleTheme } = useLanguage()
+  const isLight = theme === "light"
   return (
   <button
   onClick={toggleTheme}
-  className={`flex items-center gap-1.5 rounded-full border border-white/15 bg-[#0a0a0c]/60 px-3 py-1.5 text-xs font-bold text-white transition-all duration-300 hover:bg-[#f0b400]/15 hover:text-[#f0b400] hover:border-[#f0b400]/30 ${className || ""}`}
+  className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-bold transition-all duration-300 hover:border-[#f0b400]/30 ${className || ""}`}
+  style={{
+    background: isLight ? "rgba(15,23,42,0.06)" : "rgba(10,10,12,0.6)",
+    borderColor: isLight ? "rgba(15,23,42,0.15)" : "rgba(255,255,255,0.15)",
+    color: isLight ? "#1a1a2e" : "#ffffff",
+  }}
   aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
   title={theme === "dark" ? "Light mode" : "Dark mode"}
   >

@@ -111,46 +111,7 @@
 .light section span.text-white\/60,
 .light section span.text-white\/70 { color: #2a4060 !important; }
 
-/* ===== CARDS (use-cases, FAQ, dashboard): SAME AS DARK MODE ===== */
-.light .bg-\[\#0c1220\],
-.light [class*="bg-[#0c1220]"] {
-  background-color: #0c1220 !important;
-}
-.light .bg-\[\#0c1220\] .text-white,
-.light .bg-\[\#0c1220\] .text-white\/60,
-.light .bg-\[\#0c1220\] .text-white\/70,
-.light .bg-\[\#0c1220\] p,
-.light .bg-\[\#0c1220\] span,
-.light .bg-\[\#0c1220\] h1,
-.light .bg-\[\#0c1220\] h2,
-.light .bg-\[\#0c1220\] h3,
-.light .bg-\[\#0c1220\] h4,
-.light [class*="bg-[#0c1220]"] .text-white,
-.light [class*="bg-[#0c1220]"] .text-white\/60,
-.light [class*="bg-[#0c1220]"] .text-white\/70,
-.light [class*="bg-[#0c1220]"] p,
-.light [class*="bg-[#0c1220]"] span,
-.light [class*="bg-[#0c1220]"] button {
-  color: white !important;
-}
-.light [class*="bg-[#0c1220]"] .text-white\/60,
-.light [class*="bg-[#0c1220]"] .text-white\/70 {
-  color: rgba(255,255,255,0.7) !important;
-}
-.light [class*="bg-[#0c1220]"] .text-\[\#f0b400\] {
-  color: #f0b400 !important;
-}
-
-/* ===== FAQ: white text inside dark card ===== */
-.light #faq .bg-\[\#0c1220\] .text-white,
-.light #faq .bg-\[\#0c1220\] span,
-.light #faq .bg-\[\#0c1220\] button span {
-  color: white !important;
-}
-.light #faq .bg-\[\#0c1220\] .text-white\/70,
-.light #faq .bg-\[\#0c1220\] p.text-white\/70 {
-  color: rgba(255,255,255,0.7) !important;
-}
+/* Cards converted to light bg by rules at line ~382. Text handled by lines ~427 and catch-all at bottom. */
 
 /* ===== FOOTER: text blue, titles yellow ===== */
 .light footer p.text-white\/60,
@@ -180,67 +141,14 @@
   color: #1a2a42 !important;
 }
 
-/* ===== USE-CASES: preserve dark card with white text and colored labels ===== */
-.light .use-case-card {
-  background-color: #0c1220 !important;
-}
-.light .use-case-card .card-title {
-  color: white !important;
-}
-.light .use-case-card .card-text {
-  color: rgba(255,255,255,0.7) !important;
-}
-.light .use-case-card .seller-label {
-  color: rgba(255,255,255,0.5) !important;
-}
-/* Buyer labels - FORCE the exact dark mode colors */
-.light .use-case-card:nth-child(1) .buyer-label { color: #f0b400 !important; }
-.light .use-case-card:nth-child(2) .buyer-label { color: #4ade80 !important; }
-.light .use-case-card:nth-child(3) .buyer-label { color: #60a5fa !important; }
-.light .use-case-card:nth-child(4) .buyer-label { color: #f97316 !important; }
-.light .use-case-card:nth-child(5) .buyer-label { color: #a78bfa !important; }
-.light .use-case-card:nth-child(6) .buyer-label { color: #f472b6 !important; }
-.light .use-case-card:nth-child(7) .buyer-label { color: #2dd4bf !important; }
+/* Use-case cards: light bg from line ~382, dark text from catch-all */
 
 /* Amber/yellow colors for Partial Release status */
 .light .text-amber-400 { color: #f59e0b !important; }
 .light .bg-amber-500\/10 { background-color: rgba(245, 158, 11, 0.1) !important; }
 .light .border-amber-500\/20 { border-color: rgba(245, 158, 11, 0.2) !important; }
 
-/* ===== DASHBOARD STATS CARDS: same colors as dark mode ===== */
-.light .dashboard-stat-card {
-  background-color: #0c1220 !important;
-}
-.light .dashboard-stat-card .stat-label {
-  color: rgba(255,255,255,0.6) !important;
-}
-.light .dashboard-stat-card .stat-value {
-  color: white !important;
-}
-.light .dashboard-stat-card .stat-suffix {
-  color: rgba(255,255,255,0.5) !important;
-}
-
-/* ===== ESCROW CARDS: same colors as dark mode ===== */
-.light .escrow-card {
-  background-color: #0c1220 !important;
-}
-.light .escrow-card h3,
-.light .escrow-card .text-white {
-  color: white !important;
-}
-.light .escrow-card .text-white\/60,
-.light .escrow-card .text-white\/50 {
-  color: rgba(255,255,255,0.6) !important;
-}
-/* Yield must be green */
-.light .escrow-card .text-emerald-400 {
-  color: #34d399 !important;
-}
-/* Release button text stays dark on yellow bg */
-.light .escrow-card button.bg-\[\#f0b400\] {
-  color: #0c1220 !important;
-}
+/* Dashboard stat cards & escrow cards: light bg from line ~382, dark text from catch-all */
 
 /* Green amounts stay green everywhere */
 .light .text-emerald-400,
@@ -277,11 +185,7 @@
   background-color: rgba(240, 245, 255, 0.7) !important;
 }
 
-/* ===== USE-CASES: buyer/seller labels keep their individual colors ===== */
-.light .bg-\[\#0c1220\] p[style*="color"],
-.light [class*="bg-[#0c1220]"] p[style*="color"] {
-  color: inherit !important;
-}
+/* Buyer/seller labels use inline styles which now work correctly */
 
 /* ===== DASHBOARD: yield green, release button dark, status colors ===== */
 .light .text-emerald-400 { color: #34d399 !important; }
@@ -529,17 +433,7 @@
   border-color: var(--border) !important;
 }
 
-/* ===== DASHBOARD TITLES outside cards (repaired selector) ===== */
-.light .text-white:not(.bg-\[\#0c1220\] *):not(.bg-\[\#0a0d14\] *):not(.bg-\[\#060810\] *):not(aside *):not(header *) {
-  color: var(--foreground) !important;
-}
-.light .text-white\/30:not(.bg-\[\#0c1220\] *):not(.bg-\[\#0a0d14\] *):not(.bg-\[\#060810\] *):not(aside *):not(header *),
-.light .text-white\/40:not(.bg-\[\#0c1220\] *):not(.bg-\[\#0a0d14\] *):not(.bg-\[\#060810\] *):not(aside *):not(header *),
-.light .text-white\/50:not(.bg-\[\#0c1220\] *):not(.bg-\[\#0a0d14\] *):not(.bg-\[\#060810\] *):not(aside *):not(header *),
-.light .text-white\/60:not(.bg-\[\#0c1220\] *):not(.bg-\[\#0a0d14\] *):not(.bg-\[\#060810\] *):not(aside *):not(header *),
-.light .text-white\/70:not(.bg-\[\#0c1220\] *):not(.bg-\[\#0a0d14\] *):not(.bg-\[\#060810\] *):not(aside *):not(header *) {
-  color: var(--muted-foreground) !important;
-}
+/* Dashboard titles: handled by catch-all at bottom */
 
 /* Hover text conversions to prevent white text disappearing on light background */
 .light .hover\:text-white:hover {
@@ -574,6 +468,17 @@
 }
 .light .recharts-default-tooltip * {
   color: var(--popover-foreground) !important;
+}
+
+.light .chart-tooltip-container {
+  background-color: #ffffff !important;
+  border-color: rgba(15, 23, 42, 0.1) !important;
+}
+.light .chart-tooltip-label {
+  color: #737373 !important;
+}
+.light .chart-tooltip-value {
+  color: #262626 !important;
 }
 
 /* ===== GLOBAL TRANSPARENCY CONVERSIONS IN LIGHT MODE ===== */
@@ -899,4 +804,26 @@ main {
   opacity: 1;
   transform: scale(1);
   filter: blur(0);
+}
+
+/* =====================================================================
+   LIGHT MODE — GLOBAL TEXT CATCH-ALL
+   ALL .text-white variants → dark readable text in light mode.
+   Cards already get dark text from lines ~427-452 via var(--card-foreground).
+   This catch-all ensures anything missed also gets dark text.
+   ===================================================================== */
+.light .text-white           { color: #262626 !important; }
+.light .text-white\/70       { color: #404040 !important; }
+.light .text-white\/60       { color: #525252 !important; }
+.light .text-white\/50       { color: #737373 !important; }
+.light .text-white\/40       { color: #8a8a8a !important; }
+.light .text-white\/35       { color: #9a9a9a !important; }
+.light .text-white\/30       { color: #a3a3a3 !important; }
+.light .text-white\/25       { color: #b3b3b3 !important; }
+.light .text-white\/20       { color: #c4c4c4 !important; }
+.light .hover\:text-white:hover { color: #262626 !important; }
+
+/* Mobile hamburger spans color in light mode header */
+.light header button span.bg-white {
+  background-color: #262626 !important;
 }
