@@ -43,42 +43,37 @@
 
 /* Light theme - light background with black text, special colors (yellow, blue) remain */
 .light {
-  /* Light background so ocean images show better */
-  --background: oklch(0.92 0.01 220);
-  /* Black text for light mode */
+  --background: oklch(0.96 0.008 220);
   --foreground: oklch(0.15 0.01 250);
-  /* Cards keep dark for contrast */
-  --card: oklch(0.15 0.005 250);
-  --card-foreground: oklch(0.97 0 0);
-  --popover: oklch(0.15 0.005 250);
-  --popover-foreground: oklch(0.97 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.15 0.01 250);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.15 0.01 250);
   --primary: oklch(0.80 0.17 88);
   --primary-foreground: oklch(0.12 0 0);
-  /* Secondary with dark bg for bubbles */
-  --secondary: oklch(0.18 0.005 250);
-  --secondary-foreground: oklch(0.95 0 0);
-  --muted: oklch(0.18 0.005 250);
-  --muted-foreground: oklch(0.35 0.01 250);
-  --accent: oklch(0.65 0.2 260);
-  --accent-foreground: oklch(0.98 0 0);
+  --secondary: oklch(0.95 0.005 250);
+  --secondary-foreground: oklch(0.15 0.01 250);
+  --muted: oklch(0.92 0.008 220);
+  --muted-foreground: oklch(0.45 0.01 250);
+  --accent: oklch(0.94 0.01 220);
+  --accent-foreground: oklch(0.15 0.01 250);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.577 0.245 27.325);
-  /* Visible border for light mode */
-  --border: oklch(0.3 0.01 250);
-  --input: oklch(0.22 0.008 250);
+  --border: oklch(0.88 0.01 250);
+  --input: oklch(0.98 0.005 250);
   --ring: oklch(0.78 0.16 85);
   --chart-1: oklch(0.78 0.16 85);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.12 0.005 250);
-  --sidebar-foreground: oklch(0.97 0 0);
+  --sidebar: oklch(0.98 0.005 250);
+  --sidebar-foreground: oklch(0.2 0.01 250);
   --sidebar-primary: oklch(0.78 0.16 85);
   --sidebar-primary-foreground: oklch(0.12 0 0);
-  --sidebar-accent: oklch(0.2 0.005 250);
-  --sidebar-accent-foreground: oklch(0.97 0 0);
-  --sidebar-border: oklch(0.25 0.01 250);
+  --sidebar-accent: oklch(0.94 0.01 220);
+  --sidebar-accent-foreground: oklch(0.15 0.01 250);
+  --sidebar-border: oklch(0.9 0.01 250);
   --sidebar-ring: oklch(0.78 0.16 85);
   color-scheme: light;
 }
@@ -97,14 +92,7 @@
    LIGHT MODE OVERRIDES
    ══════════════════════════════════════════════════════════════════ */
 
-/* ===== HEADER: text stays WHITE ===== */
-.light header,
-.light header a,
-.light header button,
-.light header span,
-.light nav a { 
-  color: white !important; 
-}
+/* ===== HEADER: text inherits correct colors in light mode ===== */
 
 /* ===== HERO: titles dark, typewriter yellow ===== */
 .light .hero-title { color: #0c1220 !important; }
@@ -302,112 +290,214 @@
 .light .bg-amber-500\/10 { background-color: rgba(245, 158, 11, 0.1) !important; }
 
 /* ===== DASHBOARD LIGHT MODE ===== */
-/*
- * SIMPLE RULE: Dashboard cards look IDENTICAL in light and dark mode.
- * Only the page background changes. Sidebar stays dark.
- */
 
-/* ===== SIDEBAR: Always dark (same as dark mode) ===== */
+/* ===== SIDEBAR: Clean Light Mode Sidebar ===== */
 .light aside {
-  background: linear-gradient(180deg, #0f1318 0%, #0a0d12 100%) !important;
+  background: var(--sidebar) !important;
+  border-right: 1px solid var(--sidebar-border) !important;
 }
 .light aside * {
-  color: inherit !important;
+  color: inherit;
 }
-.light aside .text-white { color: #ffffff !important; }
+/* For titles & profile name inside sidebar */
+.light aside .text-white:not(.bg-\[\#3b82f6\] *):not(.bg-\[\#3b82f6\]) {
+  color: var(--sidebar-foreground) !important;
+}
+.light aside .text-white\/70,
 .light aside .text-white\/60,
 .light aside .text-white\/50,
-.light aside .text-white\/40 { color: rgba(255,255,255,0.5) !important; }
-.light aside .text-\[\#f0b400\] { color: #f0b400 !important; }
-.light aside .text-\[\#3b82f6\] { color: #3b82f6 !important; }
+.light aside .text-white\/45,
+.light aside .text-white\/40,
+.light aside .text-white\/30 {
+  color: var(--muted-foreground) !important;
+}
 .light aside .border-white\/6,
-.light aside .border-white\/10 { border-color: rgba(255,255,255,0.1) !important; }
+.light aside .border-white\/10,
+.light aside .border-white\/\[0\.06\],
+.light aside .border-white\/15 {
+  border-color: var(--sidebar-border) !important;
+}
+.light aside .bg-white\/\[0\.04\]:hover,
+.light aside .hover\:bg-white\/\[0\.04\]:hover {
+  background-color: var(--sidebar-accent) !important;
+  color: var(--sidebar-accent-foreground) !important;
+}
+.light aside .bg-white\/5 {
+  background-color: var(--sidebar-accent) !important;
+}
+.light aside .text-\[\#f0b400\],
+.light aside .text-\[\#3b82f6\] {
+  color: var(--primary) !important;
+}
 
-/* ===== HEADER: Always dark ===== */
+/* ===== HEADER: Clean Light Mode Header ===== */
 .light header.sticky,
 .light header[class*="bg-"] {
-  background: rgba(12, 18, 32, 0.98) !important;
+  background-color: rgba(255, 255, 255, 0.85) !important;
+  border-bottom: 1px solid var(--border) !important;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04) !important;
 }
-.light header .text-white { color: #ffffff !important; }
+.light header .text-white {
+  color: var(--foreground) !important;
+}
 .light header .text-white\/60,
-.light header .text-white\/70 { color: rgba(255,255,255,0.6) !important; }
+.light header .text-white\/70 {
+  color: oklch(0.35 0.01 250) !important; /* Higher contrast dark grey */
+}
+.light header button:hover {
+  background-color: var(--accent) !important;
+  color: var(--accent-foreground) !important;
+}
+.light header .border-white\/15,
+.light header .border-white\/10 {
+  border-color: var(--border) !important;
+}
+.light header .bg-white\/5 {
+  background-color: var(--secondary) !important;
+}
+/* Profile dropdown menu */
+.light header .bg-\[\#0c1220\],
+.light header [class*="bg-[#0c1220]"] {
+  background: var(--popover) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08) !important;
+}
+.light header .bg-\[\#0c1220\] button,
+.light header [class*="bg-[#0c1220]"] button,
+.light header .bg-\[\#0c1220\] a,
+.light header [class*="bg-[#0c1220]"] a {
+  color: var(--popover-foreground) !important;
+}
+.light header .bg-\[\#0c1220\] button:hover,
+.light header [class*="bg-[#0c1220]"] button:hover {
+  background-color: var(--accent) !important;
+  color: var(--popover-foreground) !important;
+}
+.light header .bg-white\/\[0\.06\] {
+  background-color: var(--border) !important;
+}
 
-/* ===== PAGE BACKGROUND: Light gradient ===== */
+/* ===== PAGE BACKGROUND: Rich Premium Light Mode Background ===== */
 .light .fixed.inset-0.z-0 {
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 50%, #e2e8f0 100%) !important;
+  background: radial-gradient(circle at 10% 10%, oklch(0.92 0.015 220), transparent 50%),
+              radial-gradient(circle at 90% 90%, oklch(0.90 0.02 245), transparent 60%),
+              oklch(0.95 0.005 250) !important;
 }
 .light .fixed.inset-0.z-0 > div {
-  opacity: 0.15 !important;
+  opacity: 0.25 !important;
 }
 
-/* ===== DASHBOARD CARDS: Keep dark styling with subtle gradient ===== */
+/* ===== DASHBOARD CARDS & CONTAINERS ===== */
 .light .bg-\[\#0c1220\],
 .light .bg-\[\#0a0d14\],
 .light .bg-\[\#060810\],
-.light .bg-gradient-to-br.from-\[\#0c1220\] {
-  background: linear-gradient(145deg, #0c1220 0%, #0a0e18 100%) !important;
+.light .bg-gradient-to-br.from-\[\#0c1220\],
+.light [class*="bg-[#0c1220]"],
+.light [class*="bg-[#0a0d14]"],
+.light [class*="bg-[#060810]"] {
+  background: var(--card) !important;
+  border-color: var(--border) !important;
+  color: var(--card-foreground) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03), inset 0 1px 0 rgba(255, 255, 255, 0.6) !important;
+}
+/* Connect new wallet button / Quick Actions opacity classes */
+.light .bg-\[\#0c1220\]\/60 {
+  background-color: rgba(255, 255, 255, 0.6) !important;
+  border-color: var(--border) !important;
+  color: var(--card-foreground) !important;
+}
+.light .hover\:bg-\[\#0c1220\]\/80:hover {
+  background-color: rgba(255, 255, 255, 0.9) !important;
+}
+.light .bg-\[\#0c1220\]\/90 {
+  background-color: rgba(255, 255, 255, 0.9) !important;
+}
+.light .bg-\[\#0c1220\]\/95 {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+}
+.light .bg-\[\#0a0d14\]\/95 {
+  background-color: rgba(255, 255, 255, 0.95) !important;
 }
 
-/* All text inside dark cards stays white */
+/* Connect Wallet text & border color hovers */
+.light .hover\:text-\[\#3b82f6\]:hover {
+  color: #2563eb !important;
+}
+.light .hover\:text-\[\#f0b400\]:hover {
+  color: #d97706 !important;
+}
+.light .hover\:border-\[\#3b82f6\]\/30:hover {
+  border-color: rgba(37, 99, 235, 0.3) !important;
+}
+.light .hover\:border-\[\#f0b400\]\/30:hover {
+  border-color: rgba(217, 119, 6, 0.3) !important;
+}
+
+/* All text inside cards should adapt to card foreground */
 .light .bg-\[\#0c1220\] .text-white,
 .light .bg-\[\#0a0d14\] .text-white,
 .light .bg-\[\#060810\] .text-white,
-.light .bg-gradient-to-br.from-\[\#0c1220\] .text-white,
-.light [class*="rounded-xl"][class*="border"][class*="bg-gradient"] .text-white,
-.light [class*="rounded-xl"][class*="border"][class*="bg-\[\#0"] .text-white {
-  color: #ffffff !important;
+.light [class*="bg-[#0c1220]"] .text-white,
+.light [class*="bg-[#0a0d14]"] .text-white,
+.light [class*="bg-[#060810]"] .text-white,
+.light [class*="bg-gradient-to-br"] .text-white {
+  color: var(--card-foreground) !important;
 }
-
-/* Gradient cards text */
-.light .bg-gradient-to-br.from-\[\#0c1220\] .text-white\/50,
-.light .bg-gradient-to-br.from-\[\#0c1220\] .text-white\/40,
-.light .bg-gradient-to-br.from-\[\#0c1220\] .text-white\/60 {
-  color: rgba(255,255,255,0.5) !important;
-}
-
-/* Muted text inside cards */
+.light .bg-\[\#0c1220\] .text-white\/70,
 .light .bg-\[\#0c1220\] .text-white\/60,
 .light .bg-\[\#0c1220\] .text-white\/50,
 .light .bg-\[\#0c1220\] .text-white\/40,
-.light .bg-\[\#0c1220\] .text-white\/30,
 .light .bg-\[\#0c1220\] .text-white\/35,
+.light .bg-\[\#0c1220\] .text-white\/30,
 .light .bg-\[\#0c1220\] .text-white\/25,
-.light .bg-\[\#0a0d14\] .text-white\/60,
-.light .bg-\[\#0a0d14\] .text-white\/50,
-.light .bg-\[\#0a0d14\] .text-white\/40 {
-  color: rgba(255,255,255,0.5) !important;
+.light [class*="bg-[#0c1220]"] .text-white\/70,
+.light [class*="bg-[#0c1220]"] .text-white\/60,
+.light [class*="bg-[#0c1220]"] .text-white\/50,
+.light [class*="bg-[#0c1220]"] .text-white\/40,
+.light [class*="bg-[#0c1220]"] .text-white\/30,
+.light [class*="bg-[#0a0d14]"] .text-white\/60,
+.light [class*="bg-[#0a0d14]"] .text-white\/50,
+.light [class*="bg-[#0a0d14]"] .text-white\/40 {
+  color: var(--muted-foreground) !important;
 }
 
 /* Borders inside cards */
 .light .bg-\[\#0c1220\] .border-white\/6,
 .light .bg-\[\#0c1220\] .border-white\/10,
 .light .bg-\[\#0c1220\] .border-white\/15,
-.light .bg-\[\#0a0d14\] .border-white\/6,
-.light .bg-\[\#0a0d14\] .border-white\/10 {
-  border-color: rgba(255,255,255,0.1) !important;
+.light [class*="bg-[#0c1220]"] .border-white\/6,
+.light [class*="bg-[#0c1220]"] .border-white\/10,
+.light [class*="bg-[#0c1220]"] .border-white\/15,
+.light [class*="bg-[#0a0d14]"] .border-white\/6,
+.light [class*="bg-[#0a0d14]"] .border-white\/10 {
+  border-color: var(--border) !important;
 }
 
-/* Inputs inside cards */
+/* Inputs and Forms inside cards */
 .light .bg-\[\#0c1220\] input,
-.light .bg-\[\#0a0d14\] input {
-  background-color: rgba(255,255,255,0.05) !important;
-  border-color: rgba(255,255,255,0.1) !important;
-  color: #ffffff !important;
+.light .bg-\[\#0c1220\] textarea,
+.light .bg-\[\#0c1220\] select,
+.light [class*="bg-[#0c1220]"] input,
+.light [class*="bg-[#0c1220]"] textarea,
+.light [class*="bg-[#0c1220]"] select,
+.light .bg-\[\#0a0a0c\]\/70,
+.light .bg-\[\#0a0a0c\]\/50 {
+  background-color: var(--input) !important;
+  border-color: var(--border) !important;
+  color: var(--foreground) !important;
 }
-.light .bg-\[\#0c1220\] input::placeholder,
-.light .bg-\[\#0a0d14\] input::placeholder {
-  color: rgba(255,255,255,0.35) !important;
+.light input::placeholder,
+.light textarea::placeholder {
+  color: var(--muted-foreground) !important;
+  opacity: 0.6;
 }
 
 /* Status colors inside cards */
-.light .bg-\[\#0c1220\] .text-\[\#f0b400\],
-.light .bg-\[\#0a0d14\] .text-\[\#f0b400\] { color: #f0b400 !important; }
-.light .bg-\[\#0c1220\] .text-amber-400 { color: #fbbf24 !important; }
-.light .bg-\[\#0c1220\] .text-emerald-400 { color: #34d399 !important; }
-.light .bg-\[\#0c1220\] .text-sky-400 { color: #38bdf8 !important; }
-.light .bg-\[\#0c1220\] .text-rose-400 { color: #fb7185 !important; }
-.light .bg-\[\#0c1220\] .text-violet-400 { color: #a78bfa !important; }
-.light .bg-\[\#0c1220\] .text-\[\#3b82f6\] { color: #3b82f6 !important; }
+.light .text-\[\#f0b400\],
+.light .text-amber-400 { color: #d97706 !important; }
+.light .text-emerald-400 { color: #059669 !important; }
+.light .text-sky-400 { color: #0284c7 !important; }
+.light .text-[#3b82f6] { color: #2563eb !important; }
 
 /* Buttons inside cards */
 .light .bg-\[\#0c1220\] .bg-\[\#f0b400\],
@@ -421,58 +511,91 @@
   color: #ffffff !important;
 }
 
-/* ===== MODALS/POPUPS: Keep dark ===== */
+/* ===== MODALS/POPUPS: Clean light themed modals ===== */
 .light [role="dialog"] .bg-\[\#0c1220\],
 .light [class*="fixed"][class*="z-50"] .bg-\[\#0c1220\] {
-  background: linear-gradient(145deg, #0c1220 0%, #0a0e18 100%) !important;
+  background: var(--popover) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1) !important;
 }
 .light [role="dialog"] .text-white,
 .light [class*="fixed"][class*="z-50"] .bg-\[\#0c1220\] .text-white {
-  color: #ffffff !important;
+  color: var(--popover-foreground) !important;
 }
 
-/* ===== AGREEMENTS VIEW CARDS: Same as dark mode ===== */
-.light .rounded-xl.border.border-white\/10.bg-\[\#0c1220\],
-.light .rounded-xl.border.border-white\/6.bg-\[\#0c1220\],
+/* ===== AGREEMENTS VIEW CARDS ===== */
 .light [class*="rounded-xl"][class*="border-white"][class*="bg-\[\#0c1220\]"] {
-  background: linear-gradient(145deg, #0c1220 0%, #0a0e18 100%) !important;
-}
-.light .rounded-xl.border.border-white\/10.bg-\[\#0c1220\] *,
-.light .rounded-xl.border.border-white\/6.bg-\[\#0c1220\] * {
-  color: inherit;
-}
-.light .rounded-xl.border.border-white\/10 .text-white,
-.light .rounded-xl.border.border-white\/6 .text-white {
-  color: #ffffff !important;
-}
-.light .rounded-xl.border.border-white\/10 .text-white\/60,
-.light .rounded-xl.border.border-white\/10 .text-white\/50,
-.light .rounded-xl.border.border-white\/10 .text-white\/40,
-.light .rounded-xl.border.border-white\/6 .text-white\/60,
-.light .rounded-xl.border.border-white\/6 .text-white\/50 {
-  color: rgba(255,255,255,0.5) !important;
+  background: var(--card) !important;
+  border-color: var(--border) !important;
 }
 
-/* ===== DASHBOARD-ONLY RULES ===== */
-/* These apply only to dashboard pages, not landing */
-
-/* Dashboard page titles - dark on light bg */
-body:has(aside) .light main h1.text-white:not(.bg-\[\#0c1220\] *),
-body:has(aside) .light main h2.text-white:not(.bg-\[\#0c1220\] *),
-body:has(aside) .light main .text-2xl.font-semibold.text-white:not(.bg-\[\#0c1220\] *) {
-  color: #0f172a !important;
+/* ===== DASHBOARD TITLES outside cards (repaired selector) ===== */
+.light .text-white:not(.bg-\[\#0c1220\] *):not(.bg-\[\#0a0d14\] *):not(.bg-\[\#060810\] *):not(aside *):not(header *) {
+  color: var(--foreground) !important;
+}
+.light .text-white\/30:not(.bg-\[\#0c1220\] *):not(.bg-\[\#0a0d14\] *):not(.bg-\[\#060810\] *):not(aside *):not(header *),
+.light .text-white\/40:not(.bg-\[\#0c1220\] *):not(.bg-\[\#0a0d14\] *):not(.bg-\[\#060810\] *):not(aside *):not(header *),
+.light .text-white\/50:not(.bg-\[\#0c1220\] *):not(.bg-\[\#0a0d14\] *):not(.bg-\[\#060810\] *):not(aside *):not(header *),
+.light .text-white\/60:not(.bg-\[\#0c1220\] *):not(.bg-\[\#0a0d14\] *):not(.bg-\[\#060810\] *):not(aside *):not(header *),
+.light .text-white\/70:not(.bg-\[\#0c1220\] *):not(.bg-\[\#0a0d14\] *):not(.bg-\[\#060810\] *):not(aside *):not(header *) {
+  color: var(--muted-foreground) !important;
 }
 
-/* Dashboard action buttons */
-body:has(aside) .light main > div > button.bg-\[\#f0b400\],
-body:has(aside) .light main button.rounded-full.bg-\[\#f0b400\] {
-  background-color: #f0b400 !important;
-  color: #0c1220 !important;
+/* Hover text conversions to prevent white text disappearing on light background */
+.light .hover\:text-white:hover {
+  color: var(--foreground) !important;
 }
-body:has(aside) .light main > div > button.bg-\[\#3b82f6\],
-body:has(aside) .light main button.rounded-full.bg-\[\#3b82f6\] {
-  background-color: #3b82f6 !important;
-  color: #ffffff !important;
+.light aside .hover\:text-white:hover {
+  color: var(--sidebar-foreground) !important;
+}
+.light [class*="bg-[#0c1220]"] .hover\:text-white:hover {
+  color: var(--card-foreground) !important;
+}
+
+/* ===== RECHARTS STYLING IN LIGHT MODE (repaired for high visibility) ===== */
+.light .recharts-cartesian-grid line {
+  stroke: rgba(15, 23, 42, 0.08) !important;
+}
+.light .recharts-cartesian-axis-line {
+  stroke: rgba(15, 23, 42, 0.1) !important;
+}
+.light .recharts-cartesian-axis-tick-value,
+.light .recharts-text,
+.light .recharts-cartesian-axis-tick text {
+  fill: oklch(0.45 0.01 250) !important;
+}
+.light .recharts-tooltip-cursor {
+  stroke: rgba(15, 23, 42, 0.05) !important;
+}
+.light .recharts-default-tooltip {
+  background-color: var(--popover) !important;
+  border-color: var(--border) !important;
+  color: var(--popover-foreground) !important;
+}
+.light .recharts-default-tooltip * {
+  color: var(--popover-foreground) !important;
+}
+
+/* ===== GLOBAL TRANSPARENCY CONVERSIONS IN LIGHT MODE ===== */
+.light .bg-white\/5,
+.light .bg-white\/10,
+.light .bg-white\/\[0\.02\],
+.light .bg-white\/\[0\.04\] {
+  background-color: var(--secondary) !important;
+}
+.light .border-white\/6,
+.light .border-white\/10,
+.light .border-white\/15,
+.light .border-white\/20,
+.light .border-white\/\[0\.06\] {
+  border-color: var(--border) !important;
+}
+.light .text-white\/30,
+.light .text-white\/40,
+.light .text-white\/50,
+.light .text-white\/60,
+.light .text-white\/70 {
+  color: var(--muted-foreground) !important;
 }
 
 /* ===== LANDING PAGE: Already handled in lines 126-165 ===== */
