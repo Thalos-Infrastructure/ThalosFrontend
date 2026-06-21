@@ -100,15 +100,18 @@ export async function getWalletBalance(
   )
 }
 
-// Request a SEP-0043 challenge that must be signed before linking/verifying an external wallet.
+// Request a SEP-0043 challenge from the NestJS backend that must be signed
+// before linking or verifying an external wallet.
 export async function requestWalletChallenge(
   userId: string,
   walletAddress: string,
+  token: string,
 ): Promise<ApiResponse<{ signed_message: string; expires_at: string }>> {
   const params = new URLSearchParams({ userId, walletAddress })
   return apiRequest<{ signed_message: string; expires_at: string }>(
-    `/api/wallets/challenge?${params}`,
+    `/wallets/challenge?${params}`,
     { method: "GET" },
+    token,
   )
 }
 
@@ -135,9 +138,10 @@ export async function linkWallet(
 }
 
 // Verify an already-linked external wallet using a SEP-0043 challenge proof.
+// userId is derived server-side from the JWT — only signed_message + signature are needed.
 export async function verifyWallet(
   walletId: string,
-  data: { userId: string; signed_message: string; signature: string },
+  data: { signed_message: string; signature: string },
   token: string,
 ): Promise<ApiResponse<LinkedWallet>> {
   return apiRequest<LinkedWallet>(
