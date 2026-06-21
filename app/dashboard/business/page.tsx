@@ -6,6 +6,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { AlertTriangle } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { toast } from "sonner"
 import { ThalosLoader } from "@/components/thalos-loader"
 import { LanguageToggle, ThemeToggle, useLanguage } from "@/lib/i18n"
 import { Footer } from "@/components/footer"
@@ -444,14 +445,16 @@ const res = await getEscrowsByRole({ role: "approver", address: walletAddress })
         milestones: milestoneData,
         metadata: meta,
       })
-      if (!error && template) {
-        setTemplates(prev =>
-          prev.map(t => t.id === editingTemplate
-            ? { ...template, escrowType, useCase: useCase || "" }
-            : t
-          )
-        )
+      if (error || !template) {
+        toast.error(t("dashPage.templateSaveError"))
+        return
       }
+      setTemplates(prev =>
+        prev.map(t => t.id === editingTemplate
+          ? { ...template, escrowType, useCase: useCase || "" }
+          : t
+        )
+      )
     } else {
       const { template, error } = await createTemplate({
         owner_wallet: walletAddress,
@@ -462,10 +465,13 @@ const res = await getEscrowsByRole({ role: "approver", address: walletAddress })
         milestones: milestoneData,
         metadata: meta,
       })
-      if (!error && template) {
-        setTemplates(prev => [{ ...template, escrowType, useCase: useCase || "" }, ...prev])
+      if (error || !template) {
+        toast.error(t("dashPage.templateSaveError"))
+        return
       }
+      setTemplates(prev => [{ ...template, escrowType, useCase: useCase || "" }, ...prev])
     }
+    toast.success(t("dashPage.templateSaved"))
     setShowSaveTemplate(false); setTemplateName(""); setEditingTemplate(null)
   }
 
@@ -486,7 +492,12 @@ const res = await getEscrowsByRole({ role: "approver", address: walletAddress })
     if (!walletAddress || deletingTemplateId) return
     setDeletingTemplateId(id)
     const { success } = await deleteTemplateAction(id, walletAddress)
-    if (success) setTemplates(prev => prev.filter(t => t.id !== id))
+    if (success) {
+      setTemplates(prev => prev.filter(t => t.id !== id))
+      toast.success(t("dashPage.templateDeleted"))
+    } else {
+      toast.error(t("dashPage.templateDeleteError"))
+    }
     setDeletingTemplateId(null)
   }
 

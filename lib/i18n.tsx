@@ -466,6 +466,8 @@ const translations: Record<Lang, Record<string, string>> = {
     "dashPage.cancel": "Cancel",
     "dashPage.templateSaved": "Template saved",
     "dashPage.templateDeleted": "Template deleted",
+    "dashPage.templateSaveError": "Failed to save template",
+    "dashPage.templateDeleteError": "Failed to delete template",
 
     // Evidence & flow
     "flow.sellerView": "Seller View",
@@ -1303,6 +1305,8 @@ const translations: Record<Lang, Record<string, string>> = {
     "dashPage.cancel": "Cancelar",
     "dashPage.templateSaved": "Plantilla guardada",
     "dashPage.templateDeleted": "Plantilla eliminada",
+    "dashPage.templateSaveError": "Error al guardar la plantilla",
+    "dashPage.templateDeleteError": "Error al eliminar la plantilla",
 
     // Evidence & flow (duplicate section)
     "flow.sellerView": "Vista del Vendedor",
