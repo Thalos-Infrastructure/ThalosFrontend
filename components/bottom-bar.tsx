@@ -8,8 +8,7 @@ import { SignInPanel } from "@/components/sign-in-panel"
 import { useLanguage } from "@/lib/i18n"
 
 export function BottomBar({ onNavigate }: { onNavigate: (section: string) => void }) {
-  const { t, theme } = useLanguage()
-  const isLight = theme === "light"
+  const { t } = useLanguage()
   const [showQR, setShowQR] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
   const [showSignIn, setShowSignIn] = useState(false)
@@ -192,9 +191,9 @@ export function BottomBar({ onNavigate }: { onNavigate: (section: string) => voi
                 ? "bg-white/15"
                 : "hover:bg-white/8"
             )}
-            style={{ color: isLight ? '#262626' : '#ffffff' }}
+            style={{ color: '#ffffff' }}
           >
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={isLight ? '#262626' : '#ffffff'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
             </svg>
             Menu

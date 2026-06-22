@@ -1,6 +1,7 @@
 "use server"
 
 import { createServiceClient } from "@/lib/supabase/service"
+import { createClient } from "@/lib/supabase/server"
 import { type Profile } from "@/lib/actions/profile"
 
 export interface BusinessMember {
@@ -13,6 +14,53 @@ export interface BusinessMember {
   display_name?: string | null
   email?: string | null
   avatar_url?: string | null
+}
+
+/**
+ * Verify server-side that the logged-in user is an Admin of the business workspace.
+ */
+async function verifyAdminPermission(businessWallet: string): Promise<{ authorized: boolean; error: string | null }> {
+  try {
+    const supabase = await createClient()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) {
+      return { authorized: false, error: "Unauthenticated" }
+    }
+
+    // Fetch caller's profile to resolve their wallet address
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("wallet_address, account_type")
+      .eq("id", user.id)
+      .single()
+
+    if (profileError || !profile || !profile.wallet_address) {
+      return { authorized: false, error: "No wallet address associated with session" }
+    }
+
+    const callerWallet = profile.wallet_address
+
+    // Owner is admin of their own enterprise account
+    if (callerWallet === businessWallet && profile.account_type === "enterprise") {
+      return { authorized: true, error: null }
+    }
+
+    // Check if caller is registered as Admin in business_members
+    const { data: membership, error: membershipError } = await supabase
+      .from("business_members")
+      .select("role")
+      .eq("business_wallet", businessWallet)
+      .eq("member_wallet", callerWallet)
+      .single()
+
+    if (membershipError || !membership || membership.role !== "Admin") {
+      return { authorized: false, error: "Unauthorized: Admin role required" }
+    }
+
+    return { authorized: true, error: null }
+  } catch (e) {
+    return { authorized: false, error: "Authorization verification failed" }
+  }
 }
 
 /**
@@ -78,6 +126,11 @@ export async function addBusinessMember(
   role: "Admin" | "Finance" | "Operator"
 ): Promise<{ success: boolean; error: string | null }> {
   try {
+    const authCheck = await verifyAdminPermission(businessWallet)
+    if (!authCheck.authorized) {
+      return { success: false, error: authCheck.error }
+    }
+
     const supabase = createServiceClient()
 
     const { error } = await supabase
@@ -109,6 +162,11 @@ export async function updateBusinessMemberRole(
   role: "Admin" | "Finance" | "Operator"
 ): Promise<{ success: boolean; error: string | null }> {
   try {
+    const authCheck = await verifyAdminPermission(businessWallet)
+    if (!authCheck.authorized) {
+      return { success: false, error: authCheck.error }
+    }
+
     const supabase = createServiceClient()
 
     const { error } = await supabase
@@ -140,6 +198,11 @@ export async function removeBusinessMember(
   memberWallet: string
 ): Promise<{ success: boolean; error: string | null }> {
   try {
+    const authCheck = await verifyAdminPermission(businessWallet)
+    if (!authCheck.authorized) {
+      return { success: false, error: authCheck.error }
+    }
+
     const supabase = createServiceClient()
 
     const { error } = await supabase

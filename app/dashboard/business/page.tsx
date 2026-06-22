@@ -31,7 +31,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area,
 } from "recharts"
 import { createAgreement, sendTransaction, AgreementPayload, approveMilestone } from "@/services/trustlessworkService"
-import { STELLAR_EXPLORER_BASE_URL, TRUSTLINE_USDC, SHOW_MOCKED_AGREEMENTS } from "@/lib/config"
+import { STELLAR_EXPLORER_BASE_URL, SHOW_MOCKED_AGREEMENTS } from "@/lib/config"
 import {
   createTemplate,
   updateTemplate,
@@ -111,14 +111,29 @@ const connectedWallets = [
 
 const wizardStepKeys = ["wizard.escrowType", "wizard.useCase", "wizard.agreementInfo", "wizard.paymentWallets", "wizard.reviewSend"]
 
-interface Milestone { description: string; amount: string; status: "pending" | "approved" | "released" }
-interface Agreement { id: string; title: string; status: string; type: "Single Release" | "Multi Release"; counterparty: string; amount: string; date: string; releaseStrategy?: "per-milestone" | "all-at-once" | "upon-completion"; milestones: Milestone[]; receiver: string }
+interface Milestone { description: string; amount: string; status: "pending" | "approved" | "released"; released?: boolean; approved?: boolean }
+interface Agreement {
+  id: string
+  title: string
+  counterparty: string
+  status: string
+  amount: string
+  currency: string
+  type: "Single Release" | "Multi Release"
+  date: string
+  releaseStrategy?: "per-milestone" | "all-at-once" | "upon-completion"
+  milestones: Milestone[]
+  receiver: string
+  role?: "buyer" | "seller"
+  serviceProvider?: string
+  client?: string
+}
 
 const initialAgreements: Agreement[] = [
-  { id: "ENT-001", title: "Fleet Vehicle Purchase", status: "funded", type: "Multi Release", counterparty: "G...DLR5", amount: "125,000", date: "2026-01-20", releaseStrategy: "per-milestone", milestones: [{ description: "Down Payment (10 units)", amount: "50,000", status: "released" }, { description: "Delivery of first batch", amount: "37,500", status: "approved" }, { description: "Final batch + inspection", amount: "37,500", status: "pending" }], receiver: "GBXGQJWVLWOYHFLVTKWV5FGHA3DLR5" },
-  { id: "ENT-002", title: "Resort Partnership Q2", status: "in_progress", type: "Multi Release", counterparty: "G...TRV8", amount: "48,000", date: "2026-01-15", releaseStrategy: "upon-completion", milestones: [{ description: "Contract signing", amount: "12,000", status: "approved" }, { description: "Marketing materials", amount: "12,000", status: "approved" }, { description: "Launch campaign", amount: "12,000", status: "pending" }, { description: "Performance review", amount: "12,000", status: "pending" }], receiver: "GBXGQJWVLWOYHFLVTKWV5FGHA3TRV8" },
-  { id: "ENT-003", title: "Corporate Event Setup", status: "released", type: "Single Release", counterparty: "G...EVT2", amount: "15,000", date: "2025-12-18", milestones: [{ description: "Full event delivery", amount: "15,000", status: "released" }], receiver: "GBXGQJWVLWOYHFLVTKWV5FGHA3EVT2" },
-  { id: "ENT-004", title: "Property Management Fee", status: "in_progress", type: "Multi Release", counterparty: "G...RNT9", amount: "6,500", date: "2025-12-05", releaseStrategy: "all-at-once", milestones: [{ description: "Q1 management fee", amount: "1,625", status: "approved" }, { description: "Q2 management fee", amount: "1,625", status: "approved" }, { description: "Q3 management fee", amount: "1,625", status: "approved" }, { description: "Q4 management fee", amount: "1,625", status: "pending" }], receiver: "GBXGQJWVLWOYHFLVTKWV5FGHA3RNT9" },
+  { id: "ENT-001", title: "Fleet Vehicle Purchase", status: "funded", type: "Multi Release", counterparty: "G...DLR5", amount: "125,000", date: "2026-01-20", releaseStrategy: "per-milestone", milestones: [{ description: "Down Payment (10 units)", amount: "50,000", status: "released" }, { description: "Delivery of first batch", amount: "37,500", status: "approved" }, { description: "Final batch + inspection", amount: "37,500", status: "pending" }], receiver: "GBXGQJWVLWOYHFLVTKWV5FGHA3DLR5", currency: "USDC" },
+  { id: "ENT-002", title: "Resort Partnership Q2", status: "in_progress", type: "Multi Release", counterparty: "G...TRV8", amount: "48,000", date: "2026-01-15", releaseStrategy: "upon-completion", milestones: [{ description: "Contract signing", amount: "12,000", status: "approved" }, { description: "Marketing materials", amount: "12,000", status: "approved" }, { description: "Launch campaign", amount: "12,000", status: "pending" }, { description: "Performance review", amount: "12,000", status: "pending" }], receiver: "GBXGQJWVLWOYHFLVTKWV5FGHA3TRV8", currency: "USDC" },
+  { id: "ENT-003", title: "Corporate Event Setup", status: "released", type: "Single Release", counterparty: "G...EVT2", amount: "15,000", date: "2025-12-18", milestones: [{ description: "Full event delivery", amount: "15,000", status: "released" }], receiver: "GBXGQJWVLWOYHFLVTKWV5FGHA3EVT2", currency: "USDC" },
+  { id: "ENT-004", title: "Property Management Fee", status: "in_progress", type: "Multi Release", counterparty: "G...RNT9", amount: "6,500", date: "2025-12-05", releaseStrategy: "all-at-once", milestones: [{ description: "Q1 management fee", amount: "1,625", status: "approved" }, { description: "Q2 management fee", amount: "1,625", status: "approved" }, { description: "Q3 management fee", amount: "1,625", status: "approved" }, { description: "Q4 management fee", amount: "1,625", status: "pending" }], receiver: "GBXGQJWVLWOYHFLVTKWV5FGHA3RNT9", currency: "USDC" },
 ]
 
 const statusConfig: Record<string, { labelKey: string; color: string }> = {
@@ -225,7 +240,7 @@ function ChartTooltip({ active, payload, label }: {
 export default function BusinessDashboardPage() {
   const { t, theme } = useLanguage()
   const isLight = theme === "light"
-  const { openWalletModal, walletAddress } = useStellarWallet()
+  const { openWalletModal, address: walletAddress } = useStellarWallet()
   const [loading, setLoading] = useState(false)
 
   const [activeSection, setActiveSection] = useState("agreements")
@@ -260,8 +275,8 @@ export default function BusinessDashboardPage() {
     async function resolveRoleAndProfile() {
       if (!walletAddress) {
         setCompanyProfile(null)
-        setActiveBusinessWallet("GBADMINWALLET0000000000000000")
-        setMemberRole("Finance")
+        setActiveBusinessWallet(null)
+        setMemberRole(null)
         setIsCheckingRole(false)
         return
       }
@@ -325,7 +340,7 @@ export default function BusinessDashboardPage() {
   const currentWorkspaceWallet = activeBusinessWallet || walletAddress;
 
   // Helper to map escrow to agreement format
-  const mapEscrowToAgreement = (e: Record<string, unknown>): Agreement => {
+  const mapEscrowToAgreement = (e: any): Agreement => {
     const milestones = e.milestones as Array<{ description?: string; amount?: number; approved?: boolean; released?: boolean; status?: string }> || [];
     const isMulti = (e.type as string) === "multi-release" || milestones.length > 1;
     const amount = isMulti 
@@ -367,10 +382,10 @@ export default function BusinessDashboardPage() {
       // Fetch escrows by signer
       const signerRes = await getEscrowsBySigner(currentWorkspaceWallet);
       if (signerRes.success && Array.isArray(signerRes.data)) {
-        signerRes.data.forEach(escrow => {
+        signerRes.data.forEach((escrow: any) => {
           if (!seenIds.has(escrow.contractId)) {
             seenIds.add(escrow.contractId);
-            allAgreements.push(mapEscrowToAgreement(escrow as unknown as Record<string, unknown>));
+            allAgreements.push(mapEscrowToAgreement(escrow));
           }
         });
       }
@@ -380,10 +395,10 @@ export default function BusinessDashboardPage() {
       for (const role of roles) {
         const res = await getEscrowsByRole({ role, address: currentWorkspaceWallet });
         if (res.success && Array.isArray(res.data)) {
-          res.data.forEach(escrow => {
+          res.data.forEach((escrow: any) => {
             if (!seenIds.has(escrow.contractId)) {
               seenIds.add(escrow.contractId);
-              allAgreements.push(mapEscrowToAgreement(escrow as unknown as Record<string, unknown>));
+              allAgreements.push(mapEscrowToAgreement(escrow));
             }
           });
         }
@@ -406,7 +421,7 @@ export default function BusinessDashboardPage() {
         const { getEscrowsByRole } = await import("@/services/escrowMigration");
         const res = await getEscrowsByRole({ role: "approver", address: currentWorkspaceWallet });
         if (res.success && Array.isArray(res.data)) {
-          setApproverEscrows(res.data.map((e: Record<string, unknown>) => mapEscrowToAgreement(e)));
+          setApproverEscrows(res.data.map((e: any) => mapEscrowToAgreement(e)));
         }
       } catch (err) {
         console.error("Error fetching approver escrows:", err);
@@ -747,11 +762,15 @@ export default function BusinessDashboardPage() {
         {activeBusinessWallet === null ? (
           <div className="flex-1 flex flex-col items-center justify-center p-8 text-center max-w-md mx-auto my-20 border border-white/10 bg-[#0c1220] rounded-2xl shadow-xl z-20 backdrop-blur-md h-fit">
             <div className="h-16 w-16 bg-red-500/10 text-red-400 rounded-full flex items-center justify-center mb-6">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z"/><path d="M12 8V12"/><path d="M12 16H12.01"/></svg>
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" /><path d="M12 8V12" /><path d="M12 16H12.01" /></svg>
             </div>
-            <h2 className="text-xl font-bold text-white mb-2">Access Denied</h2>
+            <h2 className="text-xl font-bold text-white mb-2">
+              {!walletAddress ? "Wallet Not Connected" : "Access Denied"}
+            </h2>
             <p className="text-sm text-white/50 mb-6 font-medium">
-              You must be a business workspace owner or a registered team member to access the Enterprise Dashboard.
+              {!walletAddress 
+                ? "Please connect your Stellar wallet to access the Enterprise Dashboard."
+                : "You must be a business workspace owner or a registered team member to access the Enterprise Dashboard."}
             </p>
             <div className="flex flex-col gap-3 w-full">
               <Link href="/dashboard/personal">
@@ -760,7 +779,7 @@ export default function BusinessDashboardPage() {
                 </Button>
               </Link>
               <Button variant="outline" className="w-full rounded-full border-white/10 text-white/60 bg-transparent" onClick={() => openWalletModal()}>
-                Switch Wallet
+                {!walletAddress ? "Connect Wallet" : "Switch Wallet"}
               </Button>
             </div>
           </div>
