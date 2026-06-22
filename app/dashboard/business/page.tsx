@@ -6,6 +6,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { AlertTriangle } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { toast } from "sonner"
 import { ThalosLoader } from "@/components/thalos-loader"
 import { LanguageToggle, ThemeToggle, useLanguage } from "@/lib/i18n"
 import { Footer } from "@/components/footer"
@@ -23,6 +24,13 @@ import {
 } from "recharts"
 import { createAgreement, sendTransaction, AgreementPayload, approveMilestone } from "@/services/trustlessworkService"
 import { STELLAR_EXPLORER_BASE_URL, TRUSTLINE_USDC, SHOW_MOCKED_AGREEMENTS } from "@/lib/config"
+import {
+  createTemplate,
+  updateTemplate,
+  deleteTemplate as deleteTemplateAction,
+  getTemplatesByOwner,
+  type AgreementTemplate,
+} from "@/lib/actions/agreement-templates"
 
 /* ── Enterprise Use-Cases ── */
 const useCases = [
@@ -399,31 +407,71 @@ const res = await getEscrowsByRole({ role: "approver", address: walletAddress })
   }, [agreements])
 
   /* ── Templates state ── */
-  interface Template { id: string; name: string; escrowType: "single" | "multi"; useCase: string; title: string; description: string; milestones: { description: string; amount: string }[] }
-  const [templates, setTemplates] = useState<Template[]>(() => {
-    if (typeof window === "undefined") return []
-    try { const stored = localStorage.getItem("thalos_biz_templates"); return stored ? JSON.parse(stored) : [] } catch { return [] }
-  })
+  type Template = AgreementTemplate & { escrowType: "single" | "multi"; useCase: string }
+  const [templates, setTemplates] = useState<Template[]>([])
+  const [templatesLoading, setTemplatesLoading] = useState(false)
+  const [deletingTemplateId, setDeletingTemplateId] = useState<string | null>(null)
   const [showSaveTemplate, setShowSaveTemplate] = useState(false)
   const [templateName, setTemplateName] = useState("")
   const [editingTemplate, setEditingTemplate] = useState<string | null>(null)
 
   useEffect(() => {
-    if (typeof window !== "undefined") localStorage.setItem("thalos_biz_templates", JSON.stringify(templates))
-  }, [templates])
+    if (!walletAddress) return
+    setTemplatesLoading(true)
+    getTemplatesByOwner(walletAddress)
+      .then(({ templates: data }) => {
+        setTemplates(
+          (data ?? []).map((t) => ({
+            ...t,
+            escrowType: (t.agreement_type as "single" | "multi") ?? "single",
+            useCase: (t.metadata as Record<string, string>)?.useCase ?? "",
+          }))
+        )
+      })
+      .finally(() => setTemplatesLoading(false))
+  }, [walletAddress])
 
-  const saveAsTemplate = () => {
-    const tpl: Template = {
-      id: `TPL-${Date.now().toString(36).toUpperCase()}`,
-      name: templateName.trim() || title,
-      escrowType, useCase: useCase || "", title, description,
-      milestones: milestones.map(m => ({ description: m.description, amount: m.amount })),
-    }
+  const saveAsTemplate = async () => {
+    if (!walletAddress) return
+    const milestoneData = milestones.map(m => ({ description: m.description, amount: m.amount, status: "pending" as const }))
+    const meta = { useCase: useCase || "" }
+
     if (editingTemplate) {
-      setTemplates(prev => prev.map(t => t.id === editingTemplate ? { ...tpl, id: editingTemplate } : t))
+      const { template, error } = await updateTemplate(editingTemplate, walletAddress, {
+        name: templateName.trim() || title,
+        title,
+        description,
+        agreement_type: escrowType,
+        milestones: milestoneData,
+        metadata: meta,
+      })
+      if (error || !template) {
+        toast.error(t("dashPage.templateSaveError"))
+        return
+      }
+      setTemplates(prev =>
+        prev.map(t => t.id === editingTemplate
+          ? { ...template, escrowType, useCase: useCase || "" }
+          : t
+        )
+      )
     } else {
-      setTemplates(prev => [...prev, tpl])
+      const { template, error } = await createTemplate({
+        owner_wallet: walletAddress,
+        name: templateName.trim() || title,
+        title,
+        description,
+        agreement_type: escrowType,
+        milestones: milestoneData,
+        metadata: meta,
+      })
+      if (error || !template) {
+        toast.error(t("dashPage.templateSaveError"))
+        return
+      }
+      setTemplates(prev => [{ ...template, escrowType, useCase: useCase || "" }, ...prev])
     }
+    toast.success(t("dashPage.templateSaved"))
     setShowSaveTemplate(false); setTemplateName(""); setEditingTemplate(null)
   }
 
@@ -432,20 +480,33 @@ const res = await getEscrowsByRole({ role: "approver", address: walletAddress })
     setEscrowType(tpl.escrowType)
     setUseCase(tpl.useCase || null)
     setTitle(tpl.title)
-    setDescription(tpl.description)
-    setMilestones(tpl.milestones.length > 0 ? tpl.milestones : [{ description: "Full delivery", amount: "" }])
+    setDescription(tpl.description ?? "")
+    const tplMilestones = tpl.milestones.map(m => ({ description: m.description, amount: m.amount }))
+    setMilestones(tplMilestones.length > 0 ? tplMilestones : [{ description: "Full delivery", amount: "" }])
     setGuidePrefilled(true)
     setStep(2)
     setActiveSection("create")
   }
 
-  const deleteTemplate = (id: string) => setTemplates(prev => prev.filter(t => t.id !== id))
+  const deleteTemplate = async (id: string) => {
+    if (!walletAddress || deletingTemplateId) return
+    setDeletingTemplateId(id)
+    const { success } = await deleteTemplateAction(id, walletAddress)
+    if (success) {
+      setTemplates(prev => prev.filter(t => t.id !== id))
+      toast.success(t("dashPage.templateDeleted"))
+    } else {
+      toast.error(t("dashPage.templateDeleteError"))
+    }
+    setDeletingTemplateId(null)
+  }
 
   const startEditTemplate = (tpl: Template) => {
     setTemplateName(tpl.name); setEditingTemplate(tpl.id); setShowSaveTemplate(true)
     setEscrowType(tpl.escrowType); setUseCase(tpl.useCase || null)
-    setTitle(tpl.title); setDescription(tpl.description)
-    setMilestones(tpl.milestones.length > 0 ? tpl.milestones : [{ description: "Full delivery", amount: "" }])
+    setTitle(tpl.title); setDescription(tpl.description ?? "")
+    const tplMilestones = tpl.milestones.map(m => ({ description: m.description, amount: m.amount }))
+    setMilestones(tplMilestones.length > 0 ? tplMilestones : [{ description: "Full delivery", amount: "" }])
   }
 
   if (loading) return <ThalosLoader />
@@ -1009,7 +1070,7 @@ const res = await getEscrowsByRole({ role: "approver", address: walletAddress })
                       </div>
                     )}
                     <div className="flex items-center gap-3 pt-2">
-                      <Button onClick={saveAsTemplate} disabled={!templateName.trim() && !title.trim()}
+                      <Button onClick={() => void saveAsTemplate()} disabled={!templateName.trim() && !title.trim()}
                         className="rounded-full bg-[#3b82f6] px-6 text-sm font-semibold text-white hover:bg-[#2563eb] disabled:opacity-30">
                         {t("dashPage.saveTemplate")}
                       </Button>
@@ -1023,7 +1084,11 @@ const res = await getEscrowsByRole({ role: "approver", address: walletAddress })
               )}
 
               {/* Template cards */}
-              {templates.length === 0 && !showSaveTemplate ? (
+              {templatesLoading ? (
+                <div className="mt-6 flex items-center justify-center py-16">
+                  <p className="text-sm text-white/40">Loading templates…</p>
+                </div>
+              ) : templates.length === 0 && !showSaveTemplate ? (
                 <div className="mt-6 flex flex-col items-center justify-center rounded-2xl border border-white/10 bg-[#0c1220] py-16 px-6 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)] text-center">
                   <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" className="text-white/15 mb-4"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
                   <p className="text-sm font-medium text-white/40">{t("dashPage.noTemplates")}</p>
@@ -1060,7 +1125,12 @@ const res = await getEscrowsByRole({ role: "approver", address: walletAddress })
                         <button onClick={() => startEditTemplate(tpl)} className="rounded-full p-2 text-white/20 hover:text-white/60 hover:bg-white/[0.04] transition-all" title={t("dashPage.editTemplate")}>
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                         </button>
-                        <button onClick={() => deleteTemplate(tpl.id)} className="rounded-full p-2 text-white/20 hover:text-red-400 hover:bg-red-400/[0.06] transition-all" title={t("dashPage.deleteTemplate")}>
+                        <button
+                          onClick={() => deleteTemplate(tpl.id)}
+                          disabled={deletingTemplateId === tpl.id}
+                          className="rounded-full p-2 text-white/20 hover:text-red-400 hover:bg-red-400/[0.06] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                          title={t("dashPage.deleteTemplate")}
+                        >
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
                         </button>
                       </div>
