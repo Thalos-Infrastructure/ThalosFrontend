@@ -350,7 +350,10 @@ const res = await getEscrowsByRole({ role: "approver", address: walletAddress })
 
   const canProceed = () => {
     if (step === 0) return true
-    if (step === 1) return useCase === "other" ? customUseCase.trim().length > 0 : !!useCase
+    if (step === 1) {
+      if (escrowType === "single") return true // Optional for Quick Escrow
+      return useCase === "other" ? customUseCase.trim().length > 0 : !!useCase
+    }
     if (step === 2) return title.trim().length > 0
     if (step === 3) return signerWallet.trim().length > 0 && totalAmount > 0
     return true
@@ -1240,7 +1243,7 @@ const res = await getEscrowsByRole({ role: "approver", address: walletAddress })
                       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                         {([
                           { id: "single" as const, label: t("wizard.oneTimePayment"), desc: t("wizard.oneTimeDesc"), icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><path d="M16 8l-8 8M8 8h8v8"/></svg> },
-                          { id: "multi" as const, label: t("wizard.milestoneBased"), desc: t("wizard.milestoneDesc"), icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg> },
+                          { id: "multi" as const, label: t("wizard.milestoneBased"), desc: t("wizard.milestoneBasedDesc"), icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg> },
                         ]).map((opt) => (
                           <button key={opt.id} onClick={() => { setEscrowType(opt.id); if (opt.id === "single") setMilestones([{ description: "Full delivery", amount: "" }]) }}
                             className={cn("flex flex-col gap-3 rounded-xl border p-6 text-left transition-all",
@@ -1328,6 +1331,14 @@ const res = await getEscrowsByRole({ role: "approver", address: walletAddress })
                   {step === 4 && (
                     <div className="flex flex-col gap-5">
                       <div><h3 className="text-lg font-semibold text-white sm:text-xl">{t("wizard.reviewAndSend")}</h3><p className="mt-1 text-sm text-white/35">{t("wizard.confirmDetails")}</p></div>
+
+                      {escrowType === "single" && (
+                        <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 flex items-center gap-3">
+                          <AlertTriangle className="h-5 w-5 text-amber-500 shrink-0" />
+                          <p className="text-sm text-amber-200/80">{t("wizard.quickWarning")}</p>
+                        </div>
+                      )}
+
                       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                         <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5">
                           <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-white/25">{t("wizard.agreement")}</p>
