@@ -24,5 +24,8 @@ export const STELLAR_NETWORK = process.env.NEXT_PUBLIC_STELLAR_NETWORK || "TESTN
 export const HORIZON_URL = STELLAR_NETWORK === "MAINNET" 
   ? "https://horizon.stellar.org"
   : "https://horizon-testnet.stellar.org";
+export const STELLAR_NETWORK_PASSPHRASE = STELLAR_NETWORK === "MAINNET"
+  ? "Public Global Stellar Network ; September 2015"
+  : "Test SDF Network ; September 2015";
 
 // Friendbot is used for testnet wallet activation (free, no funding required)
