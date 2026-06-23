@@ -8,6 +8,8 @@ import { ThalosLoader } from "@/components/thalos-loader"
 import { Navbar } from "@/components/navbar"
 import { HeroSection } from "@/components/hero-section"
 import { SocialAuthModal } from "@/components/social-auth-modal"
+import { TestSignMessage } from "@/components/test-sign-message"
+
 
 // Lazy load below-the-fold sections for faster initial paint
 const HowItWorks = dynamic(() => import("@/components/how-it-works").then(m => ({ default: m.HowItWorks })), { ssr: false })
@@ -135,6 +137,9 @@ export default function Home() {
         mode={showAuthModal === "signup" ? "signup" : "login"}
         onClose={() => setShowAuthModal(null)}
       />
+      
+      {/* Dev Test Component */}
+      <TestSignMessage />
   </div>
   )
   }
