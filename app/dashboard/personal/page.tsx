@@ -28,6 +28,7 @@ import { ContactSelector } from "@/components/agreements/contact-selector"
 import { AgreementChat } from "@/components/agreements/agreement-chat"
 import { ProfileEditor } from "@/components/profile/profile-editor"
 import { WalletSelector } from "@/components/dashboard/wallet-selector"
+import { WalletAgreementsPanel } from "@/components/dashboard/wallet-agreements-panel"
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area,
 } from "recharts"
@@ -1117,28 +1118,30 @@ const res = await getEscrowsByRole({ role: "approver", address: walletAddress })
     className="mb-6"
   />
   
-  {/* Structured Agreements View - includes all agreements and approver escrows */}
+  {/* Agreements view — pre-filtered by selected wallet when active */}
               <AgreementsView
-                agreements={[
-                  // Regular agreements with role
-                  ...agreements.map(a => ({
-                    ...a,
-                    updatedAt: a.date,
-                  })),
-                  // Approver escrows (these are agreements where user is approver)
-                  ...approverEscrows.map(e => ({
-                    id: e.id,
-                    title: e.title,
-                    counterparty: e.serviceProvider?.slice(0, 8) + "..." || "Unknown",
-                    status: e.status || "pending",
-                    amount: typeof e.amount === "number" ? e.amount.toLocaleString() : e.amount || "0",
-                    currency: "USDC",
-                    type: "Single Release" as const,
-                    updatedAt: e.date,
-                    milestones: e.milestones || [{ status: "pending" }],
-                    role: "buyer" as const, // As approver, user is typically the buyer
-                  }))
-                ]}
+                agreements={(() => {
+                  const all = [
+                    ...agreements.map(a => ({ ...a, updatedAt: a.date, currency: "USDC" })),
+                    ...approverEscrows.map(e => ({
+                      id: e.id,
+                      title: e.title,
+                      counterparty: (e as unknown as { serviceProvider?: string }).serviceProvider?.slice(0, 8) + "..." || "Unknown",
+                      status: e.status || "pending",
+                      amount: typeof e.amount === "number" ? (e.amount as number).toLocaleString() : e.amount || "0",
+                      currency: "USDC",
+                      type: "Single Release" as const,
+                      updatedAt: e.date,
+                      milestones: e.milestones || [{ status: "pending" }],
+                      role: "buyer" as const,
+                    })),
+                  ]
+                  if (!walletFilter) return all
+                  return all.filter(a =>
+                    (a as unknown as { receiver?: string }).receiver === walletFilter ||
+                    (a as unknown as { serviceProvider?: string }).serviceProvider === walletFilter
+                  )
+                })()}
                 onAgreementClick={(id) => setViewingAgreement(id)}
                 onOpenChat={(id) => setShowAgreementChat(id)}
                 currentUserWallet={walletAddress}
@@ -1300,6 +1303,19 @@ const res = await getEscrowsByRole({ role: "approver", address: walletAddress })
                 </div>
                 <p className="text-xs text-white/40 leading-relaxed">All wallets require a USDC trustline on the Stellar network to participate in Thalos escrow agreements. You can add the trustline from your wallet provider.</p>
                 <p className="mt-2 text-xs text-white/25 font-mono break-all">{TRUSTLINE_USDC.address}</p>
+              </div>
+
+              {/* Agreements grouped by wallet — real data from API */}
+              <div className="mt-8">
+                <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-white/40">
+                  Agreements by wallet
+                </h2>
+                <WalletAgreementsPanel
+                  onAgreementClick={(id) => {
+                    setViewingAgreement(id)
+                    setActiveSection("agreements")
+                  }}
+                />
               </div>
             </div>
           )}

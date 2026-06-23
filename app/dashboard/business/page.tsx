@@ -19,6 +19,8 @@ import { ProfileEditor } from "@/components/profile/profile-editor"
 import { AgreementsView } from "@/components/agreements/agreements-view"
 import { ContactSelector } from "@/components/agreements/contact-selector"
 import { AgreementChat } from "@/components/agreements/agreement-chat"
+import { WalletSelector } from "@/components/dashboard/wallet-selector"
+import { WalletAgreementsPanel } from "@/components/dashboard/wallet-agreements-panel"
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area,
 } from "recharts"
@@ -370,6 +372,7 @@ const res = await getEscrowsByRole({ role: "approver", address: walletAddress })
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(agreementUrl)}&bgcolor=0a0a0a&color=f0b400&qzone=3&format=png`
 
   /* ── Agreements filter/sort state ── */
+  const [walletFilter, setWalletFilter] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState<"all" | "funded" | "in_progress" | "released">("all")
   const [sortBy, setSortBy] = useState<"date" | "amount" | "title">("date")
@@ -797,28 +800,37 @@ const res = await getEscrowsByRole({ role: "approver", address: walletAddress })
                 <Button onClick={() => { setActiveSection("create"); resetWizard() }} className="rounded-full bg-[#3b82f6] px-6 text-sm font-semibold text-white hover:bg-[#2563eb] shadow-[0_4px_16px_rgba(59,130,246,0.25)]">+ {t("dashPage.newAgreement")}</Button>
               </div>
 
-              {/* Structured Agreements View with filters */}
+              {/* Wallet filter — only renders when user has multiple linked wallets */}
+              <WalletSelector
+                selectedWallet={walletFilter}
+                onWalletChange={setWalletFilter}
+                className="mb-6"
+              />
+
+              {/* Agreements view, pre-filtered by selected wallet */}
               <AgreementsView
-                agreements={[
-                  // Regular agreements
-                  ...agreements.map(a => ({
-                    ...a,
-                    updatedAt: a.date,
-                  })),
-                  // Approver escrows
-                  ...approverEscrows.map(e => ({
-                    id: e.id,
-                    title: e.title,
-                    counterparty: e.counterparty,
-                    status: e.status,
-                    amount: e.amount,
-                    currency: "USDC",
-                    type: e.type,
-                    updatedAt: e.date,
-                    milestones: e.milestones,
-                    role: e.role,
-                  }))
-                ]}
+                agreements={(() => {
+                  const all = [
+                    ...agreements.map(a => ({ ...a, updatedAt: a.date, currency: "USDC" })),
+                    ...approverEscrows.map(e => ({
+                      id: e.id,
+                      title: e.title,
+                      counterparty: e.counterparty,
+                      status: e.status,
+                      amount: e.amount,
+                      currency: "USDC",
+                      type: e.type,
+                      updatedAt: e.date,
+                      milestones: e.milestones,
+                      role: (e as unknown as { role?: "buyer" | "seller" }).role,
+                    })),
+                  ]
+                  if (!walletFilter) return all
+                  return all.filter(a =>
+                    (a as unknown as { receiver?: string }).receiver === walletFilter ||
+                    (a as unknown as { serviceProvider?: string }).serviceProvider === walletFilter
+                  )
+                })()}
                 onAgreementClick={(id) => setViewingAgreement(id)}
                 onOpenChat={(id) => setShowAgreementChat(id)}
                 currentUserWallet={walletAddress || undefined}
@@ -1172,13 +1184,26 @@ const res = await getEscrowsByRole({ role: "approver", address: walletAddress })
                     </div>
                   </div>
                 ))}
-                <button 
+                <button
                   onClick={() => openWalletModal()}
                   className="flex items-center justify-center gap-3 rounded-2xl border border-dashed border-white/10 bg-[#0c1220]/60 p-8 text-white/70 hover:border-[#3b82f6]/30 hover:text-[#3b82f6] hover:bg-[#0c1220]/80 transition-all"
                 >
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                   <span className="text-sm font-medium">{t("dashPage.connectWallet")}</span>
                 </button>
+              </div>
+
+              {/* Agreements grouped by wallet — real data from API */}
+              <div className="mt-8">
+                <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-white/40">
+                  Agreements by wallet
+                </h2>
+                <WalletAgreementsPanel
+                  onAgreementClick={(id) => {
+                    setViewingAgreement(id)
+                    setActiveSection("agreements")
+                  }}
+                />
               </div>
             </div>
           )}
