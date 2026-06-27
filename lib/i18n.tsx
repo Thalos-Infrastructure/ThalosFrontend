@@ -686,6 +686,16 @@ const translations: Record<Lang, Record<string, string>> = {
 "ramps.fastSettlement": "Fast Settlement",
   "dashPage.ramps": "Deposit / Withdraw",
 
+  // Wallet Agreements Panel
+  "walletPanel.filterBy": "Filter by wallet:",
+  "walletPanel.allWallets": "All Wallets",
+  "walletPanel.agreements": "agreements",
+  "walletPanel.primary": "Primary",
+  "walletPanel.setPrimary": "Set primary",
+  "walletPanel.unlink": "Unlink",
+  "walletPanel.noWallets": "No linked wallets. Link a wallet to see agreements grouped by wallet.",
+  "walletPanel.noAgreements": "No agreements found for this wallet",
+
   // New Dashboard Components
   "dashboard.goodMorning": "Good morning",
   "dashboard.goodAfternoon": "Good afternoon",
@@ -1539,6 +1549,16 @@ const translations: Record<Lang, Record<string, string>> = {
     "ramps.regulatedAnchors": "Anchors Regulados",
 "ramps.fastSettlement": "Liquidacion Rapida",
   "dashPage.ramps": "Depositar / Retirar",
+
+  // Wallet Agreements Panel
+  "walletPanel.filterBy": "Filtrar por wallet:",
+  "walletPanel.allWallets": "Todas las wallets",
+  "walletPanel.agreements": "acuerdos",
+  "walletPanel.primary": "Principal",
+  "walletPanel.setPrimary": "Establecer principal",
+  "walletPanel.unlink": "Desvincular",
+  "walletPanel.noWallets": "Sin wallets vinculadas. Vincula una wallet para ver acuerdos agrupados.",
+  "walletPanel.noAgreements": "Sin acuerdos para esta wallet",
 
   // New Dashboard Components
   "dashboard.goodMorning": "Buenos dias",

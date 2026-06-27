@@ -396,7 +396,7 @@ const [currentPage, setCurrentPage] = useState(1)
       return a.title.localeCompare(b.title)
     })
     return filtered
-  }, [agreements, statusFilter, searchQuery, sortBy])
+  }, [agreements, statusFilter, searchQuery, sortBy, walletFilter])
 
   // Pagination
   const totalPages = Math.ceil(filteredAgreements.length / ITEMS_PER_PAGE)
@@ -1120,28 +1120,21 @@ const res = await getEscrowsByRole({ role: "approver", address: walletAddress })
   
   {/* Agreements view — pre-filtered by selected wallet when active */}
               <AgreementsView
-                agreements={(() => {
-                  const all = [
-                    ...agreements.map(a => ({ ...a, updatedAt: a.date, currency: "USDC" })),
-                    ...approverEscrows.map(e => ({
-                      id: e.id,
-                      title: e.title,
-                      counterparty: (e as unknown as { serviceProvider?: string }).serviceProvider?.slice(0, 8) + "..." || "Unknown",
-                      status: e.status || "pending",
-                      amount: typeof e.amount === "number" ? (e.amount as number).toLocaleString() : e.amount || "0",
-                      currency: "USDC",
-                      type: "Single Release" as const,
-                      updatedAt: e.date,
-                      milestones: e.milestones || [{ status: "pending" }],
-                      role: "buyer" as const,
-                    })),
-                  ]
-                  if (!walletFilter) return all
-                  return all.filter(a =>
-                    (a as unknown as { receiver?: string }).receiver === walletFilter ||
-                    (a as unknown as { serviceProvider?: string }).serviceProvider === walletFilter
-                  )
-                })()}
+                agreements={[
+                  ...filteredAgreements.map(a => ({ ...a, updatedAt: a.date, currency: "USDC" })),
+                  ...approverEscrows.map(e => ({
+                    id: e.id,
+                    title: e.title,
+                    counterparty: (e as unknown as { serviceProvider?: string }).serviceProvider?.slice(0, 8) + "..." || "Unknown",
+                    status: e.status || "pending",
+                    amount: typeof e.amount === "number" ? (e.amount as number).toLocaleString() : e.amount || "0",
+                    currency: "USDC",
+                    type: "Single Release" as const,
+                    updatedAt: e.date,
+                    milestones: e.milestones || [{ status: "pending" }],
+                    role: "buyer" as const,
+                  })),
+                ]}
                 onAgreementClick={(id) => setViewingAgreement(id)}
                 onOpenChat={(id) => setShowAgreementChat(id)}
                 currentUserWallet={walletAddress}

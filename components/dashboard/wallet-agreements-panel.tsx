@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { cn } from "@/lib/utils"
 import { useAuthStore } from "@/lib/auth-store"
+import { useLanguage } from "@/lib/i18n"
 import {
   getWalletsWithAgreements,
   updateWallet,
@@ -37,6 +38,7 @@ export function WalletAgreementsPanel({
   onWalletSelect,
 }: WalletAgreementsPanelProps) {
   const { token } = useAuthStore()
+  const { t } = useLanguage()
   const [wallets, setWallets] = useState<WalletWithAgreements[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -109,7 +111,7 @@ export function WalletAgreementsPanel({
   if (wallets.length === 0) {
     return (
       <div className="rounded-xl border border-dashed border-white/10 py-10 text-center text-sm text-white/40">
-        No linked wallets. Link a wallet to see agreements grouped by wallet.
+        {t("walletPanel.noWallets")}
       </div>
     )
   }
@@ -119,7 +121,7 @@ export function WalletAgreementsPanel({
       {/* Filter chips */}
       {onWalletSelect && (
         <div className="flex flex-wrap items-center gap-2 pb-1">
-          <span className="text-xs text-white/40">Filter by wallet:</span>
+          <span className="text-xs text-white/40">{t("walletPanel.filterBy")}</span>
           <button
             onClick={() => onWalletSelect(null)}
             className={cn(
@@ -129,7 +131,7 @@ export function WalletAgreementsPanel({
                 : "bg-white/5 text-white/50 hover:bg-white/10 hover:text-white"
             )}
           >
-            All Wallets
+            {t("walletPanel.allWallets")}
           </button>
           {wallets.map((w) => (
             <button
@@ -199,7 +201,7 @@ export function WalletAgreementsPanel({
                     </span>
                     {wallet.is_primary && (
                       <span className="rounded-full bg-[#f0b400]/20 px-2 py-0.5 text-[10px] font-semibold text-[#f0b400]">
-                        Primary
+                        {t("walletPanel.primary")}
                       </span>
                     )}
                   </div>
@@ -209,7 +211,7 @@ export function WalletAgreementsPanel({
                 <div className="flex items-center gap-3 shrink-0">
                   <div className="text-right">
                     <p className="text-sm font-bold text-white">{wallet.agreements_count}</p>
-                    <p className="text-[10px] text-white/30">agreements</p>
+                    <p className="text-[10px] text-white/30">{t("walletPanel.agreements")}</p>
                   </div>
                   <svg
                     width="16" height="16" viewBox="0 0 24 24" fill="none"
@@ -229,14 +231,14 @@ export function WalletAgreementsPanel({
                     disabled={isActing}
                     className="rounded-lg px-2.5 py-1.5 text-[11px] font-medium text-white/50 hover:bg-white/10 hover:text-white disabled:opacity-30 transition-colors"
                   >
-                    Set primary
+                    {t("walletPanel.setPrimary")}
                   </button>
                   <button
                     onClick={() => handleUnlink(wallet.id)}
                     disabled={isActing}
                     className="rounded-lg px-2.5 py-1.5 text-[11px] font-medium text-red-400/70 hover:bg-red-500/10 hover:text-red-400 disabled:opacity-30 transition-colors"
                   >
-                    {isActing ? "..." : "Unlink"}
+                    {isActing ? "..." : t("walletPanel.unlink")}
                   </button>
                 </div>
               )}
@@ -277,7 +279,7 @@ export function WalletAgreementsPanel({
 
             {isExpanded && wallet.agreements.length === 0 && (
               <div className="border-t border-white/[0.06] px-5 py-6 text-center text-xs text-white/30">
-                No agreements found for this wallet
+                {t("walletPanel.noAgreements")}
               </div>
             )}
           </div>
