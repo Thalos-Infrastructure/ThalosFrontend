@@ -78,7 +78,30 @@ export async function getWalletsWithBalances(token: string): Promise<ApiResponse
 
 // Get agreements grouped by wallet
 export async function getWalletsWithAgreements(token: string): Promise<ApiResponse<WalletWithAgreements[]>> {
-  return apiRequest<WalletWithAgreements[]>("/wallets/agreements", { method: "GET" }, token)
+  const result = await apiRequest<unknown>("/wallets/agreements", { method: "GET" }, token)
+  if (!result.success || !result.data) return { success: false, error: result.error }
+
+  // Unwrap { wallets: [...] } envelope if the backend returns that shape
+  const raw: unknown[] = Array.isArray(result.data)
+    ? result.data
+    : ((result.data as Record<string, unknown>).wallets as unknown[] | undefined) ?? []
+
+  const mapped: WalletWithAgreements[] = raw.map((w) => {
+    const wallet = w as Record<string, unknown>
+    const agreements = (wallet.agreements as WalletWithAgreements["agreements"] | undefined) ?? []
+    return {
+      id: wallet.id as string,
+      wallet_address: wallet.wallet_address as string,
+      wallet_type: wallet.wallet_type as LinkedWallet["wallet_type"],
+      label: (wallet.label as string | null) ?? null,
+      is_primary: (wallet.is_primary as boolean) ?? false,
+      linked_at: wallet.linked_at as string,
+      agreements_count: (wallet.agreements_count as number | undefined) ?? agreements.length,
+      agreements,
+    }
+  })
+
+  return { success: true, data: mapped }
 }
 
 // Get primary wallet
