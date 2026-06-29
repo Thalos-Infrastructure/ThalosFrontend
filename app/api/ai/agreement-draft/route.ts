@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateObject } from "ai";
 import { z } from "zod";
+import { openai } from "@ai-sdk/openai";
+import { verifyToken } from "@/lib/auth";
 
-// Since we don't have a specific AI provider configured, we'll create a mock response
-// In a real implementation, you'd configure a provider like OpenAI, Anthropic, etc.
+// Real AI provider configuration: OpenAI
 
 const AgreementDraftSchema = z.object({
   title: z.string(),
@@ -27,32 +28,32 @@ const AgreementDraftSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    const { userInput, useCases } = await request.json();
+    // Authentication
+    const authHeader = request.headers.get("authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return NextResponse.json({ error: "Missing Authorization header" }, { status: 401 });
+    }
+    const token = authHeader.split(" ")[1];
+    const payload = verifyToken(token);
+    if (!payload) {
+      return NextResponse.json({ error: "Invalid JWT token" }, { status: 401 });
+    }
 
-    // Mock AI response for demonstration
-    // In a real scenario, you'd use generateObject with a proper AI provider
-    const mockDraft = {
-      title: "AI Generated Agreement",
-      description: userInput,
-      amount: "1000",
-      asset: "USDC" as const,
-      agreement_type: "single" as const,
-      milestones: [
-        {
-          description: "Full delivery",
-          amount: "1000",
-          status: "pending" as const,
-        },
-      ],
-      metadata: {
-        generatedByAI: true,
-        riskFlags: ["Consider adding specific deliverables"],
-        useCase: "other",
-      },
-    };
+    // Parse user input
+    const { title, description, amount, milestones, useCase } = await request.json();
 
-    // Validate the mock draft
-    const validatedDraft = AgreementDraftSchema.parse(mockDraft);
+    // Build prompt for AI
+    const prompt = `Generate an agreement draft with the following details:\nTitle: ${title}\nDescription: ${description}\nAmount: ${amount}\nUse case: ${useCase ?? "N/A"}\nMilestones: ${JSON.stringify(milestones)}`;
+
+    // Generate draft using OpenAI
+    const { object: aiDraft } = await generateObject({
+      model: openai("gpt-4o"),
+      schema: AgreementDraftSchema,
+      prompt,
+    });
+
+    // Validate draft (schema already validated)
+    const validatedDraft = AgreementDraftSchema.parse(aiDraft);
 
     return NextResponse.json(validatedDraft);
   } catch (error) {

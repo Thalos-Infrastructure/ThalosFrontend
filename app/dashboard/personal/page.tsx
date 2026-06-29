@@ -1118,7 +1118,7 @@ const res = await getEscrowsByRole({ role: "approver", address: walletAddress })
     <Button onClick={() => setShowAIAssistant(true)}
     className="rounded-full bg-white/10 px-6 text-sm font-semibold text-white hover:bg-white/15 shadow-[0_4px_16px_rgba(255,255,255,0.1)] flex items-center gap-2">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M10 11h4v2h-4z"/><circle cx="12" cy="12" r="10"/><path d="M12 7v2"/></svg>
-      Create with AI
+      {t("dashPage.createWithAI")}
     </Button>
     <Button onClick={() => { setActiveSection("create"); resetWizard() }}
     className="rounded-full bg-[#f0b400] px-6 text-sm font-semibold text-background hover:bg-[#d4a000] shadow-[0_4px_16px_rgba(240,180,0,0.25)]">
