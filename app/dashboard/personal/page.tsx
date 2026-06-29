@@ -9,7 +9,8 @@ import { cn } from "@/lib/utils"
 import { ThalosLoader } from "@/components/thalos-loader"
 import { LanguageToggle, ThemeToggle, useLanguage } from "@/lib/i18n"
 import { useStellarWallet } from "@/lib/stellar-wallet"
-import { useCurrentAddress } from "@/lib/use-current-address"
+import { useCurrentAddress, useWalletType } from "@/lib/use-current-address"
+import { WalletGuard, WalletPrompt } from "@/components/shared/wallet-guard"
 import { useAuthStore } from "@/lib/auth-store"
 import { WalletAddress } from "@/components/ui/wallet-address"
 import { AlertTriangle } from "lucide-react"
@@ -329,6 +330,8 @@ export default function PersonalDashboardPage() {
   const { signTransaction, openWalletModal } = useStellarWallet();
   const walletAddress = useCurrentAddress();
   const { user: socialUser } = useAuthStore();
+  const walletType = useWalletType();
+  const isExternalWallet = walletType === "external";
   const [loading, setLoading] = useState(false);
 
   const [activeSection, setActiveSection] = useState("home");
@@ -1230,7 +1233,13 @@ const res = await getEscrowsByRole({ role: "approver", address: walletAddress })
 
                 {/* Milestones */}
                 <div className="flex flex-col gap-3 mb-6">
-                  <SellerMilestoneList agr={agr} agreements={agreements} setAgreements={setAgreements} t={t} />
+                  {isExternalWallet ? (
+                    <SellerMilestoneList agr={agr} agreements={agreements} setAgreements={setAgreements} t={t} />
+                  ) : (
+                    <WalletPrompt
+                      message="Connect and verify a wallet to submit evidence and manage this agreement."
+                    />
+                  )}
                 </div>
 
                 {allReleased && (
@@ -1339,6 +1348,14 @@ const res = await getEscrowsByRole({ role: "approver", address: walletAddress })
           {/* ══════ CREATE AGREEMENT ══════ */}
           {activeSection === "create" && (
             <div className="mx-auto max-w-4xl animate-in fade-in slide-in-from-bottom-2 duration-300">
+              {!isExternalWallet && !submitted ? (
+                <div className="pt-8">
+                  <WalletPrompt
+                    message="Connect and verify a wallet to operate escrow agreements on Thalos."
+                  />
+                </div>
+              ) : (
+              <>
               <div className="mb-6 flex items-center justify-between">
                 <h1 className="text-2xl font-semibold text-white">New Agreement</h1>
                 <Button onClick={() => { setActiveSection("agreements"); resetWizard() }}
@@ -1580,6 +1597,8 @@ const newAgr: Agreement = {
                   </div>
                 </div>
               )}
+              </>
+              )}
             </div>
           )}
         </main>
@@ -1587,7 +1606,7 @@ const newAgr: Agreement = {
       
       {/* Footer */}
       <Footer />
-
+      
       {/* Mobile Navigation */}
       <MobileNav
         activeSection={activeSection}
