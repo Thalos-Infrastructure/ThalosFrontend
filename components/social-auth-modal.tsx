@@ -81,7 +81,13 @@ export function SocialAuthModal({ mode, open, onClose }: SocialAuthModalProps) {
       if (!user) throw new Error("Invalid response from server");
       login(user, data.token);
       onClose();
-      router.push(accountType === "enterprise" ? "/dashboard/business" : "/dashboard/personal");
+      if (isLogin) {
+        // Returning user: go directly to dashboard
+        router.push("/dashboard/personal");
+      } else {
+        // New registration: route through select-profile
+        router.push("/auth/select-profile");
+      }
     } catch (e) {
       const msg = e instanceof Error ? e.message : t("auth.error.generic");
       setError(msg);
