@@ -193,3 +193,48 @@ All transactions are signed client-side by your Stellar wallet. Thalos never hol
 ## License
 
 All rights reserved by Thalos.
+
+---
+
+## Authenticated User Contract (AuthUser)
+
+The canonical `AuthUser` type is defined in `lib/auth/types.ts` and is the single source of truth for the authenticated user shape across both server and client.
+
+```ts
+type AuthWallet = {
+  publicKey: string; // Stellar public key of the custodial wallet
+  provider: string;  // wallet origin, e.g. "embedded"
+};
+
+type AuthUser = {
+  id: string;            // auth_users UUID — never empty
+  email: string;         // verified email — never empty
+  name: string | null;   // optional display name; null if not provided
+  avatarUrl: string | null; // OAuth avatar URL; null for email flows
+  wallet: AuthWallet | null; // null if the user has no custodial wallet
+};
+```
+
+### Field guarantees
+
+| Field | Type | Guarantee |
+|---|---|---|
+| `id` | `string` | Non-empty UUID; session is rejected if absent |
+| `email` | `string` | Non-empty email; session is rejected if absent |
+| `name` | `string \| null` | Explicit `null` (never `undefined`) to preserve JSON serialization round-trips |
+| `avatarUrl` | `string \| null` | Extracted from `user_metadata.avatar_url` or `picture` in the OAuth flow; `null` for email login and registration |
+| `wallet.provider` | `string` | Normalizes the legacy server `type` field to `provider` at the hydration layer |
+| `wallet.publicKey` | `string` | Strictly validated as a non-empty string; absent or null keys map to `wallet: null` |
+
+### Normalizer
+
+`normalizeAuthUser(raw: unknown): AuthUser | null` converts any network response or `localStorage` blob into the canonical contract. Returns `null` if `id` or `email` are absent, falsy, or not strings — preventing identity-less sessions from reaching the store. All authentication entry points pass network data through this function before calling `login()`.
+
+### Entry points
+
+| File | Event | Normalized |
+|---|---|---|
+| `components/sign-in-panel.tsx` | Email login and registration | `normalizeAuthUser(data.user)` |
+| `components/social-auth-modal.tsx` | Email login and registration | `normalizeAuthUser(data.user)` |
+| `app/auth/callback/success/page.tsx` | OAuth callback (Google) | `normalizeAuthUser(data.user)` |
+| `lib/auth-provider.tsx` | Hydration from `localStorage` | `normalizeAuthUser(JSON.parse(...))` |

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useAuthStore } from "@/lib/auth-store";
+import { useAuthStore, normalizeAuthUser } from "@/lib/auth-store";
 
 function getParams(): { token: string | null; next: string } {
   if (typeof window === "undefined") return { token: null, next: "/auth/select-profile" };
@@ -31,7 +31,9 @@ export default function AuthCallbackSuccessPage() {
         return res.json();
       })
       .then((data) => {
-        login(data.user, token);
+        const user = normalizeAuthUser(data.user);
+        if (!user) throw new Error("Invalid user data");
+        login(user, token);
         setStatus("done");
         window.location.replace(next);
       })

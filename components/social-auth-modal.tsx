@@ -4,7 +4,7 @@ import React, { useState, useRef } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/lib/i18n";
-import { useAuthStore } from "@/lib/auth-store";
+import { useAuthStore, normalizeAuthUser } from "@/lib/auth-store";
 import { useRouter } from "next/navigation";
 import { signInWithOAuthAction } from "@/lib/actions/auth-oauth";
 import { useStellarWallet } from "@/lib/stellar-wallet";
@@ -49,6 +49,16 @@ export function SocialAuthModal({ mode, open, onClose }: SocialAuthModalProps) {
 
   const isLogin = mode === "login";
 
+  /** Maps raw API error strings to i18n translation keys */
+  const apiErrorToI18nKey: Record<string, string> = {
+    "Invalid credentials": "auth.error.invalidCredentials",
+    "This account uses Google or GitHub sign-in": "auth.error.oauthOnly",
+    "An account with this email already exists": "auth.error.duplicateEmail",
+    "Invalid or missing email": "auth.error.invalidEmail",
+    "Password must be at least 8 characters": "auth.error.passwordTooShort",
+    "Registration failed": "auth.error.registrationFailed",
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -60,15 +70,28 @@ export function SocialAuthModal({ mode, open, onClose }: SocialAuthModalProps) {
         body: JSON.stringify({ email, password, name, accountType }),
       });
       if (!res.ok) {
-        throw new Error("Authentication error");
+        const data = await res.json().catch(() => null);
+        const apiError: string = data?.error ?? data?.message ?? "";
+        const i18nKey = apiErrorToI18nKey[apiError] ?? "auth.error.generic";
+        const message = t(i18nKey);
+        throw new Error(message);
       }
       const data = await res.json();
-      login(data.user, data.token);
+      const user = normalizeAuthUser(data.user);
+      if (!user) throw new Error("Invalid response from server");
+      login(user, data.token);
       onClose();
-      router.push(accountType === "enterprise" ? "/dashboard/business" : "/dashboard/personal");
+      if (isLogin) {
+        // Returning user: go directly to dashboard
+        router.push("/dashboard/personal");
+      } else {
+        // New registration: route through select-profile
+        router.push("/auth/select-profile");
+      }
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "Could not sign in.";
+      const msg = e instanceof Error ? e.message : t("auth.error.generic");
       setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -259,7 +282,7 @@ export function SocialAuthModal({ mode, open, onClose }: SocialAuthModalProps) {
                 placeholder="Enter your password"
               />
             </div>
-            {error && <p className="text-xs text-red-400">{error}</p>}
+            {error && <p className="text-xs text-red-400" role="alert">{error}</p>}
             <Button
               type="submit"
               className="h-11 w-full rounded-xl bg-[#f0b400] text-sm font-semibold text-[#0c1220] hover:bg-[#d9a300] transition-colors"

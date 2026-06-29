@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
 import { useLanguage } from "@/lib/i18n"
 import { useStellarWallet } from "@/lib/stellar-wallet"
-import { useAuthStore } from "@/lib/auth-store"
+import { useAuthStore, normalizeAuthUser } from "@/lib/auth-store"
 import { signInWithOAuthAction } from "@/lib/actions/auth-oauth"
 import { toast } from "sonner"
 import { APP_URL } from "@/lib/config"
@@ -22,7 +22,7 @@ interface SignInPanelProps { open: boolean; onClose: () => void }
 export function SignInPanel({ open, onClose }: SignInPanelProps) {
   const { t } = useLanguage()
   const router = useRouter()
-  const { logout, setUser, setToken } = useAuthStore()
+  const { logout, login } = useAuthStore()
   const { address, isConnecting, walletError, openWalletModal } = useStellarWallet()
   const [profileType, setProfileType] = useState<"personal" | "business">("personal")
   const [oauthLoading, setOauthLoading] = useState<"google" | "email" | null>(null)
@@ -66,8 +66,9 @@ export function SignInPanel({ open, onClose }: SignInPanelProps) {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || "Login failed")
-      setUser(data.user)
-      setToken(data.token)
+      const user = normalizeAuthUser(data.user)
+      if (!user) throw new Error("Invalid response from server")
+      login(user, data.token)
       toast.success("Welcome back!")
       onClose()
       router.push(dashboardHref)
@@ -95,8 +96,9 @@ export function SignInPanel({ open, onClose }: SignInPanelProps) {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || "Registration failed")
-      setUser(data.user)
-      setToken(data.token)
+      const user = normalizeAuthUser(data.user)
+      if (!user) throw new Error("Invalid response from server")
+      login(user, data.token)
       toast.success("Account created!")
       onClose()
       router.push(dashboardHref)

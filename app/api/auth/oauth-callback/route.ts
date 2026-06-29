@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { signToken, type AuthUser } from "@/lib/auth/utils";
-import { Keypair } from "stellar-sdk";
-import { activateAndAddTrustline } from "@/lib/stellar/trustline";
 
 export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}));
@@ -28,6 +26,7 @@ export async function POST(req: Request) {
   }
 
   const name = (supaUser.user_metadata?.full_name ?? supaUser.user_metadata?.name ?? supaUser.user_metadata?.user_name) as string | undefined;
+  const avatarUrl = (supaUser.user_metadata?.avatar_url ?? supaUser.user_metadata?.picture ?? null) as string | null;
   const db = createServiceClient();
   const { data: existing } = await db
     .from("auth_users")
@@ -36,7 +35,7 @@ export async function POST(req: Request) {
     .maybeSingle();
 
   let userId: string;
-  let walletPublicKey: string;
+  let walletPublicKey: string | null;
   let userName: string | undefined = name;
 
   if (existing) {
@@ -44,24 +43,16 @@ export async function POST(req: Request) {
     walletPublicKey = existing.wallet_public_key;
     if (existing.name) userName = existing.name;
   } else {
-    const keypair = Keypair.random();
-    walletPublicKey = keypair.publicKey();
-    const walletSecretKey = keypair.secret();
-    
-    // Activate wallet and add USDC trustline before saving
-    const trustlineResult = await activateAndAddTrustline(walletPublicKey, walletSecretKey);
-    if (!trustlineResult.success) {
-      console.warn("Failed to activate wallet/trustline for OAuth user:", trustlineResult.error);
-      // Continue with registration even if trustline fails
-    }
-    
+    // OAuth signup creates the identity only. No wallet is generated — the
+    // user connects their own wallet later (M2 flow).
+    walletPublicKey = null;
+
     const { data: inserted, error: insertError } = await db
       .from("auth_users")
       .insert({
         email,
         password_hash: null,
         name: name ?? null,
-        wallet_public_key: walletPublicKey,
         auth_provider: "oauth",
       })
       .select("id, name")
@@ -80,8 +71,11 @@ export async function POST(req: Request) {
   const user: AuthUser = {
     id: userId,
     email,
-    name: userName,
-    wallet: { publicKey: walletPublicKey, type: "embedded" },
+    name: userName ?? null,
+    avatarUrl,
+    wallet: walletPublicKey
+      ? { publicKey: walletPublicKey, provider: "embedded" }
+      : null,
   };
   const token = signToken({ sub: userId, email });
   return NextResponse.json({ user, token });

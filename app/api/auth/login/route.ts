@@ -60,8 +60,11 @@ export async function POST(req: Request) {
   const user: AuthUser = {
     id: row.id,
     email: row.email,
-    name: row.name ?? undefined,
-    wallet: { publicKey: row.wallet_public_key, type: "embedded" },
+    name: row.name ?? null,
+    avatarUrl: null,
+    wallet: row.wallet_public_key
+      ? { publicKey: row.wallet_public_key, provider: "embedded" }
+      : null,
   };
   const token = signToken({ sub: row.id, email: row.email });
   return NextResponse.json({ user, token });

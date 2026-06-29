@@ -275,6 +275,68 @@ const translations: Record<Lang, Record<string, string>> = {
     "auth.connectStellarWallet": "Connect Stellar Wallet",
     "auth.securelyConnect": "Securely connect your wallet to access escrow features.",
 
+    // Auth Errors
+    "auth.error.invalidCredentials": "Invalid credentials. Please check your email and password and try again.",
+    "auth.error.oauthOnly": "This account uses Google or GitHub sign-in. Try connecting with one of those providers.",
+    "auth.error.duplicateEmail": "An account with this email already exists. Try signing in or use a different email.",
+    "auth.error.invalidEmail": "Invalid or missing email address.",
+    "auth.error.passwordTooShort": "Password must be at least 8 characters.",
+    "auth.error.registrationFailed": "Registration failed. Please try again later.",
+    "auth.error.generic": "Authentication error. Please try again.",
+
+    // Profile
+    "profile.title": "Profile Settings",
+    "profile.subtitle": "Manage your account information and preferences",
+    "profile.backToDashboard": "Back to Dashboard",
+    "profile.personalInfo": "Personal Information",
+    "profile.displayName": "Display Name",
+    "profile.displayNamePlaceholder": "Enter your name or alias",
+    "profile.displayNameInfo": "Visible to other users",
+    "profile.email": "Email Address",
+    "profile.emailPlaceholder": "your@email.com",
+    "profile.emailInfo": "For notifications",
+    "profile.avatarUrl": "Avatar URL",
+    "profile.avatarPlaceholder": "https://example.com/avatar.jpg",
+    "profile.avatarInfo": "Direct link to image",
+    "profile.saveChanges": "Save Changes",
+    "profile.saving": "Saving...",
+    "profile.saved": "Changes saved successfully",
+    "profile.noEmail": "No email set",
+    "profile.connectedWallet": "Connected Wallet",
+    "profile.disconnectWallet": "Disconnect Wallet",
+    "profile.signOut": "Sign Out",
+    "profile.role": "Role",
+    "profile.accountType": "Account Type",
+    "profile.memberSince": "Member Since",
+    "profile.agreements": "Agreements",
+    "profile.totalVolume": "Total Volume",
+    "profile.saveRequiresWallet": "Connect an operating wallet to save profile details on-chain.",
+    "profile.role.user": "User",
+    "profile.role.validator": "Validator",
+    "profile.role.disputeResolver": "Dispute Resolver",
+    "profile.role.admin": "Admin",
+    "profile.account.personal": "Personal Account",
+    "profile.account.enterprise": "Enterprise Account",
+
+    // Linked Wallets
+    "linkedWallets.title": "Wallets",
+    "linkedWallets.description": "Connect and manage the wallet you use to create agreements and receive payments.",
+    "linkedWallets.noOperatingWallet": "No operating wallet",
+    "linkedWallets.noOperatingWalletDesc": "Connect one to create or operate agreements.",
+    "linkedWallets.connectWallet": "Connect your wallet",
+    "linkedWallets.operatingWallet": "Operating wallet",
+    "linkedWallets.verified": "Verified",
+    "linkedWallets.connected": "Connected",
+    "linkedWallets.linkConnected": "Link connected wallet",
+    "linkedWallets.linking": "Linking...",
+    "linkedWallets.setOperating": "Set as operating",
+    "linkedWallets.remove": "Remove",
+    "linkedWallets.cannotRemovePrimary": "Cannot remove operating wallet",
+    "linkedWallets.alreadyLinked": "This wallet is already linked",
+    "linkedWallets.loadError": "Failed to load wallets",
+    "linkedWallets.linkError": "Failed to link wallet",
+    "linkedWallets.walletCount": "{count} wallet(s)",
+
     // Status labels
     "status.funded": "Funded",
     "status.inProgress": "In Progress",
@@ -309,11 +371,14 @@ const translations: Record<Lang, Record<string, string>> = {
     "wizard.paymentWallets": "Payment & Wallets",
     "wizard.reviewSend": "Review & Send",
     "wizard.howPayment": "How should the payment work?",
-    "wizard.chooseFunds": "Choose how funds will be released.",
-    "wizard.oneTimePayment": "One-time Payment",
-    "wizard.oneTimeDesc": "Funds released all at once upon completion.",
-    "wizard.milestoneBased": "Milestone-based",
-    "wizard.milestoneDesc": "Funds released in stages as work progresses.",
+    "wizard.chooseFunds": "Select 'Quick' for fast, simple deals or 'Standard' for milestone-based projects.",
+    "wizard.oneTimePayment": "Quick Escrow",
+    "wizard.oneTimeDesc": "Fast & simple. Single payment, no milestones.",
+    "wizard.milestoneBased": "Standard Escrow",
+    "wizard.milestoneBasedDesc": "Milestone-based releases for complex projects.",
+    "wizard.quickWarning": "Quick Escrow: Funds are released in full upon approval. Milestones are disabled.",
+    "wizard.standardEscrow": "Standard Escrow",
+    "wizard.standardEscrowDesc": "Funds released in stages as work progresses.",
     "wizard.whatAgreement": "What is this agreement for?",
     "wizard.selectCategory": "Select the business category or choose Other.",
     "wizard.basedOn": "Based on",
@@ -358,6 +423,12 @@ const translations: Record<Lang, Record<string, string>> = {
     "wizard.describeAgreement": "Describe this agreement.",
     "wizard.personalTitlePlaceholder": "e.g. Apartment deposit",
     "wizard.personalDescPlaceholder": "Describe the agreement terms...",
+    "wizard.counterpartyInfo": "Counterparty / Signer Wallet",
+    "wizard.stellarAddress": "Stellar public key",
+    "wizard.fullDelivery": "Full delivery",
+    "wizard.remove": "Remove",
+    "wizard.enterDesc": "Enter description...",
+    "wizard.active": "Active",
 
     // Theme
     // Dispute
@@ -443,6 +514,7 @@ const translations: Record<Lang, Record<string, string>> = {
     "dashPage.loadingEscrows": "Loading escrows...",
     "dashPage.noEscrows": "No escrows require your attention",
     "dashPage.templates": "Templates",
+    "dashPage.team": "Team",
     "dashPage.templatesSub": "Reusable templates for recurring agreements",
     "dashPage.newTemplate": "New Template",
     "dashPage.useTemplate": "Use Template",
@@ -457,6 +529,8 @@ const translations: Record<Lang, Record<string, string>> = {
     "dashPage.cancel": "Cancel",
     "dashPage.templateSaved": "Template saved",
     "dashPage.templateDeleted": "Template deleted",
+    "dashPage.templateSaveError": "Failed to save template",
+    "dashPage.templateDeleteError": "Failed to delete template",
 
     // Evidence & flow
     "flow.sellerView": "Seller View",
@@ -576,58 +650,11 @@ const translations: Record<Lang, Record<string, string>> = {
     "partners.builtOn": "Built on",
     "partners.escrowsBy": "Escrows by",
 
-    // Wizard form labels
-    "wizard.howPayment": "How should the payment work?",
-    "wizard.chooseFunds": "Choose how funds will be released.",
-    "wizard.oneTimePayment": "One-time Payment",
-    "wizard.oneTimeDesc": "Funds released all at once upon completion.",
-    "wizard.milestoneBased": "Milestone-based",
-    "wizard.milestoneDesc": "Funds released in stages as work progresses.",
-    "wizard.whatAgreement": "What is this agreement for?",
-    "wizard.selectCategory": "Select a category to get guided suggestions, or choose Other.",
-    "wizard.basedOn": "Based on",
-    "wizard.yourWallet": "Your Wallet",
-    "wizard.connectedWallet": "Your connected wallet",
-    "wizard.counterpartyInfo": "Counterparty / Signer Wallet",
-    "wizard.stellarAddress": "Stellar public key",
-    "wizard.fullDelivery": "Full delivery",
-    "wizard.remove": "Remove",
-    "wizard.enterDesc": "Enter description...",
-    "wizard.active": "Active",
-
     // Dashboard hardcoded labels
     "dashPage.newAgreementTitle": "New Agreement",
     "dashPage.avgAgreement": "Avg. Agreement",
     "dashPage.noAgreements": "No agreements found",
     "dashPage.noAgreementsDesc": "Create your first agreement to get started.",
-
-    // Wizard step 2/3/4 labels
-    "wizard.titleLabel": "Title",
-    "wizard.descLabel": "Description",
-    "wizard.paymentDetails": "Payment Details",
-    "wizard.selectWalletInfo": "Select your wallet and enter the counterparty information.",
-    "wizard.releaseSignerWallet": "Release Signer Wallet",
-    "wizard.whoReleases": "Who releases the funds",
-    "wizard.paymentStages": "Payment Stages",
-    "wizard.addStage": "+ Add Stage",
-    "wizard.stageDesc": "Stage description...",
-    "wizard.total": "Total",
-    "wizard.reviewAndSend": "Review & Send",
-    "wizard.confirmDetails": "Confirm the details and send a notification to the Release Signer.",
-    "wizard.agreement": "Agreement",
-    "wizard.untitled": "Untitled",
-    "wizard.noDescription": "No description",
-    "wizard.protectedFunds": "Protected Funds",
-    "wizard.platformFeeLabel": "Platform fee:",
-    "wizard.emailNotifications": "Email Notifications",
-    "wizard.releaseSignerEmail": "Release Signer Email",
-    "wizard.yourEmailOptional": "Your Email (optional)",
-    "wizard.receiveCopy": "Receive a copy",
-    "wizard.back": "Back",
-    "wizard.continue": "Continue",
-    "wizard.createNotify": "Create & Notify Signer",
-    "wizard.agreementDesc": "Brief description of the agreement scope...",
-    "wizard.titlePlaceholder": "e.g. Website Redesign Project",
 
     // Ramps (On-ramp / Off-ramp)
     "ramps.title": "Deposit & Withdraw",
@@ -659,6 +686,16 @@ const translations: Record<Lang, Record<string, string>> = {
     "ramps.regulatedAnchors": "Regulated Anchors",
 "ramps.fastSettlement": "Fast Settlement",
   "dashPage.ramps": "Deposit / Withdraw",
+
+  // Wallet Agreements Panel
+  "walletPanel.filterBy": "Filter by wallet:",
+  "walletPanel.allWallets": "All Wallets",
+  "walletPanel.agreements": "agreements",
+  "walletPanel.primary": "Primary",
+  "walletPanel.setPrimary": "Set primary",
+  "walletPanel.unlink": "Unlink",
+  "walletPanel.noWallets": "No linked wallets. Link a wallet to see agreements grouped by wallet.",
+  "walletPanel.noAgreements": "No agreements found for this wallet",
 
   // New Dashboard Components
   "dashboard.goodMorning": "Good morning",
@@ -1062,6 +1099,68 @@ const translations: Record<Lang, Record<string, string>> = {
     "auth.connectStellarWallet": "Conectar Billetera Stellar",
     "auth.securelyConnect": "Conecta tu billetera de forma segura para acceder a las funciones de escrow.",
 
+    // Auth Errors
+    "auth.error.invalidCredentials": "Credenciales invalidas. Verifica tu correo y contrasena e intenta de nuevo.",
+    "auth.error.oauthOnly": "Esta cuenta usa inicio de sesion con Google o GitHub. Intenta conectarte con uno de esos proveedores.",
+    "auth.error.duplicateEmail": "Ya existe una cuenta con este correo electronico. Intenta iniciar sesion o usa otro correo.",
+    "auth.error.invalidEmail": "Correo electronico invalido o faltante.",
+    "auth.error.passwordTooShort": "La contrasena debe tener al menos 8 caracteres.",
+    "auth.error.registrationFailed": "Error en el registro. Intenta de nuevo mas tarde.",
+    "auth.error.generic": "Error de autenticacion. Intenta de nuevo.",
+
+    // Profile
+    "profile.title": "Configuracion de Perfil",
+    "profile.subtitle": "Administra la informacion y preferencias de tu cuenta",
+    "profile.backToDashboard": "Volver al Panel",
+    "profile.personalInfo": "Informacion Personal",
+    "profile.displayName": "Nombre para Mostrar",
+    "profile.displayNamePlaceholder": "Ingresa tu nombre o alias",
+    "profile.displayNameInfo": "Visible para otros usuarios",
+    "profile.email": "Correo Electronico",
+    "profile.emailPlaceholder": "tu@email.com",
+    "profile.emailInfo": "Para notificaciones",
+    "profile.avatarUrl": "URL del Avatar",
+    "profile.avatarPlaceholder": "https://ejemplo.com/avatar.jpg",
+    "profile.avatarInfo": "Enlace directo a la imagen",
+    "profile.saveChanges": "Guardar Cambios",
+    "profile.saving": "Guardando...",
+    "profile.saved": "Cambios guardados correctamente",
+    "profile.noEmail": "Sin correo configurado",
+    "profile.connectedWallet": "Billetera Conectada",
+    "profile.disconnectWallet": "Desconectar Billetera",
+    "profile.signOut": "Cerrar Sesion",
+    "profile.role": "Rol",
+    "profile.accountType": "Tipo de Cuenta",
+    "profile.memberSince": "Miembro Desde",
+    "profile.agreements": "Acuerdos",
+    "profile.totalVolume": "Volumen Total",
+    "profile.saveRequiresWallet": "Conecta una billetera operativa para guardar los detalles del perfil on-chain.",
+    "profile.role.user": "Usuario",
+    "profile.role.validator": "Validador",
+    "profile.role.disputeResolver": "Resolvedor de Disputas",
+    "profile.role.admin": "Administrador",
+    "profile.account.personal": "Cuenta Personal",
+    "profile.account.enterprise": "Cuenta Empresarial",
+
+    // Linked Wallets
+    "linkedWallets.title": "Billeteras",
+    "linkedWallets.description": "Conecta y administra la billetera que usas para crear acuerdos y recibir pagos.",
+    "linkedWallets.noOperatingWallet": "Sin billetera operativa",
+    "linkedWallets.noOperatingWalletDesc": "Conecta una para crear o gestionar acuerdos.",
+    "linkedWallets.connectWallet": "Conectar tu billetera",
+    "linkedWallets.operatingWallet": "Billetera operativa",
+    "linkedWallets.verified": "Verificada",
+    "linkedWallets.connected": "Conectada",
+    "linkedWallets.linkConnected": "Vincular billetera conectada",
+    "linkedWallets.linking": "Vinculando...",
+    "linkedWallets.setOperating": "Marcar como operativa",
+    "linkedWallets.remove": "Eliminar",
+    "linkedWallets.cannotRemovePrimary": "No se puede eliminar la billetera operativa",
+    "linkedWallets.alreadyLinked": "Esta billetera ya esta vinculada",
+    "linkedWallets.loadError": "Error al cargar billeteras",
+    "linkedWallets.linkError": "Error al vincular billetera",
+    "linkedWallets.walletCount": "{count} billetera(s)",
+
     // Status labels
     "status.funded": "Financiado",
     "status.inProgress": "En Progreso",
@@ -1148,11 +1247,14 @@ const translations: Record<Lang, Record<string, string>> = {
     "wizard.paymentWallets": "Pago y Billeteras",
     "wizard.reviewSend": "Revisar y Enviar",
     "wizard.howPayment": "Como debe funcionar el pago?",
-    "wizard.chooseFunds": "Elige como se liberaran los fondos.",
-    "wizard.oneTimePayment": "Pago Unico",
-    "wizard.oneTimeDesc": "Fondos liberados de una vez al completar.",
-    "wizard.milestoneBased": "Basado en Hitos",
-    "wizard.milestoneDesc": "Fondos liberados en etapas segun el avance.",
+    "wizard.chooseFunds": "Selecciona 'Rápido' para acuerdos simples o 'Estándar' para proyectos por hitos.",
+    "wizard.oneTimePayment": "Escrow Rápido",
+    "wizard.oneTimeDesc": "Rápido y simple. Pago único, sin hitos.",
+    "wizard.milestoneBased": "Escrow Estándar",
+    "wizard.milestoneBasedDesc": "Liberaciones por hitos para proyectos complejos.",
+    "wizard.quickWarning": "Escrow Rápido: Los fondos se liberan por completo al aprobarse. Hitos deshabilitados.",
+    "wizard.standardEscrow": "Escrow Estándar",
+    "wizard.standardEscrowDesc": "Fondos liberados en etapas segun el avance.",
     "wizard.whatAgreement": "Para que es este acuerdo?",
     "wizard.selectCategory": "Selecciona la categoria o elige Otro.",
     "wizard.basedOn": "Basado en",
@@ -1197,6 +1299,12 @@ const translations: Record<Lang, Record<string, string>> = {
     "wizard.describeAgreement": "Describe este acuerdo.",
     "wizard.personalTitlePlaceholder": "ej. Deposito de apartamento",
     "wizard.personalDescPlaceholder": "Describe los terminos del acuerdo...",
+    "wizard.counterpartyInfo": "Billetera Contraparte / Firmante",
+    "wizard.stellarAddress": "Clave publica de Stellar",
+    "wizard.fullDelivery": "Entrega completa",
+    "wizard.remove": "Eliminar",
+    "wizard.enterDesc": "Ingresa descripcion...",
+    "wizard.active": "Activo",
 
     // Theme
     "theme.light": "Claro",
@@ -1271,6 +1379,7 @@ const translations: Record<Lang, Record<string, string>> = {
     "dashPage.loadingEscrows": "Cargando escrows...",
     "dashPage.noEscrows": "No hay escrows que requieran tu atencion",
     "dashPage.templates": "Plantillas",
+    "dashPage.team": "Equipo",
     "dashPage.templatesSub": "Plantillas reutilizables para acuerdos recurrentes",
     "dashPage.newTemplate": "Nueva Plantilla",
     "dashPage.useTemplate": "Usar Plantilla",
@@ -1285,6 +1394,8 @@ const translations: Record<Lang, Record<string, string>> = {
     "dashPage.cancel": "Cancelar",
     "dashPage.templateSaved": "Plantilla guardada",
     "dashPage.templateDeleted": "Plantilla eliminada",
+    "dashPage.templateSaveError": "Error al guardar la plantilla",
+    "dashPage.templateDeleteError": "Error al eliminar la plantilla",
 
     // Evidence & flow (duplicate section)
     "flow.sellerView": "Vista del Vendedor",
@@ -1404,58 +1515,11 @@ const translations: Record<Lang, Record<string, string>> = {
     "partners.builtOn": "Construido en",
     "partners.escrowsBy": "Escrows por",
 
-    // Wizard form labels
-    "wizard.howPayment": "Como deberia funcionar el pago?",
-    "wizard.chooseFunds": "Elige como se liberaran los fondos.",
-    "wizard.oneTimePayment": "Pago Unico",
-    "wizard.oneTimeDesc": "Fondos liberados de una vez al completar.",
-    "wizard.milestoneBased": "Basado en Hitos",
-    "wizard.milestoneDesc": "Fondos liberados en etapas a medida que avanza el trabajo.",
-    "wizard.whatAgreement": "Para que es este acuerdo?",
-    "wizard.selectCategory": "Selecciona una categoria para obtener sugerencias, o elige Otro.",
-    "wizard.basedOn": "Basado en",
-    "wizard.yourWallet": "Tu Billetera",
-    "wizard.connectedWallet": "Tu billetera conectada",
-    "wizard.counterpartyInfo": "Billetera Contraparte / Firmante",
-    "wizard.stellarAddress": "Clave publica de Stellar",
-    "wizard.fullDelivery": "Entrega completa",
-    "wizard.remove": "Eliminar",
-    "wizard.enterDesc": "Ingresa descripcion...",
-    "wizard.active": "Activo",
-
     // Dashboard hardcoded labels
     "dashPage.newAgreementTitle": "Nuevo Acuerdo",
     "dashPage.avgAgreement": "Acuerdo Prom.",
     "dashPage.noAgreements": "No se encontraron acuerdos",
     "dashPage.noAgreementsDesc": "Crea tu primer acuerdo para comenzar.",
-
-    // Wizard step 2/3/4 labels
-    "wizard.titleLabel": "Titulo",
-    "wizard.descLabel": "Descripcion",
-    "wizard.paymentDetails": "Detalles de Pago",
-    "wizard.selectWalletInfo": "Selecciona tu billetera e ingresa la informacion de la contraparte.",
-    "wizard.releaseSignerWallet": "Billetera del Firmante de Liberacion",
-    "wizard.whoReleases": "Quien libera los fondos",
-    "wizard.paymentStages": "Etapas de Pago",
-    "wizard.addStage": "+ Agregar Etapa",
-    "wizard.stageDesc": "Descripcion de la etapa...",
-    "wizard.total": "Total",
-    "wizard.reviewAndSend": "Revisar y Enviar",
-    "wizard.confirmDetails": "Confirma los detalles y envia una notificacion al Firmante de Liberacion.",
-    "wizard.agreement": "Acuerdo",
-    "wizard.untitled": "Sin titulo",
-    "wizard.noDescription": "Sin descripcion",
-    "wizard.protectedFunds": "Fondos Protegidos",
-    "wizard.platformFeeLabel": "Comision de plataforma:",
-    "wizard.emailNotifications": "Notificaciones por Email",
-    "wizard.releaseSignerEmail": "Email del Firmante de Liberacion",
-    "wizard.yourEmailOptional": "Tu Email (opcional)",
-    "wizard.receiveCopy": "Recibir una copia",
-    "wizard.back": "Atras",
-    "wizard.continue": "Continuar",
-    "wizard.createNotify": "Crear y Notificar Firmante",
-    "wizard.agreementDesc": "Breve descripcion del alcance del acuerdo...",
-    "wizard.titlePlaceholder": "ej. Proyecto de Rediseno Web",
 
     // Ramps (On-ramp / Off-ramp)
     "ramps.title": "Depositar y Retirar",
@@ -1487,6 +1551,16 @@ const translations: Record<Lang, Record<string, string>> = {
     "ramps.regulatedAnchors": "Anchors Regulados",
 "ramps.fastSettlement": "Liquidacion Rapida",
   "dashPage.ramps": "Depositar / Retirar",
+
+  // Wallet Agreements Panel
+  "walletPanel.filterBy": "Filtrar por wallet:",
+  "walletPanel.allWallets": "Todas las wallets",
+  "walletPanel.agreements": "acuerdos",
+  "walletPanel.primary": "Principal",
+  "walletPanel.setPrimary": "Establecer principal",
+  "walletPanel.unlink": "Desvincular",
+  "walletPanel.noWallets": "Sin wallets vinculadas. Vincula una wallet para ver acuerdos agrupados.",
+  "walletPanel.noAgreements": "Sin acuerdos para esta wallet",
 
   // New Dashboard Components
   "dashboard.goodMorning": "Buenos dias",
@@ -1689,11 +1763,17 @@ export function useLanguage() {
 
 /** Small globe toggle button */
 export function LanguageToggle({ className }: { className?: string }) {
-  const { lang, setLang } = useLanguage()
+  const { lang, setLang, theme } = useLanguage()
+  const isLight = theme === "light"
   return (
   <button
   onClick={() => setLang(lang === "en" ? "es" : "en")}
-  className={`flex items-center gap-1.5 rounded-full border border-white/15 bg-[#0a0a0c]/60 px-3 py-1.5 text-xs font-bold text-white transition-all duration-300 hover:bg-[#f0b400]/15 hover:text-[#f0b400] hover:border-[#f0b400]/30 ${className || ""}`}
+  className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-bold transition-all duration-300 hover:border-[#f0b400]/30 ${className || ""}`}
+  style={{
+    background: isLight ? "rgba(15,23,42,0.06)" : "rgba(10,10,12,0.6)",
+    borderColor: isLight ? "rgba(15,23,42,0.15)" : "rgba(255,255,255,0.15)",
+    color: isLight ? "#1a1a2e" : "#ffffff",
+  }}
   aria-label={lang === "en" ? "Cambiar a Espanol" : "Switch to English"}
   title={lang === "en" ? "Cambiar a Espanol" : "Switch to English"}
   >
@@ -1710,10 +1790,16 @@ export function LanguageToggle({ className }: { className?: string }) {
 /** Sun/Moon theme toggle */
 export function ThemeToggle({ className }: { className?: string }) {
   const { theme, toggleTheme } = useLanguage()
+  const isLight = theme === "light"
   return (
   <button
   onClick={toggleTheme}
-  className={`flex items-center gap-1.5 rounded-full border border-white/15 bg-[#0a0a0c]/60 px-3 py-1.5 text-xs font-bold text-white transition-all duration-300 hover:bg-[#f0b400]/15 hover:text-[#f0b400] hover:border-[#f0b400]/30 ${className || ""}`}
+  className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-bold transition-all duration-300 hover:border-[#f0b400]/30 ${className || ""}`}
+  style={{
+    background: isLight ? "rgba(15,23,42,0.06)" : "rgba(10,10,12,0.6)",
+    borderColor: isLight ? "rgba(15,23,42,0.15)" : "rgba(255,255,255,0.15)",
+    color: isLight ? "#1a1a2e" : "#ffffff",
+  }}
   aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
   title={theme === "dark" ? "Light mode" : "Dark mode"}
   >

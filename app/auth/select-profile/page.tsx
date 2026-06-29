@@ -20,6 +20,9 @@ export default function SelectProfilePage() {
   const { address: stellarAddress, refreshProfile } = useStellarWallet();
   const [busy, setBusy] = useState(false);
 
+  // For JWT-only users (no Freighter), use custodial wallet from auth store
+  const walletAddress = stellarAddress ?? user?.wallet?.publicKey ?? null;
+
   const goHome = useCallback(() => {
     router.replace("/");
   }, [router]);
@@ -27,29 +30,21 @@ export default function SelectProfilePage() {
   useEffect(() => {
     if (!hydrated) return;
     const tmr = setTimeout(() => {
-      if (!user && !stellarAddress) goHome();
+      if (!user && !walletAddress) goHome();
     }, 400);
     return () => clearTimeout(tmr);
-  }, [hydrated, user, stellarAddress, goHome]);
+  }, [hydrated, user, walletAddress, goHome]);
 
   const handleSelect = async (type: "personal" | "business") => {
     const href = type === "personal" ? "/dashboard/personal" : "/dashboard/business";
 
-    if (stellarAddress && type === "business") {
+    if (walletAddress) {
       setBusy(true);
       try {
-        const { error } = await updateProfile(stellarAddress, { account_type: "enterprise" });
-        if (error) console.warn("updateProfile enterprise:", error);
-        await refreshProfile();
-      } finally {
-        setBusy(false);
-      }
-    } else if (stellarAddress && type === "personal") {
-      setBusy(true);
-      try {
-        const { error } = await updateProfile(stellarAddress, { account_type: "personal" });
-        if (error) console.warn("updateProfile personal:", error);
-        await refreshProfile();
+        const accountType = type === "enterprise" ? "enterprise" : "personal";
+        const { error } = await updateProfile(walletAddress, { account_type: accountType });
+        if (error) console.warn("updateProfile:", error);
+        if (refreshProfile) await refreshProfile();
       } finally {
         setBusy(false);
       }
@@ -66,7 +61,7 @@ export default function SelectProfilePage() {
     );
   }
 
-  if (!user && !stellarAddress) {
+  if (!user && !walletAddress) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <p className="text-muted-foreground">{t("common.loading")}</p>

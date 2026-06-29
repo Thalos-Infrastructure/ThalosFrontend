@@ -2,8 +2,6 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { signToken } from "@/lib/auth/utils";
-import { Keypair } from "stellar-sdk";
-import { activateAndAddTrustline } from "@/lib/stellar/trustline";
 
 /**
  * Server-side OAuth callback. The code verifier is in the request cookies
@@ -45,44 +43,40 @@ export async function GET(req: Request) {
       .maybeSingle();
 
     let userId: string;
-    let walletPublicKey: string;
+    let walletPublicKey: string | null;
     let userName: string | undefined = name;
 
     let accountType: string | null = null;
-    
+
     if (existing) {
       userId = existing.id;
       walletPublicKey = existing.wallet_public_key;
       if (existing.name) userName = existing.name;
-      
-      // Check if user has a profile with account_type
-      const { data: profile } = await db
-        .from("profiles")
-        .select("account_type")
-        .eq("wallet_address", walletPublicKey)
-        .maybeSingle();
-      
-      if (profile?.account_type) {
-        accountType = profile.account_type;
+
+      // Check if user has a profile with account_type (only if a wallet is set)
+      if (walletPublicKey) {
+        const { data: profile } = await db
+          .from("profiles")
+          .select("account_type")
+          .eq("wallet_address", walletPublicKey)
+          .maybeSingle();
+
+        if (profile?.account_type) {
+          accountType = profile.account_type;
+        }
       }
     } else {
-      const keypair = Keypair.random();
-      walletPublicKey = keypair.publicKey();
-      const walletSecretKey = keypair.secret();
-      
-      // Activate wallet and add USDC trustline for new users
-      const trustlineResult = await activateAndAddTrustline(walletPublicKey, walletSecretKey);
-      if (!trustlineResult.success) {
-        console.warn("Failed to activate wallet/trustline for OAuth user:", trustlineResult.error);
-      }
-      
+      // OAuth signup creates the identity only. No wallet is generated and no
+      // custodial wallet is auto-linked — the user connects their own wallet
+      // later (M2 flow).
+      walletPublicKey = null;
+
       const { data: inserted, error: insertError } = await db
         .from("auth_users")
         .insert({
           email,
           password_hash: null,
           name: name ?? null,
-          wallet_public_key: walletPublicKey,
           auth_provider: "oauth",
         })
         .select("id, name")
@@ -95,17 +89,6 @@ export async function GET(req: Request) {
       }
       userId = inserted.id;
       if (inserted.name) userName = inserted.name;
-      
-      // Auto-link the custodial wallet for new OAuth users
-      await db
-        .from("linked_wallets")
-        .insert({
-          user_id: userId,
-          wallet_address: walletPublicKey,
-          wallet_type: "custodial",
-          label: "Email Wallet",
-          is_primary: true,
-        });
     }
 
     // Determine redirect: if user has account_type, go to dashboard; otherwise select-profile

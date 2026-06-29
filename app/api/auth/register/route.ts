@@ -1,12 +1,10 @@
 import { NextResponse } from "next/server";
-import { Keypair } from "stellar-sdk";
 import { createServiceClient } from "@/lib/supabase/service";
 import {
   hashPassword,
   signToken,
   type AuthUser,
 } from "@/lib/auth/utils";
-import { activateAndAddTrustline } from "@/lib/stellar/trustline";
 
 function validateEmail(email: unknown): email is string {
   return typeof email === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -21,7 +19,6 @@ export async function POST(req: Request) {
   const email = body.email;
   const password = body.password;
   const name = typeof body.name === "string" ? body.name : undefined;
-  const accountType = body.accountType === "enterprise" ? "enterprise" : "personal";
 
   if (!validateEmail(email)) {
     return NextResponse.json(
@@ -51,28 +48,17 @@ export async function POST(req: Request) {
   }
 
   const password_hash = await hashPassword(password);
-  const keypair = Keypair.random();
-  const wallet_public_key = keypair.publicKey();
-  const wallet_secret_key = keypair.secret();
 
-  // Activate wallet and add USDC trustline before saving
-  // This ensures the custodial wallet can receive USDC payments
-  const trustlineResult = await activateAndAddTrustline(wallet_public_key, wallet_secret_key);
-  if (!trustlineResult.success) {
-    console.warn("Failed to activate wallet/trustline:", trustlineResult.error);
-    // Continue with registration even if trustline fails
-    // User can add trustline later
-  }
-
+  // Signup creates the identity only. No wallet is generated here — the user
+  // connects their own wallet later (M2 flow), so wallet_public_key stays null.
   const { data: inserted, error } = await supabase
     .from("auth_users")
     .insert({
       email: email.trim().toLowerCase(),
       password_hash,
       name: name ?? null,
-      wallet_public_key,
     })
-    .select("id, email, name, wallet_public_key")
+    .select("id, email, name")
     .single();
 
   if (error) {
@@ -83,41 +69,21 @@ export async function POST(req: Request) {
     );
   }
 
-  // Auto-link the custodial wallet to the user's linked_wallets
-  const { error: linkError } = await supabase
-    .from("linked_wallets")
-    .insert({
-      user_id: inserted.id,
-      wallet_address: wallet_public_key,
-      wallet_type: "custodial",
-      label: "Email Wallet",
-      is_primary: true,
-    });
-
-  if (linkError) {
-    console.warn("Failed to auto-link custodial wallet:", linkError);
-    // Continue anyway - user can link it manually
-  }
-
-  // Create profile with account_type
-  const { error: profileError } = await supabase
-    .from("profiles")
-    .upsert({
-      wallet_address: wallet_public_key,
-      email: email.trim().toLowerCase(),
-      display_name: name,
-      account_type: accountType,
-    }, { onConflict: "wallet_address" });
-
-  if (profileError) {
-    console.warn("Failed to create profile:", profileError);
-  }
+  // The custodial-wallet link and the wallet-keyed profile row are intentionally
+  // not created here. They depend on a wallet, which the user now connects later
+  // (M2 flow), so they belong to the wallet-connect step rather than signup.
+  //
+  // account_type (personal/enterprise) is not dropped: it is no longer persisted
+  // at signup (it lived on the wallet-keyed profile) and is instead set at the
+  // profile-selection / wallet-connect step (#1.4). Signup must not break without
+  // it, which is why nothing here depends on a wallet or profile.
 
   const user: AuthUser = {
     id: inserted.id,
     email: inserted.email,
-    name: inserted.name ?? undefined,
-    wallet: { publicKey: inserted.wallet_public_key, type: "embedded" },
+    name: inserted.name ?? null,
+    avatarUrl: null,
+    wallet: null,
   };
   const token = signToken({ sub: inserted.id, email: inserted.email });
   return NextResponse.json({ user, token });

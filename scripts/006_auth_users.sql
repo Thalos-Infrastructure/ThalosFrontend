@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS auth_users (
   email TEXT UNIQUE NOT NULL,
   password_hash TEXT NOT NULL,
   name TEXT,
-  wallet_public_key TEXT NOT NULL,
+  wallet_public_key TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );

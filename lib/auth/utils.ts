@@ -4,17 +4,7 @@ import * as jwt from "jsonwebtoken";
 
 export const SALT_ROUNDS = 10;
 
-export interface AuthUser {
-  id: string;
-  email: string;
-  name?: string;
-  wallet: { publicKey: string; type?: string };
-}
-
-export interface AuthResponse {
-  user: AuthUser;
-  token: string;
-}
+export type { AuthUser, AuthWallet, AuthResponse } from "./types";
 
 export async function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, SALT_ROUNDS);
