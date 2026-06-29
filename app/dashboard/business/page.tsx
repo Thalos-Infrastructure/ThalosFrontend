@@ -6,6 +6,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { AlertTriangle } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { toast } from "sonner"
 import { ThalosLoader } from "@/components/thalos-loader"
 import { LanguageToggle, ThemeToggle, useLanguage } from "@/lib/i18n"
 import { Footer } from "@/components/footer"
@@ -14,6 +15,14 @@ import { useCurrentAddress } from "@/lib/use-current-address"
 import { useAuthStore } from "@/lib/auth-store"
 import { WalletAddress } from "@/components/ui/wallet-address"
 import { getProfileByWallet, type Profile } from "@/lib/actions/profile"
+import {
+  getBusinessMembers,
+  addBusinessMember,
+  updateBusinessMemberRole,
+  removeBusinessMember,
+  getUserBusinessAccounts,
+  type BusinessMember
+} from "@/lib/actions/business-roles"
 import { ProfileEditor } from "@/components/profile/profile-editor"
 import { AgreementsView } from "@/components/agreements/agreements-view"
 import { ContactSelector } from "@/components/agreements/contact-selector"
@@ -23,7 +32,14 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area,
 } from "recharts"
 import { createAgreement, sendTransaction, AgreementPayload, approveMilestone } from "@/services/trustlessworkService"
-import { STELLAR_EXPLORER_BASE_URL, TRUSTLINE_USDC, SHOW_MOCKED_AGREEMENTS } from "@/lib/config"
+import { STELLAR_EXPLORER_BASE_URL, SHOW_MOCKED_AGREEMENTS } from "@/lib/config"
+import {
+  createTemplate,
+  updateTemplate,
+  deleteTemplate as deleteTemplateAction,
+  getTemplatesByOwner,
+  type AgreementTemplate,
+} from "@/lib/actions/agreement-templates"
 
 /* ── Enterprise Use-Cases ── */
 const useCases = [
@@ -96,14 +112,29 @@ const connectedWallets = [
 
 const wizardStepKeys = ["wizard.escrowType", "wizard.useCase", "wizard.agreementInfo", "wizard.paymentWallets", "wizard.reviewSend"]
 
-interface Milestone { description: string; amount: string; status: "pending" | "approved" | "released" }
-interface Agreement { id: string; title: string; status: string; type: "Single Release" | "Multi Release"; counterparty: string; amount: string; date: string; releaseStrategy?: "per-milestone" | "all-at-once" | "upon-completion"; milestones: Milestone[]; receiver: string }
+interface Milestone { description: string; amount: string; status: "pending" | "approved" | "released"; released?: boolean; approved?: boolean }
+interface Agreement {
+  id: string
+  title: string
+  counterparty: string
+  status: string
+  amount: string
+  currency: string
+  type: "Single Release" | "Multi Release"
+  date: string
+  releaseStrategy?: "per-milestone" | "all-at-once" | "upon-completion"
+  milestones: Milestone[]
+  receiver: string
+  role?: "buyer" | "seller"
+  serviceProvider?: string
+  client?: string
+}
 
 const initialAgreements: Agreement[] = [
-  { id: "ENT-001", title: "Fleet Vehicle Purchase", status: "funded", type: "Multi Release", counterparty: "G...DLR5", amount: "125,000", date: "2026-01-20", releaseStrategy: "per-milestone", milestones: [{ description: "Down Payment (10 units)", amount: "50,000", status: "released" }, { description: "Delivery of first batch", amount: "37,500", status: "approved" }, { description: "Final batch + inspection", amount: "37,500", status: "pending" }], receiver: "GBXGQJWVLWOYHFLVTKWV5FGHA3DLR5" },
-  { id: "ENT-002", title: "Resort Partnership Q2", status: "in_progress", type: "Multi Release", counterparty: "G...TRV8", amount: "48,000", date: "2026-01-15", releaseStrategy: "upon-completion", milestones: [{ description: "Contract signing", amount: "12,000", status: "approved" }, { description: "Marketing materials", amount: "12,000", status: "approved" }, { description: "Launch campaign", amount: "12,000", status: "pending" }, { description: "Performance review", amount: "12,000", status: "pending" }], receiver: "GBXGQJWVLWOYHFLVTKWV5FGHA3TRV8" },
-  { id: "ENT-003", title: "Corporate Event Setup", status: "released", type: "Single Release", counterparty: "G...EVT2", amount: "15,000", date: "2025-12-18", milestones: [{ description: "Full event delivery", amount: "15,000", status: "released" }], receiver: "GBXGQJWVLWOYHFLVTKWV5FGHA3EVT2" },
-  { id: "ENT-004", title: "Property Management Fee", status: "in_progress", type: "Multi Release", counterparty: "G...RNT9", amount: "6,500", date: "2025-12-05", releaseStrategy: "all-at-once", milestones: [{ description: "Q1 management fee", amount: "1,625", status: "approved" }, { description: "Q2 management fee", amount: "1,625", status: "approved" }, { description: "Q3 management fee", amount: "1,625", status: "approved" }, { description: "Q4 management fee", amount: "1,625", status: "pending" }], receiver: "GBXGQJWVLWOYHFLVTKWV5FGHA3RNT9" },
+  { id: "ENT-001", title: "Fleet Vehicle Purchase", status: "funded", type: "Multi Release", counterparty: "G...DLR5", amount: "125,000", date: "2026-01-20", releaseStrategy: "per-milestone", milestones: [{ description: "Down Payment (10 units)", amount: "50,000", status: "released" }, { description: "Delivery of first batch", amount: "37,500", status: "approved" }, { description: "Final batch + inspection", amount: "37,500", status: "pending" }], receiver: "GBXGQJWVLWOYHFLVTKWV5FGHA3DLR5", currency: "USDC" },
+  { id: "ENT-002", title: "Resort Partnership Q2", status: "in_progress", type: "Multi Release", counterparty: "G...TRV8", amount: "48,000", date: "2026-01-15", releaseStrategy: "upon-completion", milestones: [{ description: "Contract signing", amount: "12,000", status: "approved" }, { description: "Marketing materials", amount: "12,000", status: "approved" }, { description: "Launch campaign", amount: "12,000", status: "pending" }, { description: "Performance review", amount: "12,000", status: "pending" }], receiver: "GBXGQJWVLWOYHFLVTKWV5FGHA3TRV8", currency: "USDC" },
+  { id: "ENT-003", title: "Corporate Event Setup", status: "released", type: "Single Release", counterparty: "G...EVT2", amount: "15,000", date: "2025-12-18", milestones: [{ description: "Full event delivery", amount: "15,000", status: "released" }], receiver: "GBXGQJWVLWOYHFLVTKWV5FGHA3EVT2", currency: "USDC" },
+  { id: "ENT-004", title: "Property Management Fee", status: "in_progress", type: "Multi Release", counterparty: "G...RNT9", amount: "6,500", date: "2025-12-05", releaseStrategy: "all-at-once", milestones: [{ description: "Q1 management fee", amount: "1,625", status: "approved" }, { description: "Q2 management fee", amount: "1,625", status: "approved" }, { description: "Q3 management fee", amount: "1,625", status: "approved" }, { description: "Q4 management fee", amount: "1,625", status: "pending" }], receiver: "GBXGQJWVLWOYHFLVTKWV5FGHA3RNT9", currency: "USDC" },
 ]
 
 const statusConfig: Record<string, { labelKey: string; color: string }> = {
@@ -138,17 +169,79 @@ const sidebarItems = [
   { id: "create", labelKey: "dashPage.newAgreement", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg> },
   { id: "agreements", labelKey: "dashPage.agreements", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> },
   { id: "templates", labelKey: "dashPage.templates", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg> },
-  
   { id: "wallets", labelKey: "dashPage.wallets", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg> },
   { id: "analytics", labelKey: "dashPage.analytics", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg> },
-  ]
+  { id: "team", labelKey: "dashPage.team", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg> },
+]
+
+const permissions = {
+  Admin: {
+    create: true,
+    templates: true,
+    wallets: true,
+    analytics: true,
+    approve: true,
+    release: true,
+    team: true,
+  },
+  Finance: {
+    create: false,
+    templates: false,
+    wallets: true,
+    analytics: true,
+    approve: true,
+    release: true,
+    team: false,
+  },
+  Operator: {
+    create: true,
+    templates: true,
+    wallets: false,
+    analytics: false,
+    approve: false,
+    release: false,
+    team: false,
+  },
+}
+
+function ChartTooltip({ active, payload, label }: {
+  active?: boolean; payload?: Array<{ name: string; value: number; color?: string; dataKey?: string }>; label?: string
+}) {
+  if (active && payload && payload.length) {
+    const item = payload[0]
+    const displayVal = item.dataKey === "volume" 
+      ? `$${item.value.toLocaleString()}` 
+      : String(item.value)
+
+    const isDark = typeof document !== "undefined" && document.documentElement.classList.contains("dark")
+
+    return (
+      <div style={{
+        borderRadius: "12px",
+        border: "1px solid rgba(15,23,42,0.12)",
+        backgroundColor: isDark ? "#0f172a" : "#ffffff",
+        padding: "10px 14px",
+        boxShadow: isDark ? "0 4px 24px rgba(0,0,0,0.5)" : "0 4px 24px rgba(0,0,0,0.1)",
+        textAlign: "left" as const,
+        minWidth: 90,
+      }}>
+        <p style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.1em", color: isDark ? "rgba(255,255,255,0.45)" : "#737373", margin: 0 }}>{label}</p>
+        <p style={{ marginTop: 4, fontSize: 14, fontWeight: 700, color: isDark ? "#f8fafc" : "#1a1a1a", margin: "4px 0 0" }}>
+          {displayVal}
+        </p>
+      </div>
+    )
+  }
+  return null
+}
 
 /* ════════════════════════════════════════════════
    PAGE
    ════════════════════════════════════════════════ */
 export default function BusinessDashboardPage() {
-  const { t } = useLanguage()
-  const { openWalletModal, walletAddress } = useStellarWallet()
+  const { t, theme } = useLanguage()
+  const isLight = theme === "light"
+  const { openWalletModal, address: walletAddress } = useStellarWallet()
   const [loading, setLoading] = useState(false)
 
   const [activeSection, setActiveSection] = useState("agreements")
@@ -157,15 +250,85 @@ export default function BusinessDashboardPage() {
   const [companyProfile, setCompanyProfile] = useState<Profile | null>(null)
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
   
-  // Fetch company profile
+  // Workspace and RBAC State
+  const [activeBusinessWallet, setActiveBusinessWallet] = useState<string | null>(null)
+  const [memberRole, setMemberRole] = useState<"Admin" | "Finance" | "Operator" | null>(null)
+  const [userBusinessAccounts, setUserBusinessAccounts] = useState<{ business_wallet: string; role: "Admin" | "Finance" | "Operator" }[]>([])
+  const [isCheckingRole, setIsCheckingRole] = useState(true)
+  const [teamMembers, setTeamMembers] = useState<BusinessMember[]>([])
+  const [loadingTeam, setLoadingTeam] = useState(false)
+
+  // Derive permissions helper
+  const activePermissions = useMemo(() => {
+    return memberRole ? permissions[memberRole] : {
+      create: false,
+      templates: false,
+      wallets: false,
+      analytics: false,
+      approve: false,
+      release: false,
+      team: false,
+    }
+  }, [memberRole])
+
+  // Fetch company profile & verify business roles
   useEffect(() => {
-    async function fetchProfile() {
-      if (walletAddress) {
-        const result = await getProfileByWallet(walletAddress)
-        if (result.profile) setCompanyProfile(result.profile)
+    async function resolveRoleAndProfile() {
+      if (!walletAddress) {
+        setCompanyProfile(null)
+        setActiveBusinessWallet(null)
+        setMemberRole(null)
+        setIsCheckingRole(false)
+        return
+      }
+
+      setIsCheckingRole(true)
+      try {
+        const ownProfileRes = await getProfileByWallet(walletAddress)
+        const profile = ownProfileRes.profile
+
+        if (profile && profile.account_type === "enterprise") {
+          setActiveBusinessWallet(walletAddress)
+          setMemberRole("Admin")
+          setCompanyProfile(profile)
+          setIsCheckingRole(false)
+        } else {
+          const res = await getUserBusinessAccounts(walletAddress)
+          
+          if (res.accounts && res.accounts.length > 0) {
+            const firstBiz = res.accounts[0]
+            setActiveBusinessWallet(firstBiz.business_wallet)
+            setMemberRole(firstBiz.role)
+            
+            const bizProfileRes = await getProfileByWallet(firstBiz.business_wallet)
+            if (bizProfileRes.profile) {
+              setCompanyProfile(bizProfileRes.profile)
+            } else {
+              setCompanyProfile({
+                id: firstBiz.business_wallet,
+                wallet_address: firstBiz.business_wallet,
+                display_name: "Enterprise Workspace",
+                email: "",
+                avatar_url: null,
+                account_type: "enterprise",
+                role: "user",
+                created_at: "",
+                updated_at: ""
+              })
+            }
+          } else {
+            setActiveBusinessWallet(null)
+            setMemberRole(null)
+            setCompanyProfile(null)
+          }
+          setIsCheckingRole(false)
+        }
+      } catch (err) {
+        console.error("Error checking workspace membership:", err)
+        setIsCheckingRole(false)
       }
     }
-    fetchProfile()
+    resolveRoleAndProfile()
   }, [walletAddress])
   const [agreements, setAgreements] = useState<Agreement[]>(initialAgreements)
   const [viewingAgreement, setViewingAgreement] = useState<string | null>(null)
@@ -175,8 +338,10 @@ export default function BusinessDashboardPage() {
   const [approverEscrows, setApproverEscrows] = useState<Agreement[]>([])
   const [approverLoading, setApproverLoading] = useState(false)
   
+  const currentWorkspaceWallet = activeBusinessWallet || walletAddress;
+
   // Helper to map escrow to agreement format
-  const mapEscrowToAgreement = (e: Record<string, unknown>): Agreement => {
+  const mapEscrowToAgreement = (e: any): Agreement => {
     const milestones = e.milestones as Array<{ description?: string; amount?: number; approved?: boolean; released?: boolean; status?: string }> || [];
     const isMulti = (e.type as string) === "multi-release" || milestones.length > 1;
     const amount = isMulti 
@@ -198,43 +363,43 @@ export default function BusinessDashboardPage() {
         status: m.released ? "released" : m.approved ? "approved" : "pending" as "pending" | "approved" | "released",
       })),
       receiver: e.receiver as string || "",
-      role: walletAddress === e.serviceProvider ? "seller" : "buyer",
+      role: currentWorkspaceWallet === e.serviceProvider ? "seller" : "buyer",
     };
   };
 
   // Fetch all escrows where user has any role
   const fetchedEscrowsRef = useRef<string | null>(null);
   useEffect(() => {
-    if (!walletAddress) return;
-    if (fetchedEscrowsRef.current === walletAddress) return;
-    fetchedEscrowsRef.current = walletAddress;
+    if (!currentWorkspaceWallet) return;
+    if (fetchedEscrowsRef.current === currentWorkspaceWallet) return;
+    fetchedEscrowsRef.current = currentWorkspaceWallet;
     
-async function fetchAllEscrows() {
-// MIGRATION: Using escrowMigration wrapper
-const { getEscrowsBySigner, getEscrowsByRole } = await import("@/services/escrowMigration");
+    async function fetchAllEscrows() {
+      // MIGRATION: Using escrowMigration wrapper
+      const { getEscrowsBySigner, getEscrowsByRole } = await import("@/services/escrowMigration");
       const seenIds = new Set<string>();
       const allAgreements: Agreement[] = [];
       
       // Fetch escrows by signer
-      const signerRes = await getEscrowsBySigner(walletAddress);
+      const signerRes = await getEscrowsBySigner(currentWorkspaceWallet);
       if (signerRes.success && Array.isArray(signerRes.data)) {
-        signerRes.data.forEach(escrow => {
+        signerRes.data.forEach((escrow: any) => {
           if (!seenIds.has(escrow.contractId)) {
             seenIds.add(escrow.contractId);
-            allAgreements.push(mapEscrowToAgreement(escrow as unknown as Record<string, unknown>));
+            allAgreements.push(mapEscrowToAgreement(escrow));
           }
         });
       }
       
-// Fetch by each role
-const roles = ["receiver", "service_provider", "approver"] as const;
-for (const role of roles) {
-const res = await getEscrowsByRole({ role, address: walletAddress });
+      // Fetch by each role
+      const roles = ["receiver", "service_provider", "approver"] as const;
+      for (const role of roles) {
+        const res = await getEscrowsByRole({ role, address: currentWorkspaceWallet });
         if (res.success && Array.isArray(res.data)) {
-          res.data.forEach(escrow => {
+          res.data.forEach((escrow: any) => {
             if (!seenIds.has(escrow.contractId)) {
               seenIds.add(escrow.contractId);
-              allAgreements.push(mapEscrowToAgreement(escrow as unknown as Record<string, unknown>));
+              allAgreements.push(mapEscrowToAgreement(escrow));
             }
           });
         }
@@ -246,28 +411,43 @@ const res = await getEscrowsByRole({ role, address: walletAddress });
     }
     
     fetchAllEscrows();
-  }, [walletAddress]);
+  }, [currentWorkspaceWallet]);
 
   // Fetch approver escrows (for approver tab)
   useEffect(() => {
-    if (!walletAddress) return
+    if (!currentWorkspaceWallet) return;
     async function fetchApproverEscrows() {
-setApproverLoading(true)
-try {
-// MIGRATION: Using escrowMigration wrapper
-const { getEscrowsByRole } = await import("@/services/escrowMigration")
-const res = await getEscrowsByRole({ role: "approver", address: walletAddress })
+      setApproverLoading(true);
+      try {
+        const { getEscrowsByRole } = await import("@/services/escrowMigration");
+        const res = await getEscrowsByRole({ role: "approver", address: currentWorkspaceWallet });
         if (res.success && Array.isArray(res.data)) {
-          setApproverEscrows(res.data.map((e: Record<string, unknown>) => mapEscrowToAgreement(e)))
+          setApproverEscrows(res.data.map((e: any) => mapEscrowToAgreement(e)));
         }
       } catch (err) {
-        console.error("Error fetching approver escrows:", err)
-        setApproverEscrows([])
+        console.error("Error fetching approver escrows:", err);
+        setApproverEscrows([]);
       }
-      setApproverLoading(false)
+      setApproverLoading(false);
     }
-    fetchApproverEscrows()
-  }, [walletAddress])
+    fetchApproverEscrows();
+  }, [currentWorkspaceWallet]);
+
+  // Fetch team members when activeSection is 'team'
+  useEffect(() => {
+    async function fetchTeam() {
+      if (activeSection === "team" && activeBusinessWallet && activePermissions.team) {
+        setLoadingTeam(true);
+        const { getBusinessMembers } = await import("@/lib/actions/business-roles");
+        const res = await getBusinessMembers(activeBusinessWallet);
+        if (res.members) {
+          setTeamMembers(res.members);
+        }
+        setLoadingTeam(false);
+      }
+    }
+    fetchTeam();
+  }, [activeSection, activeBusinessWallet, activePermissions.team]);
 
   const approveMilestone = (agrId: string, msIdx: number) => {
     setAgreements(prev => prev.map(a => a.id === agrId ? { ...a, milestones: a.milestones.map((m, i) => i === msIdx && m.status === "pending" ? { ...m, status: "approved" as const } : m) } : a))
@@ -344,7 +524,10 @@ const res = await getEscrowsByRole({ role: "approver", address: walletAddress })
 
   const canProceed = () => {
     if (step === 0) return true
-    if (step === 1) return useCase === "other" ? customUseCase.trim().length > 0 : !!useCase
+    if (step === 1) {
+      if (escrowType === "single") return true // Optional for Quick Escrow
+      return useCase === "other" ? customUseCase.trim().length > 0 : !!useCase
+    }
     if (step === 2) return title.trim().length > 0
     if (step === 3) return signerWallet.trim().length > 0 && totalAmount > 0
     return true
@@ -413,31 +596,71 @@ const res = await getEscrowsByRole({ role: "approver", address: walletAddress })
   }, [agreements])
 
   /* ── Templates state ── */
-  interface Template { id: string; name: string; escrowType: "single" | "multi"; useCase: string; title: string; description: string; milestones: { description: string; amount: string }[] }
-  const [templates, setTemplates] = useState<Template[]>(() => {
-    if (typeof window === "undefined") return []
-    try { const stored = localStorage.getItem("thalos_biz_templates"); return stored ? JSON.parse(stored) : [] } catch { return [] }
-  })
+  type Template = AgreementTemplate & { escrowType: "single" | "multi"; useCase: string }
+  const [templates, setTemplates] = useState<Template[]>([])
+  const [templatesLoading, setTemplatesLoading] = useState(false)
+  const [deletingTemplateId, setDeletingTemplateId] = useState<string | null>(null)
   const [showSaveTemplate, setShowSaveTemplate] = useState(false)
   const [templateName, setTemplateName] = useState("")
   const [editingTemplate, setEditingTemplate] = useState<string | null>(null)
 
   useEffect(() => {
-    if (typeof window !== "undefined") localStorage.setItem("thalos_biz_templates", JSON.stringify(templates))
-  }, [templates])
+    if (!walletAddress) return
+    setTemplatesLoading(true)
+    getTemplatesByOwner(walletAddress)
+      .then(({ templates: data }) => {
+        setTemplates(
+          (data ?? []).map((t) => ({
+            ...t,
+            escrowType: (t.agreement_type as "single" | "multi") ?? "single",
+            useCase: (t.metadata as Record<string, string>)?.useCase ?? "",
+          }))
+        )
+      })
+      .finally(() => setTemplatesLoading(false))
+  }, [walletAddress])
 
-  const saveAsTemplate = () => {
-    const tpl: Template = {
-      id: `TPL-${Date.now().toString(36).toUpperCase()}`,
-      name: templateName.trim() || title,
-      escrowType, useCase: useCase || "", title, description,
-      milestones: milestones.map(m => ({ description: m.description, amount: m.amount })),
-    }
+  const saveAsTemplate = async () => {
+    if (!walletAddress) return
+    const milestoneData = milestones.map(m => ({ description: m.description, amount: m.amount, status: "pending" as const }))
+    const meta = { useCase: useCase || "" }
+
     if (editingTemplate) {
-      setTemplates(prev => prev.map(t => t.id === editingTemplate ? { ...tpl, id: editingTemplate } : t))
+      const { template, error } = await updateTemplate(editingTemplate, walletAddress, {
+        name: templateName.trim() || title,
+        title,
+        description,
+        agreement_type: escrowType,
+        milestones: milestoneData,
+        metadata: meta,
+      })
+      if (error || !template) {
+        toast.error(t("dashPage.templateSaveError"))
+        return
+      }
+      setTemplates(prev =>
+        prev.map(t => t.id === editingTemplate
+          ? { ...template, escrowType, useCase: useCase || "" }
+          : t
+        )
+      )
     } else {
-      setTemplates(prev => [...prev, tpl])
+      const { template, error } = await createTemplate({
+        owner_wallet: walletAddress,
+        name: templateName.trim() || title,
+        title,
+        description,
+        agreement_type: escrowType,
+        milestones: milestoneData,
+        metadata: meta,
+      })
+      if (error || !template) {
+        toast.error(t("dashPage.templateSaveError"))
+        return
+      }
+      setTemplates(prev => [{ ...template, escrowType, useCase: useCase || "" }, ...prev])
     }
+    toast.success(t("dashPage.templateSaved"))
     setShowSaveTemplate(false); setTemplateName(""); setEditingTemplate(null)
   }
 
@@ -446,23 +669,36 @@ const res = await getEscrowsByRole({ role: "approver", address: walletAddress })
     setEscrowType(tpl.escrowType)
     setUseCase(tpl.useCase || null)
     setTitle(tpl.title)
-    setDescription(tpl.description)
-    setMilestones(tpl.milestones.length > 0 ? tpl.milestones : [{ description: "Full delivery", amount: "" }])
+    setDescription(tpl.description ?? "")
+    const tplMilestones = tpl.milestones.map(m => ({ description: m.description, amount: m.amount }))
+    setMilestones(tplMilestones.length > 0 ? tplMilestones : [{ description: "Full delivery", amount: "" }])
     setGuidePrefilled(true)
     setStep(2)
     setActiveSection("create")
   }
 
-  const deleteTemplate = (id: string) => setTemplates(prev => prev.filter(t => t.id !== id))
+  const deleteTemplate = async (id: string) => {
+    if (!walletAddress || deletingTemplateId) return
+    setDeletingTemplateId(id)
+    const { success } = await deleteTemplateAction(id, walletAddress)
+    if (success) {
+      setTemplates(prev => prev.filter(t => t.id !== id))
+      toast.success(t("dashPage.templateDeleted"))
+    } else {
+      toast.error(t("dashPage.templateDeleteError"))
+    }
+    setDeletingTemplateId(null)
+  }
 
   const startEditTemplate = (tpl: Template) => {
     setTemplateName(tpl.name); setEditingTemplate(tpl.id); setShowSaveTemplate(true)
     setEscrowType(tpl.escrowType); setUseCase(tpl.useCase || null)
-    setTitle(tpl.title); setDescription(tpl.description)
-    setMilestones(tpl.milestones.length > 0 ? tpl.milestones : [{ description: "Full delivery", amount: "" }])
+    setTitle(tpl.title); setDescription(tpl.description ?? "")
+    const tplMilestones = tpl.milestones.map(m => ({ description: m.description, amount: m.amount }))
+    setMilestones(tplMilestones.length > 0 ? tplMilestones : [{ description: "Full delivery", amount: "" }])
   }
 
-  if (loading) return <ThalosLoader />
+  if (loading || isCheckingRole) return <ThalosLoader />
 
   return (
     <div className="relative min-h-screen text-foreground">
@@ -499,7 +735,13 @@ const res = await getEscrowsByRole({ role: "approver", address: walletAddress })
 
           <div className="flex items-center gap-3">
             <div className="relative">
-              <button onClick={() => setProfileMenuOpen(!profileMenuOpen)} className="flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-sm font-medium text-white/70 hover:bg-white/10 hover:text-white transition-all">
+              <button onClick={() => setProfileMenuOpen(!profileMenuOpen)}
+                className="flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-medium transition-all"
+                style={{
+                  background: isLight ? "rgba(15,23,42,0.06)" : "rgba(255,255,255,0.05)",
+                  borderColor: isLight ? "rgba(15,23,42,0.15)" : "rgba(255,255,255,0.15)",
+                  color: isLight ? "#1a1a2e" : "rgba(255,255,255,0.7)",
+                }}>
                 <div className="h-6 w-6 rounded-full bg-[#3b82f6]/10 flex items-center justify-center text-[#3b82f6]">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>
                 </div>
@@ -530,45 +772,86 @@ const res = await getEscrowsByRole({ role: "approver", address: walletAddress })
         </nav>
       </header>
 
-      <div className="relative z-10 flex min-h-[calc(100vh-80px)]">
-        {/* Modern Sidebar */}
-        <aside className={cn(
-          "fixed inset-y-20 left-0 z-30 w-64 transition-transform duration-300 lg:sticky lg:top-20 lg:translate-x-0 lg:h-[calc(100vh-80px)]",
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        )}>
-          <div className="h-full flex flex-col bg-[#0a0d14]/95 backdrop-blur-xl border-r border-white/[0.06]">
-            {/* Enterprise Profile Section - Clickable to edit */}
-            <div className="p-4 border-b border-white/[0.06]">
-              <button
-                onClick={() => setShowProfileEditor(true)}
-                className="w-full flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-[#3b82f6]/10 to-transparent border border-[#3b82f6]/10 hover:from-[#3b82f6]/20 hover:to-[#3b82f6]/5 transition-all group"
-              >
-                <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[#3b82f6] to-[#3b82f6]/60 flex items-center justify-center text-white font-bold text-sm overflow-hidden">
-                  {companyProfile?.avatar_url ? (
-                    <img src={companyProfile.avatar_url} alt="" className="h-full w-full object-cover" />
-                  ) : (
-                    companyProfile?.display_name?.slice(0, 2).toUpperCase() || walletAddress?.slice(0, 2).toUpperCase() || "EN"
-                  )}
-                </div>
-                <div className="flex-1 min-w-0 text-left">
-                  <p className="text-sm font-semibold text-white truncate">{companyProfile?.display_name || t("dashPage.enterpriseAccount")}</p>
-                  <p className="text-[11px] font-mono text-[#3b82f6]/80 truncate">
-                    {walletAddress ? `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}` : "Connect Wallet"}
-                  </p>
-                </div>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-white/30 group-hover:text-white/60 transition-colors">
-                  <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
-                </svg>
-              </button>
+      <div className="relative z-10 flex min-h-[calc(100vh-80px)] justify-center w-full">
+        {activeBusinessWallet === null ? (
+          <div className="flex-1 flex flex-col items-center justify-center p-8 text-center max-w-md mx-auto my-20 border border-white/10 bg-[#0c1220] rounded-2xl shadow-xl z-20 backdrop-blur-md h-fit">
+            <div className="h-16 w-16 bg-red-500/10 text-red-400 rounded-full flex items-center justify-center mb-6">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" /><path d="M12 8V12" /><path d="M12 16H12.01" /></svg>
             </div>
+            <h2 className="text-xl font-bold text-white mb-2">
+              {!walletAddress ? "Wallet Not Connected" : "Access Denied"}
+            </h2>
+            <p className="text-sm text-white/50 mb-6 font-medium">
+              {!walletAddress 
+                ? "Please connect your Stellar wallet to access the Enterprise Dashboard."
+                : "You must be a business workspace owner or a registered team member to access the Enterprise Dashboard."}
+            </p>
+            <div className="flex flex-col gap-3 w-full">
+              <Link href="/dashboard/personal">
+                <Button className="w-full rounded-full bg-[#3b82f6] text-white hover:bg-[#2563eb]">
+                  Go to Personal Dashboard
+                </Button>
+              </Link>
+              <Button variant="outline" className="w-full rounded-full border-white/10 text-white/60 bg-transparent" onClick={() => openWalletModal()}>
+                {!walletAddress ? "Connect Wallet" : "Switch Wallet"}
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Modern Sidebar */}
+            <aside className={cn(
+              "fixed inset-y-20 left-0 z-30 w-64 transition-transform duration-300 lg:sticky lg:top-20 lg:translate-x-0 lg:h-[calc(100vh-80px)]",
+              sidebarOpen ? "translate-x-0" : "-translate-x-full"
+            )}>
+              <div className="h-full flex flex-col bg-[#0a0d14]/95 backdrop-blur-xl border-r border-white/[0.06]">
+                {/* Enterprise Profile Section - Clickable to edit only if Admin */}
+                <div className="p-4 border-b border-white/[0.06]">
+                  <button
+                    onClick={() => { if (memberRole === 'Admin') setShowProfileEditor(true) }}
+                    disabled={memberRole !== 'Admin'}
+                    className={cn(
+                      "w-full flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-[#3b82f6]/10 to-transparent border border-[#3b82f6]/10 transition-all group",
+                      memberRole === 'Admin' ? "hover:from-[#3b82f6]/20 hover:to-[#3b82f6]/5 cursor-pointer" : "cursor-default"
+                    )}
+                  >
+                    <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[#3b82f6] to-[#3b82f6]/60 flex items-center justify-center text-white font-bold text-sm overflow-hidden">
+                      {companyProfile?.avatar_url ? (
+                        <img src={companyProfile.avatar_url} alt="" className="h-full w-full object-cover" />
+                      ) : (
+                        companyProfile?.display_name?.slice(0, 2).toUpperCase() || walletAddress?.slice(0, 2).toUpperCase() || "EN"
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0 text-left">
+                      <p className="text-sm font-semibold text-white truncate">{companyProfile?.display_name || t("dashPage.enterpriseAccount")}</p>
+                      <p className="text-[11px] font-mono text-[#3b82f6]/80 truncate">
+                        {activeBusinessWallet ? `${activeBusinessWallet.slice(0, 6)}...${activeBusinessWallet.slice(-4)}` : "Connect Wallet"}
+                      </p>
+                    </div>
+                    {memberRole === 'Admin' && (
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-white/30 group-hover:text-white/60 transition-colors">
+                        <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+                      </svg>
+                    )}
+                  </button>
+                </div>
 
-            {/* Main Navigation */}
-            <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
-              {sidebarItems.map((item) => {
-                const isActive = activeSection === item.id
-                return (
-                  <button 
-                    key={item.id} 
+                {/* Main Navigation */}
+                <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
+                  {sidebarItems
+                    .filter((item) => {
+                      if (item.id === "create") return activePermissions.create;
+                      if (item.id === "templates") return activePermissions.templates;
+                      if (item.id === "wallets") return activePermissions.wallets;
+                      if (item.id === "analytics") return activePermissions.analytics;
+                      if (item.id === "team") return activePermissions.team;
+                      return true;
+                    })
+                    .map((item) => {
+                      const isActive = activeSection === item.id
+                      return (
+                        <button 
+                          key={item.id} 
                     onClick={() => { setActiveSection(item.id); setSidebarOpen(false); if (item.id === "create") resetWizard() }}
                     className={cn(
                       "group flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-all duration-200 relative overflow-hidden",
@@ -652,7 +935,7 @@ const res = await getEscrowsByRole({ role: "approver", address: walletAddress })
           
 
           {/* ══════ ANALYTICS ══════ */}
-          {activeSection === "analytics" && (
+          {activeSection === "analytics" && activePermissions.analytics && (
             <div className="mx-auto max-w-5xl animate-in fade-in slide-in-from-bottom-2 duration-300">
               <h1 className="mb-6 text-2xl font-semibold text-white">{t("dashPage.enterprise")} {t("dashPage.analytics")}</h1>
 
@@ -680,7 +963,7 @@ const res = await getEscrowsByRole({ role: "approver", address: walletAddress })
                         <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
                         <XAxis dataKey="month" tick={{ fill: "rgba(255,255,255,0.3)", fontSize: 12 }} axisLine={false} tickLine={false} />
                         <YAxis tick={{ fill: "rgba(255,255,255,0.3)", fontSize: 12 }} axisLine={false} tickLine={false} />
-                        <Tooltip contentStyle={{ backgroundColor: "rgba(15,15,18,0.95)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "12px", color: "#fff", fontSize: 13 }} />
+                        <Tooltip content={<ChartTooltip />} />
                         <Bar dataKey="agreements" fill="#3b82f6" radius={[6, 6, 0, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
@@ -702,7 +985,7 @@ const res = await getEscrowsByRole({ role: "approver", address: walletAddress })
                         <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
                         <XAxis dataKey="month" tick={{ fill: "rgba(255,255,255,0.3)", fontSize: 12 }} axisLine={false} tickLine={false} />
                         <YAxis tick={{ fill: "rgba(255,255,255,0.3)", fontSize: 12 }} axisLine={false} tickLine={false} tickFormatter={(v: number) => `$${(v / 1000).toFixed(0)}k`} />
-                        <Tooltip contentStyle={{ backgroundColor: "rgba(15,15,18,0.95)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "12px", color: "#fff", fontSize: 13 }} formatter={(value: number) => [`$${value.toLocaleString()}`, "Volume"]} />
+                        <Tooltip content={<ChartTooltip />} />
                         <Area type="monotone" dataKey="volume" stroke="#3b82f6" fill="url(#volGradE)" strokeWidth={2} />
                       </AreaChart>
                     </ResponsiveContainer>
@@ -864,13 +1147,13 @@ const res = await getEscrowsByRole({ role: "approver", address: walletAddress })
                         </div>
                         <div className="flex items-center gap-3">
                           <p className="text-lg font-bold text-white">{"$"}{ms.amount} <span className="text-xs font-normal text-white/35">USDC</span></p>
-                          {ms.status === "pending" && !allReleased && (
+                          {ms.status === "pending" && !allReleased && activePermissions.approve && (
                             <Button size="sm" onClick={() => approveMilestone(agr.id, idx)}
                               className="rounded-full bg-white/10 px-4 text-xs font-semibold text-white hover:bg-white/20">
                               Approve
                             </Button>
                           )}
-                          {ms.status === "approved" && agr.releaseStrategy === "per-milestone" && (
+                          {ms.status === "approved" && agr.releaseStrategy === "per-milestone" && activePermissions.release && (
                             <Button size="sm" onClick={() => releaseMilestone(agr.id, idx)}
                               className="rounded-full bg-[#3b82f6] px-4 text-xs font-semibold text-white hover:bg-[#2563eb] shadow-[0_2px_8px_rgba(59,130,246,0.2)]">
                               Release Funds
@@ -895,29 +1178,29 @@ const res = await getEscrowsByRole({ role: "approver", address: walletAddress })
                   ))}
                 </div>
 
-                {!allReleased && (
+                {!allReleased && (activePermissions.approve || activePermissions.release) && (
                   <div className="rounded-2xl border border-white/10 bg-[#0c1220] p-6 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)]">
                     <h3 className="mb-4 text-sm font-bold uppercase tracking-wider text-white/40">Release Actions</h3>
                     <div className="flex flex-wrap gap-3">
-                      {agr.type === "Single Release" && agr.milestones[0]?.status === "pending" && (
+                      {agr.type === "Single Release" && agr.milestones[0]?.status === "pending" && activePermissions.approve && (
                         <Button onClick={() => approveMilestone(agr.id, 0)}
                           className="rounded-full bg-white/10 px-6 text-sm font-semibold text-white hover:bg-white/20">
                           Approve Agreement
                         </Button>
                       )}
-                      {agr.type === "Single Release" && agr.milestones[0]?.status === "approved" && (
+                      {agr.type === "Single Release" && agr.milestones[0]?.status === "approved" && activePermissions.release && (
                         <Button onClick={() => releaseMilestone(agr.id, 0)}
                           className="rounded-full bg-[#3b82f6] px-6 text-sm font-semibold text-white hover:bg-[#2563eb] shadow-[0_4px_16px_rgba(59,130,246,0.25)]">
                           Release All Funds
                         </Button>
                       )}
-                      {agr.type === "Multi Release" && hasApproved && (
+                      {agr.type === "Multi Release" && hasApproved && activePermissions.release && (
                         <Button onClick={() => releaseAllApproved(agr.id)}
                           className="rounded-full bg-[#3b82f6] px-6 text-sm font-semibold text-white hover:bg-[#2563eb] shadow-[0_4px_16px_rgba(59,130,246,0.25)]">
                           Release All Approved
                         </Button>
                       )}
-                      {agr.type === "Multi Release" && !allApproved && (
+                      {agr.type === "Multi Release" && !allApproved && activePermissions.approve && activePermissions.release && (
                         <Button onClick={() => approveAndReleaseAll(agr.id)}
                           className="rounded-full bg-emerald-600 px-6 text-sm font-semibold text-white hover:bg-emerald-700 shadow-[0_4px_16px_rgba(16,185,129,0.2)]">
                           Approve & Release All
@@ -973,7 +1256,7 @@ const res = await getEscrowsByRole({ role: "approver", address: walletAddress })
           )}
 
           {/* ══════ TEMPLATES ══════ */}
-          {activeSection === "templates" && (
+          {activeSection === "templates" && activePermissions.templates && (
             <div className="mx-auto max-w-4xl animate-in fade-in slide-in-from-bottom-2 duration-300">
               <div className="mb-2 flex items-center justify-between">
                 <div>
@@ -1029,7 +1312,7 @@ const res = await getEscrowsByRole({ role: "approver", address: walletAddress })
                       </div>
                     )}
                     <div className="flex items-center gap-3 pt-2">
-                      <Button onClick={saveAsTemplate} disabled={!templateName.trim() && !title.trim()}
+                      <Button onClick={() => void saveAsTemplate()} disabled={!templateName.trim() && !title.trim()}
                         className="rounded-full bg-[#3b82f6] px-6 text-sm font-semibold text-white hover:bg-[#2563eb] disabled:opacity-30">
                         {t("dashPage.saveTemplate")}
                       </Button>
@@ -1043,7 +1326,11 @@ const res = await getEscrowsByRole({ role: "approver", address: walletAddress })
               )}
 
               {/* Template cards */}
-              {templates.length === 0 && !showSaveTemplate ? (
+              {templatesLoading ? (
+                <div className="mt-6 flex items-center justify-center py-16">
+                  <p className="text-sm text-white/40">Loading templates…</p>
+                </div>
+              ) : templates.length === 0 && !showSaveTemplate ? (
                 <div className="mt-6 flex flex-col items-center justify-center rounded-2xl border border-white/10 bg-[#0c1220] py-16 px-6 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)] text-center">
                   <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" className="text-white/15 mb-4"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
                   <p className="text-sm font-medium text-white/40">{t("dashPage.noTemplates")}</p>
@@ -1080,7 +1367,12 @@ const res = await getEscrowsByRole({ role: "approver", address: walletAddress })
                         <button onClick={() => startEditTemplate(tpl)} className="rounded-full p-2 text-white/20 hover:text-white/60 hover:bg-white/[0.04] transition-all" title={t("dashPage.editTemplate")}>
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                         </button>
-                        <button onClick={() => deleteTemplate(tpl.id)} className="rounded-full p-2 text-white/20 hover:text-red-400 hover:bg-red-400/[0.06] transition-all" title={t("dashPage.deleteTemplate")}>
+                        <button
+                          onClick={() => deleteTemplate(tpl.id)}
+                          disabled={deletingTemplateId === tpl.id}
+                          className="rounded-full p-2 text-white/20 hover:text-red-400 hover:bg-red-400/[0.06] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                          title={t("dashPage.deleteTemplate")}
+                        >
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
                         </button>
                       </div>
@@ -1092,7 +1384,7 @@ const res = await getEscrowsByRole({ role: "approver", address: walletAddress })
           )}
 
           {/* ══════ WALLETS ══════ */}
-          {activeSection === "wallets" && (
+          {activeSection === "wallets" && activePermissions.wallets && (
             <div className="mx-auto max-w-4xl animate-in fade-in slide-in-from-bottom-2 duration-300">
               <h1 className="mb-6 text-2xl font-semibold text-white">Enterprise Wallets</h1>
               <div className="flex flex-col gap-4">
@@ -1121,7 +1413,12 @@ const res = await getEscrowsByRole({ role: "approver", address: walletAddress })
                 ))}
                 <button 
                   onClick={() => openWalletModal()}
-                  className="flex items-center justify-center gap-3 rounded-2xl border border-dashed border-white/10 bg-[#0c1220]/60 p-8 text-white/70 hover:border-[#3b82f6]/30 hover:text-[#3b82f6] hover:bg-[#0c1220]/80 transition-all"
+                  className="flex items-center justify-center gap-3 rounded-2xl border border-dashed p-8 transition-all hover:border-[#3b82f6]/40"
+                  style={{
+                    background: isLight ? "rgba(15,23,42,0.04)" : "rgba(12,18,32,0.6)",
+                    borderColor: isLight ? "rgba(15,23,42,0.2)" : "rgba(255,255,255,0.1)",
+                    color: isLight ? "#374151" : "rgba(255,255,255,0.7)",
+                  }}
                 >
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                   <span className="text-sm font-medium">{t("dashPage.connectWallet")}</span>
@@ -1131,7 +1428,7 @@ const res = await getEscrowsByRole({ role: "approver", address: walletAddress })
           )}
 
           {/* ══════ CREATE AGREEMENT ══════ */}
-          {activeSection === "create" && (
+          {activeSection === "create" && activePermissions.create && (
             <div className="mx-auto max-w-4xl animate-in fade-in slide-in-from-bottom-2 duration-300">
               <div className="mb-6 flex items-center justify-between">
                 <h1 className="text-2xl font-semibold text-white">New Agreement</h1>
@@ -1190,7 +1487,7 @@ const res = await getEscrowsByRole({ role: "approver", address: walletAddress })
                       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                         {([
                           { id: "single" as const, label: t("wizard.oneTimePayment"), desc: t("wizard.oneTimeDesc"), icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><path d="M16 8l-8 8M8 8h8v8"/></svg> },
-                          { id: "multi" as const, label: t("wizard.milestoneBased"), desc: t("wizard.milestoneDesc"), icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg> },
+                          { id: "multi" as const, label: t("wizard.milestoneBased"), desc: t("wizard.milestoneBasedDesc"), icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg> },
                         ]).map((opt) => (
                           <button key={opt.id} onClick={() => { setEscrowType(opt.id); if (opt.id === "single") setMilestones([{ description: "Full delivery", amount: "" }]) }}
                             className={cn("flex flex-col gap-3 rounded-xl border p-6 text-left transition-all",
@@ -1278,6 +1575,14 @@ const res = await getEscrowsByRole({ role: "approver", address: walletAddress })
                   {step === 4 && (
                     <div className="flex flex-col gap-5">
                       <div><h3 className="text-lg font-semibold text-white sm:text-xl">{t("wizard.reviewAndSend")}</h3><p className="mt-1 text-sm text-white/35">{t("wizard.confirmDetails")}</p></div>
+
+                      {escrowType === "single" && (
+                        <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 flex items-center gap-3">
+                          <AlertTriangle className="h-5 w-5 text-amber-500 shrink-0" />
+                          <p className="text-sm text-amber-200/80">{t("wizard.quickWarning")}</p>
+                        </div>
+                      )}
+
                       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                         <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5">
                           <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-white/25">{t("wizard.agreement")}</p>
@@ -1329,8 +1634,139 @@ const res = await getEscrowsByRole({ role: "approver", address: walletAddress })
               )}
             </div>
           )}
+          {/* ══════ TEAM MANAGEMENT ══════ */}
+          {activeSection === "team" && activePermissions.team && (
+            <div className="mx-auto max-w-4xl animate-in fade-in slide-in-from-bottom-2 duration-300">
+              <div className="mb-6">
+                <h1 className="text-2xl font-semibold text-white">Team Management</h1>
+                <p className="mt-1 text-sm text-white/35">Manage your team members and assign their operational/financial roles.</p>
+              </div>
+
+              {/* Add Team Member form */}
+              <div className="mb-8 rounded-2xl border border-white/10 bg-[#0c1220] p-6 shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
+                <h3 className="text-base font-semibold text-white mb-4">Add Team Member</h3>
+                <form onSubmit={async (e) => {
+                  e.preventDefault();
+                  const form = e.currentTarget;
+                  const formData = new FormData(form);
+                  const wallet = formData.get("wallet") as string;
+                  const role = formData.get("role") as "Admin" | "Finance" | "Operator";
+
+                  if (!wallet || !wallet.startsWith("G") || wallet.length < 50) {
+                    alert("Please enter a valid Stellar public key starting with 'G'");
+                    return;
+                  }
+
+                  if (activeBusinessWallet) {
+                    const { addBusinessMember, getBusinessMembers } = await import("@/lib/actions/business-roles");
+                    const res = await addBusinessMember(activeBusinessWallet, wallet, role);
+                    if (res.success) {
+                      form.reset();
+                      setLoadingTeam(true);
+                      const fetchRes = await getBusinessMembers(activeBusinessWallet);
+                      if (fetchRes.members) setTeamMembers(fetchRes.members);
+                      setLoadingTeam(false);
+                    } else {
+                      alert(res.error || "Failed to add member");
+                    }
+                  }
+                }} className="flex flex-col gap-4 sm:flex-row sm:items-end">
+                  <div className="flex-1">
+                    <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-white/50">Stellar Wallet Address</label>
+                    <input name="wallet" type="text" placeholder="e.g. GBXGQJWVLWOYH..." required
+                      className="h-11 w-full rounded-xl border border-white/10 bg-white/5 px-4 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-[#3b82f6]/50" />
+                  </div>
+                  <div className="w-full sm:w-44">
+                    <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-white/50">Role</label>
+                    <select name="role" required
+                      className="h-11 w-full rounded-xl border border-white/10 bg-[#0c1220] px-4 text-sm text-white focus:outline-none focus:border-[#3b82f6]/50">
+                      <option value="Operator">Operator</option>
+                      <option value="Finance">Finance</option>
+                      <option value="Admin">Admin</option>
+                    </select>
+                  </div>
+                  <Button type="submit" className="h-11 rounded-xl bg-[#3b82f6] text-white hover:bg-[#2563eb] px-6">
+                    Add Member
+                  </Button>
+                </form>
+              </div>
+
+              {/* Members List */}
+              <div className="rounded-2xl border border-white/10 bg-[#0c1220] p-6 shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
+                <h3 className="text-base font-semibold text-white mb-4">Workspace Members</h3>
+                {loadingTeam ? (
+                  <p className="text-sm text-white/40">Loading team members...</p>
+                ) : teamMembers.length === 0 ? (
+                  <p className="text-sm text-white/35">No registered team members yet.</p>
+                ) : (
+                  <div className="flex flex-col gap-4">
+                    {teamMembers.map((member) => (
+                      <div key={member.id} className="flex items-center justify-between rounded-xl border border-white/[0.04] bg-white/[0.01] p-4 hover:border-white/10 transition-all">
+                        <div className="flex items-center gap-3">
+                          <div className="h-9 w-9 rounded-full bg-[#3b82f6]/10 flex items-center justify-center text-white font-bold text-xs">
+                            {member.avatar_url ? (
+                              <img src={member.avatar_url} alt="" className="h-full w-full rounded-full object-cover" />
+                            ) : (
+                              (member.display_name || "M").slice(0, 2).toUpperCase()
+                            )}
+                          </div>
+                          <div>
+                            <p className="text-sm font-semibold text-white">{member.display_name || "Workspace Member"}</p>
+                            <p className="text-xs text-white/30 font-mono">{member.member_wallet.slice(0, 6)}...{member.member_wallet.slice(-4)}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <select 
+                            value={member.role}
+                            onChange={async (e) => {
+                              const newRole = e.target.value as "Admin" | "Finance" | "Operator";
+                              if (activeBusinessWallet) {
+                                const { updateBusinessMemberRole } = await import("@/lib/actions/business-roles");
+                                const res = await updateBusinessMemberRole(activeBusinessWallet, member.member_wallet, newRole);
+                                if (res.success) {
+                                  setTeamMembers(prev => prev.map(m => m.id === member.id ? { ...m, role: newRole } : m));
+                                } else {
+                                  alert(res.error || "Failed to update role");
+                                }
+                              }
+                            }}
+                            className="h-9 rounded-lg border border-white/10 bg-[#0c1220] px-3 text-xs text-white focus:outline-none"
+                          >
+                            <option value="Operator">Operator</option>
+                            <option value="Finance">Finance</option>
+                            <option value="Admin">Admin</option>
+                          </select>
+                          <button
+                            onClick={async () => {
+                              if (confirm("Are you sure you want to remove this member?")) {
+                                if (activeBusinessWallet) {
+                                  const { removeBusinessMember } = await import("@/lib/actions/business-roles");
+                                  const res = await removeBusinessMember(activeBusinessWallet, member.member_wallet);
+                                  if (res.success) {
+                                    setTeamMembers(prev => prev.filter(m => m.id !== member.id));
+                                  } else {
+                                    alert(res.error || "Failed to remove member");
+                                  }
+                                }
+                              }
+                            }}
+                            className="p-2 rounded-lg text-white/30 hover:text-red-400 hover:bg-red-400/10 transition-colors"
+                            title="Remove Member"
+                          >
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </main>
-      </div>
+      </>
+    )}
+  </div>
       
       {/* Footer */}
       <Footer />
