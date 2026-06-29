@@ -6,6 +6,7 @@ export interface LinkedWallet {
   wallet_type: "custodial" | "freighter" | "lobstr" | "xbull" | "albedo" | "other"
   label: string | null
   is_primary: boolean
+  is_verified: boolean
   linked_at: string
 }
 
@@ -95,6 +96,7 @@ export async function getWalletsWithAgreements(token: string): Promise<ApiRespon
       wallet_type: wallet.wallet_type as LinkedWallet["wallet_type"],
       label: (wallet.label as string | null) ?? null,
       is_primary: (wallet.is_primary as boolean) ?? false,
+      is_verified: (wallet.is_verified as boolean) ?? false,
       linked_at: wallet.linked_at as string,
       agreements_count: (wallet.agreements_count as number | undefined) ?? agreements.length,
       agreements,
@@ -121,12 +123,14 @@ export async function getWalletBalance(
   )
 }
 
-// Link a new wallet
+// Link a new wallet (with optional signature proof)
 export async function linkWallet(
   data: {
     wallet_address: string
     wallet_type: LinkedWallet["wallet_type"]
     label?: string
+    signed_message?: string
+    signature?: string
   },
   token: string
 ): Promise<ApiResponse<LinkedWallet>> {
@@ -136,6 +140,18 @@ export async function linkWallet(
       method: "POST",
       body: JSON.stringify(data),
     },
+    token
+  )
+}
+
+// Request a wallet verification challenge
+export async function getWalletVerificationChallenge(
+  walletAddress: string,
+  token: string
+): Promise<ApiResponse<{ challenge: string }>> {
+  return apiRequest<{ challenge: string }>(
+    `/wallets/verify-challenge?wallet_address=${encodeURIComponent(walletAddress)}`,
+    { method: "GET" },
     token
   )
 }

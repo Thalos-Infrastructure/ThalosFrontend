@@ -9,6 +9,7 @@ import { useStellarWallet } from "@/lib/stellar-wallet"
 import { useAuthStore } from "@/lib/auth-store"
 import {
   getWalletsWithBalances,
+  getWalletVerificationChallenge,
   linkWallet,
   updateWallet,
   unlinkWallet,
@@ -80,7 +81,7 @@ interface LinkedWalletsProps {
 
 export function LinkedWallets({ onWalletSelect, selectedWallet, showBalances = true }: LinkedWalletsProps) {
   const { t } = useLanguage()
-  const { address: connectedWallet, openWalletModal } = useStellarWallet()
+  const { address: connectedWallet, openWalletModal, signMessage } = useStellarWallet()
   const { token } = useAuthStore()
   const [wallets, setWallets] = useState<WalletWithBalance[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -138,10 +139,36 @@ export function LinkedWallets({ onWalletSelect, selectedWallet, showBalances = t
     setError(null)
 
     try {
+      // Step 1: Request verification challenge from backend
+      const challengeResult = await getWalletVerificationChallenge(walletAddress, token)
+      if (!challengeResult.success || !challengeResult.data) {
+        // Backend may not support challenge endpoint yet — link without proof
+        const result = await linkWallet(
+          { wallet_address: walletAddress, wallet_type: "freighter" },
+          token
+        )
+        if (result.success) {
+          await loadWallets()
+          return true
+        }
+        setError(result.error || t("linkedWallets.linkError"))
+        return false
+      }
+
+      // Step 2: Sign the challenge message with the connected wallet
+      const signature = await signMessage(challengeResult.data.challenge)
+      if (!signature) {
+        setError(t("linkedWallets.signatureCancelled"))
+        return false
+      }
+
+      // Step 3: Link wallet with signature proof
       const result = await linkWallet(
         {
           wallet_address: walletAddress,
           wallet_type: "freighter",
+          signed_message: challengeResult.data.challenge,
+          signature,
         },
         token
       )
@@ -308,7 +335,7 @@ export function LinkedWallets({ onWalletSelect, selectedWallet, showBalances = t
               const typeInfo = walletTypeLabels[wallet.wallet_type] || walletTypeLabels.other
               const isSelected = selectedWallet === wallet.wallet_address
               const isConnected = connectedWallet === wallet.wallet_address
-              const isVerified = isConnected
+              const isVerified = wallet.is_verified
               const isEditing = editingLabel === wallet.id
 
               return (
@@ -371,9 +398,13 @@ export function LinkedWallets({ onWalletSelect, selectedWallet, showBalances = t
                               {t("linkedWallets.operatingWallet")}
                             </span>
                           )}
-                          {isVerified && (
+                          {isVerified ? (
                             <span className="rounded-full bg-blue-500/20 px-2 py-0.5 text-[10px] font-medium text-blue-400">
                               {t("linkedWallets.verified")}
+                            </span>
+                          ) : (
+                            <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-[10px] font-medium text-amber-400">
+                              {t("linkedWallets.pending")}
                             </span>
                           )}
                           {isConnected && (
