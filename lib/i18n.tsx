@@ -450,6 +450,7 @@ const translations: Record<Lang, Record<string, string>> = {
     "dashPage.dashboard": "Dashboard",
     "dashPage.agreements": "Agreements",
     "dashPage.newAgreement": "New Agreement",
+    "dashPage.createWithAI": "Create with AI",
     "dashPage.wallets": "My Wallets",
     "dashPage.active": "Active",
     "dashPage.totalVolume": "Total Volume",
@@ -1314,7 +1315,8 @@ const translations: Record<Lang, Record<string, string>> = {
     // Dashboard page keys
     "dashPage.dashboard": "Panel",
     "dashPage.agreements": "Acuerdos",
-    "dashPage.newAgreement": "Nuevo Acuerdo",
+    "dashPage.newAgreement": "Nueva Acuerdo",
+    "dashPage.createWithAI": "Crear con IA",
     "dashPage.wallets": "Mis Billeteras",
     "dashPage.active": "Activos",
     "dashPage.totalVolume": "Volumen Total",
