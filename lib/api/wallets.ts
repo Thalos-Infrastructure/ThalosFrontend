@@ -6,6 +6,7 @@ export interface LinkedWallet {
   wallet_type: "custodial" | "freighter" | "lobstr" | "xbull" | "albedo" | "other"
   label: string | null
   is_primary: boolean
+  is_verified: boolean
   linked_at: string
 }
 
@@ -78,7 +79,31 @@ export async function getWalletsWithBalances(token: string): Promise<ApiResponse
 
 // Get agreements grouped by wallet
 export async function getWalletsWithAgreements(token: string): Promise<ApiResponse<WalletWithAgreements[]>> {
-  return apiRequest<WalletWithAgreements[]>("/wallets/agreements", { method: "GET" }, token)
+  const result = await apiRequest<unknown>("/wallets/agreements", { method: "GET" }, token)
+  if (!result.success || !result.data) return { success: false, error: result.error }
+
+  // Unwrap { wallets: [...] } envelope if the backend returns that shape
+  const raw: unknown[] = Array.isArray(result.data)
+    ? result.data
+    : ((result.data as Record<string, unknown>).wallets as unknown[] | undefined) ?? []
+
+  const mapped: WalletWithAgreements[] = raw.map((w) => {
+    const wallet = w as Record<string, unknown>
+    const agreements = (wallet.agreements as WalletWithAgreements["agreements"] | undefined) ?? []
+    return {
+      id: wallet.id as string,
+      wallet_address: wallet.wallet_address as string,
+      wallet_type: wallet.wallet_type as LinkedWallet["wallet_type"],
+      label: (wallet.label as string | null) ?? null,
+      is_primary: (wallet.is_primary as boolean) ?? false,
+      is_verified: (wallet.is_verified as boolean) ?? false,
+      linked_at: wallet.linked_at as string,
+      agreements_count: (wallet.agreements_count as number | undefined) ?? agreements.length,
+      agreements,
+    }
+  })
+
+  return { success: true, data: mapped }
 }
 
 // Get primary wallet
@@ -98,12 +123,14 @@ export async function getWalletBalance(
   )
 }
 
-// Link a new wallet
+// Link a new wallet (with optional signature proof)
 export async function linkWallet(
   data: {
     wallet_address: string
     wallet_type: LinkedWallet["wallet_type"]
     label?: string
+    signed_message?: string
+    signature?: string
   },
   token: string
 ): Promise<ApiResponse<LinkedWallet>> {
@@ -113,6 +140,18 @@ export async function linkWallet(
       method: "POST",
       body: JSON.stringify(data),
     },
+    token
+  )
+}
+
+// Request a wallet verification challenge
+export async function getWalletVerificationChallenge(
+  walletAddress: string,
+  token: string
+): Promise<ApiResponse<{ challenge: string }>> {
+  return apiRequest<{ challenge: string }>(
+    `/wallets/verify-challenge?wallet_address=${encodeURIComponent(walletAddress)}`,
+    { method: "GET" },
     token
   )
 }

@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from "react"
 import { getKit, clearKit, isFreighterAvailable } from "@/lib/stellar-wallet-kit"
 import { getOrCreateProfile, type Profile } from "@/lib/actions/profile"
+import { STELLAR_NETWORK_PASSPHRASE } from "@/lib/config"
 
 const STELLAR_WALLET_KEY = "thalos_stellar_address"
 const STELLAR_PROFILE_KEY = "thalos_profile"
@@ -16,6 +17,7 @@ type StellarWalletContextValue = {
   openWalletModal: (onConnected?: (address: string) => void, accountType?: "personal" | "enterprise") => Promise<void>
   disconnect: () => void
   signTransaction: (xdr: string, networkPassphrase: string) => Promise<{ signedTxXdr: string } | null>
+  signMessage: (message: string) => Promise<{ signedMessage: string; signerAddress: string } | null>
   refreshProfile: () => Promise<void>
 }
 
@@ -143,6 +145,52 @@ export function StellarWalletProvider({ children }: { children: React.ReactNode 
         return null
       }
     },
+    }, [address]
+  )
+
+  const signMessage = useCallback(
+    async (message: string): Promise<string | null> => {
+      if (!address) return null
+      try {
+        const kit = await getKit()
+        if (kit && typeof (kit as any).signMessage === "function") {
+          const result = await (kit as any).signMessage(address, message)
+          return typeof result === "string" ? result : result?.signature ?? null
+        }
+        if (typeof window !== "undefined" && (window as any).freighter?.signMessage) {
+          const result = await (window as any).freighter.signMessage(message, address)
+          return typeof result === "string" ? result : result?.signature ?? null
+        }
+        return null
+      } catch {
+        return null
+      }
+    },
+    [address]
+  )
+
+  // Use this for wallet ownership proof challenges; pass the exact challenge string to sign.
+  const signMessage = useCallback(
+    async (message: string): Promise<{ signedMessage: string; signerAddress: string } | null> => {
+      if (!address) return null
+      try {
+        const kit = await getKit()
+        if (!kit) return null
+        const result = await kit.signMessage(message, {
+          networkPassphrase: STELLAR_NETWORK_PASSPHRASE,
+          address,
+        })
+
+        return result?.signedMessage
+          ? {
+              signedMessage: result.signedMessage,
+              signerAddress: result.signerAddress ?? address,
+            }
+          : null
+      } catch {
+        return null
+      }
+    },
     [address]
   )
 
@@ -154,6 +202,7 @@ export function StellarWalletProvider({ children }: { children: React.ReactNode 
     openWalletModal,
     disconnect,
     signTransaction,
+    signMessage,
     refreshProfile,
   }
 

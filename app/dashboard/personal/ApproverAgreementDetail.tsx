@@ -25,10 +25,16 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { statusConfig } from "./statusConfig";
 import { useLanguage } from "@/lib/i18n";
+import { useWalletType } from "@/lib/use-current-address";
+import { useStellarWallet } from "@/lib/stellar-wallet";
+import { WalletPrompt } from "@/components/shared/wallet-guard";
 import { fundAndSignEscrow } from "@/lib/agreementActions";
 import { AlertTriangle } from "lucide-react";
 
 export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreementDetailProps) {
+  const walletType = useWalletType();
+  const { openWalletModal } = useStellarWallet();
+  const isExternalWallet = walletType === "external";
   const [showDetail, setShowDetail] = React.useState(false);
   const [loadingMs, setLoadingMs] = React.useState<number | null>(null);
   const [errorMs, setErrorMs] = React.useState<string | null>(null);
@@ -224,7 +230,7 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
       </div>
 
       {/* Fund Escrow button (step 1) */}
-      {!isFunded && !allReleased && (
+      {!isFunded && !allReleased && isExternalWallet && (
         <div className="mt-4 rounded-xl border border-blue-500/15 bg-blue-500/5 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             <p className="text-sm font-semibold text-white">{t("flow.fundEscrow")}</p>
@@ -248,6 +254,12 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
             {funding ? t("flow.funding") : t("flow.fundEscrow")}
           </Button>
         </div>
+      )}
+      {!isFunded && !allReleased && !isExternalWallet && (
+        <WalletPrompt
+          message="Connect and verify a wallet to fund this escrow agreement."
+          onConnect={openWalletModal}
+        />
       )}
       {fundError && <div className="text-red-400 text-xs mt-2">{fundError}</div>}
       {fundSuccess && <div className="text-emerald-400 text-xs mt-2">{t("flow.funded")} - Escrow funded successfully!</div>}
@@ -280,7 +292,7 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
                   
                   {/* Dispute button - appears when evidence is submitted but not yet released */}
                   {/* Dispute button - show for funded escrows on any milestone that is not released and not already disputed */}
-                  {isFunded && ms.status !== "released" && !disputedMs.has(idx) && (
+                  {isFunded && ms.status !== "released" && !disputedMs.has(idx) && isExternalWallet && (
                     <Button 
                       size="sm" 
                       onClick={() => setShowDisputeConfirm(idx)} 
@@ -300,7 +312,7 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
                     </span>
                   )}
                   
-                  {isFunded && (ms.status === "pending" || ms.status === "Completed") && !allReleased && ms.approved === false && !disputedMs.has(idx) && (
+                  {isFunded && (ms.status === "pending" || ms.status === "Completed") && !allReleased && ms.approved === false && !disputedMs.has(idx) && isExternalWallet && (
                     <Button size="sm" onClick={() => handleApprove(idx)} disabled={loadingMs === idx}
                       className="rounded-full bg-[#f0b400]/15 text-xs font-semibold text-[#f0b400] hover:bg-[#f0b400]/25 border border-[#f0b400]/20">
                       {loadingMs === idx ? t("flow.approving") : t("flow.approveMs")}
@@ -355,7 +367,7 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
           )}
 
           {/* Release button */}
-          {allApproved && !agr.released && !allReleased && (
+          {allApproved && !agr.released && !allReleased && isExternalWallet && (
             <div className="mt-4 rounded-xl border border-emerald-500/15 bg-emerald-500/5 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div>
                 <p className="text-sm font-semibold text-emerald-400">{t("flow.releaseAll")}</p>

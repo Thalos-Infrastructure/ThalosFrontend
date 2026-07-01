@@ -9,7 +9,8 @@ import { cn } from "@/lib/utils"
 import { ThalosLoader } from "@/components/thalos-loader"
 import { LanguageToggle, ThemeToggle, useLanguage } from "@/lib/i18n"
 import { useStellarWallet } from "@/lib/stellar-wallet"
-import { useCurrentAddress } from "@/lib/use-current-address"
+import { useCurrentAddress, useWalletType } from "@/lib/use-current-address"
+import { WalletGuard, WalletPrompt } from "@/components/shared/wallet-guard"
 import { useAuthStore } from "@/lib/auth-store"
 import { WalletAddress } from "@/components/ui/wallet-address"
 import { AlertTriangle } from "lucide-react"
@@ -29,6 +30,7 @@ import { AgreementChat } from "@/components/agreements/agreement-chat";
 import { AIAgreementAssistant } from "@/components/agreements/ai-agreement-assistant";
 import { ProfileEditor } from "@/components/profile/profile-editor"
 import { WalletSelector } from "@/components/dashboard/wallet-selector"
+import { WalletAgreementsPanel } from "@/components/dashboard/wallet-agreements-panel"
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area,
 } from "recharts"
@@ -329,6 +331,8 @@ export default function PersonalDashboardPage() {
   const { signTransaction, openWalletModal } = useStellarWallet();
   const walletAddress = useCurrentAddress();
   const { user: socialUser } = useAuthStore();
+  const walletType = useWalletType();
+  const isExternalWallet = walletType === "external";
   const [loading, setLoading] = useState(false);
 
   const [activeSection, setActiveSection] = useState("home");
@@ -396,7 +400,7 @@ const [currentPage, setCurrentPage] = useState(1)
       return a.title.localeCompare(b.title)
     })
     return filtered
-  }, [agreements, statusFilter, searchQuery, sortBy])
+  }, [agreements, statusFilter, searchQuery, sortBy, walletFilter])
 
   // Pagination
   const totalPages = Math.ceil(filteredAgreements.length / ITEMS_PER_PAGE)
@@ -1138,27 +1142,22 @@ const res = await getEscrowsByRole({ role: "approver", address: walletAddress })
     className="mb-6"
   />
   
-  {/* Structured Agreements View - includes all agreements and approver escrows */}
+  {/* Agreements view — pre-filtered by selected wallet when active */}
               <AgreementsView
                 agreements={[
-                  // Regular agreements with role
-                  ...agreements.map(a => ({
-                    ...a,
-                    updatedAt: a.date,
-                  })),
-                  // Approver escrows (these are agreements where user is approver)
+                  ...filteredAgreements.map(a => ({ ...a, updatedAt: a.date, currency: "USDC" })),
                   ...approverEscrows.map(e => ({
                     id: e.id,
                     title: e.title,
-                    counterparty: e.serviceProvider?.slice(0, 8) + "..." || "Unknown",
+                    counterparty: (e as unknown as { serviceProvider?: string }).serviceProvider?.slice(0, 8) + "..." || "Unknown",
                     status: e.status || "pending",
-                    amount: typeof e.amount === "number" ? e.amount.toLocaleString() : e.amount || "0",
+                    amount: typeof e.amount === "number" ? (e.amount as number).toLocaleString() : e.amount || "0",
                     currency: "USDC",
                     type: "Single Release" as const,
                     updatedAt: e.date,
                     milestones: e.milestones || [{ status: "pending" }],
-                    role: "buyer" as const, // As approver, user is typically the buyer
-                  }))
+                    role: "buyer" as const,
+                  })),
                 ]}
                 onAgreementClick={(id) => setViewingAgreement(id)}
                 onOpenChat={(id) => setShowAgreementChat(id)}
@@ -1255,7 +1254,13 @@ const res = await getEscrowsByRole({ role: "approver", address: walletAddress })
 
                 {/* Milestones */}
                 <div className="flex flex-col gap-3 mb-6">
-                  <SellerMilestoneList agr={agr} agreements={agreements} setAgreements={setAgreements} t={t} />
+                  {isExternalWallet ? (
+                    <SellerMilestoneList agr={agr} agreements={agreements} setAgreements={setAgreements} t={t} />
+                  ) : (
+                    <WalletPrompt
+                      message="Connect and verify a wallet to submit evidence and manage this agreement."
+                    />
+                  )}
                 </div>
 
                 {allReleased && (
@@ -1322,6 +1327,19 @@ const res = await getEscrowsByRole({ role: "approver", address: walletAddress })
                 <p className="text-xs text-white/40 leading-relaxed">All wallets require a USDC trustline on the Stellar network to participate in Thalos escrow agreements. You can add the trustline from your wallet provider.</p>
                 <p className="mt-2 text-xs text-white/25 font-mono break-all">{TRUSTLINE_USDC.address}</p>
               </div>
+
+              {/* Agreements grouped by wallet — real data from API */}
+              <div className="mt-8">
+                <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-white/40">
+                  Agreements by wallet
+                </h2>
+                <WalletAgreementsPanel
+                  onAgreementClick={(id) => {
+                    setViewingAgreement(id)
+                    setActiveSection("agreements")
+                  }}
+                />
+              </div>
             </div>
           )}
 
@@ -1351,6 +1369,14 @@ const res = await getEscrowsByRole({ role: "approver", address: walletAddress })
           {/* ══════ CREATE AGREEMENT ══════ */}
           {activeSection === "create" && (
             <div className="mx-auto max-w-4xl animate-in fade-in slide-in-from-bottom-2 duration-300">
+              {!isExternalWallet && !submitted ? (
+                <div className="pt-8">
+                  <WalletPrompt
+                    message="Connect and verify a wallet to operate escrow agreements on Thalos."
+                  />
+                </div>
+              ) : (
+              <>
               <div className="mb-6 flex items-center justify-between">
                 <h1 className="text-2xl font-semibold text-white">New Agreement</h1>
                 <Button onClick={() => { setActiveSection("agreements"); resetWizard() }}
@@ -1592,6 +1618,8 @@ const newAgr: Agreement = {
                   </div>
                 </div>
               )}
+              </>
+              )}
             </div>
           )}
         </main>
@@ -1599,7 +1627,7 @@ const newAgr: Agreement = {
       
       {/* Footer */}
       <Footer />
-
+      
       {/* Mobile Navigation */}
       <MobileNav
         activeSection={activeSection}
