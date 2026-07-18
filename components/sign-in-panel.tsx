@@ -22,7 +22,7 @@ interface SignInPanelProps { open: boolean; onClose: () => void }
 export function SignInPanel({ open, onClose }: SignInPanelProps) {
   const { t } = useLanguage()
   const router = useRouter()
-  const { logout, login } = useAuthStore()
+  const { login } = useAuthStore()
   const { address, isConnecting, walletError, openWalletModal } = useStellarWallet()
   const [profileType, setProfileType] = useState<"personal" | "business">("personal")
   const [oauthLoading, setOauthLoading] = useState<"google" | "email" | null>(null)
@@ -34,7 +34,10 @@ export function SignInPanel({ open, onClose }: SignInPanelProps) {
 
   const handleLoginWithWallet = () => {
     openWalletModal(() => {
-      logout()
+      // Do NOT logout() here: connecting the wallet now mints the app JWT
+      // (see StellarWalletProvider.openWalletModal), which routes dashboard
+      // data through the Thalos backend. Clearing it would force the direct
+      // Trustless Work fallback.
       onClose()
       router.push(dashboardHref)
     }, profileType === "business" ? "enterprise" : "personal")
