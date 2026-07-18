@@ -244,6 +244,7 @@ export default function BusinessDashboardPage() {
   const { t, theme } = useLanguage()
   const isLight = theme === "light"
   const { openWalletModal, address: walletAddress } = useStellarWallet()
+  const { token } = useAuthStore()
   const walletType = useWalletType()
   const isExternalWallet = walletType === "external"
   const [loading, setLoading] = useState(false)
@@ -375,9 +376,12 @@ export default function BusinessDashboardPage() {
   const fetchedEscrowsRef = useRef<string | null>(null);
   useEffect(() => {
     if (!currentWorkspaceWallet) return;
-    if (fetchedEscrowsRef.current === currentWorkspaceWallet) return;
-    fetchedEscrowsRef.current = currentWorkspaceWallet;
-    
+    // Include the token so we re-fetch once auth loads and route through the
+    // backend instead of falling back to the direct Trustless Work service.
+    const fetchKey = `${currentWorkspaceWallet}::${token ?? ""}`;
+    if (fetchedEscrowsRef.current === fetchKey) return;
+    fetchedEscrowsRef.current = fetchKey;
+
     async function fetchAllEscrows() {
       // MIGRATION: Using escrowMigration wrapper
       const { getEscrowsBySigner, getEscrowsByRole } = await import("@/services/escrowMigration");
@@ -385,7 +389,7 @@ export default function BusinessDashboardPage() {
       const allAgreements: Agreement[] = [];
       
       // Fetch escrows by signer
-      const signerRes = await getEscrowsBySigner(currentWorkspaceWallet);
+      const signerRes = await getEscrowsBySigner(currentWorkspaceWallet, token);
       if (signerRes.success && Array.isArray(signerRes.data)) {
         signerRes.data.forEach((escrow: any) => {
           if (!seenIds.has(escrow.contractId)) {
@@ -398,7 +402,7 @@ export default function BusinessDashboardPage() {
       // Fetch by each role
       const roles = ["receiver", "service_provider", "approver"] as const;
       for (const role of roles) {
-        const res = await getEscrowsByRole({ role, address: currentWorkspaceWallet });
+        const res = await getEscrowsByRole({ role, address: currentWorkspaceWallet }, token);
         if (res.success && Array.isArray(res.data)) {
           res.data.forEach((escrow: any) => {
             if (!seenIds.has(escrow.contractId)) {
@@ -415,7 +419,7 @@ export default function BusinessDashboardPage() {
     }
     
     fetchAllEscrows();
-  }, [currentWorkspaceWallet]);
+  }, [currentWorkspaceWallet, token]);
 
   // Fetch approver escrows (for approver tab)
   useEffect(() => {
@@ -424,7 +428,7 @@ export default function BusinessDashboardPage() {
       setApproverLoading(true);
       try {
         const { getEscrowsByRole } = await import("@/services/escrowMigration");
-        const res = await getEscrowsByRole({ role: "approver", address: currentWorkspaceWallet });
+        const res = await getEscrowsByRole({ role: "approver", address: currentWorkspaceWallet }, token);
         if (res.success && Array.isArray(res.data)) {
           setApproverEscrows(res.data.map((e: any) => mapEscrowToAgreement(e)));
         }
@@ -435,7 +439,7 @@ export default function BusinessDashboardPage() {
       setApproverLoading(false);
     }
     fetchApproverEscrows();
-  }, [currentWorkspaceWallet]);
+  }, [currentWorkspaceWallet, token]);
 
   // Fetch team members when activeSection is 'team'
   useEffect(() => {
