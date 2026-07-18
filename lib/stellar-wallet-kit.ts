@@ -1,4 +1,4 @@
-/**
+**
  * Inicialización client-only del Stellar Wallets Kit.
  * Uso: getKit() desde el navegador para abrir el modal "Connect Wallet" y firmar.
  */
