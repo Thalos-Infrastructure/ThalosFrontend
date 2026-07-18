@@ -329,7 +329,7 @@ export default function PersonalDashboardPage() {
   const { t } = useLanguage();
   const { signTransaction, openWalletModal } = useStellarWallet();
   const walletAddress = useCurrentAddress();
-  const { user: socialUser } = useAuthStore();
+  const { user: socialUser, token } = useAuthStore();
   const walletType = useWalletType();
   const isExternalWallet = walletType === "external";
   const [loading, setLoading] = useState(false);
@@ -425,10 +425,13 @@ const [currentPage, setCurrentPage] = useState(1)
 
   useEffect(() => {
     if (!walletAddress) return;
-    // Only fetch if we haven't already for this address
-    if (fetchedEscrowsRef.current === walletAddress) return;
-    fetchedEscrowsRef.current = walletAddress;
-    
+    // Only fetch if we haven't already for this address + token combination.
+    // Including the token means we re-fetch once auth loads, so we route through
+    // the backend instead of falling back to the direct Trustless Work service.
+    const fetchKey = `${walletAddress}::${token ?? ""}`;
+    if (fetchedEscrowsRef.current === fetchKey) return;
+    fetchedEscrowsRef.current = fetchKey;
+
 async function fetchAllEscrows() {
 // MIGRATION: Using escrowMigration wrapper
 const { getEscrowsByRole } = await import("@/services/escrowMigration");
@@ -436,7 +439,7 @@ const { getEscrowsByRole } = await import("@/services/escrowMigration");
       const allAgreements: Agreement[] = [];
       
       // Fetch escrows by signer (main method)
-      const signerRes = await getEscrowsBySigner(walletAddress);
+      const signerRes = await getEscrowsBySigner(walletAddress, token);
       if (signerRes.success && Array.isArray(signerRes.data)) {
         signerRes.data.forEach(escrow => {
           if (!seenIds.has(escrow.contractId)) {
@@ -449,7 +452,7 @@ const { getEscrowsByRole } = await import("@/services/escrowMigration");
       // Fetch by each role to ensure we get all escrows
 const roles = ["receiver", "service_provider", "approver"] as const;
 for (const role of roles) {
-const res = await getEscrowsByRole({ role, address: walletAddress });
+const res = await getEscrowsByRole({ role, address: walletAddress }, token);
         if (res.success && Array.isArray(res.data)) {
           res.data.forEach(escrow => {
             if (!seenIds.has(escrow.contractId)) {
@@ -476,7 +479,7 @@ const res = await getEscrowsByRole({ role, address: walletAddress });
 setApproverLoading(true);
 // MIGRATION: Using escrowMigration wrapper
 const { getEscrowsByRole } = await import("@/services/escrowMigration");
-const res = await getEscrowsByRole({ role: "approver", address: walletAddress });
+const res = await getEscrowsByRole({ role: "approver", address: walletAddress }, token);
       if (res.success && Array.isArray(res.data)) {
         setApproverEscrows(res.data.map(mapEscrowToAgreement));
       } else {
@@ -485,7 +488,7 @@ const res = await getEscrowsByRole({ role: "approver", address: walletAddress })
       setApproverLoading(false);
     }
     fetchApproverEscrows();
-  }, [walletAddress]);
+  }, [walletAddress, token]);
   const [viewingAgreement, setViewingAgreement] = useState<string | null>(null)
   const [showAgreementChat, setShowAgreementChat] = useState<string | null>(null)
   const [showProfileEditor, setShowProfileEditor] = useState(false)
