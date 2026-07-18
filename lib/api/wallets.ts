@@ -150,7 +150,7 @@ export async function getWalletVerificationChallenge(
   token: string
 ): Promise<ApiResponse<{ challenge: string }>> {
   return apiRequest<{ challenge: string }>(
-    `/wallets/verify-challenge?wallet_address=${encodeURIComponent(walletAddress)}`,
+    `/wallets/verification-challenge?address=${encodeURIComponent(walletAddress)}`,
     { method: "GET" },
     token
   )
