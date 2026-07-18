@@ -51,16 +51,11 @@ export async function verifySupabaseToken(
 ): Promise<SupabaseJwtPayload | null> {
   const secret = process.env.SUPABASE_JWT_SECRET;
   if (!secret) return null;
-  const encoder = new TextEncoder();
-  const key = await jose.importKey(
-    "raw",
-    encoder.encode(secret),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["verify"],
-  );
+  // jose v6 removed `importKey`; for an HS256 symmetric secret, pass the raw
+  // key bytes (Uint8Array) directly to jwtVerify.
+  const key = new TextEncoder().encode(secret);
   try {
-    const { payload } = await jose.jwtVerify(accessToken, key);
+    const { payload } = await jose.jwtVerify(accessToken, key, { algorithms: ["HS256"] });
     const sub = payload.sub as string;
     if (!sub) return null;
     return {

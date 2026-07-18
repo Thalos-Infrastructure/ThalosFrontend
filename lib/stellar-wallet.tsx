@@ -4,6 +4,8 @@ import React, { createContext, useContext, useState, useCallback, useEffect } fr
 import { getKit, clearKit, isFreighterAvailable } from "@/lib/stellar-wallet-kit"
 import { getOrCreateProfile, type Profile } from "@/lib/actions/profile"
 import { STELLAR_NETWORK_PASSPHRASE } from "@/lib/config"
+import { useAuthStore } from "@/lib/auth-store"
+import { requestWalletChallenge, verifyWalletLogin } from "@/lib/api/wallet-auth"
 
 const STELLAR_WALLET_KEY = "thalos_stellar_address"
 const STELLAR_PROFILE_KEY = "thalos_profile"
@@ -28,6 +30,9 @@ export function StellarWalletProvider({ children }: { children: React.ReactNode 
   const [profile, setProfile] = useState<Profile | null>(null)
   const [isConnecting, setIsConnecting] = useState(false)
   const [walletError, setWalletError] = useState<string | null>(null)
+  // AuthProvider wraps StellarWalletProvider (see app/layout.tsx), so the app JWT
+  // store is available here. Connecting a wallet mints/stores that JWT.
+  const { login } = useAuthStore()
 
   useEffect(() => {
     if (typeof window === "undefined") return
@@ -93,7 +98,30 @@ export function StellarWalletProvider({ children }: { children: React.ReactNode 
               if (profileError) {
                 console.error("Profile error:", profileError);
               }
-              
+
+              // Authenticate the wallet against our own backend by minting an app JWT.
+              // This is what makes dashboard data calls go through the Thalos backend
+              // instead of falling back to the direct Trustless Work service.
+              // Non-fatal: if the user rejects signing or verification fails, the
+              // wallet stays connected in wallet-only mode.
+              try {
+                const { challenge } = await requestWalletChallenge(addr);
+                const signed = await kit.signMessage(challenge, {
+                  networkPassphrase: STELLAR_NETWORK_PASSPHRASE,
+                  address: addr,
+                });
+                if (!signed?.signedMessage) {
+                  throw new Error("La wallet no devolvió una firma");
+                }
+                const { user, token } = await verifyWalletLogin(addr, challenge, signed.signedMessage, option.id);
+                login(user, token);
+              } catch (authErr) {
+                console.warn(
+                  "[wallet-auth] no se pudo autenticar la wallet contra el backend; se continúa en modo wallet-only:",
+                  authErr,
+                );
+              }
+
               onConnected?.(addr);
             } catch (e) {
               const msg = e instanceof Error ? e.message : "No se pudo obtener la dirección.";
@@ -113,7 +141,7 @@ export function StellarWalletProvider({ children }: { children: React.ReactNode 
         setIsConnecting(false);
       }
     },
-    []
+    [login]
   );
 
   const disconnect = useCallback(async () => {
@@ -141,27 +169,6 @@ export function StellarWalletProvider({ children }: { children: React.ReactNode 
         if (!kit) return null
         const result = await kit.signTransaction(xdr, { networkPassphrase, address })
         return result?.signedTxXdr ? { signedTxXdr: result.signedTxXdr } : null
-      } catch {
-        return null
-      }
-    },
-    }, [address]
-  )
-
-  const signMessage = useCallback(
-    async (message: string): Promise<string | null> => {
-      if (!address) return null
-      try {
-        const kit = await getKit()
-        if (kit && typeof (kit as any).signMessage === "function") {
-          const result = await (kit as any).signMessage(address, message)
-          return typeof result === "string" ? result : result?.signature ?? null
-        }
-        if (typeof window !== "undefined" && (window as any).freighter?.signMessage) {
-          const result = await (window as any).freighter.signMessage(message, address)
-          return typeof result === "string" ? result : result?.signature ?? null
-        }
-        return null
       } catch {
         return null
       }
