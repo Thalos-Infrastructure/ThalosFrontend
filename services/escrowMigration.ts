@@ -64,34 +64,28 @@ export async function getEscrowsBySigner(
   error?: string
   source: "backend" | "original"
 }> {
-  // If no token or flag disabled, use original
+  // Backend-only: we never call Trustless Work directly from the browser (it would
+  // expose the API key and bypass our auth). No token or flag disabled => error,
+  // NOT a direct-TW fallback.
   if (!token || !MIGRATION_FLAGS.getEscrowsBySigner) {
-    console.log("[v0] MIGRATION: getEscrowsBySigner - using original (no token or disabled)")
-    const result = await originalService.getEscrowsBySigner(signerAddress)
-    return { ...result, source: "original" }
+    console.warn("[v0] MIGRATION: getEscrowsBySigner - no token or disabled; not calling backend")
+    return { success: false, error: "No autenticado", source: "backend" }
   }
 
-  try {
-    console.log("[v0] MIGRATION: Attempting BACKEND for getEscrowsBySigner", { signerAddress })
-    
-    const result = await escrowApi.getEscrowsBySigner(signerAddress, token)
-    
-    if (result.success && result.data) {
-      console.log("[v0] MIGRATION: SUCCESS using BACKEND for getEscrowsBySigner", { 
-        count: result.data.length 
-      })
-      return { success: true, data: result.data, source: "backend" }
-    }
-    
-    throw new Error(result.error || "Backend returned no data")
-  } catch (error) {
-    console.warn("[v0] MIGRATION: FALLBACK to original for getEscrowsBySigner", { 
-      error: error instanceof Error ? error.message : "Unknown error" 
+  console.log("[v0] MIGRATION: Attempting BACKEND for getEscrowsBySigner", { signerAddress })
+  const result = await escrowApi.getEscrowsBySigner(signerAddress, token)
+
+  if (result.success && result.data) {
+    console.log("[v0] MIGRATION: SUCCESS using BACKEND for getEscrowsBySigner", {
+      count: result.data.length,
     })
-    
-    const result = await originalService.getEscrowsBySigner(signerAddress)
-    return { ...result, source: "original" }
+    return { success: true, data: result.data, source: "backend" }
   }
+
+  console.warn("[v0] MIGRATION: BACKEND error for getEscrowsBySigner (no TW fallback)", {
+    error: result.error,
+  })
+  return { success: false, error: result.error || "Backend returned no data", source: "backend" }
 }
 
 // ============================================================================
@@ -114,34 +108,26 @@ export async function getEscrowsByRole(
   error?: string
   source: "backend" | "original"
 }> {
-  // If no token or flag disabled, use original
+  // Backend-only: never call Trustless Work directly from the browser.
   if (!token || !MIGRATION_FLAGS.getEscrowsByRole) {
-    console.log("[v0] MIGRATION: getEscrowsByRole - using original (no token or disabled)")
-    const result = await originalService.getEscrowsByRole(params)
-    return { ...result, source: "original" }
+    console.warn("[v0] MIGRATION: getEscrowsByRole - no token or disabled; not calling backend")
+    return { success: false, error: "No autenticado", source: "backend" }
   }
 
-  try {
-    console.log("[v0] MIGRATION: Attempting BACKEND for getEscrowsByRole", params)
-    
-    const result = await escrowApi.getEscrowsByRole(params, token)
-    
-    if (result.success && result.data) {
-      console.log("[v0] MIGRATION: SUCCESS using BACKEND for getEscrowsByRole", { 
-        count: result.data.length 
-      })
-      return { success: true, data: result.data, source: "backend" }
-    }
-    
-    throw new Error(result.error || "Backend returned no data")
-  } catch (error) {
-    console.warn("[v0] MIGRATION: FALLBACK to original for getEscrowsByRole", { 
-      error: error instanceof Error ? error.message : "Unknown error" 
+  console.log("[v0] MIGRATION: Attempting BACKEND for getEscrowsByRole", params)
+  const result = await escrowApi.getEscrowsByRole(params, token)
+
+  if (result.success && result.data) {
+    console.log("[v0] MIGRATION: SUCCESS using BACKEND for getEscrowsByRole", {
+      count: result.data.length,
     })
-    
-    const result = await originalService.getEscrowsByRole(params)
-    return { ...result, source: "original" }
+    return { success: true, data: result.data, source: "backend" }
   }
+
+  console.warn("[v0] MIGRATION: BACKEND error for getEscrowsByRole (no TW fallback)", {
+    error: result.error,
+  })
+  return { success: false, error: result.error || "Backend returned no data", source: "backend" }
 }
 
 // ============================================================================
