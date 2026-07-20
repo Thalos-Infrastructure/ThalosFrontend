@@ -145,27 +145,6 @@ export function StellarWalletProvider({ children }: { children: React.ReactNode 
         return null
       }
     },
-    }, [address]
-  )
-
-  const signMessage = useCallback(
-    async (message: string): Promise<string | null> => {
-      if (!address) return null
-      try {
-        const kit = await getKit()
-        if (kit && typeof (kit as any).signMessage === "function") {
-          const result = await (kit as any).signMessage(address, message)
-          return typeof result === "string" ? result : result?.signature ?? null
-        }
-        if (typeof window !== "undefined" && (window as any).freighter?.signMessage) {
-          const result = await (window as any).freighter.signMessage(message, address)
-          return typeof result === "string" ? result : result?.signature ?? null
-        }
-        return null
-      } catch {
-        return null
-      }
-    },
     [address]
   )
 
