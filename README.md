@@ -103,17 +103,23 @@ Or with npm:
 npm install
 ```
 
-### 3. Environment variables (optional)
+### 3. Environment variables
 
-Create a `.env.local` file in the root directory. All variables are optional and have working defaults:
+Copy [`.env.example`](.env.example) to `.env.local` and fill in real values. `.env*.local`
+are gitignored and must never be committed. See `.env.example` for the full, commented list;
+the **required** ones are:
 
-```env
-# Stellar block explorer base URL (defaults to testnet)
-NEXT_PUBLIC_STELLAR_EXPLORER_URL=https://stellar.expert/explorer/testnet/contract/
+| Variable | Description |
+|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL (same project as the backend). |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon/public key (Dashboard → Project Settings → API). |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key (server-side only — keep secret). |
+| `JWT_SECRET` | App JWT signing secret (HS256). **Must be identical** to the backend's `JWT_SECRET`. |
+| `NEXT_PUBLIC_API_URL` | Base URL of the NestJS backend, **including `/v1`** (e.g. `http://localhost:3001/v1` in dev). Points to the backend host, not the frontend site. |
 
-# Show mock agreements in the UI for development (defaults to true)
-NEXT_PUBLIC_SHOW_MOCKED_AGREEMENTS=true
-```
+Everything else (email, Stellar/UI, Trustless Work) is optional and documented in `.env.example`.
+
+> `NEXT_PUBLIC_*` values are inlined at **build time** — changing them requires a rebuild/redeploy.
 
 ### 4. Run the development server
 
