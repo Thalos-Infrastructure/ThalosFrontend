@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from "react"
 import { getKit, clearKit, isFreighterAvailable } from "@/lib/stellar-wallet-kit"
 import { getOrCreateProfile, type Profile } from "@/lib/actions/profile"
-import { STELLAR_NETWORK_PASSPHRASE } from "@/lib/config"
+import { STELLAR_NETWORK_PASSPHRASE, SHOW_SIGN_MESSAGE_TEST } from "@/lib/config"
 import { useAuthStore } from "@/lib/auth-store"
 import { requestWalletChallenge, verifyWalletLogin } from "@/lib/api/wallet-auth"
 
@@ -99,27 +99,30 @@ export function StellarWalletProvider({ children }: { children: React.ReactNode 
                 console.error("Profile error:", profileError);
               }
 
-              // Authenticate the wallet against our own backend by minting an app JWT.
-              // This is what makes dashboard data calls go through the Thalos backend
-              // instead of falling back to the direct Trustless Work service.
-              // Non-fatal: if the user rejects signing or verification fails, the
-              // wallet stays connected in wallet-only mode.
-              try {
-                const { challenge } = await requestWalletChallenge(addr);
-                const signed = await kit.signMessage(challenge, {
-                  networkPassphrase: STELLAR_NETWORK_PASSPHRASE,
-                  address: addr,
-                });
-                if (!signed?.signedMessage) {
-                  throw new Error("La wallet no devolvió una firma");
+              // Wallet-signature login (ownership-proof challenge) is gated behind
+              // NEXT_PUBLIC_SHOW_SIGN_MESSAGE_TEST — same flag/pattern as the dev
+              // "SignMessage Test" widget. When the flag is off (default, incl.
+              // production), connecting a wallet does NOT trigger the signing popup;
+              // the app JWT is expected to come from email/social login instead.
+              // When on, we mint the app JWT so dashboard data goes through the backend.
+              if (SHOW_SIGN_MESSAGE_TEST) {
+                try {
+                  const { challenge } = await requestWalletChallenge(addr);
+                  const signed = await kit.signMessage(challenge, {
+                    networkPassphrase: STELLAR_NETWORK_PASSPHRASE,
+                    address: addr,
+                  });
+                  if (!signed?.signedMessage) {
+                    throw new Error("La wallet no devolvió una firma");
+                  }
+                  const { user, token } = await verifyWalletLogin(addr, challenge, signed.signedMessage, option.id);
+                  login(user, token);
+                } catch (authErr) {
+                  console.warn(
+                    "[wallet-auth] no se pudo autenticar la wallet contra el backend; se continúa en modo wallet-only:",
+                    authErr,
+                  );
                 }
-                const { user, token } = await verifyWalletLogin(addr, challenge, signed.signedMessage, option.id);
-                login(user, token);
-              } catch (authErr) {
-                console.warn(
-                  "[wallet-auth] no se pudo autenticar la wallet contra el backend; se continúa en modo wallet-only:",
-                  authErr,
-                );
               }
 
               onConnected?.(addr);
