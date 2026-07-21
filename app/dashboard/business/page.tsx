@@ -485,6 +485,7 @@ export default function BusinessDashboardPage() {
   const [showCustomize, setShowCustomize] = useState(false)
   const [notifyEmail, setNotifyEmail] = useState("")
   const [signerEmail, setSignerEmail] = useState("")
+  const [showAIAssistant, setShowAIAssistant] = useState(false)
 
   const dragItem = useRef<number | null>(null)
   const dragOverItem = useRef<number | null>(null)
@@ -545,6 +546,18 @@ export default function BusinessDashboardPage() {
     setTitle(""); setDescription(""); setSignerWallet(""); setGuidePrefilled(false)
     setMilestones([{ description: "Full delivery", amount: "" }]); setShowCustomize(false)
     setNotifyEmail(""); setSignerEmail(""); setSelectedWallet(connectedWallets[0].value)
+  }
+
+  const handleUseAIDraft = (draft: any) => {
+    resetWizard()
+    setTitle(draft.title)
+    setDescription(draft.description)
+    setEscrowType(draft.agreement_type)
+    setMilestones(draft.milestones.map((m: any) => ({
+      description: m.description,
+      amount: m.amount
+    })))
+    setStep(2)
   }
 
   const agreementUrl = typeof window !== "undefined" ? `${window.location.origin}/dashboard/business` : "https://thalos.app/dashboard/business"
@@ -1023,7 +1036,13 @@ export default function BusinessDashboardPage() {
               {/* Header */}
               <div className="mb-6 flex items-center justify-between">
                 <h1 className="text-2xl font-semibold text-white">{t("dashPage.enterpriseAgreements")}</h1>
-                <Button onClick={() => { setActiveSection("create"); resetWizard() }} className="rounded-full bg-[#3b82f6] px-6 text-sm font-semibold text-white hover:bg-[#2563eb] shadow-[0_4px_16px_rgba(59,130,246,0.25)]">+ {t("dashPage.newAgreement")}</Button>
+                <div className="flex gap-3">
+                  <Button onClick={() => setShowAIAssistant(true)} className="rounded-full bg-white/10 px-6 text-sm font-semibold text-white hover:bg-white/15 shadow-[0_4px_16px_rgba(255,255,255,0.1)] flex items-center gap-2">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M10 11h4v2h-4z"/><circle cx="12" cy="12" r="10"/><path d="M12 7v2"/></svg>
+                    Create with AI
+                  </Button>
+                  <Button onClick={() => { setActiveSection("create"); resetWizard() }} className="rounded-full bg-[#3b82f6] px-6 text-sm font-semibold text-white hover:bg-[#2563eb] shadow-[0_4px_16px_rgba(59,130,246,0.25)]">+ {t("dashPage.newAgreement")}</Button>
+                </div>
               </div>
 
               {/* Wallet filter — only renders when user has multiple linked wallets */}
@@ -1845,6 +1864,17 @@ export default function BusinessDashboardPage() {
           }
         }}
         type="enterprise"
+      />
+
+      {/* AI Agreement Assistant */}
+      <AIAgreementAssistant
+        isOpen={showAIAssistant}
+        onClose={() => setShowAIAssistant(false)}
+        onUseDraft={(draft) => {
+          handleUseAIDraft(draft)
+          setActiveSection("create")
+        }}
+        useCases={useCases}
       />
 
       {/* Agreement Chat - Floating Popup */}

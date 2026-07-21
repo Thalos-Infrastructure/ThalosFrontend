@@ -26,7 +26,8 @@ import {
 import { getProfileByWallet, type Profile } from "@/lib/actions/profile"
 import { AgreementsView } from "@/components/agreements/agreements-view"
 import { ContactSelector } from "@/components/agreements/contact-selector"
-import { AgreementChat } from "@/components/agreements/agreement-chat"
+import { AgreementChat } from "@/components/agreements/agreement-chat";
+import { AIAgreementAssistant } from "@/components/agreements/ai-agreement-assistant";
 import { ProfileEditor } from "@/components/profile/profile-editor"
 import { WalletSelector } from "@/components/dashboard/wallet-selector"
 import { WalletAgreementsPanel } from "@/components/dashboard/wallet-agreements-panel"
@@ -523,6 +524,7 @@ const res = await getEscrowsByRole({ role: "approver", address: walletAddress },
   const [showCustomize, setShowCustomize] = useState(false)
   const [notifyEmail, setNotifyEmail] = useState("")
   const [signerEmail, setSignerEmail] = useState("")
+  const [showAIAssistant, setShowAIAssistant] = useState(false)
 
   const dragItem = useRef<number | null>(null)
   const dragOverItem = useRef<number | null>(null)
@@ -593,6 +595,18 @@ const res = await getEscrowsByRole({ role: "approver", address: walletAddress },
     setTitle(""); setDescription(""); setSignerWallet(""); setGuidePrefilled(false)
     setMilestones([{ description: "Full delivery", amount: "" }]); setShowCustomize(false)
     setNotifyEmail(""); setSignerEmail(""); setSelectedWallet(connectedWallets[0].value)
+  }
+
+  const handleUseAIDraft = (draft: any) => {
+    resetWizard()
+    setTitle(draft.title)
+    setDescription(draft.description)
+    setEscrowType(draft.agreement_type)
+    setMilestones(draft.milestones.map((m: any) => ({
+      description: m.description,
+      amount: m.amount
+    })))
+    setStep(2)
   }
 
   const agreementUrl = typeof window !== "undefined" ? `${window.location.origin}/dashboard/personal` : "https://thalos.app/dashboard/personal"
@@ -1111,10 +1125,17 @@ const res = await getEscrowsByRole({ role: "approver", address: walletAddress },
 {/* Header */}
   <div className="mb-6 flex items-center justify-between">
   <h1 className="text-2xl font-semibold text-white">{t("dashPage.myAgreements")}</h1>
-  <Button onClick={() => { setActiveSection("create"); resetWizard() }}
-  className="rounded-full bg-[#f0b400] px-6 text-sm font-semibold text-background hover:bg-[#d4a000] shadow-[0_4px_16px_rgba(240,180,0,0.25)]">
-  + {t("dashPage.newAgreement")}
-  </Button>
+  <div className="flex gap-3">
+    <Button onClick={() => setShowAIAssistant(true)}
+    className="rounded-full bg-white/10 px-6 text-sm font-semibold text-white hover:bg-white/15 shadow-[0_4px_16px_rgba(255,255,255,0.1)] flex items-center gap-2">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M10 11h4v2h-4z"/><circle cx="12" cy="12" r="10"/><path d="M12 7v2"/></svg>
+      {t("dashPage.createWithAI")}
+    </Button>
+    <Button onClick={() => { setActiveSection("create"); resetWizard() }}
+    className="rounded-full bg-[#f0b400] px-6 text-sm font-semibold text-background hover:bg-[#d4a000] shadow-[0_4px_16px_rgba(240,180,0,0.25)]">
+    + {t("dashPage.newAgreement")}
+    </Button>
+  </div>
   </div>
   
   {/* Wallet Selector - only shows if user has multiple wallets */}
@@ -1681,6 +1702,17 @@ const newAgr: Agreement = {
           }
         }}
         type="personal"
+      />
+
+      {/* AI Agreement Assistant */}
+      <AIAgreementAssistant
+        isOpen={showAIAssistant}
+        onClose={() => setShowAIAssistant(false)}
+        onUseDraft={(draft) => {
+          handleUseAIDraft(draft)
+          setActiveSection("create")
+        }}
+        useCases={useCases}
       />
     </div>
   );
