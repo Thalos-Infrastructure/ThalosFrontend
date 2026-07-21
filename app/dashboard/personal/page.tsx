@@ -1565,6 +1565,7 @@ const res = await getEscrowsByRole({ role: "approver", address: walletAddress },
                             const { createAndSignAgreement } = await import("@/lib/agreementActions");
                             await createAndSignAgreement({
                               payload,
+                              token,
                               walletAddress,
                               openWalletModal,
                               signTransaction,
