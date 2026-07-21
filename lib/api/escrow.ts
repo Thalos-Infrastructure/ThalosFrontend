@@ -68,11 +68,71 @@ async function apiRequest<T>(
 
     return { success: true, data }
   } catch (error) {
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : "Network error" 
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Network error"
     }
   }
+}
+
+// ============================================================================
+// Backend escrow WRITE relay (Trustless Work behind the Thalos backend)
+// ----------------------------------------------------------------------------
+// These match the real NestJS routes under /v1/escrows and their DTOs exactly.
+// The ValidationPipe uses forbidNonWhitelisted, so send ONLY these fields — the
+// backend injects platformAddress/disputeResolver/engagementId/trustline itself.
+// Build endpoints return an UNSIGNED transaction; the wallet signs it client-side
+// and the signed XDR is submitted via submitSignedTransaction (send-transaction).
+// ============================================================================
+
+export type EscrowServiceType = "single-release" | "multi-release"
+
+export interface BackendEscrowRoles {
+  approver: string
+  serviceProvider: string
+  releaseSigner: string
+  receiver?: string // required for single-release
+}
+
+export interface BackendCreateMilestone {
+  description: string
+  amount?: string
+  status?: string
+}
+
+export interface BackendCreateEscrowDto {
+  title: string
+  description: string
+  amount: string
+  platformFee: string
+  signer: string // must equal the JWT user's wallet (assertSignerWallet)
+  serviceType: EscrowServiceType
+  roles: BackendEscrowRoles
+  milestones: BackendCreateMilestone[]
+}
+
+// POST /v1/escrows/create -> { unsignedTransaction }
+export async function buildCreateEscrow(
+  dto: BackendCreateEscrowDto,
+  token: string,
+): Promise<ApiResponse<{ unsignedTransaction: string }>> {
+  return apiRequest<{ unsignedTransaction: string }>(
+    "/escrows/create",
+    { method: "POST", body: JSON.stringify(dto) },
+    token,
+  )
+}
+
+// POST /v1/escrows/send-transaction -> TW submission result
+export async function submitSignedTransaction(
+  signedXdr: string,
+  token: string,
+): Promise<ApiResponse<unknown>> {
+  return apiRequest<unknown>(
+    "/escrows/send-transaction",
+    { method: "POST", body: JSON.stringify({ signedXdr }) },
+    token,
+  )
 }
 
 // Initialize/deploy a new escrow contract
