@@ -16,6 +16,7 @@ import { WalletGuard, WalletPrompt } from "@/components/shared/wallet-guard"
 import { useAuthStore } from "@/lib/auth-store"
 import { WalletAddress } from "@/components/ui/wallet-address"
 import { getProfileByWallet, type Profile } from "@/lib/actions/profile"
+import { getKybStatus, startKybSession, type KybSession, type KybStatus } from "@/lib/api/kyb"
 import {
   getBusinessMembers,
   addBusinessMember,
@@ -262,6 +263,12 @@ export default function BusinessDashboardPage() {
   const [isCheckingRole, setIsCheckingRole] = useState(true)
   const [teamMembers, setTeamMembers] = useState<BusinessMember[]>([])
   const [loadingTeam, setLoadingTeam] = useState(false)
+  const [kybStatus, setKybStatus] = useState<KybStatus>("pending")
+  const [kybOrganizationId, setKybOrganizationId] = useState<string | null>(null)
+  const [kybSession, setKybSession] = useState<KybSession | null>(null)
+  const [kybLoading, setKybLoading] = useState(false)
+  const [kybError, setKybError] = useState<string | null>(null)
+  const [kybSessionExpired, setKybSessionExpired] = useState(false)
 
   // Derive permissions helper
   const activePermissions = useMemo(() => {
@@ -344,6 +351,64 @@ export default function BusinessDashboardPage() {
   const [approverLoading, setApproverLoading] = useState(false)
   
   const currentWorkspaceWallet = activeBusinessWallet || walletAddress;
+  const isKybVerified = kybStatus === "verified"
+  const profileKybDetails = companyProfile as (Profile & {
+    registration_number?: string | null
+    country?: string | null
+    entity_type?: string | null
+    organization_id?: string | null
+  }) | null
+  const profileOrganizationId = profileKybDetails?.organization_id || companyProfile?.id || null
+  const hasKybOrganizationUuid = Boolean(profileOrganizationId?.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i))
+  const canStartKybSession = Boolean(
+    hasKybOrganizationUuid &&
+    profileKybDetails?.display_name &&
+    profileKybDetails?.registration_number &&
+    profileKybDetails?.country &&
+    profileKybDetails?.entity_type
+  )
+
+  const refreshKybStatus = useCallback(async (organizationId = kybOrganizationId) => {
+    if (!organizationId) return
+    setKybLoading(true)
+    const result = await getKybStatus(organizationId, token ?? undefined)
+    if (result.success && result.data) {
+      setKybStatus(result.data.status)
+      setKybSessionExpired(Boolean(result.data.sessionExpired))
+      setKybError(result.data.failureReason ?? null)
+    } else {
+      setKybError(result.error || "Unable to refresh verification status")
+    }
+    setKybLoading(false)
+  }, [kybOrganizationId, token])
+
+  const handleStartKybSession = useCallback(async () => {
+    setKybLoading(true)
+    setKybError(null)
+    setKybSessionExpired(false)
+    if (!hasKybOrganizationUuid || !profileOrganizationId || !profileKybDetails?.display_name || !profileKybDetails?.registration_number || !profileKybDetails?.country || !profileKybDetails?.entity_type) {
+      setKybError("Complete your business profile before starting KYB verification.")
+      setKybLoading(false)
+      return
+    }
+
+    const result = await startKybSession({
+      organization_id: profileOrganizationId,
+      business_name: profileKybDetails.display_name,
+      registration_number: profileKybDetails.registration_number,
+      country: profileKybDetails.country,
+      entity_type: profileKybDetails.entity_type,
+    }, token ?? undefined)
+    if (result.success && result.data) {
+      setKybSession(result.data)
+      setKybStatus(result.data.status === "pending" ? "in_review" : result.data.status)
+      setKybOrganizationId(result.data.organizationId)
+      void refreshKybStatus(result.data.organizationId)
+    } else {
+      setKybError(result.error || "Unable to start verification")
+    }
+    setKybLoading(false)
+  }, [hasKybOrganizationUuid, profileKybDetails, profileOrganizationId, refreshKybStatus, token])
 
   // Helper to map escrow to agreement format
   const mapEscrowToAgreement = (e: any): Agreement => {
@@ -389,7 +454,7 @@ export default function BusinessDashboardPage() {
       const allAgreements: Agreement[] = [];
       
       // Fetch escrows by signer
-      const signerRes = await getEscrowsBySigner(currentWorkspaceWallet, token);
+      const signerRes = await getEscrowsBySigner(currentWorkspaceWallet, token ?? undefined);
       if (signerRes.success && Array.isArray(signerRes.data)) {
         signerRes.data.forEach((escrow: any) => {
           if (!seenIds.has(escrow.contractId)) {
@@ -402,7 +467,7 @@ export default function BusinessDashboardPage() {
       // Fetch by each role
       const roles = ["receiver", "service_provider", "approver"] as const;
       for (const role of roles) {
-        const res = await getEscrowsByRole({ role, address: currentWorkspaceWallet }, token);
+        const res = await getEscrowsByRole({ role, address: currentWorkspaceWallet }, token ?? undefined);
         if (res.success && Array.isArray(res.data)) {
           res.data.forEach((escrow: any) => {
             if (!seenIds.has(escrow.contractId)) {
@@ -428,7 +493,7 @@ export default function BusinessDashboardPage() {
       setApproverLoading(true);
       try {
         const { getEscrowsByRole } = await import("@/services/escrowMigration");
-        const res = await getEscrowsByRole({ role: "approver", address: currentWorkspaceWallet }, token);
+        const res = await getEscrowsByRole({ role: "approver", address: currentWorkspaceWallet }, token ?? undefined);
         if (res.success && Array.isArray(res.data)) {
           setApproverEscrows(res.data.map((e: any) => mapEscrowToAgreement(e)));
         }
@@ -456,6 +521,20 @@ export default function BusinessDashboardPage() {
     }
     fetchTeam();
   }, [activeSection, activeBusinessWallet, activePermissions.team]);
+
+  useEffect(() => {
+    if (!hasKybOrganizationUuid || !profileOrganizationId) return
+    setKybOrganizationId(profileOrganizationId)
+    void refreshKybStatus(profileOrganizationId)
+  }, [hasKybOrganizationUuid, profileOrganizationId, refreshKybStatus])
+
+  useEffect(() => {
+    if (!kybOrganizationId || kybStatus === "verified" || kybStatus === "rejected") return
+    const interval = window.setInterval(() => {
+      void refreshKybStatus(kybOrganizationId)
+    }, 15000)
+    return () => window.clearInterval(interval)
+  }, [kybOrganizationId, kybStatus, refreshKybStatus])
 
   const approveMilestone = (agrId: string, msIdx: number) => {
     setAgreements(prev => prev.map(a => a.id === agrId ? { ...a, milestones: a.milestones.map((m, i) => i === msIdx && m.status === "pending" ? { ...m, status: "approved" as const } : m) } : a))
@@ -928,7 +1007,33 @@ export default function BusinessDashboardPage() {
 
         {/* Main content */}
         <main className="flex-1 overflow-y-auto p-4 lg:p-8">
-          
+          <div className="mx-auto mb-6 max-w-4xl rounded-2xl border border-white/10 bg-[#0c1220] p-5 shadow-[0_8px_32px_rgba(0,0,0,0.35)]">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div>
+                <div className="mb-2 flex items-center gap-2">
+                  <h2 className="text-lg font-semibold text-white">Business verification</h2>
+                  <span className={cn("rounded-full border px-2.5 py-0.5 text-xs font-semibold",
+                    kybStatus === "verified" ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-400" :
+                    kybStatus === "rejected" ? "border-red-500/20 bg-red-500/10 text-red-400" :
+                    "border-[#f0b400]/20 bg-[#f0b400]/10 text-[#f0b400]"
+                  )}>{kybStatus.replace("_", " ")}</span>
+                </div>
+                <div className="grid gap-2 text-sm text-white/50 sm:grid-cols-3">
+                  <p><span className="block text-[10px] uppercase tracking-widest text-white/25">Business name</span>{companyProfile?.display_name || "Not provided"}</p>
+                  <p><span className="block text-[10px] uppercase tracking-widest text-white/25">Registration number</span>{(companyProfile as Profile & { registration_number?: string | null })?.registration_number || "Not provided"}</p>
+                  <p><span className="block text-[10px] uppercase tracking-widest text-white/25">Country</span>{profileKybDetails?.country || "Not provided"}</p>
+                  <p><span className="block text-[10px] uppercase tracking-widest text-white/25">Entity type</span>{profileKybDetails?.entity_type || "Not provided"}</p>
+                </div>
+                {!isKybVerified && <p className="mt-3 text-sm text-amber-200/80">Verification is required before creating enterprise agreements or depositing funds.</p>}
+                {kybSessionExpired && <p className="mt-2 text-sm text-red-300">Your verification session expired. Start a new session to continue.</p>}
+                {kybError && <p className="mt-2 text-sm text-red-300">{kybError}</p>}
+              </div>
+              <div className="flex gap-2">
+                <Button onClick={() => void refreshKybStatus()} disabled={kybLoading || !kybOrganizationId} variant="outline" className="rounded-full border-white/10 bg-white/5 text-white/70 hover:bg-white/10">Refresh</Button>
+                {!isKybVerified && <Button onClick={handleStartKybSession} disabled={kybLoading || !canStartKybSession} className="rounded-full bg-[#f0b400] text-background hover:bg-[#d4a000]">{kybSessionExpired || kybStatus === "rejected" ? "Retry verification" : "Continue KYB verification"}</Button>}
+              </div>
+            </div>
+          </div>
 
           {/* ══════ ANALYTICS ══════ */}
           {activeSection === "analytics" && activePermissions.analytics && (
@@ -1146,7 +1251,7 @@ export default function BusinessDashboardPage() {
                         </div>
                         <div className="flex items-center gap-3">
                           <p className="text-lg font-bold text-white">{"$"}{ms.amount} <span className="text-xs font-normal text-white/35">USDC</span></p>
-                          {ms.status === "pending" && !allReleased && activePermissions.approve && (
+                          {ms.status === "pending" && !allReleased && activePermissions.approve && isKybVerified && (
                             <Button size="sm" onClick={() => {
                               if (!isExternalWallet) { openWalletModal(); return }
                               approveMilestone(agr.id, idx)
@@ -1155,7 +1260,7 @@ export default function BusinessDashboardPage() {
                               Approve
                             </Button>
                           )}
-                          {ms.status === "approved" && agr.releaseStrategy === "per-milestone" && activePermissions.release && (
+                          {ms.status === "approved" && agr.releaseStrategy === "per-milestone" && activePermissions.release && isKybVerified && (
                             <Button size="sm" onClick={() => {
                               if (!isExternalWallet) { openWalletModal(); return }
                               releaseMilestone(agr.id, idx)
@@ -1190,7 +1295,7 @@ export default function BusinessDashboardPage() {
                   <div className="rounded-2xl border border-white/10 bg-[#0c1220] p-6 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)]">
                     <h3 className="mb-4 text-sm font-bold uppercase tracking-wider text-white/40">Release Actions</h3>
                     <div className="flex flex-wrap gap-3">
-                      {agr.type === "Single Release" && agr.milestones[0]?.status === "pending" && activePermissions.approve && (
+                      {agr.type === "Single Release" && agr.milestones[0]?.status === "pending" && activePermissions.approve && isKybVerified && (
                         <Button onClick={() => {
                           if (!isExternalWallet) { openWalletModal(); return }
                           approveMilestone(agr.id, 0)
@@ -1199,7 +1304,7 @@ export default function BusinessDashboardPage() {
                           Approve Agreement
                         </Button>
                       )}
-                      {agr.type === "Single Release" && agr.milestones[0]?.status === "approved" && activePermissions.release && (
+                      {agr.type === "Single Release" && agr.milestones[0]?.status === "approved" && activePermissions.release && isKybVerified && (
                         <Button onClick={() => {
                           if (!isExternalWallet) { openWalletModal(); return }
                           releaseMilestone(agr.id, 0)
@@ -1208,7 +1313,7 @@ export default function BusinessDashboardPage() {
                           Release All Funds
                         </Button>
                       )}
-                      {agr.type === "Multi Release" && hasApproved && activePermissions.release && (
+                      {agr.type === "Multi Release" && hasApproved && activePermissions.release && isKybVerified && (
                         <Button onClick={() => {
                           if (!isExternalWallet) { openWalletModal(); return }
                           releaseAllApproved(agr.id)
@@ -1217,7 +1322,7 @@ export default function BusinessDashboardPage() {
                           Release All Approved
                         </Button>
                       )}
-                      {agr.type === "Multi Release" && !allApproved && activePermissions.approve && activePermissions.release && (
+                      {agr.type === "Multi Release" && !allApproved && activePermissions.approve && activePermissions.release && isKybVerified && (
                         <Button onClick={() => {
                           if (!isExternalWallet) { openWalletModal(); return }
                           approveAndReleaseAll(agr.id)
@@ -1468,7 +1573,13 @@ export default function BusinessDashboardPage() {
           {/* ══════ CREATE AGREEMENT ══════ */}
           {activeSection === "create" && activePermissions.create && (
             <div className="mx-auto max-w-4xl animate-in fade-in slide-in-from-bottom-2 duration-300">
-              {!isExternalWallet && !submitted ? (
+              {!isKybVerified ? (
+                <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-8 text-center">
+                  <h2 className="text-xl font-bold text-white">KYB verification required</h2>
+                  <p className="mx-auto mt-2 max-w-lg text-sm text-white/50">Enterprise agreement creation is blocked until your business verification is approved.</p>
+                  <Button onClick={handleStartKybSession} disabled={kybLoading || !canStartKybSession} className="mt-5 rounded-full bg-[#f0b400] text-background hover:bg-[#d4a000]">Continue KYB verification</Button>
+                </div>
+              ) : !isExternalWallet && !submitted ? (
                 <div className="pt-8">
                   <WalletPrompt
                     message="Connect and verify a wallet to operate escrow agreements on Thalos."
@@ -1670,6 +1781,7 @@ export default function BusinessDashboardPage() {
       date: new Date().toISOString().split("T")[0],
       milestones: milestones.map(m => ({ description: m.description, amount: m.amount, status: "pending" as const })),
       receiver: selectedWallet,
+      currency: "USDC",
     }
     setAgreements(prev => [newAgr, ...prev])
     setSubmitted(true)
