@@ -1,6 +1,7 @@
 "use server"
 
 import { createServiceClient } from "@/lib/supabase/service"
+import { isMockAgreement } from "@/lib/utils"
 
 export interface AgreementMessage {
   id: string
@@ -14,6 +15,10 @@ export interface AgreementMessage {
 export async function getAgreementMessages(agreementId: string): Promise<{ messages: AgreementMessage[]; error: string | null }> {
   if (!agreementId) {
     return { messages: [], error: "Agreement ID is required" }
+  }
+
+  if (isMockAgreement(agreementId)) {
+    return { messages: [], error: "Demo agreement — chat unavailable" }
   }
 
   const supabase = createServiceClient()
@@ -38,6 +43,10 @@ export async function sendAgreementMessage(
 ): Promise<{ message: AgreementMessage | null; error: string | null }> {
   if (!agreementId) {
     return { message: null, error: "Agreement ID is required" }
+  }
+
+  if (isMockAgreement(agreementId)) {
+    return { message: null, error: "Demo agreement — chat unavailable" }
   }
 
   if (!senderWallet) {
