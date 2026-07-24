@@ -8,7 +8,7 @@ import { ThalosLoader } from "@/components/thalos-loader"
 import { Navbar } from "@/components/navbar"
 import { HeroSection } from "@/components/hero-section"
 import { SocialAuthModal } from "@/components/social-auth-modal"
-import { TestSignMessage } from "@/components/test-sign-message"
+
 
 
 // Lazy load below-the-fold sections for faster initial paint
@@ -138,8 +138,8 @@ export default function Home() {
         onClose={() => setShowAuthModal(null)}
       />
       
-      {/* Dev Test Component */}
-      <TestSignMessage />
+      
+      
   </div>
   )
   }
