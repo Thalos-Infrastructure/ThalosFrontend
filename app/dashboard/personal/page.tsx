@@ -5,7 +5,7 @@ import React, { useState, useEffect, useCallback, useId, useRef, useMemo } from 
 import Image from "next/image"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
+import { cn, isMockAgreement } from "@/lib/utils"
 import { ThalosLoader } from "@/components/thalos-loader"
 import { LanguageToggle, ThemeToggle, useLanguage } from "@/lib/i18n"
 import { useStellarWallet } from "@/lib/stellar-wallet"
@@ -219,7 +219,12 @@ function SellerMilestoneList({ agr, agreements, setAgreements, t }: {
 
   const { address: walletAddress, openWalletModal } = require("@/lib/stellar-wallet").useStellarWallet();
   const { changeMilestoneStatusAgreement } = require("@/lib/agreementActions");
+  const isMock = isMockAgreement(agr.id);
   const handleSubmitEvidence = async (idx: number) => {
+    if (isMock) {
+      alert("Demo agreement — actions are unavailable. Create a real agreement to use this feature.");
+      return;
+    }
     const evidence = evidenceInputs[idx]?.trim();
     if (!evidence) return;
     setSubmitting(idx);
@@ -1169,10 +1174,15 @@ const res = await getEscrowsByRole({ role: "approver", address: walletAddress },
                   </button>
                   <button
                     onClick={() => setShowAgreementChat(viewingAgreement)}
-                    className="flex items-center gap-2 rounded-lg bg-[#f0b400]/10 px-4 py-2 text-sm font-medium text-[#f0b400] hover:bg-[#f0b400]/20 transition-colors"
+                    className={cn(
+                      "flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors",
+                      isMockAgreement(viewingAgreement!)
+                        ? "bg-amber-500/10 text-amber-400 hover:bg-amber-500/20"
+                        : "bg-[#f0b400]/10 text-[#f0b400] hover:bg-[#f0b400]/20"
+                    )}
                   >
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
-                    Chat
+                    {isMockAgreement(viewingAgreement!) ? "Chat (demo)" : "Chat"}
                   </button>
                 </div>
 

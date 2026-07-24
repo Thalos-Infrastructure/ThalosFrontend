@@ -22,7 +22,7 @@ interface ApproverAgreementDetailProps {
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { cn, isMockAgreement } from "@/lib/utils";
 import { statusConfig } from "./statusConfig";
 import { useLanguage } from "@/lib/i18n";
 import { useWalletType } from "@/lib/use-current-address";
@@ -60,6 +60,10 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
   const currentStep = allReleased ? 3 : (someApproved || allApproved) ? 2 : isFunded ? 1 : 0;
 
   async function handleDispute(idx: number) {
+    if (isMockAgreement(agr.id)) {
+      alert("Demo agreement — actions are unavailable.");
+      return;
+    }
     setDisputingMs(idx);
     setErrorMs(null);
     try {
@@ -100,6 +104,10 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
   }
 
   async function handleApprove(idx: number) {
+    if (isMockAgreement(agr.id)) {
+      alert("Demo agreement — actions are unavailable.");
+      return;
+    }
     setLoadingMs(idx);
     setErrorMs(null);
     try {
@@ -130,6 +138,10 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
   }
 
   async function handleReleaseAll() {
+    if (isMockAgreement(agr.id)) {
+      alert("Demo agreement — actions are unavailable.");
+      return;
+    }
     setLoadingMs(-1);
     setErrorMs(null);
     try {
@@ -237,7 +249,12 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
             <p className="text-xs text-white/35 mt-0.5">{t("flow.pendingFundingDesc")}</p>
           </div>
           <Button
-            onClick={() => fundAndSignEscrow({
+            onClick={() => {
+              if (isMockAgreement(agr.id)) {
+                alert("Demo agreement — actions are unavailable.");
+                return;
+              }
+              fundAndSignEscrow({
               contractId: agr.id,
               amount: agr.amount,
               walletAddress,
@@ -247,7 +264,7 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
               setFunding,
               setError: setFundError,
               setSuccess: setFundSuccess
-            })}
+            })}}
             disabled={disableFund}
             className="rounded-full bg-blue-500 px-6 text-sm font-semibold text-white hover:bg-blue-600 shadow-[0_4px_16px_rgba(59,130,246,0.25)]"
           >

@@ -1,11 +1,11 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { cn } from "@/lib/utils"
+import { cn, isMockAgreement } from "@/lib/utils"
 import { getAgreementMessages, sendAgreementMessage, type AgreementMessage } from "@/lib/actions/agreement-chat"
-import { Send, MessageCircle } from "lucide-react"
+import { Send, MessageCircle, AlertTriangle } from "lucide-react"
 
 interface AgreementChatProps {
   agreementId: string
@@ -18,6 +18,7 @@ interface AgreementChatProps {
 }
 
 export function AgreementChat({ agreementId, currentUserWallet, counterpartyWallet, counterpartyName, className, defaultOpen = false, embedded = false }: AgreementChatProps) {
+  const isMock = useMemo(() => isMockAgreement(agreementId), [agreementId])
   const [messages, setMessages] = useState<AgreementMessage[]>([])
   const [newMessage, setNewMessage] = useState("")
   const [loading, setLoading] = useState(false)
@@ -27,7 +28,7 @@ export function AgreementChat({ agreementId, currentUserWallet, counterpartyWall
   const pollInterval = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && !isMock) {
       loadMessages()
       // Poll for new messages every 5 seconds when chat is open
       pollInterval.current = setInterval(loadMessages, 5000)
@@ -35,7 +36,7 @@ export function AgreementChat({ agreementId, currentUserWallet, counterpartyWall
     return () => {
       if (pollInterval.current) clearInterval(pollInterval.current)
     }
-  }, [isOpen, agreementId])
+  }, [isOpen, agreementId, isMock])
 
   useEffect(() => {
     scrollToBottom()
@@ -87,6 +88,33 @@ export function AgreementChat({ agreementId, currentUserWallet, counterpartyWall
 
   // Embedded mode - always open, no toggle button
   if (embedded) {
+    // Demo / mock agreement - show disabled state
+    if (isMock) {
+      return (
+        <div className={cn("flex flex-col h-full", className)}>
+          <div className="flex-1 flex flex-col items-center justify-center p-6 text-center gap-3">
+            <div className="h-12 w-12 rounded-full bg-amber-500/10 flex items-center justify-center">
+              <AlertTriangle className="h-6 w-6 text-amber-400" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-white/70">Demo Agreement</p>
+              <p className="text-xs text-white/40 mt-1 max-w-[220px]">
+                Chat is unavailable for demo agreements. Create a real agreement to use messaging.
+              </p>
+            </div>
+          </div>
+          <div className="border-t border-white/10 p-4">
+            <Input
+              value=""
+              placeholder="Demo agreement — chat unavailable"
+              className="flex-1 bg-white/5 border-white/10 text-white/30 placeholder:text-white/30 cursor-not-allowed"
+              disabled
+            />
+          </div>
+        </div>
+      )
+    }
+
     return (
       <div className={cn("flex flex-col h-full", className)}>
         {/* Messages */}
@@ -164,13 +192,52 @@ export function AgreementChat({ agreementId, currentUserWallet, counterpartyWall
         )}
       >
         <MessageCircle className="h-4 w-4" />
-        Chat
-        {messages.length > 0 && (
+        {isMock ? "Chat (demo)" : "Chat"}
+        {!isMock && messages.length > 0 && (
           <span className="ml-1 rounded-full bg-[#f0b400]/20 px-1.5 py-0.5 text-[10px] font-bold text-[#f0b400]">
             {messages.length}
           </span>
         )}
       </button>
+    )
+  }
+
+  // Mock agreement popup - show disabled state
+  if (isMock) {
+    return (
+      <div className={cn("rounded-xl border border-white/10 bg-[#0c1220] overflow-hidden", className)}>
+        <div className="flex items-center justify-between border-b border-white/6 px-4 py-3">
+          <div className="flex items-center gap-2">
+            <MessageCircle className="h-4 w-4 text-[#f0b400]" />
+            <span className="text-sm font-medium text-white">Agreement Chat</span>
+          </div>
+          <button
+            onClick={() => setIsOpen(false)}
+            className="text-xs text-white/50 hover:text-white transition-colors"
+          >
+            Minimize
+          </button>
+        </div>
+        <div className="h-64 flex flex-col items-center justify-center p-6 text-center gap-3">
+          <div className="h-10 w-10 rounded-full bg-amber-500/10 flex items-center justify-center">
+            <AlertTriangle className="h-5 w-5 text-amber-400" />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-white/70">Demo Agreement</p>
+            <p className="text-xs text-white/40 mt-1">
+              Chat is unavailable for demo agreements. Create a real agreement to use messaging.
+            </p>
+          </div>
+        </div>
+        <div className="border-t border-white/6 p-3">
+          <Input
+            value=""
+            placeholder="Demo agreement — chat unavailable"
+            className="flex-1 bg-white/5 border-white/10 text-white/30 placeholder:text-white/30 cursor-not-allowed h-9"
+            disabled
+          />
+        </div>
+      </div>
     )
   }
 
