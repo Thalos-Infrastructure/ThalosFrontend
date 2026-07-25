@@ -1848,7 +1848,9 @@ export default function BusinessDashboardPage() {
       />
 
       {/* Agreement Chat - Floating Popup */}
-      {showAgreementChat && (
+      {showAgreementChat && (() => {
+        const activeAgreement = agreements.find(a => a.id === showAgreementChat)
+        return (
         <div className="fixed bottom-6 right-6 z-50 w-96 h-[500px] bg-[#0c1220] rounded-2xl border border-white/10 shadow-[0_16px_64px_rgba(0,0,0,0.5)] overflow-hidden animate-in slide-in-from-bottom-4 duration-300">
           <div className="flex h-full flex-col">
             {/* Header */}
@@ -1872,14 +1874,19 @@ export default function BusinessDashboardPage() {
               <AgreementChat
                 agreementId={showAgreementChat}
                 currentUserWallet={walletAddress || ""}
-                counterpartyWallet={agreements.find(a => a.id === showAgreementChat)?.receiver || ""}
+                counterpartyWallet={activeAgreement?.receiver || ""}
+                agreementTitle={activeAgreement?.title}
+                agreementAmount={activeAgreement?.amount}
+                agreementAsset={activeAgreement?.currency}
+                myRole={activeAgreement?.role}
                 defaultOpen={true}
                 embedded={true}
               />
             </div>
           </div>
         </div>
-      )}
+        )
+      })()}
     </div>
   )
 }

@@ -116,7 +116,7 @@ const initialAgreements: Agreement[] = SHOW_MOCKED_AGREEMENTS ? [
 // MIGRATION: Using escrowMigration wrapper to gradually migrate to backend
 import { getEscrowsBySigner } from "@/services/escrowMigration";
 
-function mapEscrowToAgreement(escrow) {
+function mapEscrowToAgreement(escrow, currentWallet?: string) {
   const isMulti = escrow.type === "multi-release";
   let amount = "";
   if (isMulti) {
@@ -165,7 +165,7 @@ function mapEscrowToAgreement(escrow) {
     balance: escrow.balance,
     serviceProvider: escrow.roles.serviceProvider,
     released: escrow.flags?.released ?? false,
-    role: "buyer" as const, // Default to buyer, can be determined by comparing wallet addresses
+    role: currentWallet && escrow.roles.serviceProvider === currentWallet ? "seller" as const : "buyer" as const,
   };
 }
 
@@ -449,7 +449,7 @@ const { getEscrowsByRole } = await import("@/services/escrowMigration");
         signerRes.data.forEach(escrow => {
           if (!seenIds.has(escrow.contractId)) {
             seenIds.add(escrow.contractId);
-            allAgreements.push(mapEscrowToAgreement(escrow));
+            allAgreements.push(mapEscrowToAgreement(escrow, walletAddress));
           }
         });
       }
@@ -462,7 +462,7 @@ const res = await getEscrowsByRole({ role, address: walletAddress }, token);
           res.data.forEach(escrow => {
             if (!seenIds.has(escrow.contractId)) {
               seenIds.add(escrow.contractId);
-              allAgreements.push(mapEscrowToAgreement(escrow));
+              allAgreements.push(mapEscrowToAgreement(escrow, walletAddress));
             }
           });
         }
@@ -486,7 +486,7 @@ setApproverLoading(true);
 const { getEscrowsByRole } = await import("@/services/escrowMigration");
 const res = await getEscrowsByRole({ role: "approver", address: walletAddress }, token);
       if (res.success && Array.isArray(res.data)) {
-        setApproverEscrows(res.data.map(mapEscrowToAgreement));
+        setApproverEscrows(res.data.map(escrow => mapEscrowToAgreement(escrow, walletAddress)));
       } else {
         setApproverEscrows([]);
       }
@@ -1143,7 +1143,7 @@ const res = await getEscrowsByRole({ role: "approver", address: walletAddress },
                     type: "Single Release" as const,
                     updatedAt: e.date,
                     milestones: e.milestones || [{ status: "pending" }],
-                    role: "buyer" as const,
+                    role: e.role ?? "buyer",
                   })),
                 ]}
                 onAgreementClick={(id) => setViewingAgreement(id)}
@@ -1632,7 +1632,9 @@ const newAgr: Agreement = {
       <div className="h-20 lg:hidden" />
 
       {/* Agreement Chat - Floating Popup */}
-      {showAgreementChat && (
+      {showAgreementChat && (() => {
+        const activeAgreement = agreements.find(a => a.id === showAgreementChat)
+        return (
         <div className="fixed bottom-6 right-6 z-50 w-96 h-[500px] bg-[#0c1220] rounded-2xl border border-white/10 shadow-[0_16px_64px_rgba(0,0,0,0.5)] overflow-hidden animate-in slide-in-from-bottom-4 duration-300">
           <div className="flex h-full flex-col">
             {/* Header */}
@@ -1656,14 +1658,19 @@ const newAgr: Agreement = {
               <AgreementChat
                 agreementId={showAgreementChat}
                 currentUserWallet={walletAddress || ""}
-                counterpartyWallet={agreements.find(a => a.id === showAgreementChat)?.receiver || ""}
+                counterpartyWallet={activeAgreement?.receiver || ""}
+                agreementTitle={activeAgreement?.title}
+                agreementAmount={activeAgreement?.amount}
+                agreementAsset={activeAgreement?.currency}
+                myRole={activeAgreement?.role}
                 defaultOpen={true}
                 embedded={true}
               />
             </div>
           </div>
         </div>
-      )}
+        )
+      })()}
 
       {/* Profile Editor Modal */}
       <ProfileEditor

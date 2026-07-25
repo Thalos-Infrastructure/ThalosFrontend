@@ -17,7 +17,7 @@ export const TRUSTLINE_USDC = {
 };
 
 // show mocked agreements in the UI, set to false to hide them
-export const SHOW_MOCKED_AGREEMENTS = process.env.NEXT_PUBLIC_SHOW_MOCKED_AGREEMENTS !== "false";
+export const SHOW_MOCKED_AGREEMENTS = process.env.NEXT_PUBLIC_SHOW_MOCKED_AGREEMENTS === "true";
 
 // show the dev-only "SignMessage Test" widget. Hidden by default (must never
 // appear in production); opt in for local dev with NEXT_PUBLIC_SHOW_SIGN_MESSAGE_TEST=true.
