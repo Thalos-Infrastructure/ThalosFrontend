@@ -29,6 +29,8 @@ import { useWalletType } from "@/lib/use-current-address";
 import { useStellarWallet } from "@/lib/stellar-wallet";
 import { WalletPrompt } from "@/components/shared/wallet-guard";
 import { fundAndSignEscrow } from "@/lib/agreementActions";
+import { signTransaction as unifiedSign } from "@/lib/signing";
+import { STELLAR_NETWORK_PASSPHRASE } from "@/lib/config";
 import { AlertTriangle } from "lucide-react";
 
 export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreementDetailProps) {
@@ -75,10 +77,8 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
       
       const xdr = res.data && typeof res.data === 'object' && 'unsignedTransaction' in res.data ? (res.data as any).unsignedTransaction : undefined;
       if (xdr) {
-        const { signTransaction: freighterSign } = await import("@stellar/freighter-api");
-        const signedResult = await freighterSign(xdr, { networkPassphrase: "Test SDF Network ; September 2015" });
+        const signedResult = await unifiedSign(xdr, STELLAR_NETWORK_PASSPHRASE, walletAddress);
         if (!signedResult?.signedTxXdr) {
-          if (signedResult?.error) throw new Error("Freighter error: " + signedResult.error);
           throw new Error("Transaction signing failed (no XDR returned)");
         }
         const sendRes = await sendTransaction(signedResult.signedTxXdr);
@@ -116,10 +116,8 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
       if (!res.success) throw new Error(res.error || "Error approving milestone");
       const xdr = res.data && typeof res.data === 'object' && 'unsignedTransaction' in res.data ? (res.data as any).unsignedTransaction : undefined;
       if (xdr) {
-        const { signTransaction: freighterSign } = await import("@stellar/freighter-api");
-        const signedResult = await freighterSign(xdr, { networkPassphrase: "Test SDF Network ; September 2015" });
+        const signedResult = await unifiedSign(xdr, STELLAR_NETWORK_PASSPHRASE, walletAddress);
         if (!signedResult?.signedTxXdr) {
-          if (signedResult?.error) throw new Error("Freighter error: " + signedResult.error);
           throw new Error("Transaction signing failed (no XDR returned)");
         }
         try {
@@ -151,10 +149,8 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
       if (!res.success) throw new Error(res.error || "Error releasing funds");
       const xdr = res.data && typeof res.data === 'object' && 'unsignedTransaction' in res.data ? (res.data as any).unsignedTransaction : undefined;
       if (xdr) {
-        const { signTransaction: freighterSign } = await import("@stellar/freighter-api");
-        const signedResult = await freighterSign(xdr, { networkPassphrase: "Test SDF Network ; September 2015" });
+        const signedResult = await unifiedSign(xdr, STELLAR_NETWORK_PASSPHRASE, walletAddress);
         if (!signedResult?.signedTxXdr) {
-          if (signedResult?.error) throw new Error("Freighter error: " + signedResult.error);
           throw new Error("Transaction signing failed (no XDR returned)");
         }
         const sendRes = await sendTransaction(signedResult.signedTxXdr);
