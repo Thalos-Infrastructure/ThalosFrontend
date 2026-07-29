@@ -10,9 +10,9 @@
  *   unified signer's accesly provider (#110) delegates to.
  */
 
-import React, { useEffect } from "react"
+import React, { useEffect, useMemo } from "react"
 import { AcceslyProvider, ENVIRONMENT_DEFAULTS, useAccesly } from "@accesly/react"
-import { zeroize } from "@accesly/core"
+import { IndexedDbDeviceStore, zeroize } from "@accesly/core"
 import { registerAcceslyRuntime, type AcceslyRuntime } from "@/lib/signing/accesly-bridge"
 import { getStoredAuthWallet } from "@/lib/signing/session"
 import { gAddressFromOwnerPubkey, reconstructSeed, signChallenge } from "./signing"
@@ -27,8 +27,15 @@ const cognitoOverride = process.env.NEXT_PUBLIC_ACCESLY_APP_ID
   : ENVIRONMENT_DEFAULTS.dev.cognito
 
 export function ThalosAcceslyProvider({ children }: { children: React.ReactNode }) {
+  // The React adapter defaults to an IN-MEMORY device store, which loses the
+  // passkey credential record on every reload (wallet.bootstrap then throws
+  // WalletAlreadyExistsError on the next session). Persist it in IndexedDB.
+  const overrides = useMemo(
+    () => (typeof window === "undefined" ? undefined : { deviceStore: new IndexedDbDeviceStore() }),
+    [],
+  )
   return (
-    <AcceslyProvider appId={ACCESLY_APP_ID} env={ACCESLY_ENV} cognitoConfig={cognitoOverride}>
+    <AcceslyProvider appId={ACCESLY_APP_ID} env={ACCESLY_ENV} cognitoConfig={cognitoOverride} overrides={overrides}>
       <AcceslySignerBridge />
       {children}
     </AcceslyProvider>

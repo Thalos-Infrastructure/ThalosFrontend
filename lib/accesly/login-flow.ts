@@ -58,18 +58,27 @@ export async function completeAcceslyLogin(
   })
   const cAddress = ensured.walletAddress
 
+  // 1b. The contract deploy + bootstrap run async on Accesly's worker; G-address
+  //     bootstrap 400s until the Smart Account is live. Poll until on-chain.
+  if (ensured.status !== "on-chain") {
+    await waitForSmartAccountOnChain(accesly)
+  }
+
   // 2. One passkey unlock powers the rest of the flow.
   const material = await accesly.wallet.unlockForSigning(email)
 
   let seed: Uint8Array | null = null
   try {
-    // 3. G-address bridge + USDC trustline (sponsored, idempotent).
+    // 3. G-address bridge + USDC trustline (sponsored, idempotent). Retried —
+    //    right after deploy the backend can still reject while indexing.
     onStage?.("g-address")
-    const g = await accesly.wallet.bootstrapG({
-      fragmentF1Plain: material.fragmentF1Plain,
-      fragmentF2Key: material.fragmentF2Key,
-      ownerPubkey: material.ownerPubkey,
-    })
+    const g = await retry(3, 5_000, () =>
+      accesly.wallet.bootstrapG({
+        fragmentF1Plain: material.fragmentF1Plain,
+        fragmentF2Key: material.fragmentF2Key,
+        ownerPubkey: material.ownerPubkey,
+      }),
+    )
     const gAddress = g.gAddress || gAddressFromOwnerPubkey(material.ownerPubkey)
 
     // 4. Thalos app JWT via the wallet-challenge flow, signed with the
@@ -103,4 +112,30 @@ export async function completeAcceslyLogin(
     zeroize(material.fragmentF1Plain)
     zeroize(material.fragmentF2Key)
   }
+}
+
+/** Poll the wallet record until Accesly's worker confirms the contract on Soroban. */
+async function waitForSmartAccountOnChain(accesly: AcceslyHook, timeoutMs = 120_000): Promise<void> {
+  const started = Date.now()
+  while (Date.now() - started < timeoutMs) {
+    const remote = await accesly.wallet.fetchRemote().catch(() => null)
+    if (remote?.onChain) return
+    await new Promise((r) => setTimeout(r, 4_000))
+  }
+  throw new Error(
+    "Your Accesly smart account is still being deployed. Wait a few seconds and sign in again.",
+  )
+}
+
+async function retry<T>(attempts: number, delayMs: number, fn: () => Promise<T>): Promise<T> {
+  let lastError: unknown
+  for (let i = 0; i < attempts; i++) {
+    try {
+      return await fn()
+    } catch (err) {
+      lastError = err
+      if (i < attempts - 1) await new Promise((r) => setTimeout(r, delayMs))
+    }
+  }
+  throw lastError
 }

@@ -31,9 +31,22 @@ export function useCurrentAddress() {
 export function useWalletType(): "external" | "custodial" | null {
   const { address: walletAddress } = useStellarWallet();
   const { user, token } = useAuthStore();
-  
+
   if (walletAddress) return "external";
   if (token && user?.wallet?.publicKey) return "custodial";
   return null;
+}
+
+/**
+ * True cuando la wallet activa puede FIRMAR operaciones de escrow a través del
+ * unified signer (#110): una wallet externa del Kit, o una custodial cuyo
+ * provider tiene firma implementada (hoy: Accesly #109; social se suma con #108).
+ */
+export function useHasSigningWallet(): boolean {
+  const { address: walletAddress } = useStellarWallet();
+  const { user, token } = useAuthStore();
+
+  if (walletAddress) return true;
+  return !!(token && user?.wallet?.publicKey && user.wallet.provider === "accesly");
 }
 
