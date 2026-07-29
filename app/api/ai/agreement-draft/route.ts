@@ -9,7 +9,9 @@ import {
   type DraftApiResponse,
 } from "@/lib/ai/agreement-draft.types";
 import { validateAgreementDraft } from "@/lib/ai/validate-agreement-draft";
+import { verifyToken } from "@/lib/auth/utils";
 
+// Shared use-case prompts (extracted from components/use-cases.tsx)
 const USE_CASE_PROMPTS = [
   "Real Estate Sale: Buyer reserves house, funds locked until legal documents signed.",
   "Agriculture Pre-Sale: Distributor locks payment for harvest, releases on delivery confirmation.",
@@ -19,6 +21,28 @@ const USE_CASE_PROMPTS = [
   "Import / Export: Funds locked until shipment clears customs.",
   "Online Coaching: Payments unlock after each session milestone.",
 ];
+
+// Simple in-memory rate limiter (for demo; use Redis/Upstash in production)
+const RATE_LIMIT = new Map<string, { count: number; resetTime: number }>();
+const MAX_REQUESTS_PER_HOUR = 20;
+
+function checkRateLimit(userId: string): boolean {
+  const now = Date.now();
+  const record = RATE_LIMIT.get(userId);
+
+  if (!record || now > record.resetTime) {
+    // New window
+    RATE_LIMIT.set(userId, { count: 1, resetTime: now + 60 * 60 * 1000 });
+    return true;
+  }
+
+  if (record.count >= MAX_REQUESTS_PER_HOUR) {
+    return false;
+  }
+
+  record.count++;
+  return true;
+}
 
 function buildSystemPrompt(): string {
   return `You are a specialized agreement draft engine for Thalos, a blockchain-based escrow platform.
@@ -63,6 +87,37 @@ function getOpenAIProvider() {
 const MODEL_ID = process.env.AI_MODEL_ID || "gpt-4o-mini";
 
 export async function POST(req: Request) {
+  // 1. Auth check
+  const auth = req.headers.get("authorization");
+  const token = auth?.startsWith("Bearer ") ? auth.slice(7) : null;
+  if (!token) {
+    const resp: DraftApiResponse = {
+      success: false,
+      error: "Missing authentication token",
+    };
+    return NextResponse.json(resp, { status: 401 });
+  }
+
+  const payload = verifyToken(token);
+  if (!payload) {
+    const resp: DraftApiResponse = {
+      success: false,
+      error: "Invalid or expired token",
+    };
+    return NextResponse.json(resp, { status: 401 });
+  }
+
+  const userId = payload.sub as string;
+
+  // 2. Rate limiting
+  if (!checkRateLimit(userId)) {
+    const resp: DraftApiResponse = {
+      success: false,
+      error: "Rate limit exceeded. Maximum 20 requests per hour.",
+    };
+    return NextResponse.json(resp, { status: 429 });
+  }
+
   try {
     const body = await req.json();
     const parseResult = DraftRequestSchema.safeParse(body);
@@ -76,6 +131,15 @@ export async function POST(req: Request) {
     }
 
     const request = parseResult.data;
+
+    // Optional: prompt length check to prevent abuse
+    if (request.prompt.length > 5000) {
+      const resp: DraftApiResponse = {
+        success: false,
+        error: "Prompt too long. Maximum 5000 characters.",
+      };
+      return NextResponse.json(resp, { status: 400 });
+    }
 
     const provider = getOpenAIProvider();
 
