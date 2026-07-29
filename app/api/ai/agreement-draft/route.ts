@@ -8,8 +8,10 @@ import {
   type AgreementDraft,
   type DraftApiResponse,
 } from "@/lib/ai/agreement-draft.types";
-import { validateAgreementDraft } from "@/lib/ai/validate-agreement-draft";
+import { processDraftAfterAI } from "@/lib/ai/process-draft-after-ai";
 import { verifyToken } from "@/lib/auth/utils";
+// Re-export for tests
+export { processDraftAfterAI } from "@/lib/ai/process-draft-after-ai";
 
 // Shared use-case prompts (extracted from components/use-cases.tsx)
 const USE_CASE_PROMPTS = [
@@ -151,12 +153,8 @@ export async function POST(req: Request) {
       system: buildSystemPrompt(),
     });
 
-    // Server-side validation as safety net
-    const validation = validateAgreementDraft(
-      draft.milestones,
-      draft.amount,
-      request.prompt
-    );
+    // Server-side validation and post-processing (extracted for test reuse)
+    const validation = processDraftAfterAI(draft, request.prompt);
 
     // Reject if milestone sum doesn't match
     if (!validation.milestone_sum_match) {
@@ -165,18 +163,6 @@ export async function POST(req: Request) {
         error: validation.milestone_sum_error || "Milestone amounts do not sum to total",
       };
       return NextResponse.json(resp, { status: 422 });
-    }
-
-    // Enforce type inference rule: multi if milestones > 1
-    if (draft.milestones.length > 1 && draft.agreement_type !== "multi") {
-      draft.agreement_type = "multi";
-    } else if (draft.milestones.length === 1 && draft.agreement_type !== "single") {
-      draft.agreement_type = "single";
-    }
-
-    // Merge risk flags from validation into metadata
-    if (validation.risk_flags.length > 0) {
-      draft.metadata.riskFlags.push(...validation.risk_flags);
     }
 
     const resp: DraftApiResponse = { success: true, data: draft };
