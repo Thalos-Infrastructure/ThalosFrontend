@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { generateObject } from "ai";
-import { z } from "zod";
+import { createOpenAI } from "@ai-sdk/openai";
 
 import {
   DraftRequestSchema,
@@ -50,6 +50,18 @@ Return a JSON object with:
 Do NOT include markdown code blocks or explanations. Return ONLY the JSON object.`;
 }
 
+// Create OpenAI-compatible provider. Supports:
+// - OPENAI_API_KEY env var (direct OpenAI)
+// - Vercel AI Gateway via OPENAI_BASE_URL
+function getOpenAIProvider() {
+  return createOpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+    baseURL: process.env.OPENAI_BASE_URL || undefined,
+  });
+}
+
+const MODEL_ID = process.env.AI_MODEL_ID || "gpt-4o-mini";
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -65,9 +77,11 @@ export async function POST(req: Request) {
 
     const request = parseResult.data;
 
+    const provider = getOpenAIProvider();
+
     // Call AI model via Vercel AI SDK with generateObject
     const { object: draft } = await generateObject({
-      model: "openai/gpt-4o-mini",
+      model: provider(MODEL_ID),
       schema: AgreementDraftSchema,
       prompt: `Generate an agreement draft for: ${request.prompt}${request.useCase ? `\nUse-case context: ${request.useCase}` : ""}`,
       system: buildSystemPrompt(),
@@ -90,7 +104,6 @@ export async function POST(req: Request) {
     }
 
     // Enforce type inference rule: multi if milestones > 1
-    const inferred = validation.type_inference.type;
     if (draft.milestones.length > 1 && draft.agreement_type !== "multi") {
       draft.agreement_type = "multi";
     } else if (draft.milestones.length === 1 && draft.agreement_type !== "single") {
