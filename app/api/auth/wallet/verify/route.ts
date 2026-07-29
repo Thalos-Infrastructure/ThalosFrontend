@@ -104,17 +104,34 @@ export async function POST(req: Request) {
     // Synthetic, deterministic email — wallet users have no email/password. Kept
     // unique per wallet so it never collides with real email accounts.
     const email = `${address.toLowerCase()}@wallet.thalos`;
-    const { data: inserted, error: insertError } = await supabase
+    // wallet_provider persists the login method so /me can echo it back
+    // (accesly/#109, pollar/#108…). Retry without it while the migration
+    // hasn't run yet.
+    let inserted = null;
+    const withProvider = await supabase
       .from("auth_users")
-      .insert({ wallet_public_key: address, email, name: null })
+      .insert({ wallet_public_key: address, email, name: null, wallet_provider: provider })
       .select("id, email, name, wallet_public_key")
       .single();
-
-    if (insertError || !inserted) {
-      console.error("auth/wallet/verify insert error:", insertError);
-      return NextResponse.json({ error: "No se pudo crear el usuario de wallet" }, { status: 500 });
+    if (!withProvider.error && withProvider.data) {
+      inserted = withProvider.data;
+    } else {
+      const fallback = await supabase
+        .from("auth_users")
+        .insert({ wallet_public_key: address, email, name: null })
+        .select("id, email, name, wallet_public_key")
+        .single();
+      if (fallback.error || !fallback.data) {
+        console.error("auth/wallet/verify insert error:", fallback.error);
+        return NextResponse.json({ error: "No se pudo crear el usuario de wallet" }, { status: 500 });
+      }
+      inserted = fallback.data;
     }
     row = inserted;
+  } else if (provider !== "stellar-wallet") {
+    // Keep the stored provider in sync for explicit login methods (non-fatal;
+    // no-op while the wallet_provider migration hasn't run).
+    await supabase.from("auth_users").update({ wallet_provider: provider }).eq("id", row.id);
   }
 
   const user: AuthUser = {
