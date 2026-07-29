@@ -29,6 +29,10 @@ import { ProfileEditor } from "@/components/profile/profile-editor"
 import { AgreementsView } from "@/components/agreements/agreements-view"
 import { ContactSelector } from "@/components/agreements/contact-selector"
 import { AgreementChat } from "@/components/agreements/agreement-chat"
+import { AiAgreementAssistant } from "@/components/agreements/ai-agreement-assistant"
+import {
+  Dialog, DialogContent, DialogTitle, DialogDescription,
+} from "@/components/ui/dialog"
 import { WalletSelector } from "@/components/dashboard/wallet-selector"
 import { WalletAgreementsPanel } from "@/components/dashboard/wallet-agreements-panel"
 import { getWalletsWithAgreements, type WalletWithAgreements, type WalletAgreement } from "@/lib/api/wallets"
@@ -258,6 +262,7 @@ export default function BusinessDashboardPage() {
   const [activeSection, setActiveSection] = useState("agreements")
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [showProfileEditor, setShowProfileEditor] = useState(false)
+  const [showAiAssistant, setShowAiAssistant] = useState(false)
   const [companyProfile, setCompanyProfile] = useState<Profile | null>(null)
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
   
@@ -671,6 +676,20 @@ export default function BusinessDashboardPage() {
     setTitle(""); setDescription(""); setSignerWallet(""); setGuidePrefilled(false)
     setMilestones([{ description: "Full delivery", amount: "" }]); setShowCustomize(false)
     setNotifyEmail(""); setSignerEmail(""); setSelectedWallet(connectedWallets[0].value)
+  }
+
+  const handleAiDraft = (draft: { title: string; description: string; escrowType: "single" | "multi"; useCase: string | null; milestones: { description: string; amount: string }[] }) => {
+    setActiveSection("create")
+    setStep(2)
+    setEscrowType(draft.escrowType)
+    setTitle(draft.title)
+    setDescription(draft.description)
+    if (draft.useCase) setUseCase(draft.useCase)
+    setGuidePrefilled(true)
+    if (draft.milestones.length > 0) {
+      setMilestones(draft.milestones.map(m => ({ description: m.description, amount: m.amount || "" })))
+    }
+    setShowAiAssistant(false)
   }
 
   const agreementUrl = typeof window !== "undefined" ? `${window.location.origin}/dashboard/business` : "https://thalos.app/dashboard/business"
@@ -1233,9 +1252,15 @@ export default function BusinessDashboardPage() {
           {activeSection === "agreements" && !isActiveSectionKybGated && !viewingAgreement && (
             <div className="mx-auto max-w-4xl animate-in fade-in slide-in-from-bottom-2 duration-300">
               {/* Header */}
-              <div className="mb-6 flex items-center justify-between">
+              <div className="mb-6 flex flex-wrap items-center justify-between gap-2">
                 <h1 className="text-2xl font-semibold text-white">{t("dashPage.enterpriseAgreements")}</h1>
-                <Button onClick={() => { setActiveSection("create"); resetWizard() }} className="rounded-full bg-[#3b82f6] px-6 text-sm font-semibold text-white hover:bg-[#2563eb] shadow-[0_4px_16px_rgba(59,130,246,0.25)]">+ {t("dashPage.newAgreement")}</Button>
+                <div className="flex items-center gap-2">
+                  <Button onClick={() => setShowAiAssistant(true)}
+                    className="rounded-full bg-purple-500/10 px-5 text-sm font-semibold text-purple-400 hover:bg-purple-500/20 border border-purple-500/20">
+                    Create with AI
+                  </Button>
+                  <Button onClick={() => { setActiveSection("create"); resetWizard() }} className="rounded-full bg-[#3b82f6] px-6 text-sm font-semibold text-white hover:bg-[#2563eb] shadow-[0_4px_16px_rgba(59,130,246,0.25)]">+ {t("dashPage.newAgreement")}</Button>
+                </div>
               </div>
 
               {/* Wallet filter — only renders when user has multiple linked wallets */}
@@ -1674,9 +1699,15 @@ export default function BusinessDashboardPage() {
                 </div>
               ) : (
               <>
-              <div className="mb-6 flex items-center justify-between">
+              <div className="mb-6 flex flex-wrap items-center justify-between gap-2">
                 <h1 className="text-2xl font-semibold text-white">New Agreement</h1>
-                <Button onClick={() => { setActiveSection("agreements"); resetWizard() }} className="rounded-full bg-white/10 px-6 text-sm font-semibold text-white/70 hover:bg-white/15 hover:text-white">View Agreements</Button>
+                <div className="flex items-center gap-2">
+                  <Button onClick={() => setShowAiAssistant(true)}
+                    className="rounded-full bg-purple-500/10 px-5 text-sm font-semibold text-purple-400 hover:bg-purple-500/20 border border-purple-500/20">
+                    Create with AI
+                  </Button>
+                  <Button onClick={() => { setActiveSection("agreements"); resetWizard() }} className="rounded-full bg-white/10 px-6 text-sm font-semibold text-white/70 hover:bg-white/15 hover:text-white">View Agreements</Button>
+                </div>
               </div>
 
               {!submitted && (
@@ -2015,6 +2046,19 @@ export default function BusinessDashboardPage() {
     )}
   </div>
       
+      {/* AI Agreement Assistant Dialog */}
+      <Dialog open={showAiAssistant} onOpenChange={setShowAiAssistant}>
+        <DialogContent className="sm:max-w-xl max-h-[80vh] flex flex-col" showCloseButton={false}>
+          <DialogTitle className="sr-only">AI Agreement Assistant</DialogTitle>
+          <DialogDescription className="sr-only">Describe your deal to generate an agreement draft</DialogDescription>
+          <AiAgreementAssistant
+            profile="business"
+            onDraftComplete={handleAiDraft}
+            onClose={() => setShowAiAssistant(false)}
+          />
+        </DialogContent>
+      </Dialog>
+
       {/* Footer */}
       <Footer />
 

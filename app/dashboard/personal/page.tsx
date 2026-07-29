@@ -28,6 +28,10 @@ import { getProfileByWallet, type Profile } from "@/lib/actions/profile"
 import { AgreementsView } from "@/components/agreements/agreements-view"
 import { ContactSelector } from "@/components/agreements/contact-selector"
 import { AgreementChat } from "@/components/agreements/agreement-chat"
+import { AiAgreementAssistant } from "@/components/agreements/ai-agreement-assistant"
+import {
+  Dialog, DialogContent, DialogTitle, DialogDescription,
+} from "@/components/ui/dialog"
 import { ProfileEditor } from "@/components/profile/profile-editor"
 import { WalletSelector } from "@/components/dashboard/wallet-selector"
 import { WalletAgreementsPanel } from "@/components/dashboard/wallet-agreements-panel"
@@ -400,6 +404,7 @@ export default function PersonalDashboardPage() {
   const [walletsData, setWalletsData] = useState<WalletWithAgreements[]>([]);
   const [userProfile, setUserProfile] = useState<Profile | null>(null);
   const [showEditProfile, setShowEditProfile] = useState(false);
+  const [showAiAssistant, setShowAiAssistant] = useState(false);
 
   // Fetch wallets with agreements
   useEffect(() => {
@@ -822,6 +827,20 @@ export default function PersonalDashboardPage() {
     setNotifyEmail(""); setSignerEmail(""); setSelectedWallet(walletAddress ?? "")
   }
 
+  const handleAiDraft = (draft: { title: string; description: string; escrowType: "single" | "multi"; useCase: string | null; milestones: { description: string; amount: string }[] }) => {
+    setActiveSection("create")
+    setStep(2)
+    setEscrowType(draft.escrowType)
+    setTitle(draft.title)
+    setDescription(draft.description)
+    if (draft.useCase) setUseCase(draft.useCase)
+    setGuidePrefilled(true)
+    if (draft.milestones.length > 0) {
+      setMilestones(draft.milestones.map(m => ({ description: m.description, amount: m.amount || "" })))
+    }
+    setShowAiAssistant(false)
+  }
+
   const agreementUrl = typeof window !== "undefined" ? `${window.location.origin}/dashboard/personal` : "https://thalos.app/dashboard/personal"
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(agreementUrl)}&bgcolor=0a0a0a&color=f0b400&qzone=3&format=png`
 
@@ -1095,6 +1114,15 @@ export default function PersonalDashboardPage() {
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-[#f0b400]"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
                   </div>
                   <span className="text-xs font-medium text-white/60">New Agreement</span>
+                </button>
+                <button
+                  onClick={() => setShowAiAssistant(true)}
+                  className="flex flex-col items-center gap-2 rounded-xl border border-white/6 bg-[#0c1220] p-4 hover:border-white/15 hover:bg-[#0c1220]/80 transition-all"
+                >
+                  <div className="rounded-lg p-2.5 bg-purple-500/10">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-purple-400"><path d="M12 2a4 4 0 014 4c0 2-2 3-2 3s2 1 2 3a4 4 0 01-8 0c0-2 2-3 2-3s-2-1-2-3a4 4 0 014-4z"/><path d="M8 16c0-2 2-3 2-3s-2-1-2-3"/><path d="M16 16c0-2-2-3-2-3s2-1 2-3"/><path d="M12 22v-4"/></svg>
+                  </div>
+                  <span className="text-xs font-medium text-white/60">Create with AI</span>
                 </button>
                 <button
                   onClick={() => setActiveSection("agreements")}
@@ -1412,12 +1440,18 @@ export default function PersonalDashboardPage() {
           {activeSection === "agreements" && !viewingAgreement && (
             <div className="mx-auto max-w-4xl animate-in fade-in slide-in-from-bottom-2 duration-300">
 {/* Header */}
-  <div className="mb-6 flex items-center justify-between">
+  <div className="mb-6 flex flex-wrap items-center justify-between gap-2">
   <h1 className="text-2xl font-semibold text-white">{t("dashPage.myAgreements")}</h1>
+  <div className="flex items-center gap-2">
+  <Button onClick={() => setShowAiAssistant(true)}
+    className="rounded-full bg-purple-500/10 px-5 text-sm font-semibold text-purple-400 hover:bg-purple-500/20 border border-purple-500/20">
+    Create with AI
+  </Button>
   <Button onClick={() => { setActiveSection("create"); resetWizard() }}
   className="rounded-full bg-[#f0b400] px-6 text-sm font-semibold text-background hover:bg-[#d4a000] shadow-[0_4px_16px_rgba(240,180,0,0.25)]">
   + {t("dashPage.newAgreement")}
   </Button>
+  </div>
   </div>
   
   {/* Wallet Selector - only shows if user has multiple wallets */}
@@ -1670,12 +1704,18 @@ export default function PersonalDashboardPage() {
                 </div>
               ) : (
               <>
-              <div className="mb-6 flex items-center justify-between">
+              <div className="mb-6 flex flex-wrap items-center justify-between gap-2">
                 <h1 className="text-2xl font-semibold text-white">New Agreement</h1>
-                <Button onClick={() => { setActiveSection("agreements"); resetWizard() }}
-                  className="rounded-full bg-white/10 px-6 text-sm font-semibold text-white/70 hover:bg-white/15 hover:text-white">
-                  View Agreements
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button onClick={() => setShowAiAssistant(true)}
+                    className="rounded-full bg-purple-500/10 px-5 text-sm font-semibold text-purple-400 hover:bg-purple-500/20 border border-purple-500/20">
+                    Create with AI
+                  </Button>
+                  <Button onClick={() => { setActiveSection("agreements"); resetWizard() }}
+                    className="rounded-full bg-white/10 px-6 text-sm font-semibold text-white/70 hover:bg-white/15 hover:text-white">
+                    View Agreements
+                  </Button>
+                </div>
               </div>
 
               {/* Progress bar */}
@@ -1969,6 +2009,19 @@ const newAgr: Agreement = {
           </div>
         </div>
       )}
+
+      {/* AI Agreement Assistant Dialog */}
+      <Dialog open={showAiAssistant} onOpenChange={setShowAiAssistant}>
+        <DialogContent className="sm:max-w-xl max-h-[80vh] flex flex-col" showCloseButton={false}>
+          <DialogTitle className="sr-only">AI Agreement Assistant</DialogTitle>
+          <DialogDescription className="sr-only">Describe your deal to generate an agreement draft</DialogDescription>
+          <AiAgreementAssistant
+            profile="personal"
+            onDraftComplete={handleAiDraft}
+            onClose={() => setShowAiAssistant(false)}
+          />
+        </DialogContent>
+      </Dialog>
 
       {/* Profile Editor Modal */}
       <ProfileEditor
