@@ -5,10 +5,8 @@
 
 import { getKit } from "@/lib/stellar-wallet-kit"
 import { STELLAR_NETWORK_PASSPHRASE } from "@/lib/config"
+import { STELLAR_WALLET_KEY } from "../session"
 import type { SignedMessage, SignedTransaction, SignTransactionOptions, WalletSigner } from "../types"
-
-// Must match STELLAR_WALLET_KEY in lib/stellar-wallet.tsx (sessionStorage).
-const STELLAR_WALLET_KEY = "thalos_stellar_address"
 
 function connectedAddress(): string | null {
   if (typeof window === "undefined") return null

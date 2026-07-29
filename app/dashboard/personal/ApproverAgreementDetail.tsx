@@ -78,13 +78,16 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
    * the Trustless Work role, signs via the unified signer (any login method)
    * and submits through TW's send-transaction endpoint so TW indexes state.
    * Build responses without an unsigned XDR need no signature and pass through.
+   *
+   * @returns true only when an XDR was actually signed AND submitted — callers
+   * with on-chain side effects (e.g. registering the dispute) must gate on it.
    */
-  async function signAndSubmit(operation: EscrowOperation, res: AgreementResponse<unknown>, errorMessage: string) {
+  async function signAndSubmit(operation: EscrowOperation, res: AgreementResponse<unknown>, errorMessage: string): Promise<boolean> {
     if (!res.success) throw new Error(res.error || errorMessage);
     const xdr = res.data && typeof res.data === "object" && "unsignedTransaction" in res.data
       ? (res.data as { unsignedTransaction?: string }).unsignedTransaction
       : undefined;
-    if (!xdr) return;
+    if (!xdr) return false;
 
     const { sendTransaction } = await import("@/services/trustlessworkService");
     const signedResult = await signEscrowOperation({
@@ -98,6 +101,7 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
     const sendRes = await sendTransaction(signedResult.signedTxXdr);
     if (!sendRes.success) throw new Error(sendRes.error || "Error sending transaction");
     setTxStatus("confirmed");
+    return true;
   }
 
   async function handleDispute(idx: number) {
@@ -113,10 +117,12 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
       const { openDispute } = await import("@/lib/actions/disputes");
 
       const res = await disputeMilestone(agr.id, idx.toString(), walletAddress);
-      await signAndSubmit("dispute", res, "Error raising dispute");
+      const submitted = await signAndSubmit("dispute", res, "Error raising dispute");
 
-      // Register dispute in Supabase if we have an agreement_id (from local DB)
-      if (agr.agreement_id) {
+      // Register dispute in Supabase only after the on-chain dispute actually
+      // went through — a build response without XDR must not create a DB-only
+      // dispute.
+      if (submitted && agr.agreement_id) {
         await openDispute({
           agreement_id: agr.agreement_id,
           opened_by: walletAddress,

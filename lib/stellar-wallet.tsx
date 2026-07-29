@@ -9,7 +9,8 @@ import { useAuthStore } from "@/lib/auth-store"
 import { requestWalletChallenge, verifyWalletLogin } from "@/lib/api/wallet-auth"
 import { linkWallet } from "@/lib/api/wallets"
 
-const STELLAR_WALLET_KEY = "thalos_stellar_address"
+import { STELLAR_WALLET_KEY } from "@/lib/signing/session"
+
 const STELLAR_PROFILE_KEY = "thalos_profile"
 
 type StellarWalletContextValue = {
