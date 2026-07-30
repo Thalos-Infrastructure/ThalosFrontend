@@ -76,9 +76,12 @@ function generateSlug(title: string): string {
 
 /**
  * Create a new bounty
+ * @param input Bounty creation input
+ * @param token JWT token for creating the underlying agreement
  */
 export async function createBounty(
-  input: CreateBountyInput
+  input: CreateBountyInput,
+  token?: string
 ): Promise<{ bounty: Bounty | null; error: string | null }> {
   try {
     const supabase = await createClient()
@@ -99,7 +102,7 @@ export async function createBounty(
         ...input.validators.map((v) => ({ wallet_address: v, role: "validator" as const })),
       ],
       metadata: { is_bounty: true, slug },
-    })
+    }, token || "")
 
     if (agreementError || !agreement) {
       return { bounty: null, error: agreementError || "Failed to create agreement" }
@@ -271,11 +274,16 @@ export async function updateBountyStatus(
 
 /**
  * Link contract to bounty after Trustless Work deployment
+ * @param bountyId Bounty ID
+ * @param contractId Contract ID
+ * @param actorWallet Wallet of the actor
+ * @param token JWT token for linking the contract to agreement
  */
 export async function linkContractToBounty(
   bountyId: string,
   contractId: string,
-  actorWallet: string
+  actorWallet: string,
+  token?: string
 ): Promise<{ success: boolean; error: string | null }> {
   try {
     const supabase = await createClient()
@@ -292,7 +300,7 @@ export async function linkContractToBounty(
     }
 
     // Link contract to agreement
-    const result = await linkContractToAgreement(bounty.agreement_id, contractId, actorWallet)
+    const result = await linkContractToAgreement(bounty.agreement_id, contractId, actorWallet, token || "")
     if (result.error) {
       return { success: false, error: result.error }
     }

@@ -1,15 +1,11 @@
 "use server";
 
-import { TRUSTLINE_USDC } from "@/lib/config";
-
-const STELLAR_NETWORK = process.env.NEXT_PUBLIC_STELLAR_NETWORK || "TESTNET";
-const HORIZON_URL = STELLAR_NETWORK === "MAINNET" 
-  ? "https://horizon.stellar.org"
-  : "https://horizon-testnet.stellar.org";
-
-const NETWORK_PASSPHRASE = STELLAR_NETWORK === "MAINNET"
-  ? "Public Global Stellar Network ; September 2015"
-  : "Test SDF Network ; September 2015";
+import {
+  TRUSTLINE_USDC,
+  STELLAR_NETWORK,
+  HORIZON_URL,
+  STELLAR_NETWORK_PASSPHRASE as NETWORK_PASSPHRASE,
+} from "@/lib/config";
 
 // Friendbot URL for testnet activation (free)
 const FRIENDBOT_URL = "https://friendbot.stellar.org";
