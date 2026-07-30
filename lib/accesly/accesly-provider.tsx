@@ -10,11 +10,13 @@
  *   unified signer's accesly provider (#110) delegates to.
  */
 
-import React, { useEffect, useMemo } from "react"
+import React, { useEffect, useMemo, useRef } from "react"
 import { AcceslyProvider, ENVIRONMENT_DEFAULTS, useAccesly } from "@accesly/react"
 import { IndexedDbDeviceStore, zeroize } from "@accesly/core"
 import { registerAcceslyRuntime, type AcceslyRuntime } from "@/lib/signing/accesly-bridge"
 import { getStoredAuthWallet } from "@/lib/signing/session"
+import { useAuthStore } from "@/lib/auth-store"
+import { isAcceslyBackedUser, shouldCloseAcceslySession } from "./session-coherence"
 import { gAddressFromOwnerPubkey, reconstructSeed, signChallenge } from "./signing"
 
 const ACCESLY_APP_ID = process.env.NEXT_PUBLIC_ACCESLY_APP_ID || "thalos-local"
@@ -27,6 +29,15 @@ const cognitoOverride = process.env.NEXT_PUBLIC_ACCESLY_APP_ID
   : ENVIRONMENT_DEFAULTS.dev.cognito
 
 export function ThalosAcceslyProvider({ children }: { children: React.ReactNode }) {
+  useEffect(() => {
+    if (!process.env.NEXT_PUBLIC_ACCESLY_APP_ID) {
+      console.warn(
+        "[accesly] NEXT_PUBLIC_ACCESLY_APP_ID is not set — falling back to the SDK's public dev Cognito pool (Stellar TESTNET). " +
+          "Fine for local dev; register a Thalos app at dev.accesly.xyz and set the app id for shared/staging/mainnet environments.",
+      )
+    }
+  }, [])
+
   // The React adapter defaults to an IN-MEMORY device store, which loses the
   // passkey credential record on every reload (wallet.bootstrap then throws
   // WalletAlreadyExistsError on the next session). Persist it in IndexedDB.
@@ -50,6 +61,30 @@ export function ThalosAcceslyProvider({ children }: { children: React.ReactNode 
 function AcceslySignerBridge() {
   const accesly = useAccesly()
   const { status, username } = accesly.auth
+  const { user, hydrated } = useAuthStore()
+
+  // Keep session state coherent on logout: when a Thalos session that was
+  // backed by Accesly ends, close the Accesly (Cognito) session too so a
+  // stale passkey session can't fight a later Freighter/Pollar login.
+  // Decision matrix lives (tested) in session-coherence.ts — it only fires
+  // on the transition accesly-user → logged-out, never during login.
+  const hadAcceslyUser = useRef(false)
+  useEffect(() => {
+    if (!hydrated) return
+    if (
+      shouldCloseAcceslySession({
+        hydrated,
+        hadAcceslyUser: hadAcceslyUser.current,
+        user,
+        acceslyStatus: status,
+      })
+    ) {
+      accesly.auth.signOut().catch(() => {
+        // Non-fatal — the Cognito session simply expires on its own.
+      })
+    }
+    hadAcceslyUser.current = isAcceslyBackedUser(user)
+  }, [accesly.auth, hydrated, status, user])
 
   useEffect(() => {
     if (status !== "authenticated" || !username) {

@@ -104,7 +104,12 @@ export function LinkedWallets({ onWalletSelect, selectedWallet, showBalances = t
       const result = await getWalletsWithBalances(token)
 
       if (result.success && result.data) {
-        setWallets(result.data)
+        // The backend may return the array bare or wrapped in { wallets: [...] };
+        // never trust the shape — a non-array here crashed the whole profile page.
+        const raw: unknown = Array.isArray(result.data)
+          ? result.data
+          : (result.data as unknown as { wallets?: unknown }).wallets
+        setWallets(Array.isArray(raw) ? (raw as WalletWithBalance[]) : [])
       } else {
         setError(result.error || t("linkedWallets.loadError"))
         setWallets([])
