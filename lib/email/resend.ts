@@ -1,7 +1,14 @@
 import { Resend } from 'resend';
 import { EMAIL_FROM, EMAIL_REPLY_TO, APP_URL, APP_NAME } from '@/lib/config';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Lazy init — Resend constructor throws without a key, which breaks `next build`
+// page-data collection when RESEND_API_KEY is unset in CI/dev.
+let resend: Resend | null = null;
+function getResend(): Resend | null {
+  if (!process.env.RESEND_API_KEY) return null;
+  if (!resend) resend = new Resend(process.env.RESEND_API_KEY);
+  return resend;
+}
 
 export interface SendEmailOptions {
   to: string;
@@ -11,13 +18,14 @@ export interface SendEmailOptions {
 }
 
 export async function sendEmail({ to, subject, html, replyTo }: SendEmailOptions) {
-  if (!process.env.RESEND_API_KEY) {
+  const client = getResend();
+  if (!client) {
     console.warn('[Email] RESEND_API_KEY not configured, skipping email send');
     return { success: false, error: 'Email not configured' };
   }
 
   try {
-    const { data, error } = await resend.emails.send({
+    const { data, error } = await client.emails.send({
       from: EMAIL_FROM,
       to,
       subject,

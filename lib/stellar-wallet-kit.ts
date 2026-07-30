@@ -1,9 +1,15 @@
 /**
- * Inicialización client-only del Stellar Wallets Kit.
+ * Inicialización client-only del Stellar Wallets Kit 2.x.
  * Uso: getKit() desde el navegador para abrir el modal "Connect Wallet" y firmar.
+ *
+ * Kit 2.x changes from 1.x:
+ * - `StellarWalletsKit.init()` is the recommended way to start (class constructor still works)
+ * - `defaultModules()` replaces `allowAllModules()`
+ * - `WalletNetwork` moved to `@creit.tech/stellar-wallets-kit/sdk`
+ * - `ISpec` config shape unchanged (network, modules)
  */
 
-import type { StellarWalletsKit } from "@creit.tech/stellar-wallets-kit"
+import type { StellarWalletsKit } from "@creit.tech/stellar-wallets-kit/sdk"
 
 let kitInstance: StellarWalletsKit | null = null
 
@@ -16,7 +22,6 @@ async function waitForFreighter(maxWaitMs = 3000): Promise<boolean> {
   
   const startTime = Date.now()
   
-  // Check if Freighter is already available
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   if ((window as any).freighter) {
     return true
@@ -45,12 +50,23 @@ export async function getKit(): Promise<StellarWalletsKit | null> {
     // Wait for Freighter to inject its API (up to 3 seconds)
     await waitForFreighter(3000)
     
-    const mod = await import("@creit.tech/stellar-wallets-kit")
-    const { StellarWalletsKit: Kit, WalletNetwork, allowAllModules } = mod
+    const mod = await import("@creit.tech/stellar-wallets-kit/sdk")
+    const { StellarWalletsKit, WalletNetwork } = mod
     
-    kitInstance = new Kit({
+    // Kit 2.x: use defaultModules instead of allowAllModules
+    let modules: any[]
+    try {
+      const utilsMod = await import("@creit.tech/stellar-wallets-kit/modules/utils")
+      modules = utilsMod.defaultModules()
+    } catch {
+      // Fallback: allowAllModules still exists in 2.x for backward compat
+      const allMod = await import("@creit.tech/stellar-wallets-kit")
+      modules = allMod.allowAllModules()
+    }
+    
+    kitInstance = new StellarWalletsKit({
       network: WalletNetwork.PUBLIC,
-      modules: allowAllModules(),
+      modules,
     })
     
     return kitInstance

@@ -1,178 +1,196 @@
-import { NextResponse } from "next/server";
-import { generateObject } from "ai";
-import { createOpenAI } from "@ai-sdk/openai";
+import { NextRequest, NextResponse } from "next/server";
+import { DraftRequestSchema, DraftApiResponseSchema, type AgreementDraft } from "@/lib/ai/agreement-draft.types";
+import { buildSystemPrompt, validateAgreementDraft } from "@/lib/ai/validate-agreement-draft";
+import { USE_CASE_PROMPTS } from "@/lib/ai/use-case-prompts";
 
-import {
-  DraftRequestSchema,
-  AgreementDraftSchema,
-  type AgreementDraft,
-  type DraftApiResponse,
-} from "@/lib/ai/agreement-draft.types";
-import { processDraftAfterAI } from "@/lib/ai/process-draft-after-ai";
-import { verifyToken } from "@/lib/auth/utils";
-// Re-export for tests
-export { processDraftAfterAI } from "@/lib/ai/process-draft-after-ai";
+// AI SDK import - using OpenAI compatible endpoint
+// Supports AI Gateway via OPENAI_BASE_URL env var
+const OPENAI_BASE_URL = process.env.OPENAI_BASE_URL || "https://api.openai.com/v1";
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY || process.env.OPENAI_KEY || "";
 
-// Shared use-case prompts (extracted from components/use-cases.tsx)
-const USE_CASE_PROMPTS = [
-  "Real Estate Sale: Buyer reserves house, funds locked until legal documents signed.",
-  "Agriculture Pre-Sale: Distributor locks payment for harvest, releases on delivery confirmation.",
-  "Event Management: Client pays in milestones — deposit, venue confirmation, event completion.",
-  "Car Dealership: Buyer secures car, funds release on ownership transfer.",
-  "Software Development: 3 milestones — design, backend, deployment.",
-  "Import / Export: Funds locked until shipment clears customs.",
-  "Online Coaching: Payments unlock after each session milestone.",
-];
-
-// Simple in-memory rate limiter (for demo; use Redis/Upstash in production)
-const RATE_LIMIT = new Map<string, { count: number; resetTime: number }>();
-const MAX_REQUESTS_PER_HOUR = 20;
-
-function checkRateLimit(userId: string): boolean {
-  const now = Date.now();
-  const record = RATE_LIMIT.get(userId);
-
-  if (!record || now > record.resetTime) {
-    // New window
-    RATE_LIMIT.set(userId, { count: 1, resetTime: now + 60 * 60 * 1000 });
-    return true;
-  }
-
-  if (record.count >= MAX_REQUESTS_PER_HOUR) {
-    return false;
-  }
-
-  record.count++;
-  return true;
+interface GenerateObjectResult {
+  object: AgreementDraft;
+  usage?: {
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+  };
 }
 
-function buildSystemPrompt(): string {
-  return `You are a specialized agreement draft engine for Thalos, a blockchain-based escrow platform.
-
-## Your Task
-Turn a natural-language deal description into a structured agreement draft with milestones.
-
-## Key Rules
-- Milestone amounts MUST sum exactly to the total amount. Use exact numbers, not ranges.
-- Agreement type is "single" if exactly 1 milestone, "multi" if > 1.
-- Milestone descriptions must be specific deliverables or conditions, not generic labels like "Phase 1".
-- Include at least one risk flag when an applicable condition is missing.
-- Asset defaults to "USDC".
-- Dates in the prompt should be captured as milestone conditions.
-
-## Example Use-Cases
-${USE_CASE_PROMPTS.join("\n")}
-
-## Output Format
-Return a JSON object with:
-- title (string, required)
-- description (string)
-- amount (string, total amount in numbers)
-- asset ("USDC")
-- agreement_type ("single" | "multi")
-- milestones (array of { description, amount, status: "pending" })
-- metadata ({ generatedByAI: true, riskFlags: string[], useCase?: string })
-
-Do NOT include markdown code blocks or explanations. Return ONLY the JSON object.`;
-}
-
-// Create OpenAI-compatible provider. Supports:
-// - OPENAI_API_KEY env var (direct OpenAI)
-// - Vercel AI Gateway via OPENAI_BASE_URL
-function getOpenAIProvider() {
-  return createOpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-    baseURL: process.env.OPENAI_BASE_URL || undefined,
+/**
+ * Generates an object using OpenAI-compatible API
+ * This is a lightweight wrapper for generateObject functionality
+ */
+async function generateObject(
+  system: string,
+  userPrompt: string,
+  schema: object,
+): Promise<GenerateObjectResult> {
+  const response = await fetch(`${OPENAI_BASE_URL}/chat/completions`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${OPENAI_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: process.env.OPENAI_MODEL || "gpt-4o-mini",
+      messages: [
+        { role: "system", content: system },
+        { role: "user", content: userPrompt },
+      ],
+      response_format: { type: "json_object" },
+      temperature: 0.3,
+    }),
   });
-}
 
-const MODEL_ID = process.env.AI_MODEL_ID || "gpt-4o-mini";
-
-export async function POST(req: Request) {
-  // 1. Auth check
-  const auth = req.headers.get("authorization");
-  const token = auth?.startsWith("Bearer ") ? auth.slice(7) : null;
-  if (!token) {
-    const resp: DraftApiResponse = {
-      success: false,
-      error: "Missing authentication token",
-    };
-    return NextResponse.json(resp, { status: 401 });
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`OpenAI API error: ${response.status} ${error}`);
   }
 
-  const payload = verifyToken(token);
-  if (!payload) {
-    const resp: DraftApiResponse = {
-      success: false,
-      error: "Invalid or expired token",
-    };
-    return NextResponse.json(resp, { status: 401 });
-  }
+  const data = await response.json();
+  const content = data.choices?.[0]?.message?.content;
 
-  const userId = payload.sub as string;
-
-  // 2. Rate limiting
-  if (!checkRateLimit(userId)) {
-    const resp: DraftApiResponse = {
-      success: false,
-      error: "Rate limit exceeded. Maximum 20 requests per hour.",
-    };
-    return NextResponse.json(resp, { status: 429 });
+  if (!content) {
+    throw new Error("No content in OpenAI response");
   }
 
   try {
-    const body = await req.json();
-    const parseResult = DraftRequestSchema.safeParse(body);
-
-    if (!parseResult.success) {
-      const resp: DraftApiResponse = {
-        success: false,
-        error: `Invalid request: ${parseResult.error.issues.map((i) => i.message).join(", ")}`,
-      };
-      return NextResponse.json(resp, { status: 400 });
-    }
-
-    const request = parseResult.data;
-
-    // Optional: prompt length check to prevent abuse
-    if (request.prompt.length > 5000) {
-      const resp: DraftApiResponse = {
-        success: false,
-        error: "Prompt too long. Maximum 5000 characters.",
-      };
-      return NextResponse.json(resp, { status: 400 });
-    }
-
-    const provider = getOpenAIProvider();
-
-    // Call AI model via Vercel AI SDK with generateObject
-    const { object: draft } = await generateObject({
-      model: provider(MODEL_ID),
-      schema: AgreementDraftSchema,
-      prompt: `Generate an agreement draft for: ${request.prompt}${request.useCase ? `\nUse-case context: ${request.useCase}` : ""}`,
-      system: buildSystemPrompt(),
-    });
-
-    // Server-side validation and post-processing (extracted for test reuse)
-    const validation = processDraftAfterAI(draft, request.prompt);
-
-    // Reject if milestone sum doesn't match
-    if (!validation.milestone_sum_match) {
-      const resp: DraftApiResponse = {
-        success: false,
-        error: validation.milestone_sum_error || "Milestone amounts do not sum to total",
-      };
-      return NextResponse.json(resp, { status: 422 });
-    }
-
-    const resp: DraftApiResponse = { success: true, data: draft };
-    return NextResponse.json(resp);
-  } catch (error) {
-    console.error("AI agreement draft error:", error);
-    const resp: DraftApiResponse = {
-      success: false,
-      error: error instanceof Error ? error.message : "Failed to generate agreement draft",
-    };
-    return NextResponse.json(resp, { status: 500 });
+    const parsed = JSON.parse(content);
+    return { object: parsed as AgreementDraft };
+  } catch (e) {
+    throw new Error(`Failed to parse AI response as JSON: ${content}`);
   }
+}
+
+/**
+ * POST /api/ai/agreement-draft
+ * Generates an AI-powered agreement draft from a natural language prompt
+ */
+export async function POST(req: NextRequest) {
+  try {
+    // Parse and validate request body
+    const body = await req.json();
+    const validation = DraftRequestSchema.safeParse(body);
+
+    if (!validation.success) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Invalid request body",
+          data: null,
+        },
+        { status: 400 },
+      );
+    }
+
+    const { prompt, useCase } = validation.data;
+
+    if (!prompt.trim()) {
+      return NextResponse.json(
+        { success: false, error: "Prompt is required", data: null },
+        { status: 400 },
+      );
+    }
+
+    if (prompt.length > 5000) {
+      return NextResponse.json(
+        { success: false, error: "Prompt exceeds max length of 5000 characters", data: null },
+        { status: 400 },
+      );
+    }
+
+    // Check if OpenAI API key is configured
+    if (!OPENAI_API_KEY) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "OpenAI API key not configured. Set OPENAI_API_KEY environment variable.",
+          data: null,
+        },
+        { status: 500 },
+      );
+    }
+
+    // Build system prompt
+    const systemPrompt = buildSystemPrompt(useCase);
+
+    // Generate agreement draft
+    let draft: AgreementDraft;
+    try {
+      const result = await generateObject(
+        systemPrompt,
+        prompt,
+        { type: "object" }, // Schema placeholder - actual validation happens in validateAgreementDraft
+      );
+      draft = result.object;
+    } catch (e: any) {
+      console.error("AI generation failed:", e);
+      return NextResponse.json(
+        {
+          success: false,
+          error: e.message || "Failed to generate agreement draft",
+          data: null,
+        },
+        { status: 500 },
+      );
+    }
+
+    // Validate the generated draft
+    const validationResult = validateAgreementDraft(draft);
+
+    // Shared post-AI processing
+    const { processDraftAfterAI } = await import("@/lib/ai/process-draft-after-ai");
+    const processed = processDraftAfterAI({ draft });
+
+    if (!processed.success) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: processed.error || "Processed draft failed validation",
+          data: {
+            draft,
+            validationErrors: processed.data?.validationErrors,
+            confidence: 0,
+          },
+        },
+        { status: 422 },
+      );
+    }
+
+    const response = {
+      success: true,
+      data: {
+        draft: processed.data!.draft,
+        validationErrors: validationResult.errors.length > 0 ? validationResult.errors : undefined,
+        confidence: processed.data!.confidence,
+      },
+    };
+
+    return NextResponse.json(response);
+  } catch (error) {
+    console.error("Unexpected error:", error);
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Internal server error",
+        data: null,
+      },
+      { status: 500 },
+    );
+  }
+}
+
+/**
+ * GET /api/ai/agreement-draft
+ * Returns available use cases for agreement drafting
+ */
+export async function GET() {
+  const useCases = USE_CASE_PROMPTS.map((prompt, index) => ({
+    id: `use-case-${index + 1}`,
+    name: prompt,
+    description: prompt,
+  }));
+
+  return NextResponse.json({ success: true, data: { useCases } });
 }

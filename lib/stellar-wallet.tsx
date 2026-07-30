@@ -2,10 +2,12 @@
 
 import React, { createContext, useContext, useState, useCallback, useEffect } from "react"
 import { getKit, clearKit, isFreighterAvailable } from "@/lib/stellar-wallet-kit"
+import { signTransaction as unifiedSign, signMessage as unifiedSignMessage } from "@/lib/signing"
 import { getOrCreateProfile, type Profile } from "@/lib/actions/profile"
 import { STELLAR_NETWORK_PASSPHRASE, SHOW_SIGN_MESSAGE_TEST } from "@/lib/config"
 import { useAuthStore } from "@/lib/auth-store"
 import { requestWalletChallenge, verifyWalletLogin } from "@/lib/api/wallet-auth"
+import { linkWallet } from "@/lib/api/wallets"
 
 const STELLAR_WALLET_KEY = "thalos_stellar_address"
 const STELLAR_PROFILE_KEY = "thalos_profile"
@@ -19,7 +21,7 @@ type StellarWalletContextValue = {
   openWalletModal: (onConnected?: (address: string) => void, accountType?: "personal" | "enterprise") => Promise<void>
   disconnect: () => void
   signTransaction: (xdr: string, networkPassphrase: string) => Promise<{ signedTxXdr: string } | null>
-  signMessage: (message: string) => Promise<{ signedMessage: string; signerAddress: string } | null>
+  signMessage: (message: string) => Promise<string | null>
   refreshProfile: () => Promise<void>
 }
 
@@ -126,6 +128,19 @@ export function StellarWalletProvider({ children }: { children: React.ReactNode 
               }
 
               onConnected?.(addr);
+
+              // Persist the Kit-connected wallet to user_wallets (non-fatal)
+              try {
+                const { token: authToken } = useAuthStore.getState?.() ?? {}
+                if (authToken) {
+                  await linkWallet(
+                    { wallet_address: addr, wallet_type: "other" },
+                    authToken,
+                  );
+                }
+              } catch {
+                // Non-fatal — wallet works for signing without persistence
+              }
             } catch (e) {
               const msg = e instanceof Error ? e.message : "No se pudo obtener la dirección.";
               setWalletError(msg);
@@ -167,39 +182,18 @@ export function StellarWalletProvider({ children }: { children: React.ReactNode 
   const signTransaction = useCallback(
     async (xdr: string, networkPassphrase: string): Promise<{ signedTxXdr: string } | null> => {
       if (!address) return null
-      try {
-        const kit = await getKit()
-        if (!kit) return null
-        const result = await kit.signTransaction(xdr, { networkPassphrase, address })
-        return result?.signedTxXdr ? { signedTxXdr: result.signedTxXdr } : null
-      } catch {
-        return null
-      }
+      // Route through the unified signer (Stellar Wallets Kit)
+      return unifiedSign(xdr, networkPassphrase, address)
     },
     [address]
   )
 
   // Use this for wallet ownership proof challenges; pass the exact challenge string to sign.
   const signMessage = useCallback(
-    async (message: string): Promise<{ signedMessage: string; signerAddress: string } | null> => {
+    async (message: string): Promise<string | null> => {
       if (!address) return null
-      try {
-        const kit = await getKit()
-        if (!kit) return null
-        const result = await kit.signMessage(message, {
-          networkPassphrase: STELLAR_NETWORK_PASSPHRASE,
-          address,
-        })
-
-        return result?.signedMessage
-          ? {
-              signedMessage: result.signedMessage,
-              signerAddress: result.signerAddress ?? address,
-            }
-          : null
-      } catch {
-        return null
-      }
+      // Route through the unified signer (Stellar Wallets Kit)
+      return unifiedSignMessage(message, address)
     },
     [address]
   )

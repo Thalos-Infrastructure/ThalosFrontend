@@ -1,6 +1,7 @@
 "use client"
 
 import Image from "next/image"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { useState, useEffect, useRef } from "react"
 import { cn } from "@/lib/utils"
@@ -34,7 +35,14 @@ const useCaseCategories = {
   ],
 }
 
+interface NavLink {
+  label: string
+  section?: string
+  href?: string
+}
+
 export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }) {
+  const router = useRouter()
   const { t, language } = useLanguage()
   const categories = useCaseCategories[language as keyof typeof useCaseCategories] || useCaseCategories.en
   const useCasesLabel = language === "es" ? "Casos de Uso" : "Use Cases"
@@ -46,9 +54,10 @@ export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }
   const lastScrollY = useRef(0)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
-  const navLinks = [
-    { label: t("nav.howItWorks"), section: "how-it-works" },
-    { label: t("nav.solutions"), section: "profiles" },
+  const navLinks: NavLink[] = [
+    { label: t("nav.howItWorks") || "How It Works", section: "how-it-works" },
+    { label: t("nav.solutions") || "Solutions", section: "profiles" },
+    { label: "AI Agreement Draft", href: "/ai-agreement-draft" },
   ]
 
   // Close dropdown on outside click
@@ -76,7 +85,6 @@ export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }
     window.addEventListener("scroll", onScroll, { passive: true })
     return () => window.removeEventListener("scroll", onScroll)
   }, [])
-
 
   return (
     <>
@@ -110,7 +118,7 @@ export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }
             {navLinks.slice(0, 2).map((item) => (
               <button
                 key={item.section}
-                onClick={() => onNavigate(item.section)}
+                onClick={() => onNavigate(item.section!)}
                 className="text-base font-bold text-white/70 transition-all duration-300 hover:text-white"
               >
                 {item.label}
@@ -160,8 +168,8 @@ export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }
 
             {navLinks.slice(2).map((item) => (
               <button
-                key={item.section}
-                onClick={() => onNavigate(item.section)}
+                key={item.href || item.section}
+                onClick={() => item.href ? router.push(item.href) : onNavigate(item.section!)}
                 className="text-base font-bold text-white/70 transition-all duration-300 hover:text-white"
               >
                 {item.label}
@@ -200,8 +208,15 @@ export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }
             <div className="flex flex-col gap-1 p-4">
               {navLinks.map((item) => (
                 <button
-                  key={item.section}
-                  onClick={() => { onNavigate(item.section); setMobileOpen(false) }}
+                  key={item.href || item.section}
+                  onClick={() => {
+                    if (item.href) {
+                      router.push(item.href)
+                    } else if (item.section) {
+                      onNavigate(item.section)
+                    }
+                    setMobileOpen(false)
+                  }}
                   className="rounded-lg px-4 py-3 text-left text-base font-bold text-white/70 transition-colors hover:bg-white/10 hover:text-white"
                 >
                   {item.label}

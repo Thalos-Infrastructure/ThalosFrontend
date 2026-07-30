@@ -1,5 +1,8 @@
 import { sendTransaction, AgreementPayload, fundEscrow, AgreementResponse, changeMilestoneStatus } from "@/services/trustlessworkService";
 import { buildCreateEscrow, submitSignedTransaction, type BackendCreateEscrowDto } from "@/lib/api/escrow";
+import { signTransaction as unifiedSign, signMessage as unifiedSignMessage } from "@/lib/signing";
+import { STELLAR_NETWORK_PASSPHRASE } from "@/lib/config";
+import { linkWallet, type LinkedWallet } from "@/lib/api/wallets";
 
 export interface CreateAndSignAgreementParams {
   payload: AgreementPayload;
@@ -63,6 +66,23 @@ function toCreateEscrowDto(payload: AgreementPayload): BackendCreateEscrowDto {
   };
 }
 
+/**
+ * Persist an externally-connected Kit wallet into the backend's `user_wallets`
+ * table via the /v1/wallets link endpoint. Non-fatal — the wallet still
+ * functions for signing even if persistence fails (e.g. no JWT yet).
+ */
+async function persistKitWallet(address: string, token: string | null): Promise<void> {
+  if (!address || !token) return;
+  try {
+    await linkWallet(
+      { wallet_address: address, wallet_type: "other" },
+      token,
+    );
+  } catch {
+    // Non-fatal — wallet works for signing without persistence
+  }
+}
+
 export async function createAndSignAgreement({
   payload,
   token,
@@ -113,8 +133,16 @@ export async function createAndSignAgreement({
   }
 }
 
-/** Ensures a wallet is connected, signs the unsigned XDR with Freighter, and submits
- * the signed XDR through the Thalos backend (/v1/escrows/send-transaction). */
+/**
+ * Unified sign + submit path.
+ *
+ * Ensures a wallet is connected, signs the unsigned XDR via the unified signer
+ * (Stellar Wallets Kit), and submits through the Thalos backend
+ * (/v1/escrows/send-transaction).
+ *
+ * The Kit wallet is also persisted to `user_wallets` so it shows up in the
+ * multi-wallet UI alongside the custodial wallet.
+ */
 async function signAndSubmitViaBackend(
   unsignedXdr: string,
   token: string,
@@ -136,12 +164,12 @@ async function signAndSubmitViaBackend(
   }
   if (!currentAddress) throw new Error("Wallet connection required to sign transaction");
 
-  const { signTransaction } = await import("@stellar/freighter-api");
-  const signedResult = await signTransaction(unsignedXdr, {
-    networkPassphrase: "Test SDF Network ; September 2015",
-  });
+  // Persist the Kit wallet to user_wallets (non-fatal)
+  await persistKitWallet(currentAddress, token);
+
+  // Unified signing path — routes through Stellar Wallets Kit
+  const signedResult = await unifiedSign(unsignedXdr, STELLAR_NETWORK_PASSPHRASE, currentAddress);
   if (!signedResult?.signedTxXdr) {
-    if (signedResult?.error) throw new Error("Freighter error: " + signedResult.error);
     throw new Error("Transaction signing failed (no XDR returned)");
   }
 
@@ -154,7 +182,7 @@ export async function fundAndSignEscrow({
   amount,
   walletAddress,
   openWalletModal,
-  signTransaction,
+  signTransaction: _unusedSignTransaction,
   setFunding,
   setError,
   setSuccess,
@@ -163,11 +191,10 @@ export async function fundAndSignEscrow({
   setError(null);
   setSuccess(false);
   try {
-    const serviceType = (typeof arguments[0].serviceType === "string") ? arguments[0].serviceType : "single-release";
     if (!walletAddress) {
       throw new Error("Wallet address is required to fund escrow");
     }
-    const response = await fundEscrow(contractId, walletAddress, Number(amount), serviceType);
+    const response = await fundEscrow(contractId, walletAddress, Number(amount), "single-release");
     await processTransaction(response, "Fund escrow failed", walletAddress, openWalletModal);
     setSuccess(true);
   } catch (e: any) {
@@ -212,6 +239,10 @@ export async function changeMilestoneStatusAgreement({
   }
 }
 
+/**
+ * Unified transaction processing — signs via the unified signer and submits
+ * through Trustless Work's send-transaction endpoint.
+ */
 async function processTransaction(
   response: AgreementResponse<unknown>,
   errorMessage: string,
@@ -228,23 +259,12 @@ async function processTransaction(
     // 2. verify wallet connection or prompt user to connect
     await validateWalletConnection();
     
-    // 3. sign transaction with connected wallet
-    const { signTransaction } = await import("@stellar/freighter-api");
-    const signedResult = await signTransaction(xdr, { networkPassphrase: "Test SDF Network ; September 2015" });
-    // TODO: VERIFY WHY THE SIGNING IS NOT WORKING WHEN PASSED THE ADDRESS (MAYBE FREIGHTER BUG OR CONFIG ISSUE).
-    // It is working using await import("@stellar/freighter-api"); but it is not the expectation.
-    /*
-    const signedResult = await signTransaction(xdr, {
-      networkPassphrase: "Test SDF Network ; September 2015",
-      address: currentAddress,
-    });
-    */
+    // 3. sign transaction via unified signer (Stellar Wallets Kit)
+    const signedResult = await unifiedSign(xdr as string, STELLAR_NETWORK_PASSPHRASE, walletAddress ?? undefined);
     if (!signedResult?.signedTxXdr) {
-      if (signedResult?.error) {
-        throw new Error("Freighter error: " + signedResult.error);
-      }
       throw new Error("Transaction signing failed (no XDR returned)");
     }
+
     // 4. send signed transaction to backend for submission
     const sendRes = await sendTransaction(signedResult.signedTxXdr);
     if (!sendRes.success)
@@ -268,4 +288,3 @@ async function processTransaction(
         throw new Error("Wallet connection required to sign transaction");
     }
   }
-
