@@ -5,6 +5,7 @@ export * from "./wallets"
 export * from "./disputes"
 export * from "./notifications"
 export * from "./escrow"
+export * from "./agreements"
 
 // Re-export API_URL for convenience
 export { API_URL } from "@/lib/config"

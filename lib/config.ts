@@ -9,7 +9,8 @@ export const APP_NAME = "Thalos";
 export const EMAIL_FROM = process.env.EMAIL_FROM || "Thalos <notifications@thalosplatform.xyz>";
 export const EMAIL_REPLY_TO = process.env.EMAIL_REPLY_TO || "support@thalosplatform.xyz";
 
-export const STELLAR_EXPLORER_BASE_URL = process.env.NEXT_PUBLIC_STELLAR_EXPLORER_URL || "https://stellar.expert/explorer/testnet/contract/";
+// Stellar Explorer — la base por red vive en STELLAR_NETWORKS (más abajo); esta
+// variable solo permite apuntar a otro explorer distinto del predeterminado.
 
 export const TRUSTLINE_USDC = {
 	symbol: "USDC",
@@ -24,12 +25,36 @@ export const SHOW_MOCKED_AGREEMENTS = process.env.NEXT_PUBLIC_SHOW_MOCKED_AGREEM
 export const SHOW_SIGN_MESSAGE_TEST = process.env.NEXT_PUBLIC_SHOW_SIGN_MESSAGE_TEST === "true";
 
 // Stellar Network Configuration
-export const STELLAR_NETWORK = process.env.NEXT_PUBLIC_STELLAR_NETWORK || "TESTNET";
-export const HORIZON_URL = STELLAR_NETWORK === "MAINNET" 
-  ? "https://horizon.stellar.org"
-  : "https://horizon-testnet.stellar.org";
-export const STELLAR_NETWORK_PASSPHRASE = STELLAR_NETWORK === "MAINNET"
-  ? "Public Global Stellar Network ; September 2015"
-  : "Test SDF Network ; September 2015";
+//
+// Fuente única de verdad para la red: todo lo que depende de ella sale de esta tabla
+// y de UNA sola decisión (STELLAR_NETWORK). Antes cada constante tenía su propio
+// ternario, y el explorer no tenía ninguno: en MAINNET apuntaba igualmente a testnet.
+const STELLAR_NETWORKS = {
+  MAINNET: {
+    passphrase: "Public Global Stellar Network ; September 2015",
+    horizonUrl: "https://horizon.stellar.org",
+    explorerBaseUrl: "https://stellar.expert/explorer/public/contract/",
+  },
+  TESTNET: {
+    passphrase: "Test SDF Network ; September 2015",
+    horizonUrl: "https://horizon-testnet.stellar.org",
+    explorerBaseUrl: "https://stellar.expert/explorer/testnet/contract/",
+  },
+} as const;
+
+export type StellarNetwork = keyof typeof STELLAR_NETWORKS;
+
+// Cualquier valor que no sea MAINNET cae en TESTNET, que es como se comportaban ya
+// la passphrase y Horizon. Normalizarlo aquí evita que un valor desconocido deje
+// media configuración en una red y media en otra.
+export const STELLAR_NETWORK: StellarNetwork =
+  process.env.NEXT_PUBLIC_STELLAR_NETWORK === "MAINNET" ? "MAINNET" : "TESTNET";
+
+const stellarNetworkConfig = STELLAR_NETWORKS[STELLAR_NETWORK];
+
+export const STELLAR_NETWORK_PASSPHRASE = stellarNetworkConfig.passphrase;
+export const HORIZON_URL = stellarNetworkConfig.horizonUrl;
+export const STELLAR_EXPLORER_BASE_URL =
+  process.env.NEXT_PUBLIC_STELLAR_EXPLORER_URL || stellarNetworkConfig.explorerBaseUrl;
 
 // Friendbot is used for testnet wallet activation (free, no funding required)

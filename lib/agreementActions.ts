@@ -1,8 +1,7 @@
-import { sendTransaction, AgreementPayload, fundEscrow, AgreementResponse, changeMilestoneStatus } from "@/services/trustlessworkService";
+import { sendTransaction, AgreementPayload, fundEscrow, AgreementResponse, changeMilestoneStatus, ServiceType } from "@/services/trustlessworkService";
 import { buildCreateEscrow, submitSignedTransaction, type BackendCreateEscrowDto } from "@/lib/api/escrow";
-import { signTransaction as unifiedSign, signMessage as unifiedSignMessage } from "@/lib/signing";
-import { STELLAR_NETWORK_PASSPHRASE } from "@/lib/config";
-import { linkWallet, type LinkedWallet } from "@/lib/api/wallets";
+import { signEscrowOperation, type EscrowOperation, type EscrowRolesInfo, type TxStatus } from "@/lib/signing";
+import { linkWallet } from "@/lib/api/wallets";
 
 export interface CreateAndSignAgreementParams {
   payload: AgreementPayload;
@@ -10,10 +9,11 @@ export interface CreateAndSignAgreementParams {
   token: string | null;
   walletAddress: string | null;
   openWalletModal: (onConnected?: (address: string) => void) => Promise<void>;
-  signTransaction: (xdr: string, opts: { networkPassphrase: string; address: string }) => Promise<any>;
   setCreating: (v: boolean) => void;
   setError: (msg: string | null) => void;
   setSubmitted: (v: boolean) => void;
+  /** Transaction progress for the UI: building → signing → submitting → confirmed. */
+  onStatus?: (status: TxStatus) => void;
   onSuccess?: () => void;
 }
 
@@ -21,11 +21,12 @@ export interface FundAndSignEscrowParams {
   contractId: string;
   amount: string;
   walletAddress: string | null;
+  serviceType?: ServiceType;
   openWalletModal: (onConnected?: (address: string) => void) => Promise<void>;
-  signTransaction: (xdr: string, opts: { networkPassphrase: string; address: string }) => Promise<any>;
   setFunding: (v: boolean) => void;
   setError: (msg: string | null) => void;
   setSuccess: (v: boolean) => void;
+  onStatus?: (status: TxStatus) => void;
 }
 
 export interface ChangeMilestoneStatusParams {
@@ -34,11 +35,12 @@ export interface ChangeMilestoneStatusParams {
   newEvidence: string;
   newStatus: string;
   serviceProvider: string;
-  serviceType: "single-release" | "multi-release";
+  serviceType: ServiceType;
   walletAddress: string | null;
   openWalletModal: (onConnected?: (address: string) => void) => Promise<void>;
   setSubmitting: (v: boolean) => void;
   setError: (msg: string | null) => void;
+  onStatus?: (status: TxStatus) => void;
   onSuccess?: () => void;
 }
 
@@ -91,6 +93,7 @@ export async function createAndSignAgreement({
   setCreating,
   setError,
   setSubmitted,
+  onStatus,
   onSuccess,
 }: CreateAndSignAgreementParams) {
   setCreating(true);
@@ -116,17 +119,20 @@ export async function createAndSignAgreement({
     }
 
     // 1. Build the escrow via OUR backend (Trustless Work relay) → unsigned XDR.
+    onStatus?.("building");
     const build = await buildCreateEscrow(toCreateEscrowDto(payload), token);
     if (!build.success || !build.data?.unsignedTransaction) {
       throw new Error(build.error || "Agreement creation failed");
     }
 
     // 2. Sign with the wallet and 3. submit the signed XDR through the backend.
-    await signAndSubmitViaBackend(build.data.unsignedTransaction, token, walletAddress, openWalletModal);
+    await signAndSubmitViaBackend(build.data.unsignedTransaction, token, walletAddress, openWalletModal, onStatus);
 
+    onStatus?.("confirmed");
     setSubmitted(true);
     onSuccess?.();
   } catch (e: any) {
+    onStatus?.("error");
     setError(e.message || "Unknown error");
   } finally {
     setCreating(false);
@@ -134,11 +140,11 @@ export async function createAndSignAgreement({
 }
 
 /**
- * Unified sign + submit path.
+ * Unified sign + submit path for escrow creation.
  *
  * Ensures a wallet is connected, signs the unsigned XDR via the unified signer
- * (Stellar Wallets Kit), and submits through the Thalos backend
- * (/v1/escrows/send-transaction).
+ * (lib/signing dispatch), and submits through the Thalos backend
+ * (/v1/escrows/send-transaction) so Trustless Work indexes state.
  *
  * The Kit wallet is also persisted to `user_wallets` so it shows up in the
  * multi-wallet UI alongside the custodial wallet.
@@ -148,31 +154,21 @@ async function signAndSubmitViaBackend(
   token: string,
   walletAddress: string | null,
   openWalletModal: (onConnected?: (address: string) => void) => Promise<void>,
+  onStatus?: (status: TxStatus) => void,
 ) {
-  let currentAddress = walletAddress;
-  if (!currentAddress) {
-    await new Promise<void>((resolve, reject) => {
-      openWalletModal((addr) => {
-        if (addr) {
-          currentAddress = addr;
-          resolve();
-        } else {
-          reject(new Error("Wallet connection cancelled or failed"));
-        }
-      });
-    });
-  }
-  if (!currentAddress) throw new Error("Wallet connection required to sign transaction");
+  const currentAddress = await ensureWalletConnected(walletAddress, openWalletModal);
 
   // Persist the Kit wallet to user_wallets (non-fatal)
   await persistKitWallet(currentAddress, token);
 
-  // Unified signing path — routes through Stellar Wallets Kit
-  const signedResult = await unifiedSign(unsignedXdr, STELLAR_NETWORK_PASSPHRASE, currentAddress);
-  if (!signedResult?.signedTxXdr) {
-    throw new Error("Transaction signing failed (no XDR returned)");
-  }
+  const signedResult = await signEscrowOperation({
+    xdr: unsignedXdr,
+    operation: "create",
+    address: currentAddress,
+    onStatus,
+  });
 
+  onStatus?.("submitting");
   const sendRes = await submitSignedTransaction(signedResult.signedTxXdr, token);
   if (!sendRes.success) throw new Error(sendRes.error || "Transaction send failed");
 }
@@ -181,11 +177,12 @@ export async function fundAndSignEscrow({
   contractId,
   amount,
   walletAddress,
+  serviceType = "single-release",
   openWalletModal,
-  signTransaction: _unusedSignTransaction,
   setFunding,
   setError,
   setSuccess,
+  onStatus,
 }: FundAndSignEscrowParams) {
   setFunding(true);
   setError(null);
@@ -194,10 +191,16 @@ export async function fundAndSignEscrow({
     if (!walletAddress) {
       throw new Error("Wallet address is required to fund escrow");
     }
-    const response = await fundEscrow(contractId, walletAddress, Number(amount), "single-release");
-    await processTransaction(response, "Fund escrow failed", walletAddress, openWalletModal);
+    onStatus?.("building");
+    const response = await fundEscrow(contractId, walletAddress, Number(amount), serviceType);
+    await processTransaction(response, "Fund escrow failed", walletAddress, openWalletModal, {
+      operation: "fund",
+      onStatus,
+    });
+    onStatus?.("confirmed");
     setSuccess(true);
   } catch (e: any) {
+    onStatus?.("error");
     setError(e.message || "Unknown error");
   } finally {
     setFunding(false);
@@ -215,11 +218,13 @@ export async function changeMilestoneStatusAgreement({
   openWalletModal,
   setSubmitting,
   setError,
+  onStatus,
   onSuccess,
 }: ChangeMilestoneStatusParams) {
   setSubmitting(true);
   setError(null);
   try {
+    onStatus?.("building");
     const response = await changeMilestoneStatus(
       contractId,
       milestoneIndex,
@@ -228,11 +233,15 @@ export async function changeMilestoneStatusAgreement({
       serviceProvider,
       serviceType
     );
-    await processTransaction(response, "Change milestone status failed", walletAddress, openWalletModal);
-    setSubmitting(true);
-    // 2. notify caller so they can add the agreement to state immediately
+    await processTransaction(response, "Change milestone status failed", walletAddress, openWalletModal, {
+      operation: "changeMilestoneStatus",
+      roles: { serviceProvider },
+      onStatus,
+    });
+    onStatus?.("confirmed");
     onSuccess?.();
   } catch (e: any) {
+    onStatus?.("error");
     setError(e.message || "Unknown error");
   } finally {
     setSubmitting(false);
@@ -240,51 +249,62 @@ export async function changeMilestoneStatusAgreement({
 }
 
 /**
- * Unified transaction processing — signs via the unified signer and submits
- * through Trustless Work's send-transaction endpoint.
+ * Unified transaction processing — validates the Trustless Work role, signs via
+ * the unified signer and submits through Trustless Work's send-transaction
+ * endpoint so TW indexes state.
  */
 async function processTransaction(
   response: AgreementResponse<unknown>,
   errorMessage: string,
   walletAddress: string | null,
-  openWalletModal: (onConnected?: (address: string) => void) => Promise<void>
+  openWalletModal: (onConnected?: (address: string) => void) => Promise<void>,
+  opts: {
+    operation: EscrowOperation;
+    roles?: EscrowRolesInfo;
+    onStatus?: (status: TxStatus) => void;
+  },
 ) {
-    if (!response.success)
-      throw new Error(response.error || errorMessage);
-    
-    const xdr = response.data?.unsignedTransaction;
-    if (!xdr)
-      throw new Error("No XDR returned from agreement API");
-    
-    // 2. verify wallet connection or prompt user to connect
-    await validateWalletConnection();
-    
-    // 3. sign transaction via unified signer (Stellar Wallets Kit)
-    const signedResult = await unifiedSign(xdr as string, STELLAR_NETWORK_PASSPHRASE, walletAddress ?? undefined);
-    if (!signedResult?.signedTxXdr) {
-      throw new Error("Transaction signing failed (no XDR returned)");
-    }
+  if (!response.success)
+    throw new Error(response.error || errorMessage);
 
-    // 4. send signed transaction to backend for submission
-    const sendRes = await sendTransaction(signedResult.signedTxXdr);
-    if (!sendRes.success)
-      throw new Error(sendRes.error || "Transaction send failed");
+  const xdr = response.data?.unsignedTransaction;
+  if (!xdr)
+    throw new Error("No XDR returned from agreement API");
 
-    async function validateWalletConnection() {
-      let currentAddress = walletAddress;
-      if (!currentAddress) {
-        await new Promise((resolve, reject) => {
-          openWalletModal((addr) => {
-            if (addr) {
-              currentAddress = addr;
-              resolve(addr);
-            } else {
-              reject(new Error("Wallet connection cancelled or failed"));
-            }
-          });
-        });
-      }
-      if (!currentAddress)
-        throw new Error("Wallet connection required to sign transaction");
-    }
+  const currentAddress = await ensureWalletConnected(walletAddress, openWalletModal);
+
+  const signedResult = await signEscrowOperation({
+    xdr: xdr as string,
+    operation: opts.operation,
+    address: currentAddress,
+    roles: opts.roles,
+    onStatus: opts.onStatus,
+  });
+
+  opts.onStatus?.("submitting");
+  const sendRes = await sendTransaction(signedResult.signedTxXdr);
+  if (!sendRes.success)
+    throw new Error(sendRes.error || "Transaction send failed");
+}
+
+/** Resolve the connected wallet address, prompting the connect modal if needed. */
+async function ensureWalletConnected(
+  walletAddress: string | null,
+  openWalletModal: (onConnected?: (address: string) => void) => Promise<void>,
+): Promise<string> {
+  let currentAddress = walletAddress;
+  if (!currentAddress) {
+    await new Promise<void>((resolve, reject) => {
+      openWalletModal((addr) => {
+        if (addr) {
+          currentAddress = addr;
+          resolve();
+        } else {
+          reject(new Error("Wallet connection cancelled or failed"));
+        }
+      });
+    });
   }
+  if (!currentAddress) throw new Error("Wallet connection required to sign transaction");
+  return currentAddress;
+}

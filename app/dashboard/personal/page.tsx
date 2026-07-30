@@ -164,6 +164,9 @@ function mapEscrowToAgreement(escrow) {
     receiver: escrow.roles.receiver || escrow.roles.serviceProvider,
     balance: escrow.balance,
     serviceProvider: escrow.roles.serviceProvider,
+    approver: escrow.roles.approver,
+    releaseSigner: escrow.roles.releaseSigner,
+    disputeResolver: escrow.roles.disputeResolver,
     released: escrow.flags?.released ?? false,
     role: "buyer" as const, // Default to buyer, can be determined by comparing wallet addresses
   };
@@ -332,7 +335,7 @@ export default function PersonalDashboardPage() {
   // Prevent duplicate fetches in Strict Mode or double mount
   const fetchedEscrowsRef = React.useRef<string | null>(null);
   const { t } = useLanguage();
-  const { signTransaction, openWalletModal } = useStellarWallet();
+  const { openWalletModal } = useStellarWallet();
   const walletAddress = useCurrentAddress();
   const { user: socialUser, token } = useAuthStore();
   const walletType = useWalletType();
@@ -515,6 +518,7 @@ const res = await getEscrowsByRole({ role: "approver", address: walletAddress },
   const [step, setStep] = useState(0)
   const [submitted, setSubmitted] = useState(false)
   const [creating, setCreating] = useState(false)
+  const [createTxStatus, setCreateTxStatus] = useState<import("@/lib/signing").TxStatus | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [escrowType, setEscrowType] = useState<"single" | "multi">("single")
   const [useCase, setUseCase] = useState<string | null>(null)
@@ -1578,10 +1582,10 @@ const res = await getEscrowsByRole({ role: "approver", address: walletAddress },
                               token,
                               walletAddress,
                               openWalletModal,
-                              signTransaction,
                               setCreating,
                               setError,
                               setSubmitted,
+                              onStatus: setCreateTxStatus,
                               onSuccess: () => {
 const newAgr: Agreement = {
   id: `AGR-${Date.now().toString(36).toUpperCase()}`,
@@ -1603,7 +1607,11 @@ const newAgr: Agreement = {
                           disabled={!signerEmail.trim() || creating}
                           className="rounded-full bg-[#f0b400] px-8 text-sm font-semibold text-background hover:bg-[#d4a000] disabled:opacity-20 shadow-[0_4px_16px_rgba(240,180,0,0.25)]"
                         >
-                          {creating ? "Creating..." : "Create & Notify Signer"}
+                          {creating
+                            ? createTxStatus === "signing" ? "Waiting for signature..."
+                              : createTxStatus === "submitting" ? "Submitting..."
+                              : "Creating..."
+                            : "Create & Notify Signer"}
                         </Button>
                         {error && <div className="mt-2 text-sm text-red-400">{error}</div>}
                       </>
