@@ -1,6 +1,7 @@
 "use server"
 
 import { createClient } from "@/lib/supabase/server"
+import { type KybEntityType, type KybVerificationStatus } from "@/lib/kyb"
 
 export type Profile = {
   id: string
@@ -10,6 +11,12 @@ export type Profile = {
   avatar_url: string | null
   account_type: "personal" | "enterprise"
   role: "user" | "validator" | "dispute_resolver" | "admin"
+  business_name: string | null
+  registration_number: string | null
+  country: string | null
+  entity_type: KybEntityType | null
+  kyb_status: KybVerificationStatus
+  kyb_session_id: string | null
   created_at: string
   updated_at: string
 }
@@ -19,6 +26,12 @@ export type ProfileUpdateInput = {
   email?: string
   avatar_url?: string
   account_type?: "personal" | "enterprise"
+  business_name?: string | null
+  registration_number?: string | null
+  country?: string | null
+  entity_type?: KybEntityType | null
+  kyb_status?: KybVerificationStatus
+  kyb_session_id?: string | null
 }
 
 /**

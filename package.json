@@ -7,7 +7,9 @@
     "dev": "next dev --webpack",
     "lint": "eslint .",
     "start": "next start",
+    "test": "node --test tests/*.test.mjs"
     "test": "vitest run"
+
   },
   "dependencies": {
     "@creit.tech/stellar-wallets-kit": "^2.5.0",

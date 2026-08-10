@@ -7,6 +7,12 @@ CREATE TABLE IF NOT EXISTS profiles (
   avatar_url TEXT,
   account_type TEXT CHECK (account_type IN ('personal', 'enterprise')) DEFAULT 'personal',
   role TEXT CHECK (role IN ('user', 'validator', 'dispute_resolver', 'admin')) DEFAULT 'user',
+  business_name TEXT,
+  registration_number TEXT,
+  country TEXT,
+  entity_type TEXT CHECK (entity_type IN ('company', 'startup', 'organization', 'legal_entity')),
+  kyb_status TEXT CHECK (kyb_status IN ('not_started', 'in_review', 'verified', 'rejected')) DEFAULT 'not_started',
+  kyb_session_id TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
