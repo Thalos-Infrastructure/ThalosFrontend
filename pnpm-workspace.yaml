@@ -1,4 +1,17 @@
+packages:
+  - '*'
+
+# El Kit arrastra @trezor/connect -> @trezor/blockchain-link, que declara su propio
+# @stellar/stellar-sdk. Ese worker de Trezor nunca se ejecuta aqui (el modulo no esta
+# en defaultModules()), pero si aparece en el lockfile como una segunda version del SDK.
+# Sin este override el arbol resuelve tres versiones del SDK a la vez.
+overrides:
+  "@stellar/stellar-sdk": "16.1.0"
+
 allowBuilds:
+  # postinstall solo verifica que las versiones @reown/appkit* coincidan entre si.
+  # Aqui no hay ninguna dependencia directa @reown/appkit, asi que hace no-op.
+  '@reown/appkit': false
   blake-hash: true
   bufferutil: true
   protobufjs: true

@@ -12,6 +12,9 @@ type Agreement = {
   receiver: string;
   balance?: string;
   serviceProvider?: string;
+  approver?: string;
+  releaseSigner?: string;
+  disputeResolver?: string;
   released?: boolean;
   agreement_id?: string; // Supabase agreement ID if synced
   };
@@ -29,6 +32,8 @@ import { useWalletType } from "@/lib/use-current-address";
 import { useStellarWallet } from "@/lib/stellar-wallet";
 import { WalletPrompt } from "@/components/shared/wallet-guard";
 import { fundAndSignEscrow } from "@/lib/agreementActions";
+import { signEscrowOperation, type EscrowOperation, type TxStatus } from "@/lib/signing";
+import type { AgreementResponse } from "@/services/trustlessworkService";
 import { AlertTriangle } from "lucide-react";
 
 export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreementDetailProps) {
@@ -45,6 +50,7 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
   const [disputingMs, setDisputingMs] = React.useState<number | null>(null);
   const [disputedMs, setDisputedMs] = React.useState<Set<number>>(new Set());
   const [showDisputeConfirm, setShowDisputeConfirm] = React.useState<number | null>(null);
+  const [txStatus, setTxStatus] = React.useState<TxStatus | null>(null);
   const allApproved = localMilestones.every(m => m.approved === true);
   const allReleased = agr.released;
   const someApproved = localMilestones.some(m => m.approved === true || m.status === "approved");
@@ -59,6 +65,44 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
   // Determine current step for the 3-step indicator
   const currentStep = allReleased ? 3 : (someApproved || allApproved) ? 2 : isFunded ? 1 : 0;
 
+  const escrowRoles = {
+    approver: agr.approver,
+    serviceProvider: agr.serviceProvider,
+    releaseSigner: agr.releaseSigner,
+    disputeResolver: agr.disputeResolver,
+  };
+
+  /**
+   * Single sign → submit path for every escrow lifecycle operation: validates
+   * the Trustless Work role, signs via the unified signer (any login method)
+   * and submits through TW's send-transaction endpoint so TW indexes state.
+   * Build responses without an unsigned XDR need no signature and pass through.
+   *
+   * @returns true only when an XDR was actually signed AND submitted — callers
+   * with on-chain side effects (e.g. registering the dispute) must gate on it.
+   */
+  async function signAndSubmit(operation: EscrowOperation, res: AgreementResponse<unknown>, errorMessage: string): Promise<boolean> {
+    if (!res.success) throw new Error(res.error || errorMessage);
+    const xdr = res.data && typeof res.data === "object" && "unsignedTransaction" in res.data
+      ? (res.data as { unsignedTransaction?: string }).unsignedTransaction
+      : undefined;
+    if (!xdr) return false;
+
+    const { sendTransaction } = await import("@/services/trustlessworkService");
+    const signedResult = await signEscrowOperation({
+      xdr,
+      operation,
+      address: walletAddress,
+      roles: escrowRoles,
+      onStatus: setTxStatus,
+    });
+    setTxStatus("submitting");
+    const sendRes = await sendTransaction(signedResult.signedTxXdr);
+    if (!sendRes.success) throw new Error(sendRes.error || "Error sending transaction");
+    setTxStatus("confirmed");
+    return true;
+  }
+
   async function handleDispute(idx: number) {
     if (isMockAgreement(agr.id)) {
       alert("Demo agreement — actions are unavailable.");
@@ -66,37 +110,29 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
     }
     setDisputingMs(idx);
     setErrorMs(null);
+    setTxStatus("building");
     try {
-      const { disputeMilestone, sendTransaction } = await import("@/services/trustlessworkService");
+      const { disputeMilestone } = await import("@/services/trustlessworkService");
       const { openDispute } = await import("@/lib/actions/disputes");
-      
+
       const res = await disputeMilestone(agr.id, idx.toString(), walletAddress);
-      if (!res.success) throw new Error(res.error || "Error raising dispute");
-      
-      const xdr = res.data && typeof res.data === 'object' && 'unsignedTransaction' in res.data ? (res.data as any).unsignedTransaction : undefined;
-      if (xdr) {
-        const { signTransaction: freighterSign } = await import("@stellar/freighter-api");
-        const signedResult = await freighterSign(xdr, { networkPassphrase: "Test SDF Network ; September 2015" });
-        if (!signedResult?.signedTxXdr) {
-          if (signedResult?.error) throw new Error("Freighter error: " + signedResult.error);
-          throw new Error("Transaction signing failed (no XDR returned)");
-        }
-        const sendRes = await sendTransaction(signedResult.signedTxXdr);
-        if (!sendRes.success) throw new Error(sendRes.error || "Error sending transaction");
-        
-        // Register dispute in Supabase if we have an agreement_id (from local DB)
-        if (agr.agreement_id) {
-          await openDispute({
-            agreement_id: agr.agreement_id,
-            opened_by: walletAddress,
-            reason: `Dispute raised on milestone ${idx + 1}`,
-            evidence_urls: []
-          });
-        }
+      const submitted = await signAndSubmit("dispute", res, "Error raising dispute");
+
+      // Register dispute in Supabase only after the on-chain dispute actually
+      // went through — a build response without XDR must not create a DB-only
+      // dispute.
+      if (submitted && agr.agreement_id) {
+        await openDispute({
+          agreement_id: agr.agreement_id,
+          opened_by: walletAddress,
+          reason: `Dispute raised on milestone ${idx + 1}`,
+          evidence_urls: []
+        });
       }
       setDisputedMs(prev => new Set(prev).add(idx));
       setShowDisputeConfirm(null);
     } catch (e: any) {
+      setTxStatus("error");
       setErrorMs(e.message || "Unknown error");
     } finally {
       setDisputingMs(null);
@@ -110,27 +146,14 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
     }
     setLoadingMs(idx);
     setErrorMs(null);
+    setTxStatus("building");
     try {
-      const { approveMilestone, sendTransaction } = await import("@/services/trustlessworkService");
+      const { approveMilestone } = await import("@/services/trustlessworkService");
       const res = await approveMilestone(agr.id, idx.toString(), walletAddress, agr.type === "Multi Release" ? "multi-release" : "single-release");
-      if (!res.success) throw new Error(res.error || "Error approving milestone");
-      const xdr = res.data && typeof res.data === 'object' && 'unsignedTransaction' in res.data ? (res.data as any).unsignedTransaction : undefined;
-      if (xdr) {
-        const { signTransaction: freighterSign } = await import("@stellar/freighter-api");
-        const signedResult = await freighterSign(xdr, { networkPassphrase: "Test SDF Network ; September 2015" });
-        if (!signedResult?.signedTxXdr) {
-          if (signedResult?.error) throw new Error("Freighter error: " + signedResult.error);
-          throw new Error("Transaction signing failed (no XDR returned)");
-        }
-        try {
-          const sendRes = await sendTransaction(signedResult.signedTxXdr);
-          if (!sendRes.success) throw new Error(sendRes.error || "Error sending transaction");
-        } catch (e: any) {
-          setErrorMs("Error sending transaction: " + (e.message || "Unknown error"));
-        }
-      }
+      await signAndSubmit("approveMilestone", res, "Error approving milestone");
       setLocalMilestones(ms => ms.map((m, i) => i === idx ? { ...m, status: "approved" as const, approved: true } : m));
     } catch (e: any) {
+      setTxStatus("error");
       setErrorMs(e.message || "Unknown error");
     } finally {
       setLoadingMs(null);
@@ -144,24 +167,15 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
     }
     setLoadingMs(-1);
     setErrorMs(null);
+    setTxStatus("building");
     try {
-      const { releaseFunds, sendTransaction } = await import("@/services/trustlessworkService");
+      const { releaseFunds } = await import("@/services/trustlessworkService");
       const type = agr.type === "Multi Release" ? "multi-release" : "single-release";
       const res = await releaseFunds(agr.id, walletAddress, type);
-      if (!res.success) throw new Error(res.error || "Error releasing funds");
-      const xdr = res.data && typeof res.data === 'object' && 'unsignedTransaction' in res.data ? (res.data as any).unsignedTransaction : undefined;
-      if (xdr) {
-        const { signTransaction: freighterSign } = await import("@stellar/freighter-api");
-        const signedResult = await freighterSign(xdr, { networkPassphrase: "Test SDF Network ; September 2015" });
-        if (!signedResult?.signedTxXdr) {
-          if (signedResult?.error) throw new Error("Freighter error: " + signedResult.error);
-          throw new Error("Transaction signing failed (no XDR returned)");
-        }
-        const sendRes = await sendTransaction(signedResult.signedTxXdr);
-        if (!sendRes.success) throw new Error(sendRes.error || "Error sending transaction");
-      }
+      await signAndSubmit("releaseFunds", res, "Error releasing funds");
       setLocalMilestones(ms => ms.map(m => ({ ...m, status: "released" as const })));
     } catch (e: any) {
+      setTxStatus("error");
       setErrorMs(e.message || "Unknown error");
     } finally {
       setLoadingMs(null);
@@ -260,10 +274,10 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
               walletAddress,
               serviceType: agr.type === "Multi Release" ? "multi-release" : "single-release",
               openWalletModal: async () => {},
-              signTransaction: async () => {},
               setFunding,
               setError: setFundError,
-              setSuccess: setFundSuccess
+              setSuccess: setFundSuccess,
+              onStatus: setTxStatus,
             })}}
             disabled={disableFund}
             className="rounded-full bg-blue-500 px-6 text-sm font-semibold text-white hover:bg-blue-600 shadow-[0_4px_16px_rgba(59,130,246,0.25)]"
@@ -280,6 +294,39 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
       )}
       {fundError && <div className="text-red-400 text-xs mt-2">{fundError}</div>}
       {fundSuccess && <div className="text-emerald-400 text-xs mt-2">{t("flow.funded")} - Escrow funded successfully!</div>}
+
+      {/* Transaction progress: build → sign → submit → confirmed */}
+      {txStatus && txStatus !== "error" && (
+        <div className="mt-3 flex items-center gap-0">
+          {([
+            { key: "building", label: "Build" },
+            { key: "signing", label: "Sign" },
+            { key: "submitting", label: "Submit" },
+            { key: "confirmed", label: "Confirmed" },
+          ] as { key: TxStatus; label: string }[]).map((s, i, steps) => {
+            const currentIdx = steps.findIndex(st => st.key === txStatus);
+            const done = i < currentIdx || txStatus === "confirmed";
+            const active = i === currentIdx && txStatus !== "confirmed";
+            return (
+              <React.Fragment key={s.key}>
+                {i > 0 && <div className={cn("h-px w-4", done || active ? "bg-[#f0b400]/40" : "bg-white/[0.06]")} />}
+                <div className={cn("flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold transition-all",
+                  done ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                    : active ? "bg-[#f0b400]/10 text-[#f0b400] border border-[#f0b400]/20"
+                    : "bg-white/[0.03] text-white/20 border border-white/[0.04]"
+                )}>
+                  {done ? (
+                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
+                  ) : (
+                    <span className={cn("h-1 w-1 rounded-full", active ? "bg-[#f0b400] animate-pulse" : "bg-white/20")} />
+                  )}
+                  {s.label}
+                </div>
+              </React.Fragment>
+            );
+          })}
+        </div>
+      )}
 
       {/* Expanded detail: milestones */}
       {showDetail && (

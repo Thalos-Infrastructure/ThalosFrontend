@@ -2,13 +2,38 @@
 
 import React, { createContext, useContext, useState, useCallback, useEffect } from "react"
 import { getKit, clearKit, isFreighterAvailable } from "@/lib/stellar-wallet-kit"
+import { signTransaction as unifiedSign, signMessage as unifiedSignMessage } from "@/lib/signing"
 import { getOrCreateProfile, type Profile } from "@/lib/actions/profile"
-import { STELLAR_NETWORK_PASSPHRASE, SHOW_SIGN_MESSAGE_TEST } from "@/lib/config"
+import { SHOW_SIGN_MESSAGE_TEST } from "@/lib/config"
 import { useAuthStore } from "@/lib/auth-store"
 import { requestWalletChallenge, verifyWalletLogin } from "@/lib/api/wallet-auth"
+import { linkWallet } from "@/lib/api/wallets"
 
-const STELLAR_WALLET_KEY = "thalos_stellar_address"
+import { STELLAR_WALLET_KEY } from "@/lib/signing/session"
+
 const STELLAR_PROFILE_KEY = "thalos_profile"
+
+/**
+ * El Kit rechaza con `IKitError` — un objeto plano, no una instancia de Error — así
+ * que un `e instanceof Error` se traga el mensaje real. El código -1 significa que el
+ * usuario cerró el modal, que no es un fallo que haya que mostrarle.
+ */
+type KitError = { code?: number; message?: string }
+const KIT_ERROR_USER_CLOSED_MODAL = -1
+
+function asKitError(e: unknown): KitError | null {
+  return typeof e === "object" && e !== null ? (e as KitError) : null
+}
+
+function isUserClosedModal(e: unknown): boolean {
+  return asKitError(e)?.code === KIT_ERROR_USER_CLOSED_MODAL
+}
+
+function errorMessage(e: unknown, fallback: string): string {
+  if (e instanceof Error) return e.message
+  const message = asKitError(e)?.message
+  return typeof message === "string" && message ? message : fallback
+}
 
 type StellarWalletContextValue = {
   address: string | null
@@ -78,68 +103,77 @@ export function StellarWalletProvider({ children }: { children: React.ReactNode 
           }
           return;
         }
-        await kit.openModal({
-          modalTitle: "Connect Wallet",
-          onWalletSelected: async (option) => {
-            try {
-              kit.setWallet(option.id);
-              const { address: addr } = await kit.getAddress();
-              setAddress(addr);
-              if (typeof window !== "undefined") sessionStorage.setItem(STELLAR_WALLET_KEY, addr);
-              
-              // Create or get profile in Supabase
-              const { profile: userProfile, error: profileError } = await getOrCreateProfile(addr, accountType);
-              if (userProfile) {
-                setProfile(userProfile);
-                if (typeof window !== "undefined") {
-                  sessionStorage.setItem(STELLAR_PROFILE_KEY, JSON.stringify(userProfile));
-                }
-              }
-              if (profileError) {
-                console.error("Profile error:", profileError);
-              }
+        // En 2.x el modal es una promesa: resuelve con la dirección ya pedida a la
+        // wallet elegida (antes llegaba por el callback onWalletSelected) y rechaza
+        // si el usuario lo cierra. Refresca por su cuenta las wallets disponibles.
+        const { address: addr } = await kit.authModal();
 
-              // Wallet-signature login (ownership-proof challenge) is gated behind
-              // NEXT_PUBLIC_SHOW_SIGN_MESSAGE_TEST — same flag/pattern as the dev
-              // "SignMessage Test" widget. When the flag is off (default, incl.
-              // production), connecting a wallet does NOT trigger the signing popup;
-              // the app JWT is expected to come from email/social login instead.
-              // When on, we mint the app JWT so dashboard data goes through the backend.
-              if (SHOW_SIGN_MESSAGE_TEST) {
-                try {
-                  const { challenge } = await requestWalletChallenge(addr);
-                  const signed = await kit.signMessage(challenge, {
-                    networkPassphrase: STELLAR_NETWORK_PASSPHRASE,
-                    address: addr,
-                  });
-                  if (!signed?.signedMessage) {
-                    throw new Error("La wallet no devolvió una firma");
-                  }
-                  const { user, token } = await verifyWalletLogin(addr, challenge, signed.signedMessage, option.id);
-                  login(user, token);
-                } catch (authErr) {
-                  console.warn(
-                    "[wallet-auth] no se pudo autenticar la wallet contra el backend; se continúa en modo wallet-only:",
-                    authErr,
-                  );
-                }
-              }
+        setAddress(addr);
+        if (typeof window !== "undefined") sessionStorage.setItem(STELLAR_WALLET_KEY, addr);
 
-              onConnected?.(addr);
-            } catch (e) {
-              const msg = e instanceof Error ? e.message : "No se pudo obtener la dirección.";
-              setWalletError(msg);
-            } finally {
-              setIsConnecting(false);
+        // Create or get profile in Supabase
+        const { profile: userProfile, error: profileError } = await getOrCreateProfile(addr, accountType);
+        if (userProfile) {
+          setProfile(userProfile);
+          if (typeof window !== "undefined") {
+            sessionStorage.setItem(STELLAR_PROFILE_KEY, JSON.stringify(userProfile));
+          }
+        }
+        if (profileError) {
+          console.error("Profile error:", profileError);
+        }
+
+        // Wallet-signature login (ownership-proof challenge) is gated behind
+        // NEXT_PUBLIC_SHOW_SIGN_MESSAGE_TEST — same flag/pattern as the dev
+        // "SignMessage Test" widget. When the flag is off (default, incl.
+        // production), connecting a wallet does NOT trigger the signing popup;
+        // the app JWT is expected to come from email/social login instead.
+        // When on, we mint the app JWT so dashboard data goes through the backend.
+        if (SHOW_SIGN_MESSAGE_TEST) {
+          try {
+            const { challenge } = await requestWalletChallenge(addr);
+            // Route through the unified signer (sessionStorage already
+            // holds the address, so dispatch resolves to the Kit provider).
+            const signed = await unifiedSignMessage(challenge, addr);
+            if (!signed?.signedMessage) {
+              throw new Error("La wallet no devolvió una firma");
             }
-          },
-          onClosed: () => {
-            setIsConnecting(false);
-          },
-        });
+            // El id de la wallet ya no llega por callback; se lee del módulo activo.
+            // `selectedModule` lanza si todavía no hay ninguno seleccionado.
+            let provider: string | undefined;
+            try {
+              provider = kit.selectedModule.productId;
+            } catch {
+              provider = undefined;
+            }
+            const { user, token } = await verifyWalletLogin(addr, challenge, signed.signedMessage, provider);
+            login(user, token);
+          } catch (authErr) {
+            console.warn(
+              "[wallet-auth] no se pudo autenticar la wallet contra el backend; se continúa en modo wallet-only:",
+              authErr,
+            );
+          }
+        }
+
+        onConnected?.(addr);
+
+        // Persist the Kit-connected wallet to user_wallets (non-fatal)
+        try {
+          const { token: authToken } = useAuthStore.getState?.() ?? {}
+          if (authToken) {
+            await linkWallet(
+              { wallet_address: addr, wallet_type: "other" },
+              authToken,
+            );
+          }
+        } catch {
+          // Non-fatal — wallet works for signing without persistence
+        }
       } catch (e) {
-        const message = e instanceof Error ? e.message : "Error al abrir el modal de billeteras.";
-        setWalletError(message);
+        // Cerrar el modal es una cancelación normal, no un error que mostrar.
+        if (isUserClosedModal(e)) return;
+        setWalletError(errorMessage(e, "Error al abrir el modal de billeteras."));
       } finally {
         setIsConnecting(false);
       }
@@ -167,14 +201,8 @@ export function StellarWalletProvider({ children }: { children: React.ReactNode 
   const signTransaction = useCallback(
     async (xdr: string, networkPassphrase: string): Promise<{ signedTxXdr: string } | null> => {
       if (!address) return null
-      try {
-        const kit = await getKit()
-        if (!kit) return null
-        const result = await kit.signTransaction(xdr, { networkPassphrase, address })
-        return result?.signedTxXdr ? { signedTxXdr: result.signedTxXdr } : null
-      } catch {
-        return null
-      }
+      // Route through the unified signer (Stellar Wallets Kit)
+      return unifiedSign(xdr, networkPassphrase, address)
     },
     [address]
   )
@@ -183,23 +211,8 @@ export function StellarWalletProvider({ children }: { children: React.ReactNode 
   const signMessage = useCallback(
     async (message: string): Promise<{ signedMessage: string; signerAddress: string } | null> => {
       if (!address) return null
-      try {
-        const kit = await getKit()
-        if (!kit) return null
-        const result = await kit.signMessage(message, {
-          networkPassphrase: STELLAR_NETWORK_PASSPHRASE,
-          address,
-        })
-
-        return result?.signedMessage
-          ? {
-              signedMessage: result.signedMessage,
-              signerAddress: result.signerAddress ?? address,
-            }
-          : null
-      } catch {
-        return null
-      }
+      // Route through the unified signer (Stellar Wallets Kit)
+      return unifiedSignMessage(message, address)
     },
     [address]
   )
