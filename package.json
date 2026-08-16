@@ -7,7 +7,7 @@
     "dev": "next dev --webpack",
     "lint": "eslint .",
     "start": "next start",
-    "test": "vitest run"
+    "test": "vitest run && node --test tests/*.test.mjs"
   },
   "dependencies": {
     "@accesly/core": "^1.28.0",

@@ -1,3 +1,6 @@
+packages:
+  - '*'
+
 # El Kit arrastra @trezor/connect -> @trezor/blockchain-link, que declara su propio
 # @stellar/stellar-sdk. Ese worker de Trezor nunca se ejecuta aqui (el modulo no esta
 # en defaultModules()), pero si aparece en el lockfile como una segunda version del SDK.

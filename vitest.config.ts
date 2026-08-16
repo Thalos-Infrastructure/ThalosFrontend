@@ -8,7 +8,9 @@ export default defineConfig({
     },
   },
   test: {
+    globals: true,
     environment: "node",
-    include: ["lib/**/*.test.ts"],
+    // .test.ts suites run under vitest; tests/*.test.mjs run under node --test (see package.json)
+    include: ["lib/**/*.test.ts", "lib/**/__tests__/**/*.test.ts"],
   },
 })
