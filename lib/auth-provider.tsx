@@ -65,6 +65,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .then((data) => {
         const normalized = normalizeAuthUser(data.user);
         if (!normalized) throw new Error("Invalid user payload");
+        // /me falls back to provider "embedded" while the wallet_provider
+        // migration is pending. If this session already knows a more specific
+        // provider for the SAME wallet (e.g. "accesly"), keep it — signing is
+        // dispatched by provider (#110), so losing it would break signing.
+        try {
+          const stored = normalizeAuthUser(JSON.parse(localStorage.getItem("auth_user") || "null"));
+          if (
+            normalized.wallet &&
+            stored?.wallet &&
+            stored.wallet.publicKey === normalized.wallet.publicKey &&
+            normalized.wallet.provider === "embedded" &&
+            stored.wallet.provider !== "embedded"
+          ) {
+            normalized.wallet = { ...normalized.wallet, provider: stored.wallet.provider };
+          }
+        } catch {
+          // ignore malformed stored user
+        }
         login(normalized, storedToken);
       })
       .catch(() => {

@@ -3,11 +3,15 @@ import { API_URL } from "@/lib/config"
 export interface LinkedWallet {
   id: string
   wallet_address: string
-  wallet_type: "custodial" | "freighter" | "lobstr" | "xbull" | "albedo" | "other"
+  wallet_type: "custodial" | "freighter" | "lobstr" | "xbull" | "albedo" | "accesly" | "other"
   label: string | null
   is_primary: boolean
   is_verified: boolean
   linked_at: string
+  /** Login method that produced this wallet (e.g. "accesly", #108/#109). */
+  auth_provider?: string | null
+  /** Smart Account contract address (C…) for account-abstraction wallets. */
+  c_address?: string | null
 }
 
 export interface WalletWithBalance extends LinkedWallet {
@@ -131,6 +135,8 @@ export async function linkWallet(
     label?: string
     signed_message?: string
     signature?: string
+    auth_provider?: string
+    c_address?: string
   },
   token: string
 ): Promise<ApiResponse<LinkedWallet>> {

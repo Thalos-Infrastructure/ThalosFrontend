@@ -28,7 +28,7 @@ import { Button } from "@/components/ui/button";
 import { cn, isMockAgreement } from "@/lib/utils";
 import { statusConfig } from "./statusConfig";
 import { useLanguage } from "@/lib/i18n";
-import { useWalletType } from "@/lib/use-current-address";
+import { useHasSigningWallet } from "@/lib/use-current-address";
 import { useStellarWallet } from "@/lib/stellar-wallet";
 import { WalletPrompt } from "@/components/shared/wallet-guard";
 import { fundAndSignEscrow } from "@/lib/agreementActions";
@@ -37,9 +37,10 @@ import type { AgreementResponse } from "@/services/trustlessworkService";
 import { AlertTriangle } from "lucide-react";
 
 export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreementDetailProps) {
-  const walletType = useWalletType();
   const { openWalletModal } = useStellarWallet();
-  const isExternalWallet = walletType === "external";
+  // Signing-capable wallet: external Kit, or custodial with a signing provider
+  // (Accesly #109) — all routed through the unified signer (#110).
+  const isExternalWallet = useHasSigningWallet();
   const [showDetail, setShowDetail] = React.useState(false);
   const [loadingMs, setLoadingMs] = React.useState<number | null>(null);
   const [errorMs, setErrorMs] = React.useState<string | null>(null);

@@ -8,6 +8,7 @@ import { useAuthStore, normalizeAuthUser } from "@/lib/auth-store";
 import { useRouter } from "next/navigation";
 import { signInWithOAuthAction } from "@/lib/actions/auth-oauth";
 import { useStellarWallet } from "@/lib/stellar-wallet";
+import { AcceslyAuthModal } from "@/components/accesly-auth-modal";
 import Image from "next/image";
 
 interface SocialAuthModalProps {
@@ -28,6 +29,7 @@ export function SocialAuthModal({ mode, open, onClose }: SocialAuthModalProps) {
   const [error, setError] = useState<string | null>(null);
   const [oauthLoading, setOauthLoading] = useState<"google" | "github" | null>(null);
   const [accountType, setAccountType] = useState<"personal" | "enterprise">("personal");
+  const [showAccesly, setShowAccesly] = useState(false);
   const emailInputRef = useRef<HTMLInputElement>(null);
 
   const handleOAuth = async (provider: "google" | "github") => {
@@ -252,6 +254,21 @@ export function SocialAuthModal({ mode, open, onClose }: SocialAuthModalProps) {
             </svg>
             {isConnecting ? "Connecting..." : "Connect Stellar Wallet"}
           </Button>
+
+          {/* Accesly passkey button (non-custodial, no extension) */}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setShowAccesly(true)}
+            className="mt-2.5 h-11 w-full gap-3 rounded-xl border-[#f0b400]/25 bg-transparent text-sm font-medium text-white hover:bg-[#f0b400]/5 hover:border-[#f0b400]/40"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f0b400" strokeWidth="1.5">
+              <path d="M12 1a5 5 0 0 0-5 5v4h10V6a5 5 0 0 0-5-5z" />
+              <rect x="4" y="10" width="16" height="12" rx="2" />
+              <circle cx="12" cy="16" r="1.5" fill="#f0b400" />
+            </svg>
+            Continue with Accesly (Passkey)
+          </Button>
           {walletError && (
             <p className="mt-2 text-xs text-red-400/90 text-center" role="alert">{walletError}</p>
           )}
@@ -301,6 +318,9 @@ export function SocialAuthModal({ mode, open, onClose }: SocialAuthModalProps) {
           </p>
         </div>
       </div>
+
+      {/* Accesly passkey login (#109) */}
+      <AcceslyAuthModal open={showAccesly} onClose={() => setShowAccesly(false)} />
     </div>
   );
 }

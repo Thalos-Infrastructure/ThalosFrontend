@@ -9,7 +9,7 @@ import { cn, isMockAgreement } from "@/lib/utils"
 import { ThalosLoader } from "@/components/thalos-loader"
 import { LanguageToggle, ThemeToggle, useLanguage } from "@/lib/i18n"
 import { useStellarWallet } from "@/lib/stellar-wallet"
-import { useCurrentAddress, useWalletType } from "@/lib/use-current-address"
+import { useCurrentAddress, useHasSigningWallet } from "@/lib/use-current-address"
 import { WalletGuard, WalletPrompt } from "@/components/shared/wallet-guard"
 import { useAuthStore } from "@/lib/auth-store"
 import { WalletAddress } from "@/components/ui/wallet-address"
@@ -338,8 +338,9 @@ export default function PersonalDashboardPage() {
   const { openWalletModal } = useStellarWallet();
   const walletAddress = useCurrentAddress();
   const { user: socialUser, token } = useAuthStore();
-  const walletType = useWalletType();
-  const isExternalWallet = walletType === "external";
+  // A signing-capable wallet: external Kit wallet, or a custodial wallet whose
+  // provider signs through the unified signer (Accesly #109; social with #108).
+  const isExternalWallet = useHasSigningWallet();
   const [loading, setLoading] = useState(false);
 
   const [activeSection, setActiveSection] = useState("home");

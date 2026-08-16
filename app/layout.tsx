@@ -5,6 +5,7 @@ import { Analytics } from '@vercel/analytics/next'
 import { LanguageProvider } from '@/lib/i18n'
 import { StellarWalletProvider } from '@/lib/stellar-wallet'
 import { AuthProvider } from '@/lib/auth-provider'
+import { ThalosAcceslyProvider } from '@/lib/accesly/accesly-provider'
 import './globals.css'
 
 const _inter = Inter({ subsets: ["latin"] });
@@ -51,9 +52,11 @@ export default function RootLayout({
       <body className="font-sans antialiased transition-colors duration-300">
         <LanguageProvider>
           <AuthProvider>
-            <StellarWalletProvider>
-              {children}
-            </StellarWalletProvider>
+            <ThalosAcceslyProvider>
+              <StellarWalletProvider>
+                {children}
+              </StellarWalletProvider>
+            </ThalosAcceslyProvider>
           </AuthProvider>
         </LanguageProvider>
         <Analytics />
