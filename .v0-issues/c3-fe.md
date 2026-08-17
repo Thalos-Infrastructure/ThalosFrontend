@@ -1,5 +1,5 @@
 > **Depends on (hard):** Thalos-Infrastructure/ThalosBackend#138 — Opportunities entity + endpoints
-> **Depends on:** #__C1__ (profiles)
+> **Depends on:** #123 (profiles)
 > **Campaign:** Thalos Connect · Phase 2 (Opportunities)
 
 ## Task Description

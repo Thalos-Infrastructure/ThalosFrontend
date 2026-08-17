@@ -1,4 +1,4 @@
-> **Depends on:** #__C1__ (Builder & Project profiles)
+> **Depends on:** #123 (Builder & Project profiles)
 > **Campaign:** Thalos Connect · Phases 1–2 (Public showcase)
 
 ## Task Description
