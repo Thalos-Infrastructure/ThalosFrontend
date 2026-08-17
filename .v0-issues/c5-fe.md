@@ -1,5 +1,5 @@
 > **Depends on (hard):** Thalos-Infrastructure/ThalosBackend#139 — Applications entity + endpoints
-> **Depends on:** #__C3__ (opportunities), #__C4__ (discovery)
+> **Depends on:** #125 (opportunities), #126 (discovery)
 > **Campaign:** Thalos Connect · Phase 4 (Opportunity → Agreement)
 
 ## Task Description
