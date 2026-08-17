@@ -1,5 +1,5 @@
 > **Depends on (hard):** Thalos-Infrastructure/ThalosBackend#140 — GitHub link verification + project-repo PR fetch
-> **Depends on:** #__C1__ (profiles), #__C5__ (agreements from opportunities)
+> **Depends on:** #123 (profiles), #127 (agreements from opportunities)
 > **Priority:** P2 — runs after the C1–C5 loop
 > **Campaign:** Thalos Connect · Verified GitHub evidence (proposal §9)
 
