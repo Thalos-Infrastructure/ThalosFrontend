@@ -1,4 +1,4 @@
-> **Depends on:** #__C1__ (profiles), #__C3__ (opportunities)
+> **Depends on:** #123 (profiles), #125 (opportunities)
 > **Campaign:** Thalos Connect · Phase 3 (Discovery)
 
 ## Task Description
