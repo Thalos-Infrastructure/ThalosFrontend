@@ -5,7 +5,7 @@ import React, { useState, useEffect, useCallback, useId, useRef, useMemo } from 
 import Image from "next/image"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { cn, isMockAgreement } from "@/lib/utils"
+import { cn } from "@/lib/utils"
 import { ThalosLoader } from "@/components/thalos-loader"
 import { LanguageToggle, ThemeToggle, useLanguage } from "@/lib/i18n"
 import { useStellarWallet } from "@/lib/stellar-wallet"
@@ -34,7 +34,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area,
 } from "recharts"
 import { createAgreement, sendTransaction, AgreementPayload, approveMilestone } from "@/services/trustlessworkService"
-import { STELLAR_EXPLORER_BASE_URL, TRUSTLINE_USDC, SHOW_MOCKED_AGREEMENTS } from "@/lib/config";
+import { STELLAR_EXPLORER_BASE_URL, TRUSTLINE_USDC } from "@/lib/config";
 
 /* ── Use-Case Presets ── */
 const useCases = [
@@ -104,13 +104,6 @@ const wizardStepKeys = ["wizard.escrowType", "wizard.useCase", "wizard.agreement
 
 interface Milestone { description: string; amount: string; status: "pending" | "approved" | "released" }
 interface Agreement { id: string; title: string; status: string; type: "Single Release" | "Multi Release"; counterparty: string; amount: string; currency: string; date: string; releaseStrategy?: "per-milestone" | "all-at-once" | "upon-completion"; milestones: Milestone[]; receiver: string; role?: "buyer" | "seller" }
-
-const initialAgreements: Agreement[] = SHOW_MOCKED_AGREEMENTS ? [
-  { id: "AGR-001", title: "Website Redesign", status: "funded", type: "Single Release", counterparty: "G...FRE3", amount: "2,500", currency: "USDC", date: "2026-01-15", milestones: [{ description: "Full delivery", amount: "2,500", status: "pending" }], receiver: "GBXGQJWVLWOYHFLVTKWV5FGHA3PERSONAL02", role: "buyer" },
-  { id: "AGR-002", title: "Moving Service", status: "in_progress", type: "Multi Release", counterparty: "G...MOV7", amount: "1,800", currency: "USDC", date: "2026-01-20", releaseStrategy: "per-milestone", milestones: [{ description: "Packing & Loading", amount: "600", status: "released" }, { description: "Transport", amount: "600", status: "approved" }, { description: "Unloading & Setup", amount: "600", status: "pending" }], receiver: "GBXGQJWVLWOYHFLVTKWV5FGHA3MOV7", role: "buyer" },
-  { id: "AGR-003", title: "Online Course Bundle", status: "released", type: "Multi Release", counterparty: "G...EDU4", amount: "1,200", currency: "USDC", date: "2025-12-10", releaseStrategy: "upon-completion", milestones: [{ description: "Module 1 - Basics", amount: "400", status: "released" }, { description: "Module 2 - Advanced", amount: "400", status: "released" }, { description: "Final Assessment", amount: "400", status: "released" }], receiver: "GBXGQJWVLWOYHFLVTKWV5FGHA3EDU4", role: "seller" },
-  { id: "AGR-004", title: "Coaching Sessions", status: "in_progress", type: "Multi Release", counterparty: "G...CCH1", amount: "900", currency: "USDC", date: "2026-02-01", releaseStrategy: "all-at-once", milestones: [{ description: "Session 1", amount: "300", status: "approved" }, { description: "Session 2", amount: "300", status: "approved" }, { description: "Session 3", amount: "300", status: "pending" }], receiver: "GBXGQJWVLWOYHFLVTKWV5FGHA3CCH1", role: "seller" },
-] : [];
 
 // Mix between real escrows fetched from the backend and some hardcoded ones for demo purposes
 // MIGRATION: Using escrowMigration wrapper to gradually migrate to backend
@@ -222,12 +215,7 @@ function SellerMilestoneList({ agr, agreements, setAgreements, t }: {
 
   const { address: walletAddress, openWalletModal } = require("@/lib/stellar-wallet").useStellarWallet();
   const { changeMilestoneStatusAgreement } = require("@/lib/agreementActions");
-  const isMock = isMockAgreement(agr.id);
   const handleSubmitEvidence = async (idx: number) => {
-    if (isMock) {
-      alert("Demo agreement — actions are unavailable. Create a real agreement to use this feature.");
-      return;
-    }
     const evidence = evidenceInputs[idx]?.trim();
     if (!evidence) return;
     setSubmitting(idx);
@@ -346,7 +334,7 @@ export default function PersonalDashboardPage() {
   const [activeSection, setActiveSection] = useState("home");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
-  const [agreements, setAgreements] = useState<Agreement[]>(initialAgreements);
+  const [agreements, setAgreements] = useState<Agreement[]>([]);
   const [approverEscrows, setApproverEscrows] = useState<Agreement[]>([]);
   const [approverLoading, setApproverLoading] = useState(false);
   const [userProfile, setUserProfile] = useState<Profile | null>(null);
@@ -472,13 +460,7 @@ const res = await getEscrowsByRole({ role, address: walletAddress }, token);
         }
       }
       
-      setAgreements(prev => {
-        // Merge with any existing mock agreements
-        const existingIds = new Set(prev.filter(a => !a.id.startsWith("AGR-")).map(a => a.id));
-        const mockAgreements = prev.filter(a => a.id.startsWith("AGR-"));
-        const newReal = allAgreements.filter(a => !existingIds.has(a.id));
-        return [...mockAgreements, ...newReal];
-      });
+      setAgreements(allAgreements);
     }
     
     fetchAllEscrows();
@@ -1179,15 +1161,10 @@ const res = await getEscrowsByRole({ role: "approver", address: walletAddress },
                   </button>
                   <button
                     onClick={() => setShowAgreementChat(viewingAgreement)}
-                    className={cn(
-                      "flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors",
-                      isMockAgreement(viewingAgreement!)
-                        ? "bg-amber-500/10 text-amber-400 hover:bg-amber-500/20"
-                        : "bg-[#f0b400]/10 text-[#f0b400] hover:bg-[#f0b400]/20"
-                    )}
+                    className="flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors bg-[#f0b400]/10 text-[#f0b400] hover:bg-[#f0b400]/20"
                   >
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
-                    {isMockAgreement(viewingAgreement!) ? "Chat (demo)" : "Chat"}
+                    Chat
                   </button>
                 </div>
 
