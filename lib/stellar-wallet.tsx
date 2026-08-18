@@ -131,10 +131,10 @@ export function StellarWalletProvider({ children }: { children: React.ReactNode 
         // When on, we mint the app JWT so dashboard data goes through the backend.
         if (SHOW_SIGN_MESSAGE_TEST) {
           try {
-            const { challenge } = await requestWalletChallenge(addr);
+            const { message } = await requestWalletChallenge(addr);
             // Route through the unified signer (sessionStorage already
             // holds the address, so dispatch resolves to the Kit provider).
-            const signed = await unifiedSignMessage(challenge, addr);
+            const signed = await unifiedSignMessage(message, addr);
             if (!signed?.signedMessage) {
               throw new Error("La wallet no devolvió una firma");
             }
@@ -146,7 +146,7 @@ export function StellarWalletProvider({ children }: { children: React.ReactNode 
             } catch {
               provider = undefined;
             }
-            const { user, token } = await verifyWalletLogin(addr, challenge, signed.signedMessage, provider);
+            const { user, token } = await verifyWalletLogin(addr, message, signed.signedMessage, provider);
             login(user, token);
           } catch (authErr) {
             console.warn(

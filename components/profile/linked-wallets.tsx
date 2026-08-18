@@ -8,6 +8,7 @@ import { useLanguage } from "@/lib/i18n"
 import { useStellarWallet } from "@/lib/stellar-wallet"
 import { useAuthStore } from "@/lib/auth-store"
 import {
+  challengeMessage,
   getWalletsWithBalances,
   getWalletVerificationChallenge,
   linkWallet,
@@ -146,7 +147,8 @@ export function LinkedWallets({ onWalletSelect, selectedWallet, showBalances = t
     try {
       // Step 1: Request verification challenge from backend
       const challengeResult = await getWalletVerificationChallenge(walletAddress, token)
-      if (!challengeResult.success || !challengeResult.data) {
+      const message = challengeResult.data ? challengeMessage(challengeResult.data) : null
+      if (!challengeResult.success || !message) {
         // Backend may not support challenge endpoint yet — link without proof
         const result = await linkWallet(
           { wallet_address: walletAddress, wallet_type: "freighter" },
@@ -161,7 +163,7 @@ export function LinkedWallets({ onWalletSelect, selectedWallet, showBalances = t
       }
 
       // Step 2: Sign the challenge message with the connected wallet
-      const signature = await signMessage(challengeResult.data.challenge)
+      const signature = await signMessage(message)
       if (!signature) {
         setError(t("linkedWallets.signatureCancelled"))
         return false
@@ -172,7 +174,7 @@ export function LinkedWallets({ onWalletSelect, selectedWallet, showBalances = t
         {
           wallet_address: walletAddress,
           wallet_type: "freighter",
-          signed_message: challengeResult.data.challenge,
+          signed_message: message,
           signature,
         },
         token

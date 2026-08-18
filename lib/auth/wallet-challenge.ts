@@ -6,12 +6,34 @@ import { createHmac, randomBytes } from "crypto";
  * Mirrors the backend's approach (src/wallets/helpers/stellar-verification.helper.ts):
  * the challenge carries an HMAC "Proof" line signed with JWT_SECRET, so no server-side
  * nonce store is needed — integrity + expiry are self-contained. The wallet signs the
- * FULL challenge string; `verifyWalletChallenge` + the Stellar signature check both run
- * against that exact string (no line stripping), keeping the flow self-consistent.
+ * FULL challenge message; `verifyWalletChallenge` + the Stellar signature check both run
+ * against that exact message (no line stripping), keeping the flow self-consistent.
  */
 
 const PREFIX = "Thalos Wallet Ownership Proof";
 const TTL_SECONDS = 5 * 60;
+
+/**
+ * Wire shape of a challenge as returned by `POST /api/auth/wallet/challenge`.
+ * Field names are the canonical ones shared with the Nest backend
+ * (`message` + `expires_at`, snake_case) so FE, Next BFF and Nest agree
+ * end-to-end — see GF-8 (#142 / ThalosBackend#143).
+ */
+export interface WalletChallenge {
+  /** The exact string the wallet must sign. */
+  message: string;
+  /** ISO-8601 instant after which the challenge is no longer accepted. */
+  expires_at: string;
+}
+
+/** Thrown when a challenge is well-formed and ours, but past its `expires_at`. */
+export class WalletChallengeExpiredError extends Error {
+  readonly code = "challenge_expired" as const;
+  constructor(message = "El challenge expiró, volvé a intentar") {
+    super(message);
+    this.name = "WalletChallengeExpiredError";
+  }
+}
 
 export interface WalletChallengePayload {
   v: 1;
@@ -26,7 +48,7 @@ function getSecret(): string {
   return secret;
 }
 
-export function buildWalletChallenge(address: string): { challenge: string; expiresAt: string } {
+export function buildWalletChallenge(address: string): WalletChallenge {
   const secret = getSecret();
   const exp = Math.floor(Date.now() / 1000) + TTL_SECONDS;
   const nonce = randomBytes(16).toString("hex");
@@ -34,23 +56,23 @@ export function buildWalletChallenge(address: string): { challenge: string; expi
   const payloadB64 = Buffer.from(JSON.stringify(payload)).toString("base64url");
   const sig = createHmac("sha256", secret).update(payloadB64).digest("base64url");
 
-  const expiresAtIso = new Date(exp * 1000).toISOString();
-  const challenge =
+  const expiresAt = new Date(exp * 1000).toISOString();
+  const message =
     `${PREFIX}\n\n` +
     `Firmá este mensaje para iniciar sesión en Thalos con tu wallet.\n` +
     `Esta firma no autoriza ninguna transacción ni movimiento de fondos.\n\n` +
     `Wallet: ${address}\n` +
     `Nonce: ${nonce}\n` +
-    `Expira: ${expiresAtIso}\n` +
+    `Expira: ${expiresAt}\n` +
     `Proof: ${payloadB64}.${sig}`;
 
-  return { challenge, expiresAt: expiresAtIso };
+  return { message, expires_at: expiresAt };
 }
 
 /** Recomputes the HMAC proof, checks the address matches and that it has not expired. Throws on any failure. */
-export function verifyWalletChallenge(challenge: string, address: string): WalletChallengePayload {
+export function verifyWalletChallenge(message: string, address: string): WalletChallengePayload {
   const secret = getSecret();
-  const match = challenge.match(/^Proof:\s*(.+)$/m);
+  const match = message.match(/^Proof:\s*(.+)$/m);
   if (!match) throw new Error("Challenge sin proof");
 
   const [payloadB64, hmac] = match[1].trim().split(".");
@@ -67,7 +89,7 @@ export function verifyWalletChallenge(challenge: string, address: string): Walle
   }
 
   if (payload.addr !== address) throw new Error("La wallet no coincide con el challenge");
-  if (payload.exp < Math.floor(Date.now() / 1000)) throw new Error("El challenge expiró");
+  if (payload.exp < Math.floor(Date.now() / 1000)) throw new WalletChallengeExpiredError();
 
   return payload;
 }

@@ -85,9 +85,9 @@ export async function completeAcceslyLogin(
     //    reconstructed ed25519 key (raw scheme, provider "accesly").
     onStage?.("session")
     seed = await reconstructSeed(accesly._internal.endpoints, material)
-    const { challenge } = await requestWalletChallenge(gAddress)
-    const signature = signChallenge(challenge, seed)
-    const { user, token } = await verifyWalletLogin(gAddress, challenge, signature, "accesly")
+    const { message } = await requestWalletChallenge(gAddress)
+    const signature = signChallenge(message, seed)
+    const { user, token } = await verifyWalletLogin(gAddress, message, signature, "accesly")
 
     // 5. Persist the Accesly identity (C + G) into user_wallets. Non-fatal —
     //    the wallet signs fine even if persistence fails.

@@ -150,12 +150,29 @@ export async function linkWallet(
   )
 }
 
+/**
+ * Challenge returned by the Nest backend. Canonical fields are `message` +
+ * `expires_at` (GF-8, #142 / ThalosBackend#143); `challenge` is kept optional so
+ * a backend still on the old shape does not break wallet linking.
+ */
+export interface WalletVerificationChallenge {
+  message?: string
+  expires_at?: string
+  /** @deprecated legacy alias of `message` */
+  challenge?: string
+}
+
+/** The string the wallet must sign, whichever field the backend used. */
+export function challengeMessage(challenge: WalletVerificationChallenge): string | null {
+  return challenge.message || challenge.challenge || null
+}
+
 // Request a wallet verification challenge
 export async function getWalletVerificationChallenge(
   walletAddress: string,
   token: string
-): Promise<ApiResponse<{ challenge: string }>> {
-  return apiRequest<{ challenge: string }>(
+): Promise<ApiResponse<WalletVerificationChallenge>> {
+  return apiRequest<WalletVerificationChallenge>(
     `/wallets/verification-challenge?address=${encodeURIComponent(walletAddress)}`,
     { method: "GET" },
     token
