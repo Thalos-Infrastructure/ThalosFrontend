@@ -6,6 +6,15 @@ export interface ApiResponse<T> {
   error?: string
 }
 
+function getErrorMessage(data: unknown): string | undefined {
+  if (!data || typeof data !== "object") return undefined
+
+  const body = data as { message?: unknown; error?: unknown }
+  if (typeof body.message === "string") return body.message
+  if (typeof body.error === "string") return body.error
+  return undefined
+}
+
 export async function apiRequest<T>(
   endpoint: string,
   options: RequestInit = {},
@@ -23,13 +32,18 @@ export async function apiRequest<T>(
       headers,
     })
 
-    const data = await response.json()
-
-    if (!response.ok) {
-      return { success: false, error: data.message || data.error || "Request failed" }
+    let data: unknown
+    try {
+      data = await response.json()
+    } catch {
+      data = undefined
     }
 
-    return { success: true, data }
+    if (!response.ok) {
+      return { success: false, error: getErrorMessage(data) ?? "Request failed" }
+    }
+
+    return { success: true, data: data as T }
   } catch (error) {
     return {
       success: false,
