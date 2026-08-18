@@ -22,19 +22,62 @@ interface Message {
 
 interface EngineMilestone {
   description: string
-  amount: number
+  // Live #121 engine returns numeric amounts; tolerate string amounts too.
+  amount: number | string
   status?: string
 }
 
 interface EngineDraft {
   title: string
   description: string
-  amount: number
+  amount: number | string
   platformFee?: string
   signer?: string
-  serviceType: "single-release" | "multi-release"
+  // The engine on `main` uses `serviceType`; some builds expose `agreement_type`.
+  serviceType?: "single-release" | "multi-release"
+  agreement_type?: "single" | "multi"
   roles?: { approver: string; serviceProvider: string; releaseSigner: string; receiver?: string }
   milestones: EngineMilestone[]
+  // Risk flags may arrive under `metadata.riskFlags` or at the top level.
+  riskFlags?: string[]
+  metadata?: { riskFlags?: string[] }
+}
+
+interface DraftEnvelope {
+  success?: boolean
+  error?: string
+  data?: (EngineDraft & { draft?: EngineDraft; validationErrors?: string[] }) | null
+}
+
+// The engine response envelope has drifted across builds. The route on `main`
+// wraps the draft as `{ data: { draft, validationErrors } }`, but the reviewed
+// contract describes `{ data: AgreementDraft }` (draft at the top of `data`).
+// Unwrap either shape so a successful response is never misread as a failure.
+function extractDraft(env: DraftEnvelope | null | undefined): EngineDraft | undefined {
+  const container = env?.data
+  if (!container) return undefined
+  if (container.draft) return container.draft
+  if (container.title || Array.isArray(container.milestones)) {
+    return container as EngineDraft
+  }
+  return undefined
+}
+
+function extractValidationErrors(env: DraftEnvelope | null | undefined): string[] | undefined {
+  return env?.data?.validationErrors
+}
+
+function toAmountString(value: number | string | null | undefined): string {
+  if (value == null) return ""
+  if (typeof value === "number") return Number.isFinite(value) ? String(value) : ""
+  return String(value).trim()
+}
+
+function resolveEscrowType(draft: EngineDraft): "single" | "multi" {
+  if (draft.agreement_type === "single" || draft.agreement_type === "multi") {
+    return draft.agreement_type
+  }
+  return draft.serviceType === "multi-release" ? "multi" : "single"
 }
 
 const USE_CASE_KEYWORDS: Record<string, string[]> = {
@@ -70,17 +113,22 @@ function mapEngineDraft(
   useCase: string | null,
   validationErrors?: string[],
 ): AiDraftData {
+  const riskFlags =
+    (draft.metadata?.riskFlags?.length ? draft.metadata.riskFlags : undefined) ??
+    (draft.riskFlags?.length ? draft.riskFlags : undefined) ??
+    (validationErrors?.length ? validationErrors : [])
+
   return {
     title: draft.title,
     description: draft.description,
-    escrowType: draft.serviceType === "multi-release" ? "multi" : "single",
+    escrowType: resolveEscrowType(draft),
     useCase,
     milestones: (draft.milestones || []).map((m) => ({
       description: m.description,
-      amount: m.amount != null ? String(m.amount) : "",
+      amount: toAmountString(m.amount),
     })),
-    riskFlags: validationErrors && validationErrors.length > 0 ? validationErrors : [],
-    totalAmount: draft.amount != null ? String(draft.amount) : "",
+    riskFlags,
+    totalAmount: toAmountString(draft.amount),
   }
 }
 
@@ -183,11 +231,11 @@ export function AiAgreementAssistant({ profile, onDraftComplete, onClose }: Prop
         body: JSON.stringify({ prompt, useCase: detectedUseCase ?? undefined }),
       })
 
-      const data = await res.json()
+      const data = (await res.json()) as DraftEnvelope
 
       if (!res.ok || data.success === false || data.error) {
-        const engineDraft = data.data?.draft as EngineDraft | undefined
-        const validationErrors = data.data?.validationErrors as string[] | undefined
+        const engineDraft = extractDraft(data)
+        const validationErrors = extractValidationErrors(data)
         if (engineDraft && validationErrors && validationErrors.length > 0) {
           const mapped = mapEngineDraft(engineDraft, detectedUseCase, validationErrors)
           setDraftData(mapped)
@@ -196,13 +244,13 @@ export function AiAgreementAssistant({ profile, onDraftComplete, onClose }: Prop
           const errorMsg =
             data.error || "I ran into an issue. Please try again or use the manual form below."
           setMessages((prev) => [...prev, { role: "assistant", content: errorMsg }])
-          setError(data.error)
+          setError(data.error ?? null)
         }
         setLoading(false)
         return
       }
 
-      const engineDraft = data.data?.draft as EngineDraft | undefined
+      const engineDraft = extractDraft(data)
       if (!engineDraft) {
         setMessages((prev) => [
           ...prev,
@@ -212,7 +260,7 @@ export function AiAgreementAssistant({ profile, onDraftComplete, onClose }: Prop
         return
       }
 
-      const mapped = mapEngineDraft(engineDraft, detectedUseCase, data.data?.validationErrors)
+      const mapped = mapEngineDraft(engineDraft, detectedUseCase, extractValidationErrors(data))
       setDraftData(mapped)
       setMessages([...updatedMessages, { role: "assistant", content: buildDraftMessage(mapped) }])
     } catch {
