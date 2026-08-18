@@ -1,14 +1,27 @@
 import { API_URL } from "@/lib/config"
+import {
+  AgreementStatus as AgreementStatusEnum,
+  AgreementType as AgreementTypeEnum,
+  ParticipantRole as ParticipantRoleEnum,
+  MilestoneStatus,
+  type AgreementStatusType,
+  type AgreementTypeType,
+  type ParticipantRoleType,
+  type MilestoneStatusType,
+} from "@/lib/enums"
 
-// Re-export types from actions for backwards compatibility
-export type AgreementStatus = "pending" | "funded" | "active" | "completed" | "disputed" | "resolved" | "cancelled"
-export type AgreementType = "single" | "multi" | "bounty"
-export type ParticipantRole = "payer" | "payee" | "approver" | "dispute_resolver" | "validator"
+// Re-export types from shared enum module for backwards compatibility
+export type AgreementStatus = AgreementStatusType
+export type AgreementType = AgreementTypeType
+export type ParticipantRole = ParticipantRoleType
+
+// Re-export enums
+export { AgreementStatusEnum, AgreementTypeEnum, ParticipantRoleEnum, MilestoneStatus }
 
 export interface AgreementMilestone {
   description: string
   amount: string
-  status: "pending" | "approved" | "released"
+  status: MilestoneStatusType
 }
 
 export interface Agreement {

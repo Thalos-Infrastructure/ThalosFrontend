@@ -1,9 +1,16 @@
 import { API_URL } from "@/lib/config"
+import {
+  MilestoneStatus,
+  AgreementStatus as AgreementStatusEnum,
+  mapCanonicalToLegacy,
+  type LegacyMilestoneStatus,
+  type AgreementStatusType,
+} from "@/lib/enums"
 
 export interface Milestone {
   description: string
   amount: string
-  status: "pending" | "completed" | "approved"
+  status: LegacyMilestoneStatus // Using legacy type for backwards compatibility
 }
 
 export interface Escrow {
@@ -20,7 +27,7 @@ export interface Escrow {
   release_signer?: string
   dispute_resolver?: string
   milestones: Milestone[]
-  status: "pending" | "funded" | "active" | "completed" | "disputed" | "cancelled"
+  status: AgreementStatusType
   created_at: string
   funded_at?: string
   completed_at?: string
@@ -176,12 +183,20 @@ export async function fundEscrow(
 }
 
 // Submit evidence for milestone
+/**
+ * @deprecated Use submitMilestoneEvidence from @/lib/api/evidence instead
+ * This endpoint is deprecated as part of GF-4-FE migration to canonical evidence path
+ * Will be removed in a future version
+ */
 export async function submitEvidence(
   contractId: string,
   milestoneIndex: number,
   evidence: { description: string; files?: string[] },
   token: string
 ): Promise<ApiResponse<Escrow>> {
+  console.warn(
+    "submitEvidence from escrow.ts is deprecated. Use submitMilestoneEvidence from @/lib/api/evidence instead"
+  )
   return apiRequest<Escrow>(
     `/escrow/${contractId}/milestones/${milestoneIndex}/evidence`,
     {
