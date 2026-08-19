@@ -1,9 +1,10 @@
 import { API_URL } from "@/lib/config"
+import type { MilestoneStatus, AgreementStatus } from "@/lib/types/status"
 
 export interface Milestone {
   description: string
   amount: string
-  status: "pending" | "completed" | "approved"
+  status: MilestoneStatus
 }
 
 export interface Escrow {
@@ -20,7 +21,7 @@ export interface Escrow {
   release_signer?: string
   dispute_resolver?: string
   milestones: Milestone[]
-  status: "pending" | "funded" | "active" | "completed" | "disputed" | "cancelled"
+  status: AgreementStatus
   created_at: string
   funded_at?: string
   completed_at?: string

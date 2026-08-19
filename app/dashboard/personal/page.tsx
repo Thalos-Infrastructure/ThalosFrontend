@@ -235,7 +235,7 @@ function SellerMilestoneList({ agr, agreements, setAgreements, t }: {
       contractId: agr.id,
       milestoneIndex: String(idx),
       newEvidence: evidence,
-      newStatus: "Completed",
+      newStatus: "released",
       serviceProvider: walletAddress,
       serviceType: agr.type === "Multi Release" ? "multi-release" : "single-release",
       walletAddress,
@@ -260,19 +260,19 @@ function SellerMilestoneList({ agr, agreements, setAgreements, t }: {
         const hasEvidence = !!submittedEvidence[idx]
         return (
           <div key={`${agr.id}-ms-${idx}`} className={cn("rounded-2xl border p-5 backdrop-blur-md transition-all",
-            ms.status === "released" ? "border-emerald-500/20 bg-emerald-500/5" : ms.status === "approved" || hasEvidence || (ms.status === "Completed" && ms.evidence) ? "border-cyan-500/20 bg-cyan-500/5" : "border-white/[0.06] bg-[#0a0a0c]/70"
+            ms.status === "released" ? "border-emerald-500/20 bg-emerald-500/5" : ms.status === "approved" || hasEvidence || (ms.status === "released" && ms.evidence) ? "border-cyan-500/20 bg-cyan-500/5" : "border-white/[0.06] bg-[#0a0a0c]/70"
           )}>
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-3">
                 <span className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold",
-                  ms.status === "released" ? "bg-emerald-500/20 text-emerald-400" : ms.status === "approved" || hasEvidence || (ms.status === "Completed" && ms.evidence) ? "bg-cyan-500/20 text-cyan-400" : "bg-white/10 text-white/40"
+                  ms.status === "released" ? "bg-emerald-500/20 text-emerald-400" : ms.status === "approved" || hasEvidence || (ms.status === "released" && ms.evidence) ? "bg-cyan-500/20 text-cyan-400" : "bg-white/10 text-white/40"
                 )}>{idx + 1}</span>
                 <div>
                   <p className="text-sm font-semibold text-white">{ms.description}</p>
                   <p className={cn("text-xs font-medium mt-0.5",
-                    ms.status === "released" ? "text-emerald-400" : ms.status === "approved" || hasEvidence || (ms.status === "Completed" && ms.evidence) ? "text-cyan-400" : "text-white/30"
+                    ms.status === "released" ? "text-emerald-400" : ms.status === "approved" || hasEvidence || (ms.status === "released" && ms.evidence) ? "text-cyan-400" : "text-white/30"
                   )}>
-                    {ms.status === "released" ? t("flow.released") : (ms.status === "approved" || hasEvidence || (ms.status === "Completed" && ms.evidence)) ? t("flow.evidenceSubmitted") : t("flow.awaitingEvidence")}
+                    {ms.status === "released" ? t("flow.released") : (ms.status === "approved" || hasEvidence || (ms.status === "released" && ms.evidence)) ? t("flow.evidenceSubmitted") : t("flow.awaitingEvidence")}
                   </p>
                 </div>
               </div>
@@ -284,7 +284,7 @@ function SellerMilestoneList({ agr, agreements, setAgreements, t }: {
                     {t("flow.submitEvidence")}
                   </Button>
                 )}
-                {(hasEvidence || (ms.status === "Completed" && ms.evidence)) && ms.status !== "released" && (
+                {(hasEvidence || (ms.status === "released" && ms.evidence)) && ms.status !== "released" && (
                   <span className="rounded-full bg-cyan-500/15 px-3 py-1 text-xs font-semibold text-cyan-400 border border-cyan-500/20">
                     {t("flow.evidenceSubmitted")}
                   </span>
@@ -315,7 +315,7 @@ function SellerMilestoneList({ agr, agreements, setAgreements, t }: {
               </div>
             )}
             {/* Show submitted evidence */}
-            {(hasEvidence || (ms.status === "Completed" && ms.evidence)) && (
+            {(hasEvidence || (ms.status === "released" && ms.evidence)) && (
               <div className="mt-3 rounded-lg border border-cyan-500/10 bg-cyan-500/5 px-3 py-2">
                 <p className="text-xs text-cyan-400/60 font-medium">{t("flow.viewEvidence")}:</p>
                 <p className="text-xs text-white/60 mt-0.5 break-all">{hasEvidence ? submittedEvidence[idx] : ms.evidence}</p>

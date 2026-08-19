@@ -1,10 +1,11 @@
 import { z } from "zod";
+import type { MilestoneStatus } from "@/lib/types/status";
 
 // Milestone schema for agreement drafts
 export const MilestoneSchema = z.object({
   description: z.string().min(1, "Milestone description is required"),
   amount: z.number().positive("Milestone amount must be positive"),
-  status: z.enum(["pending", "in-progress", "completed", "disputed", "released"]).default("pending"),
+  status: z.enum(["pending", "approved", "released"] as [MilestoneStatus, ...MilestoneStatus[]]).default("pending"),
 });
 
 // Agreement draft schema - maps to CreateAgreementInput
