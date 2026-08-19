@@ -61,4 +61,25 @@ describe("apiRequest", () => {
       error: "Request failed",
     })
   })
+
+  it("joins validation messages from nested error details", async () => {
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          success: false,
+          error: {
+            code: "VALIDATION_ERROR",
+            details: ["wallet is required", { message: "amount must be positive" }],
+          },
+        }),
+        { status: 400 },
+      ),
+    )
+    vi.stubGlobal("fetch", fetchMock)
+
+    await expect(apiRequest("/wallets")).resolves.toEqual({
+      success: false,
+      error: "wallet is required; amount must be positive",
+    })
+  })
 })

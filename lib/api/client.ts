@@ -7,12 +7,28 @@ export interface ApiResponse<T> {
 }
 
 function getErrorMessage(data: unknown): string | undefined {
+  if (typeof data === "string") return data
   if (!data || typeof data !== "object") return undefined
 
-  const body = data as { message?: unknown; error?: unknown }
-  if (typeof body.message === "string") return body.message
-  if (typeof body.error === "string") return body.error
-  return undefined
+  const body = data as {
+    message?: unknown
+    error?: unknown
+    details?: unknown
+  }
+
+  for (const value of [body.message, body.error]) {
+    const message = getErrorMessage(value)
+    if (message) return message
+  }
+
+  if (Array.isArray(body.details)) {
+    const messages = body.details
+      .map((detail) => getErrorMessage(detail))
+      .filter((message): message is string => Boolean(message))
+    if (messages.length > 0) return messages.join("; ")
+  }
+
+  return getErrorMessage(body.details)
 }
 
 export async function apiRequest<T>(
