@@ -20,11 +20,21 @@ import type {
   ServiceType,
 } from "./trustlessworkService";
 
-type MigrationSource = "backend" | "original";
-type RoutedResponse<T = unknown> = AgreementResponse<T> & { source: MigrationSource };
-
-function errorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : "Unknown error";
+// Feature flags - set to false to disable migration for specific endpoints
+// GF-2: Write operations gated behind flags. When ON, mutations go through
+// the Nest backend (build unsigned XDR → sign client-side → submit via BE).
+// When OFF, the original Trustless Work path is used (no regression).
+const MIGRATION_FLAGS = {
+  getEscrowsBySigner: true,
+  getEscrowsByRole: true,
+  // GF-2: escrow write mutations — enable when ready
+  fundEscrow: false,
+  approveMilestone: false,
+  changeMilestoneStatus: false,
+  releaseFunds: false,
+  disputeMilestone: false,
+  // createAgreement and sendTransaction are already routed through Nest
+  // in agreementActions.ts (buildCreateEscrow / submitSignedTransaction)
 }
 
 function sourceFor(path: EscrowMigrationPath): MigrationSource {
@@ -148,34 +158,157 @@ export async function getEscrowsByRole(
   );
 }
 
-export async function createAgreement(
-  payload: AgreementPayload,
-  token?: string,
-): Promise<RoutedResponse<{ unsignedTransaction: string }>> {
-  return route<{ unsignedTransaction: string }>(
-    "createAgreement",
-    () => nestWrite(token, (resolvedToken) =>
-      escrowApi.buildCreateEscrow(createEscrowDto(payload), resolvedToken)),
-    () => originalService.createAgreement(payload),
-  );
-}
+// ============================================================================
+// WRITE MIGRATIONS — escrow mutations through Nest (GF-2)
+// ============================================================================
+// Each function tries the backend first when the flag is ON.
+// Flow: backend build → unsigned XDR → caller signs → caller submits.
+// When flag is OFF, falls back to the original TW service (no regression).
+// ============================================================================
 
 export async function fundEscrow(
   contractId: string,
   signer: string,
   amount: number,
-  type: ServiceType,
+  type: originalService.ServiceType,
   token?: string,
-): Promise<RoutedResponse> {
-  return route(
-    "fundEscrow",
-    () => nestWrite(token, (resolvedToken) => escrowApi.buildFundEscrow(
-      { contractId, signer, amount, type },
-      resolvedToken,
-    )),
-    () => originalService.fundEscrow(contractId, signer, amount, type),
-  );
+): Promise<originalService.AgreementResponse> {
+  if (!token || !MIGRATION_FLAGS.fundEscrow) {
+    console.log("[v0] MIGRATION: fundEscrow - using original TW path (flag OFF or no token)")
+    return originalService.fundEscrow(contractId, signer, amount, type)
+  }
+
+  console.log("[v0] MIGRATION: Attempting BACKEND for fundEscrow", { contractId })
+  const result = await escrowApi.buildFundEscrow(
+    { contractId, signer, amount, type },
+    token,
+  )
+
+  if (result.success && result.data) {
+    console.log("[v0] MIGRATION: SUCCESS using BACKEND for fundEscrow")
+    return { success: true, data: result.data }
+  }
+
+  console.warn("[v0] MIGRATION: BACKEND error for fundEscrow, falling back to TW", { error: result.error })
+  return originalService.fundEscrow(contractId, signer, amount, type)
 }
+
+export async function approveMilestone(
+  contractId: string,
+  milestoneIndex: string,
+  approver: string,
+  type: originalService.ServiceType,
+  token?: string,
+): Promise<originalService.AgreementResponse> {
+  if (!token || !MIGRATION_FLAGS.approveMilestone) {
+    console.log("[v0] MIGRATION: approveMilestone - using original TW path (flag OFF or no token)")
+    return originalService.approveMilestone(contractId, milestoneIndex, approver, type)
+  }
+
+  console.log("[v0] MIGRATION: Attempting BACKEND for approveMilestone", { contractId, milestoneIndex })
+  const result = await escrowApi.buildApproveMilestone(
+    { contractId, milestoneIndex, approver, type },
+    token,
+  )
+
+  if (result.success && result.data) {
+    console.log("[v0] MIGRATION: SUCCESS using BACKEND for approveMilestone")
+    return { success: true, data: result.data }
+  }
+
+  console.warn("[v0] MIGRATION: BACKEND error for approveMilestone, falling back to TW", { error: result.error })
+  return originalService.approveMilestone(contractId, milestoneIndex, approver, type)
+}
+
+export async function changeMilestoneStatus(
+  contractId: string,
+  milestoneIndex: string,
+  newEvidence: string,
+  newStatus: string,
+  serviceProvider: string,
+  type: originalService.ServiceType,
+  token?: string,
+): Promise<originalService.AgreementResponse> {
+  if (!token || !MIGRATION_FLAGS.changeMilestoneStatus) {
+    console.log("[v0] MIGRATION: changeMilestoneStatus - using original TW path (flag OFF or no token)")
+    return originalService.changeMilestoneStatus(contractId, milestoneIndex, newEvidence, newStatus, serviceProvider, type)
+  }
+
+  console.log("[v0] MIGRATION: Attempting BACKEND for changeMilestoneStatus", { contractId, milestoneIndex })
+  const result = await escrowApi.buildChangeMilestoneStatus(
+    { contractId, milestoneIndex, newEvidence, newStatus, serviceProvider, type },
+    token,
+  )
+
+  if (result.success && result.data) {
+    console.log("[v0] MIGRATION: SUCCESS using BACKEND for changeMilestoneStatus")
+    return { success: true, data: result.data }
+  }
+
+  console.warn("[v0] MIGRATION: BACKEND error for changeMilestoneStatus, falling back to TW", { error: result.error })
+  return originalService.changeMilestoneStatus(contractId, milestoneIndex, newEvidence, newStatus, serviceProvider, type)
+}
+
+export async function releaseFunds(
+  contractId: string,
+  releaseSigner: string,
+  type: originalService.ServiceType,
+  milestoneIndex?: string,
+  token?: string,
+): Promise<originalService.AgreementResponse> {
+  if (!token || !MIGRATION_FLAGS.releaseFunds) {
+    console.log("[v0] MIGRATION: releaseFunds - using original TW path (flag OFF or no token)")
+    return originalService.releaseFunds(contractId, releaseSigner, type, milestoneIndex)
+  }
+
+  console.log("[v0] MIGRATION: Attempting BACKEND for releaseFunds", { contractId })
+  const result = await escrowApi.buildReleaseFunds(
+    { contractId, releaseSigner, type, milestoneIndex },
+    token,
+  )
+
+  if (result.success && result.data) {
+    console.log("[v0] MIGRATION: SUCCESS using BACKEND for releaseFunds")
+    return { success: true, data: result.data }
+  }
+
+  console.warn("[v0] MIGRATION: BACKEND error for releaseFunds, falling back to TW", { error: result.error })
+  return originalService.releaseFunds(contractId, releaseSigner, type, milestoneIndex)
+}
+
+export async function disputeMilestone(
+  contractId: string,
+  milestoneIndex: string,
+  signer: string,
+  token?: string,
+): Promise<originalService.AgreementResponse<{ unsignedTransaction: string }>> {
+  if (!token || !MIGRATION_FLAGS.disputeMilestone) {
+    console.log("[v0] MIGRATION: disputeMilestone - using original TW path (flag OFF or no token)")
+    return originalService.disputeMilestone(contractId, milestoneIndex, signer)
+  }
+
+  console.log("[v0] MIGRATION: Attempting BACKEND for disputeMilestone", { contractId, milestoneIndex })
+  const result = await escrowApi.buildDisputeMilestone(
+    { contractId, type: "multi-release", milestoneIndex, signer },
+    token,
+  )
+
+  if (result.success && result.data) {
+    console.log("[v0] MIGRATION: SUCCESS using BACKEND for disputeMilestone")
+    return { success: true, data: result.data }
+  }
+
+  console.warn("[v0] MIGRATION: BACKEND error for disputeMilestone, falling back to TW", { error: result.error })
+  return originalService.disputeMilestone(contractId, milestoneIndex, signer)
+}
+
+// createAgreement is already routed through Nest in agreementActions.ts
+// (buildCreateEscrow → sign → submitSignedTransaction)
+export const createAgreement = originalService.createAgreement
+
+// sendTransaction is already routed through Nest in agreementActions.ts
+// (submitSignedTransaction via lib/api/escrow.ts)
+export const sendTransaction = originalService.sendTransaction
 
 export async function approveMilestone(
   contractId: string,

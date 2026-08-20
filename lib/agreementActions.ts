@@ -1,4 +1,5 @@
-import { sendTransaction, AgreementPayload, fundEscrow, AgreementResponse, changeMilestoneStatus, ServiceType } from "@/services/trustlessworkService";
+import { AgreementPayload, AgreementResponse, ServiceType } from "@/services/trustlessworkService";
+import { fundEscrow, approveMilestone, changeMilestoneStatus, releaseFunds, disputeMilestone } from "@/services/escrowMigration";
 import { buildCreateEscrow, submitSignedTransaction, type BackendCreateEscrowDto } from "@/lib/api/escrow";
 import { signEscrowOperation, type EscrowOperation, type EscrowRolesInfo, type TxStatus } from "@/lib/signing";
 import { linkWallet } from "@/lib/api/wallets";
@@ -26,6 +27,9 @@ export interface FundAndSignEscrowParams {
   amount: string;
   walletAddress: string | null;
   serviceType?: ServiceType;
+  /** App JWT — required for routing through the Nest backend (GF-2). */
+  token?: string | null;
+  openWalletModal: (onConnected?: (address: string) => void) => Promise<void>;
   setFunding: (v: boolean) => void;
   setError: (msg: string | null) => void;
   setSuccess: (v: boolean) => void;
@@ -40,6 +44,9 @@ export interface ChangeMilestoneStatusParams {
   serviceProvider: string;
   serviceType: ServiceType;
   walletAddress: string | null;
+  /** App JWT — required for routing through the Nest backend (GF-2). */
+  token?: string | null;
+  openWalletModal: (onConnected?: (address: string) => void) => Promise<void>;
   setSubmitting: (v: boolean) => void;
   setError: (msg: string | null) => void;
   onStatus?: (status: TxStatus) => void;
@@ -290,6 +297,8 @@ export async function fundAndSignEscrow({
   amount,
   walletAddress,
   serviceType = "single-release",
+  token,
+  openWalletModal,
   setFunding,
   setError,
   setSuccess,
@@ -303,11 +312,13 @@ export async function fundAndSignEscrow({
       throw new Error("Wallet address is required to fund escrow");
     }
     onStatus?.("building");
-    const response = await fundEscrow(contractId, walletAddress, Number(amount), serviceType);
-    await processTransaction(response, "Fund escrow failed", walletAddress, {
+    // GF-2: route through migration layer — when flag ON, builds unsigned XDR
+    // via Nest backend instead of calling Trustless Work directly from the browser.
+    const response = await fundEscrow(contractId, walletAddress, Number(amount), serviceType, token ?? undefined);
+    await processTransaction(response, "Fund escrow failed", walletAddress, openWalletModal, {
       operation: "fund",
       onStatus,
-    });
+    }, token);
     onStatus?.("confirmed");
     setSuccess(true);
   } catch (e: any) {
@@ -326,6 +337,8 @@ export async function changeMilestoneStatusAgreement({
   serviceProvider,
   serviceType,
   walletAddress,
+  token,
+  openWalletModal,
   setSubmitting,
   setError,
   onStatus,
@@ -335,19 +348,22 @@ export async function changeMilestoneStatusAgreement({
   setError(null);
   try {
     onStatus?.("building");
+    // GF-2: route through migration layer — when flag ON, builds unsigned XDR
+    // via Nest backend instead of calling Trustless Work directly from the browser.
     const response = await changeMilestoneStatus(
       contractId,
       milestoneIndex,
       newEvidence,
       newStatus,
       serviceProvider,
-      serviceType
+      serviceType,
+      token ?? undefined,
     );
     await processTransaction(response, "Change milestone status failed", walletAddress, {
       operation: "changeMilestoneStatus",
       roles: { serviceProvider },
       onStatus,
-    });
+    }, token);
     onStatus?.("confirmed");
     onSuccess?.();
   } catch (e: any) {
@@ -360,8 +376,8 @@ export async function changeMilestoneStatusAgreement({
 
 /**
  * Unified transaction processing — validates the Trustless Work role, signs via
- * the unified signer and submits through Trustless Work's send-transaction
- * endpoint so TW indexes state.
+ * the unified signer and submits through the Thalos backend when a token is
+ * available (GF-2), falling back to Trustless Work's send-transaction endpoint.
  */
 async function processTransaction(
   response: AgreementResponse<unknown>,
@@ -372,6 +388,7 @@ async function processTransaction(
     roles?: EscrowRolesInfo;
     onStatus?: (status: TxStatus) => void;
   },
+  token?: string | null,
 ) {
   if (!response.success)
     throw new Error(response.error || errorMessage);
@@ -391,7 +408,16 @@ async function processTransaction(
   });
 
   opts.onStatus?.("submitting");
-  const sendRes = await sendTransaction(signedResult.signedTxXdr);
+  // GF-2: when token is available, submit through the Nest backend
+  // (keeps API key server-side and maintains auth audit trail).
+  // When no token, fall back to the original TW helper (wallet-only mode).
+  let sendRes;
+  if (token) {
+    sendRes = await submitSignedTransaction(signedResult.signedTxXdr, token);
+  } else {
+    const { sendTransaction } = await import("@/services/trustlessworkService");
+    sendRes = await sendTransaction(signedResult.signedTxXdr);
+  }
   if (!sendRes.success)
     throw new Error(sendRes.error || "Transaction send failed");
 }

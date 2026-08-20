@@ -39,8 +39,8 @@ import { getWalletsWithAgreements, type WalletWithAgreements, type WalletAgreeme
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area,
 } from "recharts"
-import { createAgreement, sendTransaction, AgreementPayload, approveMilestone } from "@/services/trustlessworkService"
-import { STELLAR_EXPLORER_BASE_URL } from "@/lib/config"
+import { createAgreement, sendTransaction, AgreementPayload, approveMilestone } from "@/services/escrowMigration"
+import { STELLAR_EXPLORER_BASE_URL, SHOW_MOCKED_AGREEMENTS } from "@/lib/config"
 import { getKybStatus, startKybSession } from "@/lib/api/kyb"
 import { KYB_ENTITY_TYPES, buildCreateKybSessionDto, canStartKybSession, isKybVerified, nextKybStatusAfterSessionStart, type KybEntityType } from "@/lib/kyb"
 import {

@@ -39,12 +39,8 @@ import { getWalletsWithAgreements, type WalletWithAgreements, type WalletAgreeme
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area,
 } from "recharts"
-import { createAgreement, sendTransaction, AgreementPayload, approveMilestone } from "@/services/trustlessworkService"
-import { STELLAR_EXPLORER_BASE_URL, STELLAR_EXPLORER_ACCOUNT_BASE_URL, TRUSTLINE_USDC } from "@/lib/config";
-import { getWalletBalance } from "@/lib/api/wallets";
-import { getKycStatus, startKycSession } from "@/lib/api/kyc";
-import { isKycVerified, canStartKycSession, buildCreateKycSessionDto, nextKycStatusAfterSessionStart, type KycVerificationStatus } from "@/lib/kyc";
-import { updateProfile } from "@/lib/actions/profile";
+import { createAgreement, sendTransaction, AgreementPayload, approveMilestone } from "@/services/escrowMigration"
+import { STELLAR_EXPLORER_BASE_URL, TRUSTLINE_USDC, SHOW_MOCKED_AGREEMENTS } from "@/lib/config";
 
 /* ── Use-Case Presets ── */
 const useCases = [

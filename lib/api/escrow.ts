@@ -331,3 +331,108 @@ export async function getEscrowsByRole(
     token
   )
 }
+
+// ============================================================================
+// WRITE BUILD ENDPOINTS — escrow mutations through Nest (GF-2)
+// ============================================================================
+// These match the NestJS EscrowsController under /v1/escrows.
+// Flow: build (BE) → sign (client) → send-transaction (BE).
+// All return { unsignedTransaction } — signing stays client-side (non-custodial).
+// ============================================================================
+
+export interface BackendFundEscrowDto {
+  contractId: string
+  signer: string
+  amount: number
+  type: ServiceType
+}
+
+// POST /v1/escrows/fund → { unsignedTransaction }
+export async function buildFundEscrow(
+  dto: BackendFundEscrowDto,
+  token: string,
+): Promise<ApiResponse<{ unsignedTransaction: string }>> {
+  return apiRequest<{ unsignedTransaction: string }>(
+    "/escrows/fund",
+    { method: "POST", body: JSON.stringify(dto) },
+    token,
+  )
+}
+
+export interface BackendApproveMilestoneDto {
+  contractId: string
+  milestoneIndex: string
+  approver: string
+  type: ServiceType
+}
+
+// POST /v1/escrows/approve-milestone → { unsignedTransaction }
+export async function buildApproveMilestone(
+  dto: BackendApproveMilestoneDto,
+  token: string,
+): Promise<ApiResponse<{ unsignedTransaction: string }>> {
+  return apiRequest<{ unsignedTransaction: string }>(
+    "/escrows/approve-milestone",
+    { method: "POST", body: JSON.stringify(dto) },
+    token,
+  )
+}
+
+export interface BackendChangeMilestoneStatusDto {
+  contractId: string
+  milestoneIndex: string
+  newEvidence: string
+  newStatus: string
+  serviceProvider: string
+  type: ServiceType
+}
+
+// POST /v1/escrows/change-milestone-status → { unsignedTransaction }
+export async function buildChangeMilestoneStatus(
+  dto: BackendChangeMilestoneStatusDto,
+  token: string,
+): Promise<ApiResponse<{ unsignedTransaction: string }>> {
+  return apiRequest<{ unsignedTransaction: string }>(
+    "/escrows/change-milestone-status",
+    { method: "POST", body: JSON.stringify(dto) },
+    token,
+  )
+}
+
+export interface BackendReleaseFundsDto {
+  contractId: string
+  releaseSigner: string
+  type: ServiceType
+  milestoneIndex?: string
+}
+
+// POST /v1/escrows/release → { unsignedTransaction }
+export async function buildReleaseFunds(
+  dto: BackendReleaseFundsDto,
+  token: string,
+): Promise<ApiResponse<{ unsignedTransaction: string }>> {
+  return apiRequest<{ unsignedTransaction: string }>(
+    "/escrows/release",
+    { method: "POST", body: JSON.stringify(dto) },
+    token,
+  )
+}
+
+export interface BackendDisputeMilestoneDto {
+  contractId: string
+  type: ServiceType
+  milestoneIndex?: string
+  signer: string
+}
+
+// POST /v1/escrows/dispute → { unsignedTransaction }
+export async function buildDisputeMilestone(
+  dto: BackendDisputeMilestoneDto,
+  token: string,
+): Promise<ApiResponse<{ unsignedTransaction: string }>> {
+  return apiRequest<{ unsignedTransaction: string }>(
+    "/escrows/dispute",
+    { method: "POST", body: JSON.stringify(dto) },
+    token,
+  )
+}
