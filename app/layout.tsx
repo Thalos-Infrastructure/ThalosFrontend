@@ -4,6 +4,7 @@ import { Inter, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { LanguageProvider } from '@/lib/i18n'
 import { StellarWalletProvider } from '@/lib/stellar-wallet'
+import { PollarWalletProvider } from '@/lib/pollar-wallet'
 import { AuthProvider } from '@/lib/auth-provider'
 import { ThalosAcceslyProvider } from '@/lib/accesly/accesly-provider'
 import './globals.css'
@@ -52,9 +53,13 @@ export default function RootLayout({
       <body className="font-sans antialiased transition-colors duration-300">
         <LanguageProvider>
           <AuthProvider>
+            {/* All three wallet providers sit inside AuthProvider so any login
+                method can mint the app JWT via useAuthStore().login(). */}
             <ThalosAcceslyProvider>
               <StellarWalletProvider>
-                {children}
+                <PollarWalletProvider>
+                  {children}
+                </PollarWalletProvider>
               </StellarWalletProvider>
             </ThalosAcceslyProvider>
           </AuthProvider>
