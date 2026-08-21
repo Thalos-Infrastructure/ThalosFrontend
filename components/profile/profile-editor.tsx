@@ -1,223 +1,173 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
-import { cn } from "@/lib/utils"
-import { Input } from "@/components/ui/input"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
-import { X, Camera, User, Mail, Wallet, Building, Save } from "lucide-react"
-
-interface ProfileData {
-  displayName: string
-  email: string
-  walletAddress: string
-  avatar?: string
-  company?: string
-  bio?: string
-}
+import { Input } from "@/components/ui/input"
+import {
+  getProfile,
+  saveProfile,
+  type ConnectProfile,
+  type ProfileType,
+} from "@/lib/api/profiles"
+import { BriefcaseBusiness, FolderKanban, Save, X } from "lucide-react"
 
 interface ProfileEditorProps {
   isOpen: boolean
   onClose: () => void
-  profile: ProfileData
-  onSave: (profile: ProfileData) => Promise<void>
-  type?: "personal" | "enterprise"
+  token: string | null
 }
 
-export function ProfileEditor({ isOpen, onClose, profile, onSave, type = "personal" }: ProfileEditorProps) {
-  const [formData, setFormData] = useState<ProfileData>(profile)
-  const [saving, setSaving] = useState(false)
-  const [avatarPreview, setAvatarPreview] = useState<string | null>(profile.avatar || null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
+const EMPTY_PROFILE: ConnectProfile = {
+  profile_types: [],
+  headline: "",
+  bio: "",
+  skills: [],
+  tech_stack: [],
+  hourly_rate: null,
+  availability: "",
+  portfolio_links: [],
+  social_links: [],
+  handle: "",
+  org_name: "",
+  org_description: "",
+  org_website: "",
+  looking_for: [],
+  org_links: [],
+}
 
-  // `useState(profile)` only reads the prop on first mount, and this modal
-  // mounts with the page: at that point the wallet and the profile have not
-  // resolved yet, so the form stayed frozen on the empty fallbacks. Re-seeding
-  // it on every open also discards half-finished edits after a Cancel, which is
-  // what a Cancel is expected to do.
+const inputClass = "bg-white/5 border-white/10 text-white placeholder:text-white/30"
+const textareaClass = "w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#f0b400]/50"
+
+function lines(value: string): string[] {
+  return value.split(/[\n,]/).map((item) => item.trim()).filter(Boolean)
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label className="block">
+      <span className="mb-2 block text-xs font-medium uppercase tracking-wider text-white/50">{label}</span>
+      {children}
+    </label>
+  )
+}
+
+export function ProfileEditor({ isOpen, onClose, token }: ProfileEditorProps) {
+  const [form, setForm] = useState<ConnectProfile>(EMPTY_PROFILE)
+  const [loading, setLoading] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
   useEffect(() => {
-    if (!isOpen) return
-    setFormData(profile)
-    setAvatarPreview(profile.avatar || null)
-  }, [isOpen, profile.displayName, profile.email, profile.walletAddress, profile.avatar, profile.company, profile.bio])
+    if (!isOpen || !token) return
+    let active = true
+    setLoading(true)
+    setError(null)
+    getProfile(token).then((result) => {
+      if (!active) return
+      if (result.success && result.data) {
+        setForm({ ...EMPTY_PROFILE, ...result.data, profile_types: result.data.profile_types ?? [] })
+      } else {
+        setForm(EMPTY_PROFILE)
+        // A missing profile is expected for first-time editors; Nest will create it on save.
+        if (result.error && !/not found/i.test(result.error)) setError(result.error)
+      }
+      setLoading(false)
+    })
+    return () => { active = false }
+  }, [isOpen, token])
 
   if (!isOpen) return null
 
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setAvatarPreview(reader.result as string)
-        setFormData(prev => ({ ...prev, avatar: reader.result as string }))
-      }
-      reader.readAsDataURL(file)
-    }
+  const selected = (type: ProfileType) => form.profile_types.includes(type)
+  const toggleType = (type: ProfileType) => {
+    setForm((current) => ({
+      ...current,
+      profile_types: selected(type)
+        ? current.profile_types.filter((item) => item !== type)
+        : [...current.profile_types, type],
+    }))
   }
 
   const handleSave = async () => {
-    setSaving(true)
-    try {
-      await onSave(formData)
-      onClose()
-    } catch (error) {
-      console.error("Error saving profile:", error)
-    } finally {
-      setSaving(false)
+    if (!token) return setError("Sign in to save your profile.")
+    if (form.profile_types.length === 0) return setError("Select Builder, Project, or both.")
+    if (selected("builder") && form.handle && !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(form.handle)) {
+      return setError("Handle must use lowercase letters, numbers, and single hyphens only.")
     }
+
+    setSaving(true)
+    setError(null)
+    const result = await saveProfile({
+      ...form,
+      handle: form.handle?.trim().toLowerCase() || null,
+      hourly_rate: form.hourly_rate === null || Number.isNaN(form.hourly_rate) ? null : form.hourly_rate,
+    }, token)
+    setSaving(false)
+    if (!result.success) return setError(result.error || "Could not save profile.")
+    onClose()
   }
 
-  const accentColor = type === "enterprise" ? "#3b82f6" : "#f0b400"
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Backdrop */}
-      <div 
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-        onClick={onClose}
-      />
-      
-      {/* Modal */}
-      <div className="relative w-full max-w-md bg-[#0c1220] rounded-2xl border border-white/10 shadow-[0_24px_80px_rgba(0,0,0,0.5)] overflow-hidden">
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
-          <h2 className="text-lg font-semibold text-white">
-            Edit {type === "enterprise" ? "Company" : "Personal"} Profile
-          </h2>
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-lg text-white/40 hover:bg-white/10 hover:text-white transition-colors"
-          >
-            <X className="h-5 w-5" />
-          </button>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <button aria-label="Close profile editor" className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0c1220] shadow-[0_24px_80px_rgba(0,0,0,0.5)]">
+        <div className="flex items-center justify-between border-b border-white/10 px-6 py-4">
+          <div>
+            <h2 className="text-lg font-semibold text-white">Thalos Connect profile</h2>
+            <p className="text-sm text-white/45">Choose either profile type or use both.</p>
+          </div>
+          <button aria-label="Close" onClick={onClose} className="rounded-lg p-1.5 text-white/40 hover:bg-white/10 hover:text-white"><X className="h-5 w-5" /></button>
         </div>
 
-        {/* Content */}
-        <div className="p-6 space-y-6">
-          {/* Avatar */}
-          <div className="flex flex-col items-center">
-            <div className="relative">
-              <div 
-                className="h-24 w-24 rounded-full flex items-center justify-center text-2xl font-bold overflow-hidden"
-                style={{ 
-                  background: avatarPreview ? 'transparent' : `linear-gradient(135deg, ${accentColor}, ${accentColor}80)`,
-                  color: type === "enterprise" ? "#ffffff" : "#0c1220"
-                }}
-              >
-                {avatarPreview ? (
-                  <img src={avatarPreview} alt="Avatar" className="h-full w-full object-cover" />
-                ) : (
-                  formData.displayName?.slice(0, 2).toUpperCase() || "TH"
-                )}
-              </div>
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                className="absolute bottom-0 right-0 p-2 rounded-full bg-[#0c1220] border border-white/20 text-white hover:bg-white/10 transition-colors"
-              >
-                <Camera className="h-4 w-4" />
+        <div className="overflow-y-auto p-6">
+          <div className="mb-6 grid gap-3 sm:grid-cols-2">
+            {(["builder", "project"] as const).map((type) => (
+              <button key={type} type="button" aria-pressed={selected(type)} onClick={() => toggleType(type)} className={`flex items-center gap-3 rounded-xl border p-4 text-left transition-colors ${selected(type) ? "border-[#f0b400] bg-[#f0b400]/10 text-white" : "border-white/10 bg-white/[0.03] text-white/55"}`}>
+                {type === "builder" ? <BriefcaseBusiness /> : <FolderKanban />}
+                <span><strong className="block capitalize">{type}</strong><span className="text-xs">{selected(type) ? "Included in your profile" : "Click to include"}</span></span>
               </button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleAvatarChange}
-                className="hidden"
-              />
-            </div>
-            <p className="mt-2 text-xs text-white/40">Click the camera to upload a photo</p>
+            ))}
           </div>
 
-          {/* Form Fields */}
-          <div className="space-y-4">
-            <div>
-              <label className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-white/50 mb-2">
-                <User className="h-3.5 w-3.5" />
-                {type === "enterprise" ? "Company Name" : "Display Name"}
-              </label>
-              <Input
-                value={formData.displayName}
-                onChange={(e) => setFormData(prev => ({ ...prev, displayName: e.target.value }))}
-                placeholder={type === "enterprise" ? "Acme Corporation" : "John Doe"}
-                className="bg-white/5 border-white/10 text-white placeholder:text-white/30"
-              />
-            </div>
+          {loading ? <p className="py-12 text-center text-white/50">Loading profile…</p> : (
+            <div className="space-y-6">
+              {selected("builder") && (
+                <section className="space-y-4 rounded-xl border border-white/10 p-5">
+                  <h3 className="flex items-center gap-2 font-semibold text-white"><BriefcaseBusiness className="h-4 w-4 text-[#f0b400]" />Builder</h3>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <Field label="Handle"><Input value={form.handle ?? ""} onChange={(e) => setForm({ ...form, handle: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "") })} placeholder="jane-builder" className={inputClass} /></Field>
+                    <Field label="Headline"><Input value={form.headline ?? ""} onChange={(e) => setForm({ ...form, headline: e.target.value })} placeholder="Full-stack product engineer" className={inputClass} /></Field>
+                    <Field label="Skills (comma separated)"><Input value={form.skills.join(", ")} onChange={(e) => setForm({ ...form, skills: lines(e.target.value) })} placeholder="Product design, Smart contracts" className={inputClass} /></Field>
+                    <Field label="Tech stack (comma separated)"><Input value={form.tech_stack.join(", ")} onChange={(e) => setForm({ ...form, tech_stack: lines(e.target.value) })} placeholder="React, NestJS, Soroban" className={inputClass} /></Field>
+                    <Field label="Hourly rate"><Input type="number" min="0" step="0.01" value={form.hourly_rate ?? ""} onChange={(e) => setForm({ ...form, hourly_rate: e.target.value === "" ? null : Number(e.target.value) })} placeholder="75" className={inputClass} /></Field>
+                    <Field label="Availability"><Input value={form.availability ?? ""} onChange={(e) => setForm({ ...form, availability: e.target.value })} placeholder="Available for 20 hrs/week" className={inputClass} /></Field>
+                  </div>
+                  <Field label="Bio"><textarea rows={3} value={form.bio ?? ""} onChange={(e) => setForm({ ...form, bio: e.target.value })} className={textareaClass} placeholder="Tell projects what you build." /></Field>
+                  <Field label="Portfolio links (one per line)"><textarea rows={2} value={form.portfolio_links.join("\n")} onChange={(e) => setForm({ ...form, portfolio_links: lines(e.target.value) })} className={textareaClass} placeholder="https://portfolio.example" /></Field>
+                  <Field label="Social links (one per line)"><textarea rows={2} value={form.social_links.join("\n")} onChange={(e) => setForm({ ...form, social_links: lines(e.target.value) })} className={textareaClass} placeholder="https://github.com/jane" /></Field>
+                </section>
+              )}
 
-            <div>
-              <label className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-white/50 mb-2">
-                <Mail className="h-3.5 w-3.5" />
-                Email
-              </label>
-              <Input
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                placeholder="you@example.com"
-                className="bg-white/5 border-white/10 text-white placeholder:text-white/30"
-              />
+              {selected("project") && (
+                <section className="space-y-4 rounded-xl border border-white/10 p-5">
+                  <h3 className="flex items-center gap-2 font-semibold text-white"><FolderKanban className="h-4 w-4 text-blue-400" />Project</h3>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <Field label="Organization name"><Input value={form.org_name ?? ""} onChange={(e) => setForm({ ...form, org_name: e.target.value })} placeholder="Acme Labs" className={inputClass} /></Field>
+                    <Field label="Website"><Input type="url" value={form.org_website ?? ""} onChange={(e) => setForm({ ...form, org_website: e.target.value })} placeholder="https://acme.example" className={inputClass} /></Field>
+                  </div>
+                  <Field label="Description"><textarea rows={3} value={form.org_description ?? ""} onChange={(e) => setForm({ ...form, org_description: e.target.value })} className={textareaClass} placeholder="What is your project building?" /></Field>
+                  <Field label="Looking for (comma separated)"><Input value={form.looking_for.join(", ")} onChange={(e) => setForm({ ...form, looking_for: lines(e.target.value) })} placeholder="Frontend engineer, Auditor" className={inputClass} /></Field>
+                  <Field label="Organization links (one per line)"><textarea rows={2} value={form.org_links.join("\n")} onChange={(e) => setForm({ ...form, org_links: lines(e.target.value) })} className={textareaClass} placeholder="https://github.com/acme" /></Field>
+                </section>
+              )}
             </div>
-
-            <div>
-              <label className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-white/50 mb-2">
-                <Wallet className="h-3.5 w-3.5" />
-                Wallet Address
-              </label>
-              {/* Solo lectura: la wallet identifica el perfil (es la clave del
-                  UPDATE en `updateProfile`), no es un campo editable. */}
-              <Input
-                value={formData.walletAddress}
-                readOnly
-                placeholder="G..."
-                className="bg-white/5 border-white/10 text-white/60 font-mono text-sm placeholder:text-white/30 cursor-default focus-visible:ring-0 focus-visible:ring-offset-0"
-              />
-            </div>
-
-            {type === "enterprise" && (
-              <div>
-                <label className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-white/50 mb-2">
-                  <Building className="h-3.5 w-3.5" />
-                  Industry
-                </label>
-                <Input
-                  value={formData.company || ""}
-                  onChange={(e) => setFormData(prev => ({ ...prev, company: e.target.value }))}
-                  placeholder="Technology, Finance, etc."
-                  className="bg-white/5 border-white/10 text-white placeholder:text-white/30"
-                />
-              </div>
-            )}
-
-            <div>
-              <label className="text-xs font-medium uppercase tracking-wider text-white/50 mb-2 block">
-                Bio
-              </label>
-              <textarea
-                value={formData.bio || ""}
-                onChange={(e) => setFormData(prev => ({ ...prev, bio: e.target.value }))}
-                placeholder="Tell us about yourself..."
-                rows={3}
-                className="w-full rounded-lg bg-white/5 border border-white/10 text-white placeholder:text-white/30 px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#f0b400]/50"
-              />
-            </div>
-          </div>
+          )}
+          {error && <p role="alert" className="mt-4 text-sm text-red-400">{error}</p>}
         </div>
 
-        {/* Footer */}
-        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-white/10 bg-white/[0.02]">
-          <Button
-            variant="ghost"
-            onClick={onClose}
-            className="text-white/60 hover:text-white hover:bg-white/10"
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={handleSave}
-            disabled={saving}
-            className="gap-2"
-            style={{ backgroundColor: accentColor, color: type === "enterprise" ? "#ffffff" : "#0c1220" }}
-          >
-            <Save className="h-4 w-4" />
-            {saving ? "Saving..." : "Save Changes"}
-          </Button>
+        <div className="flex items-center justify-end gap-3 border-t border-white/10 bg-white/[0.02] px-6 py-4">
+          <Button variant="ghost" onClick={onClose} className="text-white/60 hover:bg-white/10 hover:text-white">Cancel</Button>
+          <Button onClick={handleSave} disabled={saving || loading || !token} className="gap-2 bg-[#f0b400] text-[#0c1220] hover:bg-[#dba500]"><Save className="h-4 w-4" />{saving ? "Saving…" : "Save profile"}</Button>
         </div>
       </div>
     </div>
