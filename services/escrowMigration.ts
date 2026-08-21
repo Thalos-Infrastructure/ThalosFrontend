@@ -65,11 +65,16 @@ export async function getEscrowsBySigner(
   source: "backend" | "original"
 }> {
   // Backend-only: we never call Trustless Work directly from the browser (it would
-  // expose the API key and bypass our auth). No token or flag disabled => error,
-  // NOT a direct-TW fallback.
-  if (!token || !MIGRATION_FLAGS.getEscrowsBySigner) {
-    console.warn("[v0] MIGRATION: getEscrowsBySigner - no token or disabled; not calling backend")
-    return { success: false, error: "No autenticado", source: "backend" }
+  // expose the API key and bypass our auth). Flag disabled => error, NOT a direct-TW
+  // fallback.
+  //
+  // The token is OPTIONAL here: escrows are public on-chain data and the backend
+  // exposes this read as @Public() (throttled), so a freshly connected wallet can
+  // list its agreements without first signing a login challenge. We still forward
+  // the token when we have one, so the request is attributable.
+  if (!MIGRATION_FLAGS.getEscrowsBySigner) {
+    console.warn("[v0] MIGRATION: getEscrowsBySigner disabled; not calling backend")
+    return { success: false, error: "Migración deshabilitada", source: "backend" }
   }
 
   console.log("[v0] MIGRATION: Attempting BACKEND for getEscrowsBySigner", { signerAddress })
@@ -108,10 +113,11 @@ export async function getEscrowsByRole(
   error?: string
   source: "backend" | "original"
 }> {
-  // Backend-only: never call Trustless Work directly from the browser.
-  if (!token || !MIGRATION_FLAGS.getEscrowsByRole) {
-    console.warn("[v0] MIGRATION: getEscrowsByRole - no token or disabled; not calling backend")
-    return { success: false, error: "No autenticado", source: "backend" }
+  // Backend-only: never call Trustless Work directly from the browser. Token
+  // optional — see the note on getEscrowsBySigner above.
+  if (!MIGRATION_FLAGS.getEscrowsByRole) {
+    console.warn("[v0] MIGRATION: getEscrowsByRole disabled; not calling backend")
+    return { success: false, error: "Migración deshabilitada", source: "backend" }
   }
 
   console.log("[v0] MIGRATION: Attempting BACKEND for getEscrowsByRole", params)

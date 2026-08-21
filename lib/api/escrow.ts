@@ -233,10 +233,13 @@ export async function getEscrowBalance(
 // NEW ENDPOINTS - Migration from trustlessworkService
 // ============================================================================
 
-// Get escrows where user is a signer
+// Get escrows where user is a signer.
+// `token` is optional: the backend exposes this read as @Public() (escrows are
+// public on-chain data), so it works for a wallet that has not logged in yet.
+// `apiRequest` simply omits the Authorization header when there is no token.
 export async function getEscrowsBySigner(
   address: string,
-  token: string
+  token?: string
 ): Promise<ApiResponse<Escrow[]>> {
   return apiRequest<Escrow[]>(
     `/escrows/by-signer/${address}`,
@@ -253,9 +256,10 @@ export interface GetEscrowsByRoleParams {
   type?: "single-release" | "multi-release"
 }
 
+// `token` optional for the same reason as getEscrowsBySigner above.
 export async function getEscrowsByRole(
   params: GetEscrowsByRoleParams,
-  token: string
+  token?: string
 ): Promise<ApiResponse<Escrow[]>> {
   const queryParams = new URLSearchParams({ address: params.address })
   if (params.role) queryParams.set("role", params.role)

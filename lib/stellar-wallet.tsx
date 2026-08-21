@@ -4,7 +4,6 @@ import React, { createContext, useContext, useState, useCallback, useEffect } fr
 import { getKit, clearKit, isFreighterAvailable } from "@/lib/stellar-wallet-kit"
 import { signTransaction as unifiedSign, signMessage as unifiedSignMessage } from "@/lib/signing"
 import { getOrCreateProfile, type Profile } from "@/lib/actions/profile"
-import { SHOW_SIGN_MESSAGE_TEST } from "@/lib/config"
 import { useAuthStore } from "@/lib/auth-store"
 import { requestWalletChallenge, verifyWalletLogin } from "@/lib/api/wallet-auth"
 import { linkWallet } from "@/lib/api/wallets"
@@ -57,7 +56,7 @@ export function StellarWalletProvider({ children }: { children: React.ReactNode 
   const [walletError, setWalletError] = useState<string | null>(null)
   // AuthProvider wraps StellarWalletProvider (see app/layout.tsx), so the app JWT
   // store is available here. Connecting a wallet mints/stores that JWT.
-  const { login } = useAuthStore()
+  const { login, user, token } = useAuthStore()
 
   useEffect(() => {
     if (typeof window === "undefined") return
@@ -123,13 +122,20 @@ export function StellarWalletProvider({ children }: { children: React.ReactNode 
           console.error("Profile error:", profileError);
         }
 
-        // Wallet-signature login (ownership-proof challenge) is gated behind
-        // NEXT_PUBLIC_SHOW_SIGN_MESSAGE_TEST — same flag/pattern as the dev
-        // "SignMessage Test" widget. When the flag is off (default, incl.
-        // production), connecting a wallet does NOT trigger the signing popup;
-        // the app JWT is expected to come from email/social login instead.
-        // When on, we mint the app JWT so dashboard data goes through the backend.
-        if (SHOW_SIGN_MESSAGE_TEST) {
+        // Wallet-signature login (ownership-proof challenge): connecting a wallet
+        // mints the app JWT, which the backend requires for writes and for any
+        // endpoint that is not @Public().
+        //
+        // Skip it when this device already holds a session for THIS wallet. The JWT
+        // lasts 7 days and AuthProvider revalidates it against /api/auth/me on every
+        // load, so re-proving ownership on each reconnect would only cost the user a
+        // popup. A session for a different address does not count — that would let a
+        // stale login speak for the wallet just connected.
+        const hasSessionForWallet = !!token && user?.wallet?.publicKey === addr;
+
+        if (hasSessionForWallet) {
+          console.info("[wallet-auth] sesión válida ya existente para esta wallet; se omite la firma");
+        } else {
           try {
             const { challenge } = await requestWalletChallenge(addr);
             // Route through the unified signer (sessionStorage already
@@ -146,8 +152,13 @@ export function StellarWalletProvider({ children }: { children: React.ReactNode 
             } catch {
               provider = undefined;
             }
-            const { user, token } = await verifyWalletLogin(addr, challenge, signed.signedMessage, provider);
-            login(user, token);
+            const { user: authedUser, token: authedToken } = await verifyWalletLogin(
+              addr,
+              challenge,
+              signed.signedMessage,
+              provider,
+            );
+            login(authedUser, authedToken);
           } catch (authErr) {
             console.warn(
               "[wallet-auth] no se pudo autenticar la wallet contra el backend; se continúa en modo wallet-only:",
@@ -178,7 +189,8 @@ export function StellarWalletProvider({ children }: { children: React.ReactNode 
         setIsConnecting(false);
       }
     },
-    [login]
+    // user/token feed the "skip the signature" check above.
+    [login, user, token]
   );
 
   const disconnect = useCallback(async () => {
