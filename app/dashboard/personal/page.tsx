@@ -1678,28 +1678,7 @@ const newAgr: Agreement = {
       <ProfileEditor
         isOpen={showProfileEditor}
         onClose={() => setShowProfileEditor(false)}
-        profile={{
-          displayName: userProfile?.display_name || "Personal Account",
-          email: userProfile?.email || "",
-          walletAddress: walletAddress || "",
-          avatar: userProfile?.avatar_url || undefined,
-        }}
-        onSave={async (newProfile) => {
-          // Update profile in database
-          const { updateProfile } = await import("@/lib/actions/profile")
-          if (walletAddress) {
-            const result = await updateProfile(walletAddress, {
-              display_name: newProfile.displayName,
-              email: newProfile.email,
-              avatar_url: newProfile.avatar,
-              account_type: "personal",
-            })
-            if (result.profile) {
-              setUserProfile(result.profile)
-            }
-          }
-        }}
-        type="personal"
+        token={token}
       />
     </div>
   );

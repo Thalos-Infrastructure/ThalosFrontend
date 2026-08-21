@@ -7,6 +7,7 @@ export * from "./notifications"
 export * from "./escrow"
 export * from "./kyb"
 export * from "./agreements"
+export * from "./profiles"
 
 
 // Re-export API_URL for convenience
