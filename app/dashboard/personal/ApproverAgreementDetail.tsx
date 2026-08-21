@@ -276,7 +276,6 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
               amount: agr.amount,
               walletAddress,
               serviceType: agr.type === "Multi Release" ? "multi-release" : "single-release",
-              openWalletModal: async () => {},
               setFunding,
               setError: setFundError,
               setSuccess: setFundSuccess,

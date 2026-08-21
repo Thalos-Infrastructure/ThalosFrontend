@@ -5,7 +5,6 @@ import { getKit, clearKit, detectFreighter, prewarmWalletDetection } from "@/lib
 import { signTransaction as unifiedSign, signMessage as unifiedSignMessage } from "@/lib/signing"
 import { getOrCreateProfile, type Profile } from "@/lib/actions/profile"
 import { useAuthStore } from "@/lib/auth-store"
-import { requestWalletChallenge, verifyWalletLogin } from "@/lib/api/wallet-auth"
 import { linkWallet } from "@/lib/api/wallets"
 
 import { STELLAR_WALLET_KEY } from "@/lib/signing/session"
@@ -56,7 +55,6 @@ export function StellarWalletProvider({ children }: { children: React.ReactNode 
   const [walletError, setWalletError] = useState<string | null>(null)
   // AuthProvider wraps StellarWalletProvider (see app/layout.tsx), so the app JWT
   // store is available here. Connecting a wallet mints/stores that JWT.
-  const { login, user, token } = useAuthStore()
 
   useEffect(() => {
     if (typeof window === "undefined") return
@@ -129,50 +127,16 @@ export function StellarWalletProvider({ children }: { children: React.ReactNode 
           console.error("Profile error:", profileError);
         }
 
-        // Wallet-signature login (ownership-proof challenge): connecting a wallet
-        // mints the app JWT, which the backend requires for writes and for any
-        // endpoint that is not @Public().
+        // Connecting a wallet here does NOT sign anyone in. Since #108 the only
+        // way into Thalos is Pollar, and a wallet the user brings goes through
+        // Pollar's Stellar Wallets Kit adapter — which makes it a Pollar session
+        // like any other. Minting a JWT from a side connection would recreate
+        // the second auth path that change removed, and would leave the account
+        // signed in as an address it never authenticated with.
         //
-        // Skip it when this device already holds a session for THIS wallet. The JWT
-        // lasts 7 days and AuthProvider revalidates it against /api/auth/me on every
-        // load, so re-proving ownership on each reconnect would only cost the user a
-        // popup. A session for a different address does not count — that would let a
-        // stale login speak for the wallet just connected.
-        const hasSessionForWallet = !!token && user?.wallet?.publicKey === addr;
-
-        if (hasSessionForWallet) {
-          console.info("[wallet-auth] sesión válida ya existente para esta wallet; se omite la firma");
-        } else {
-          try {
-            const { challenge } = await requestWalletChallenge(addr);
-            // Route through the unified signer (sessionStorage already
-            // holds the address, so dispatch resolves to the Kit provider).
-            const signed = await unifiedSignMessage(challenge, addr);
-            if (!signed?.signedMessage) {
-              throw new Error("La wallet no devolvió una firma");
-            }
-            // El id de la wallet ya no llega por callback; se lee del módulo activo.
-            // `selectedModule` lanza si todavía no hay ninguno seleccionado.
-            let provider: string | undefined;
-            try {
-              provider = kit.selectedModule.productId;
-            } catch {
-              provider = undefined;
-            }
-            const { user: authedUser, token: authedToken } = await verifyWalletLogin(
-              addr,
-              challenge,
-              signed.signedMessage,
-              provider,
-            );
-            login(authedUser, authedToken);
-          } catch (authErr) {
-            console.warn(
-              "[wallet-auth] no se pudo autenticar la wallet contra el backend; se continúa en modo wallet-only:",
-              authErr,
-            );
-          }
-        }
+        // What remains is connecting a wallet to prove it is yours (/profile →
+        // Linked Wallets). That proof is a message signature, handled by
+        // lib/signing/providers/kit.ts, not a login.
 
         onConnected?.(addr);
 
@@ -197,7 +161,7 @@ export function StellarWalletProvider({ children }: { children: React.ReactNode 
       }
     },
     // user/token feed the "skip the signature" check above.
-    [login, user, token]
+    []
   );
 
   const disconnect = useCallback(async () => {

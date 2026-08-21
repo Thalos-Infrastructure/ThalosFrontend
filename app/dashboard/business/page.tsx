@@ -11,7 +11,8 @@ import { ThalosLoader } from "@/components/thalos-loader"
 import { LanguageToggle, ThemeToggle, useLanguage } from "@/lib/i18n"
 import { Footer } from "@/components/footer"
 import { useStellarWallet } from "@/lib/stellar-wallet"
-import { useCurrentAddress, useWalletType } from "@/lib/use-current-address"
+import { useCurrentAddress, useHasSigningWallet } from "@/lib/use-current-address"
+import { useSignOut } from "@/lib/use-sign-out"
 import { WalletGuard, WalletPrompt } from "@/components/shared/wallet-guard"
 import { useAuthStore } from "@/lib/auth-store"
 import { WalletAddress } from "@/components/ui/wallet-address"
@@ -247,9 +248,10 @@ export default function BusinessDashboardPage() {
   const { t, theme } = useLanguage()
   const isLight = theme === "light"
   const { openWalletModal, address: walletAddress } = useStellarWallet()
+  const signOut = useSignOut()
   const { token } = useAuthStore()
-  const walletType = useWalletType()
-  const isExternalWallet = walletType === "external"
+  // Signing capability, not wallet origin — same rule as the personal dashboard.
+  const isExternalWallet = useHasSigningWallet()
   const [loading, setLoading] = useState(false)
 
   const [activeSection, setActiveSection] = useState("agreements")
@@ -854,10 +856,10 @@ export default function BusinessDashboardPage() {
                     {t("dashPage.wallets")}
                   </button>
                   <div className="my-1 h-px bg-white/[0.06]" />
-                  <Link href="/" className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-white/70 hover:bg-white/8 hover:text-white transition-colors">
+                  <button onClick={signOut} className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-white/70 hover:bg-white/8 hover:text-white transition-colors">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
                     {t("dashPage.signOut")}
-                  </Link>
+                  </button>
                 </div>
               )}
             </div>
@@ -887,9 +889,6 @@ export default function BusinessDashboardPage() {
                   Go to Personal Dashboard
                 </Button>
               </Link>
-              <Button variant="outline" className="w-full rounded-full border-white/10 text-white/60 bg-transparent" onClick={() => openWalletModal()}>
-                {!walletAddress ? "Connect Wallet" : "Switch Wallet"}
-              </Button>
             </div>
           </div>
         ) : (
@@ -1248,7 +1247,7 @@ export default function BusinessDashboardPage() {
                           <p className="text-lg font-bold text-white">{"$"}{ms.amount} <span className="text-xs font-normal text-white/35">USDC</span></p>
                           {ms.status === "pending" && !allReleased && activePermissions.approve && kybVerified && (
                             <Button size="sm" onClick={() => {
-                              if (!isExternalWallet) { openWalletModal(); return }
+                              if (!isExternalWallet) return
                               approveMilestone(agr.id, idx)
                             }}
                               className="rounded-full bg-white/10 px-4 text-xs font-semibold text-white hover:bg-white/20">
@@ -1257,7 +1256,7 @@ export default function BusinessDashboardPage() {
                           )}
                           {ms.status === "approved" && agr.releaseStrategy === "per-milestone" && activePermissions.release && kybVerified && (
                             <Button size="sm" onClick={() => {
-                              if (!isExternalWallet) { openWalletModal(); return }
+                              if (!isExternalWallet) return
                               releaseMilestone(agr.id, idx)
                             }}
                               className="rounded-full bg-[#3b82f6] px-4 text-xs font-semibold text-white hover:bg-[#2563eb] shadow-[0_2px_8px_rgba(59,130,246,0.2)]">
@@ -1268,7 +1267,7 @@ export default function BusinessDashboardPage() {
                             <Button 
                               size="sm" 
                               onClick={() => {
-                                if (!isExternalWallet) { openWalletModal(); return }
+                                if (!isExternalWallet) return
                                 setShowDisputeConfirm({ agrId: agr.id, msIdx: idx })
                               }}
                               className="rounded-full bg-red-500/10 px-3 text-xs font-semibold text-red-400 hover:bg-red-500/20 border border-red-500/20"
@@ -1292,7 +1291,7 @@ export default function BusinessDashboardPage() {
                     <div className="flex flex-wrap gap-3">
                       {agr.type === "Single Release" && agr.milestones[0]?.status === "pending" && activePermissions.approve && kybVerified && (
                         <Button onClick={() => {
-                          if (!isExternalWallet) { openWalletModal(); return }
+                          if (!isExternalWallet) return
                           approveMilestone(agr.id, 0)
                         }}
                           className="rounded-full bg-white/10 px-6 text-sm font-semibold text-white hover:bg-white/20">
@@ -1301,7 +1300,7 @@ export default function BusinessDashboardPage() {
                       )}
                       {agr.type === "Single Release" && agr.milestones[0]?.status === "approved" && activePermissions.release && kybVerified && (
                         <Button onClick={() => {
-                          if (!isExternalWallet) { openWalletModal(); return }
+                          if (!isExternalWallet) return
                           releaseMilestone(agr.id, 0)
                         }}
                           className="rounded-full bg-[#3b82f6] px-6 text-sm font-semibold text-white hover:bg-[#2563eb] shadow-[0_4px_16px_rgba(59,130,246,0.25)]">
@@ -1310,7 +1309,7 @@ export default function BusinessDashboardPage() {
                       )}
                       {agr.type === "Multi Release" && hasApproved && activePermissions.release && kybVerified && (
                         <Button onClick={() => {
-                          if (!isExternalWallet) { openWalletModal(); return }
+                          if (!isExternalWallet) return
                           releaseAllApproved(agr.id)
                         }}
                           className="rounded-full bg-[#3b82f6] px-6 text-sm font-semibold text-white hover:bg-[#2563eb] shadow-[0_4px_16px_rgba(59,130,246,0.25)]">
@@ -1319,7 +1318,7 @@ export default function BusinessDashboardPage() {
                       )}
                       {agr.type === "Multi Release" && !allApproved && activePermissions.approve && activePermissions.release && kybVerified && (
                         <Button onClick={() => {
-                          if (!isExternalWallet) { openWalletModal(); return }
+                          if (!isExternalWallet) return
                           approveAndReleaseAll(agr.id)
                         }}
                           className="rounded-full bg-emerald-600 px-6 text-sm font-semibold text-white hover:bg-emerald-700 shadow-[0_4px_16px_rgba(16,185,129,0.2)]">

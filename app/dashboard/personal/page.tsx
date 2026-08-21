@@ -10,6 +10,7 @@ import { ThalosLoader } from "@/components/thalos-loader"
 import { LanguageToggle, ThemeToggle, useLanguage } from "@/lib/i18n"
 import { useStellarWallet } from "@/lib/stellar-wallet"
 import { useCurrentAddress, useHasSigningWallet } from "@/lib/use-current-address"
+import { useSignOut } from "@/lib/use-sign-out"
 import { WalletGuard, WalletPrompt } from "@/components/shared/wallet-guard"
 import { useAuthStore } from "@/lib/auth-store"
 import { WalletAddress } from "@/components/ui/wallet-address"
@@ -243,7 +244,6 @@ function SellerMilestoneList({ agr, agreements, setAgreements, t }: {
       serviceProvider: walletAddress,
       serviceType: agr.type === "Multi Release" ? "multi-release" : "single-release",
       walletAddress,
-      openWalletModal,
       setSubmitting: (v: boolean) => v === false && setSubmitting(null),
       setError: (msg: string | null) => msg && alert(msg),
       onSuccess: () => {
@@ -341,6 +341,7 @@ export default function PersonalDashboardPage() {
   const { t } = useLanguage();
   const { openWalletModal } = useStellarWallet();
   const walletAddress = useCurrentAddress();
+  const signOut = useSignOut();
   const { user: socialUser, token } = useAuthStore();
   // A signing-capable wallet: external Kit wallet, or a custodial wallet whose
   // provider signs through the unified signer (Accesly #109; social with #108).
@@ -750,10 +751,10 @@ const res = await getEscrowsByRole({ role: "approver", address: walletAddress },
                     {t("dashPage.ramps")}
                   </button>
                   <div className="my-1 h-px bg-white/6" />
-                  <Link href="/" className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-white/70 hover:bg-white/8 hover:text-white transition-colors">
+                  <button onClick={signOut} className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-white/70 hover:bg-white/8 hover:text-white transition-colors">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
                     {t("dashPage.signOut")}
-                  </Link>
+                  </button>
                 </div>
               )}
             </div>
@@ -1737,7 +1738,6 @@ const res = await getEscrowsByRole({ role: "approver", address: walletAddress },
                               payload,
                               token,
                               walletAddress,
-                              openWalletModal,
                               setCreating,
                               setError,
                               setSubmitted,
