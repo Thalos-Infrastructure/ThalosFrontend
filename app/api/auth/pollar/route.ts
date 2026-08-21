@@ -36,6 +36,9 @@ type PollarVerifiedToken = {
  */
 const SUPPORTED_CUSTODY = new Set(["internal", "external"]);
 
+/** The non-custodial wallet_type values ThalosBackend's LinkWalletDto whitelists. */
+const KNOWN_WALLET_TYPES = new Set(["freighter", "lobstr", "xbull", "albedo"]);
+
 /** Only these mean the end-user token itself was refused; see the 502 branch. */
 const TOKEN_REJECTION_CODES = new Set([
   "SDK_AUTH_TOKEN_EXPIRED",
@@ -171,6 +174,17 @@ export async function POST(req: Request) {
     ? (asString(verified.wallet?.provider) ?? "external")
     : "embedded";
 
+  // The wallet_type POST /v1/wallets accepts. A provisioned wallet is
+  // 'custodial'; a wallet the user brought is named by the adapter that
+  // connected it, and anything outside the backend's whitelist — Pollar reports
+  // a generic "wallet" for some — falls back to 'other' rather than being
+  // rejected for a label.
+  const walletType = isExternal
+    ? KNOWN_WALLET_TYPES.has(walletProvider)
+      ? walletProvider
+      : "other"
+    : "custodial";
+
   const pollarEmail = asString(verified.profile?.email)?.toLowerCase() ?? null;
   const authProvider = asString(verified.authProvider) ?? "pollar";
   const supabase = createServiceClient();
@@ -277,29 +291,18 @@ export async function POST(req: Request) {
   //    to the browser to forward: the browser would then be free to submit any
   //    value it liked. Non-fatal, matching how the Kit provider treats linking.
   //
-  //    Only provisioned wallets are linked. POST /v1/wallets requires a SEP-0043
-  //    signature for any non-custodial wallet_type, and rejects auth_provider
-  //    outright for one — so an external wallet authenticated by Pollar's SEP-10
-  //    has no shape it can be recorded under today. Attempting it would 400 on
-  //    every single login. Recording it needs a backend branch that accepts
-  //    Pollar's proof the way ThalosBackend#131 accepts Accesly's; until then the
-  //    session works end to end (the address lives on auth_users) and only the
-  //    /profile "linked wallets" list is missing the row.
-  if (isExternal) {
-    console.info(
-      `auth/pollar: not linking external wallet ${walletAddress} — POST /v1/wallets ` +
-        `has no branch for a Pollar-verified external wallet yet`,
-    );
-    return NextResponse.json({ user, token });
-  }
-
+  //    Every login records its wallet the same way, whichever custody it has:
+  //    the account should not have to explain why the wallet it signed in with
+  //    is missing from its own list. The backend accepts Pollar's SEP-10 proof
+  //    for an external wallet in place of a SEP-0043 signature the browser
+  //    could not produce anyway (ThalosBackend#131).
   try {
     const res = await fetch(`${API_URL}/wallets`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       body: JSON.stringify({
         wallet_address: walletAddress,
-        wallet_type: "custodial",
+        wallet_type: walletType,
         auth_provider: "pollar",
         pollar_user_id: pollarUserId,
         label: `Pollar (${authProvider})`,
