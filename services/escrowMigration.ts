@@ -114,6 +114,8 @@ export async function getEscrowsBySigner(
   signerAddress: string,
   token?: string,
 ): Promise<RoutedResponse<unknown[]>> {
+  // The backend exposes this read as public on-chain data, so callers may omit
+  // the token. We still forward it when present for attributable reads.
   return route<unknown[]>(
     "getEscrowsBySigner",
     () => escrowApi.getEscrowsBySigner(signerAddress, token),
@@ -132,6 +134,7 @@ export async function getEscrowsByRole(
   params: GetEscrowsByRoleParams,
   token?: string,
 ): Promise<RoutedResponse<unknown[]>> {
+  // Like getEscrowsBySigner above, this read path works without a token.
   const trustlessWorkRole = params.role === "service_provider"
     ? "serviceProvider"
     : params.role;
