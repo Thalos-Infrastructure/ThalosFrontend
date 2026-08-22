@@ -99,6 +99,101 @@ export async function submitSignedTransaction(
   )
 }
 
+export interface BackendFundEscrowDto {
+  contractId: string
+  signer: string
+  amount: number
+  type: EscrowServiceType
+}
+
+export interface BackendApproveMilestoneDto {
+  contractId: string
+  milestoneIndex: string
+  approver: string
+  type: EscrowServiceType
+}
+
+export interface BackendChangeMilestoneStatusDto {
+  contractId: string
+  milestoneIndex: string
+  newEvidence: string
+  newStatus: string
+  serviceProvider: string
+  type: EscrowServiceType
+}
+
+export interface BackendReleaseFundsDto {
+  contractId: string
+  releaseSigner: string
+  type: EscrowServiceType
+  milestoneIndex?: string
+}
+
+export interface BackendDisputeMilestoneDto {
+  contractId: string
+  type: EscrowServiceType
+  milestoneIndex?: string
+  signer: string
+}
+
+type UnsignedTransaction = { unsignedTransaction: string }
+
+// The operation names and DTOs below mirror ThalosBackend's EscrowsController.
+export async function buildFundEscrow(
+  dto: BackendFundEscrowDto,
+  token: string,
+): Promise<ApiResponse<UnsignedTransaction>> {
+  return apiRequest<UnsignedTransaction>(
+    "/escrows/fund",
+    { method: "POST", body: JSON.stringify(dto) },
+    token,
+  )
+}
+
+export async function buildApproveMilestone(
+  dto: BackendApproveMilestoneDto,
+  token: string,
+): Promise<ApiResponse<UnsignedTransaction>> {
+  return apiRequest<UnsignedTransaction>(
+    "/escrows/approve-milestone",
+    { method: "POST", body: JSON.stringify(dto) },
+    token,
+  )
+}
+
+export async function buildChangeMilestoneStatus(
+  dto: BackendChangeMilestoneStatusDto,
+  token: string,
+): Promise<ApiResponse<UnsignedTransaction>> {
+  return apiRequest<UnsignedTransaction>(
+    "/escrows/change-milestone-status",
+    { method: "POST", body: JSON.stringify(dto) },
+    token,
+  )
+}
+
+export async function buildReleaseFunds(
+  dto: BackendReleaseFundsDto,
+  token: string,
+): Promise<ApiResponse<UnsignedTransaction>> {
+  return apiRequest<UnsignedTransaction>(
+    "/escrows/release",
+    { method: "POST", body: JSON.stringify(dto) },
+    token,
+  )
+}
+
+export async function buildDisputeMilestone(
+  dto: BackendDisputeMilestoneDto,
+  token: string,
+): Promise<ApiResponse<UnsignedTransaction>> {
+  return apiRequest<UnsignedTransaction>(
+    "/escrows/dispute",
+    { method: "POST", body: JSON.stringify(dto) },
+    token,
+  )
+}
+
 // Initialize/deploy a new escrow contract
 export async function initializeEscrow(
   data: CreateEscrowData,
