@@ -2,8 +2,16 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import test from 'node:test'
 
-const kyb = readFileSync(new URL('../lib/api/kyb.ts', import.meta.url), 'utf8')
-const dashboard = readFileSync(new URL('../app/dashboard/business/page.tsx', import.meta.url), 'utf8')
+/**
+ * These assertions match raw source text, and some patterns span lines. A Windows
+ * checkout has CRLF endings, so without normalising them the multi-line patterns
+ * never match: the suite failed locally while passing on Linux CI.
+ */
+const readSource = (relative) =>
+  readFileSync(new URL(relative, import.meta.url), 'utf8').split('\r\n').join('\n')
+
+const kyb = readSource('../lib/api/kyb.ts')
+const dashboard = readSource('../app/dashboard/business/page.tsx')
 
 test('KYB API client posts the full CreateKybSessionDto body', () => {
   assert.match(kyb, /import \{ type CreateKybSessionDto \} from "@\/lib\/kyb"/)
