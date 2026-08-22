@@ -36,8 +36,12 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area,
 } from "recharts"
 import { createAgreement, sendTransaction, AgreementPayload, approveMilestone } from "@/services/trustlessworkService"
+<<<<<<< HEAD
 import { STELLAR_EXPLORER_BASE_URL, STELLAR_EXPLORER_ACCOUNT_BASE_URL, TRUSTLINE_USDC, SHOW_MOCKED_AGREEMENTS } from "@/lib/config";
 import { getWalletBalance } from "@/lib/api/wallets";
+=======
+import { STELLAR_EXPLORER_BASE_URL, TRUSTLINE_USDC, SHOW_MOCKED_AGREEMENTS } from "@/lib/config";
+>>>>>>> 88a0fd4 (feat(kyc): add person KYC client and personal dashboard UI flow)
 import { getKycStatus, startKycSession } from "@/lib/api/kyc";
 import { isKycVerified, canStartKycSession, buildCreateKycSessionDto, nextKycStatusAfterSessionStart, type KycVerificationStatus } from "@/lib/kyc";
 import { updateProfile } from "@/lib/actions/profile";
@@ -420,7 +424,6 @@ export default function PersonalDashboardPage() {
       isMounted = false;
     };
   }, [token]);
-
   // Person KYC State
   const [kycFullName, setKycFullName] = useState("");
   const [kycCountry, setKycCountry] = useState("");
