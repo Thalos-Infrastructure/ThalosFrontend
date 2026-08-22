@@ -5,6 +5,64 @@ export const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://www.thalospla
 export const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/v1";
 export const APP_NAME = "Thalos";
 
+/**
+ * Escrow migration routing.
+ *
+ * `true` sends the operation through the Nest backend; `false` keeps the
+ * direct Trustless Work path. These are deliberately explicit references to
+ * `NEXT_PUBLIC_*` variables so Next can inline them in client bundles.
+ *
+ * Defaults preserve the pre-cutover behavior: reads use Nest and writes use
+ * Trustless Work. Invalid values also fall back safely instead of enabling a
+ * route accidentally.
+ */
+function migrationFlag(value: string | undefined, fallback: boolean): boolean {
+  if (value === "true") return true;
+  if (value === "false") return false;
+  return fallback;
+}
+
+export const ESCROW_MIGRATION_FLAGS = Object.freeze({
+  getEscrowsBySigner: migrationFlag(
+    process.env.NEXT_PUBLIC_ESCROW_MIGRATION_GET_ESCROWS_BY_SIGNER_USE_NEST,
+    true,
+  ),
+  getEscrowsByRole: migrationFlag(
+    process.env.NEXT_PUBLIC_ESCROW_MIGRATION_GET_ESCROWS_BY_ROLE_USE_NEST,
+    true,
+  ),
+  createAgreement: migrationFlag(
+    process.env.NEXT_PUBLIC_ESCROW_MIGRATION_CREATE_AGREEMENT_USE_NEST,
+    false,
+  ),
+  fundEscrow: migrationFlag(
+    process.env.NEXT_PUBLIC_ESCROW_MIGRATION_FUND_ESCROW_USE_NEST,
+    false,
+  ),
+  approveMilestone: migrationFlag(
+    process.env.NEXT_PUBLIC_ESCROW_MIGRATION_APPROVE_MILESTONE_USE_NEST,
+    false,
+  ),
+  changeMilestoneStatus: migrationFlag(
+    process.env.NEXT_PUBLIC_ESCROW_MIGRATION_CHANGE_MILESTONE_STATUS_USE_NEST,
+    false,
+  ),
+  releaseFunds: migrationFlag(
+    process.env.NEXT_PUBLIC_ESCROW_MIGRATION_RELEASE_FUNDS_USE_NEST,
+    false,
+  ),
+  disputeMilestone: migrationFlag(
+    process.env.NEXT_PUBLIC_ESCROW_MIGRATION_DISPUTE_MILESTONE_USE_NEST,
+    false,
+  ),
+  sendTransaction: migrationFlag(
+    process.env.NEXT_PUBLIC_ESCROW_MIGRATION_SEND_TRANSACTION_USE_NEST,
+    false,
+  ),
+});
+
+export type EscrowMigrationOperation = keyof typeof ESCROW_MIGRATION_FLAGS;
+
 // Email Configuration (Resend)
 export const EMAIL_FROM = process.env.EMAIL_FROM || "Thalos <notifications@thalosplatform.xyz>";
 export const EMAIL_REPLY_TO = process.env.EMAIL_REPLY_TO || "support@thalosplatform.xyz";

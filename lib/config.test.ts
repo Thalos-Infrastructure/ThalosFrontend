@@ -84,3 +84,45 @@ describe("configuracion de red Stellar", () => {
     expect(config.STELLAR_EXPLORER_BASE_URL).toBe("https://example.test/explorer/")
   })
 })
+
+const ESCROW_FLAG_NAMES = [
+  "NEXT_PUBLIC_ESCROW_MIGRATION_GET_ESCROWS_BY_SIGNER_USE_NEST",
+  "NEXT_PUBLIC_ESCROW_MIGRATION_GET_ESCROWS_BY_ROLE_USE_NEST",
+  "NEXT_PUBLIC_ESCROW_MIGRATION_CREATE_AGREEMENT_USE_NEST",
+  "NEXT_PUBLIC_ESCROW_MIGRATION_FUND_ESCROW_USE_NEST",
+  "NEXT_PUBLIC_ESCROW_MIGRATION_APPROVE_MILESTONE_USE_NEST",
+  "NEXT_PUBLIC_ESCROW_MIGRATION_CHANGE_MILESTONE_STATUS_USE_NEST",
+  "NEXT_PUBLIC_ESCROW_MIGRATION_RELEASE_FUNDS_USE_NEST",
+  "NEXT_PUBLIC_ESCROW_MIGRATION_DISPUTE_MILESTONE_USE_NEST",
+  "NEXT_PUBLIC_ESCROW_MIGRATION_SEND_TRANSACTION_USE_NEST",
+] as const
+
+describe("escrow migration flag configuration", () => {
+  it("uses Nest for reads and Trustless Work for writes when flags are unset", async () => {
+    const config = await loadConfig(Object.fromEntries(
+      ESCROW_FLAG_NAMES.map((name) => [name, undefined]),
+    ))
+
+    expect(config.ESCROW_MIGRATION_FLAGS).toEqual({
+      getEscrowsBySigner: true,
+      getEscrowsByRole: true,
+      createAgreement: false,
+      fundEscrow: false,
+      approveMilestone: false,
+      changeMilestoneStatus: false,
+      releaseFunds: false,
+      disputeMilestone: false,
+      sendTransaction: false,
+    })
+  })
+
+  it("honors explicit true and false values per operation", async () => {
+    const config = await loadConfig({
+      NEXT_PUBLIC_ESCROW_MIGRATION_GET_ESCROWS_BY_SIGNER_USE_NEST: "false",
+      NEXT_PUBLIC_ESCROW_MIGRATION_FUND_ESCROW_USE_NEST: "true",
+    })
+
+    expect(config.ESCROW_MIGRATION_FLAGS.getEscrowsBySigner).toBe(false)
+    expect(config.ESCROW_MIGRATION_FLAGS.fundEscrow).toBe(true)
+  })
+})
