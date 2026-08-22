@@ -1,7 +1,7 @@
 "use client"
 
 import React, { createContext, useContext, useState, useCallback, useEffect } from "react"
-import { getKit, clearKit, isFreighterAvailable } from "@/lib/stellar-wallet-kit"
+import { getKit, clearKit, detectFreighter, prewarmWalletDetection } from "@/lib/stellar-wallet-kit"
 import { signTransaction as unifiedSign, signMessage as unifiedSignMessage } from "@/lib/signing"
 import { getOrCreateProfile, type Profile } from "@/lib/actions/profile"
 import { useAuthStore } from "@/lib/auth-store"
@@ -60,6 +60,10 @@ export function StellarWalletProvider({ children }: { children: React.ReactNode 
 
   useEffect(() => {
     if (typeof window === "undefined") return
+    // Warm up wallet detection in the background: Freighter's content script can
+    // take a moment to start answering, and doing this at mount means the click
+    // path finds it ready instead of racing a 2s timeout.
+    prewarmWalletDetection()
     const storedAddress = sessionStorage.getItem(STELLAR_WALLET_KEY)
     const storedProfile = sessionStorage.getItem(STELLAR_PROFILE_KEY)
     if (storedAddress) setAddress(storedAddress)
@@ -88,20 +92,23 @@ export function StellarWalletProvider({ children }: { children: React.ReactNode 
       setIsConnecting(true)
       setWalletError(null)
       try {
-        // Clear any existing kit instance to force fresh detection
-        clearKit();
-        
-        // Get kit - this will wait for Freighter to be available
+        // Deliberately NOT calling clearKit() here. Re-initialising on every open
+        // discarded the warm channel to the extension and restarted detection from
+        // cold, which is what made Freighter intermittently show up as "not
+        // installed" for people who have it installed. clearKit() belongs in
+        // disconnect(), where a reset is actually wanted.
         const kit = await getKit();
         if (!kit) {
-          // Check if Freighter is specifically the issue
-          if (!isFreighterAvailable()) {
-            setWalletError("No se detectó una wallet. Por favor, abre tu extensión de Freighter y vuelve a intentar.");
-          } else {
-            setWalletError("Stellar Wallets Kit no disponible.");
-          }
+          setWalletError("Stellar Wallets Kit no disponible.");
           return;
         }
+
+        // Give Freighter's content script a second chance to answer before the
+        // modal decides what to render (see detectFreighter). We ignore the result
+        // on purpose: other wallets must still be selectable, and the modal
+        // refreshes availability itself — this only makes that refresh find a
+        // channel that is already awake.
+        await detectFreighter(2);
         // En 2.x el modal es una promesa: resuelve con la dirección ya pedida a la
         // wallet elegida (antes llegaba por el callback onWalletSelected) y rechaza
         // si el usuario lo cierra. Refresca por su cuenta las wallets disponibles.
