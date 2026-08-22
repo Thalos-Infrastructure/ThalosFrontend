@@ -1,10 +1,9 @@
 "use client"
 
 import React, { createContext, useContext, useState, useCallback, useEffect } from "react"
-import { getKit, clearKit, isFreighterAvailable } from "@/lib/stellar-wallet-kit"
+import { getKit, clearKit, detectFreighter, prewarmWalletDetection } from "@/lib/stellar-wallet-kit"
 import { signTransaction as unifiedSign, signMessage as unifiedSignMessage } from "@/lib/signing"
 import { getOrCreateProfile, type Profile } from "@/lib/actions/profile"
-import { SHOW_SIGN_MESSAGE_TEST } from "@/lib/config"
 import { useAuthStore } from "@/lib/auth-store"
 import { requestWalletChallenge, verifyWalletLogin } from "@/lib/api/wallet-auth"
 import { linkWallet } from "@/lib/api/wallets"
@@ -57,10 +56,14 @@ export function StellarWalletProvider({ children }: { children: React.ReactNode 
   const [walletError, setWalletError] = useState<string | null>(null)
   // AuthProvider wraps StellarWalletProvider (see app/layout.tsx), so the app JWT
   // store is available here. Connecting a wallet mints/stores that JWT.
-  const { login } = useAuthStore()
+  const { login, user, token } = useAuthStore()
 
   useEffect(() => {
     if (typeof window === "undefined") return
+    // Warm up wallet detection in the background: Freighter's content script can
+    // take a moment to start answering, and doing this at mount means the click
+    // path finds it ready instead of racing a 2s timeout.
+    prewarmWalletDetection()
     const storedAddress = sessionStorage.getItem(STELLAR_WALLET_KEY)
     const storedProfile = sessionStorage.getItem(STELLAR_PROFILE_KEY)
     if (storedAddress) setAddress(storedAddress)
@@ -89,20 +92,23 @@ export function StellarWalletProvider({ children }: { children: React.ReactNode 
       setIsConnecting(true)
       setWalletError(null)
       try {
-        // Clear any existing kit instance to force fresh detection
-        clearKit();
-        
-        // Get kit - this will wait for Freighter to be available
+        // Deliberately NOT calling clearKit() here. Re-initialising on every open
+        // discarded the warm channel to the extension and restarted detection from
+        // cold, which is what made Freighter intermittently show up as "not
+        // installed" for people who have it installed. clearKit() belongs in
+        // disconnect(), where a reset is actually wanted.
         const kit = await getKit();
         if (!kit) {
-          // Check if Freighter is specifically the issue
-          if (!isFreighterAvailable()) {
-            setWalletError("No se detectó una wallet. Por favor, abre tu extensión de Freighter y vuelve a intentar.");
-          } else {
-            setWalletError("Stellar Wallets Kit no disponible.");
-          }
+          setWalletError("Stellar Wallets Kit no disponible.");
           return;
         }
+
+        // Give Freighter's content script a second chance to answer before the
+        // modal decides what to render (see detectFreighter). We ignore the result
+        // on purpose: other wallets must still be selectable, and the modal
+        // refreshes availability itself — this only makes that refresh find a
+        // channel that is already awake.
+        await detectFreighter(2);
         // En 2.x el modal es una promesa: resuelve con la dirección ya pedida a la
         // wallet elegida (antes llegaba por el callback onWalletSelected) y rechaza
         // si el usuario lo cierra. Refresca por su cuenta las wallets disponibles.
@@ -123,13 +129,20 @@ export function StellarWalletProvider({ children }: { children: React.ReactNode 
           console.error("Profile error:", profileError);
         }
 
-        // Wallet-signature login (ownership-proof challenge) is gated behind
-        // NEXT_PUBLIC_SHOW_SIGN_MESSAGE_TEST — same flag/pattern as the dev
-        // "SignMessage Test" widget. When the flag is off (default, incl.
-        // production), connecting a wallet does NOT trigger the signing popup;
-        // the app JWT is expected to come from email/social login instead.
-        // When on, we mint the app JWT so dashboard data goes through the backend.
-        if (SHOW_SIGN_MESSAGE_TEST) {
+        // Wallet-signature login (ownership-proof challenge): connecting a wallet
+        // mints the app JWT, which the backend requires for writes and for any
+        // endpoint that is not @Public().
+        //
+        // Skip it when this device already holds a session for THIS wallet. The JWT
+        // lasts 7 days and AuthProvider revalidates it against /api/auth/me on every
+        // load, so re-proving ownership on each reconnect would only cost the user a
+        // popup. A session for a different address does not count — that would let a
+        // stale login speak for the wallet just connected.
+        const hasSessionForWallet = !!token && user?.wallet?.publicKey === addr;
+
+        if (hasSessionForWallet) {
+          console.info("[wallet-auth] sesión válida ya existente para esta wallet; se omite la firma");
+        } else {
           try {
             const { challenge } = await requestWalletChallenge(addr);
             // Route through the unified signer (sessionStorage already
@@ -146,8 +159,13 @@ export function StellarWalletProvider({ children }: { children: React.ReactNode 
             } catch {
               provider = undefined;
             }
-            const { user, token } = await verifyWalletLogin(addr, challenge, signed.signedMessage, provider);
-            login(user, token);
+            const { user: authedUser, token: authedToken } = await verifyWalletLogin(
+              addr,
+              challenge,
+              signed.signedMessage,
+              provider,
+            );
+            login(authedUser, authedToken);
           } catch (authErr) {
             console.warn(
               "[wallet-auth] no se pudo autenticar la wallet contra el backend; se continúa en modo wallet-only:",
@@ -178,7 +196,8 @@ export function StellarWalletProvider({ children }: { children: React.ReactNode 
         setIsConnecting(false);
       }
     },
-    [login]
+    // user/token feed the "skip the signature" check above.
+    [login, user, token]
   );
 
   const disconnect = useCallback(async () => {

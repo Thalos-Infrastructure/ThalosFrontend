@@ -1,4 +1,4 @@
-import { API_URL } from "@/lib/config"
+import { apiRequest, type ApiResponse } from "./client"
 import type { MilestoneStatus, AgreementStatus } from "@/lib/types/status"
 
 export interface Milestone {
@@ -38,43 +38,6 @@ export interface CreateEscrowData {
   dispute_resolver?: string
 }
 
-interface ApiResponse<T> {
-  success: boolean
-  data?: T
-  error?: string
-}
-
-async function apiRequest<T>(
-  endpoint: string,
-  options: RequestInit = {},
-  token?: string
-): Promise<ApiResponse<T>> {
-  try {
-    const headers: HeadersInit = {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...options.headers,
-    }
-
-    const response = await fetch(`${API_URL}${endpoint}`, {
-      ...options,
-      headers,
-    })
-
-    const data = await response.json()
-
-    if (!response.ok) {
-      return { success: false, error: data.message || data.error || "Request failed" }
-    }
-
-    return { success: true, data }
-  } catch (error) {
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Network error"
-    }
-  }
-}
 
 // ============================================================================
 // Backend escrow WRITE relay (Trustless Work behind the Thalos backend)
@@ -234,10 +197,13 @@ export async function getEscrowBalance(
 // NEW ENDPOINTS - Migration from trustlessworkService
 // ============================================================================
 
-// Get escrows where user is a signer
+// Get escrows where user is a signer.
+// `token` is optional: the backend exposes this read as @Public() (escrows are
+// public on-chain data), so it works for a wallet that has not logged in yet.
+// `apiRequest` simply omits the Authorization header when there is no token.
 export async function getEscrowsBySigner(
   address: string,
-  token: string
+  token?: string
 ): Promise<ApiResponse<Escrow[]>> {
   return apiRequest<Escrow[]>(
     `/escrows/by-signer/${address}`,
@@ -254,9 +220,10 @@ export interface GetEscrowsByRoleParams {
   type?: "single-release" | "multi-release"
 }
 
+// `token` optional for the same reason as getEscrowsBySigner above.
 export async function getEscrowsByRole(
   params: GetEscrowsByRoleParams,
-  token: string
+  token?: string
 ): Promise<ApiResponse<Escrow[]>> {
   const queryParams = new URLSearchParams({ address: params.address })
   if (params.role) queryParams.set("role", params.role)
