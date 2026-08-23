@@ -113,8 +113,7 @@ export function SocialAuthModal({ open, onClose }: SocialAuthModalProps) {
           </div>
 
           {/* Every provider goes through Pollar and is driven from here, so
-              Pollar's own modal never opens. Passkey is passed as a child: it
-              is Accesly, a different auth system. */}
+              Pollar's own modal never opens. */}
           <PollarLoginOptions
             accountType={accountType}
             onAuthenticated={(_address, profile) => {
@@ -131,6 +130,9 @@ export function SocialAuthModal({ open, onClose }: SocialAuthModalProps) {
               </div>
             }
           >
+            {/* Accesly (#109) is hidden, not removed: the passkey login is a
+                separate auth system and its own PR owns it. Restore by
+                uncommenting — the modal below and its state stay wired.
             <Button
               type="button"
               variant="outline"
@@ -144,6 +146,7 @@ export function SocialAuthModal({ open, onClose }: SocialAuthModalProps) {
               </svg>
               Continue with Accesly (Passkey)
             </Button>
+            */}
           </PollarLoginOptions>
 
         </div>
