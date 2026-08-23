@@ -1,27 +1,24 @@
-import { API_URL } from "@/lib/config"
+import { apiRequest } from "./client"
 
 export interface ReputationSummary {
   completedAgreements: number
   releasedMilestones: number
-  totalValueReleased?: number | null
-  totalValueAsset?: string | null
-  valueVisible: boolean
-  githubVerified: boolean
+  totalReleasedUsdc: number | null
+  githubVerified: boolean | null // null = unknown until C6
   prBackedMilestones: number
+  handle: string | null
 }
 
 function normalize(payload: any): ReputationSummary {
   const data = payload?.data ?? payload?.reputation ?? payload ?? {}
-  const valueVisible = Boolean(data.valueVisible ?? data.value_visible ?? data.showValue ?? data.show_value)
-  const rawValue = data.totalValueReleased ?? data.total_value_released ?? data.valueReleased
+  const rawUsdc = data.total_released_usdc ?? data.totalReleasedUsdc ?? null
   return {
-    completedAgreements: Number(data.completedAgreements ?? data.completed_agreements ?? 0),
-    releasedMilestones: Number(data.releasedMilestones ?? data.released_milestones ?? 0),
-    totalValueReleased: valueVisible && rawValue != null ? Number(rawValue) : null,
-    totalValueAsset: data.totalValueAsset ?? data.total_value_asset ?? data.asset ?? null,
-    valueVisible,
-    githubVerified: Boolean(data.githubVerified ?? data.github_verified ?? data.verifiedGithub),
-    prBackedMilestones: Number(data.prBackedMilestones ?? data.pr_backed_milestones ?? data.githubPrMilestones ?? 0),
+    completedAgreements: Number(data.completed_agreements_count ?? data.completedAgreementsCount ?? 0),
+    releasedMilestones: Number(data.released_milestones_count ?? data.releasedMilestonesCount ?? 0),
+    totalReleasedUsdc: rawUsdc != null ? Number(rawUsdc) : null,
+    githubVerified: (data.github_verified ?? data.githubVerified) ?? null,
+    prBackedMilestones: Number(data.pr_backed_milestone_count ?? data.prBackedMilestoneCount ?? 0),
+    handle: data.handle ?? null,
   }
 }
 
@@ -30,12 +27,9 @@ export async function fetchReputation(target: { handle?: string; token?: string 
     ? `/profiles/handle/${encodeURIComponent(target.handle)}/reputation`
     : "/profiles/me/reputation"
   try {
-    const response = await fetch(`${API_URL}${endpoint}`, {
-      headers: target.token ? { Authorization: `Bearer ${target.token}` } : undefined,
-      cache: "no-store",
-    })
-    if (!response.ok) return null
-    return normalize(await response.json())
+    const result = await apiRequest<unknown>(endpoint, { method: "GET" }, target.token)
+    if (!result.success || !result.data) return null
+    return normalize(result.data)
   } catch {
     return null
   }
