@@ -14,8 +14,8 @@ test("Person KYC API client posts to /kyc/session with CreateKycSessionDto", () 
   assert.match(kycApi, /apiRequest<BackendKycVerificationEnvelope>\(\s*"\/kyc\/session",/)
 })
 
-test("Person KYC API client polls status via /v1/verification/user/:id", () => {
-  assert.match(kycApi, /`\/v1\/verification\/user\/\$\{encodeURIComponent\(userId\)\}`/)
+test("Person KYC API client polls status via /verification/user/:id", () => {
+  assert.match(kycApi, /`\/verification\/user\/\$\{encodeURIComponent\(userId\)\}`/)
   assert.match(kycApi, /\{ method: "GET" \}/)
 })
 
