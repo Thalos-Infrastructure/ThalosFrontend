@@ -1,0 +1,81 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+    branches: [main, master, develop]
+
+# Cancel superseded runs for the same branch/PR to save CI minutes.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Build and Test run as independent parallel jobs so a failure in one does not
+  # hide the other.
+  #
+  # Two checks are deliberately NOT here yet, because adding them today would
+  # make every PR red and teach everyone to ignore CI:
+  #   - typecheck: `tsc --noEmit` reports ~192 pre-existing errors, and
+  #     `next.config.mjs` sets `ignoreBuildErrors: true`. Clean the baseline,
+  #     then add it.
+  #   - lint: the `lint` script exists but ESLint is not installed. Install it
+  #     with a Next config and fix the fallout before wiring it up.
+  checks:
+    name: ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Build
+            cmd: pnpm build
+          - name: Test
+            cmd: pnpm test
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Setup Node.js
+        # Node 22: `@supabase/realtime-js` needs a native WebSocket, which Node 20
+        # does not have. Same constraint as ThalosBackend.
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Both jobs run without any .env file, exactly as a fresh clone would.
+      # Verified locally: the build and the suite are env-independent, and the one
+      # test that needs a model credential skips itself when it is absent.
+      - name: ${{ matrix.name }}
+        run: ${{ matrix.cmd }}
+
+  secret-scan:
+    name: Secret scan (gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      # License-free run via the official image (the gitleaks-action needs a
+      # license for GitHub orgs). Scans the working tree (--no-git) rather than
+      # history, so it blocks NEW secrets in a PR without turning the pipeline red
+      # over credentials already in this repo's history — those need rotating, and
+      # a permanently failing job would just get ignored.
+      - name: Run gitleaks
+        run: |
+          docker run --rm -v "${{ github.workspace }}:/repo" \
+            zricethezav/gitleaks:v8.18.4 detect \
+            --source=/repo \
+            --no-git \
+            --redact \
+            --verbose \
+            --config=/repo/.gitleaks.toml

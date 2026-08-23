@@ -1,11 +1,12 @@
 "use server"
 
 import { createClient } from "@/lib/supabase/server"
+import type { MilestoneStatus } from "@/lib/types/status"
 
 export interface TemplateMilestone {
   description: string
   amount: string
-  status: "pending" | "approved" | "released"
+  status: MilestoneStatus
 }
 
 export interface AgreementTemplate {

@@ -1,4 +1,6 @@
-type Milestone = { description: string; amount: string; status: "pending" | "approved" | "released" | "Completed"; approved?: boolean };
+import type { MilestoneStatus } from "@/lib/types/status"
+
+type Milestone = { description: string; amount: string; status: MilestoneStatus; approved?: boolean };
 type Agreement = {
   id: string;
   title: string;
@@ -361,7 +363,7 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
                     </span>
                   )}
                   
-                  {isFunded && (ms.status === "pending" || ms.status === "Completed") && !allReleased && ms.approved === false && !disputedMs.has(idx) && isExternalWallet && (
+                  {isFunded && (ms.status === "pending" || ms.status === "released") && !allReleased && ms.approved === false && !disputedMs.has(idx) && isExternalWallet && (
                     <Button size="sm" onClick={() => handleApprove(idx)} disabled={loadingMs === idx}
                       className="rounded-full bg-[#f0b400]/15 text-xs font-semibold text-[#f0b400] hover:bg-[#f0b400]/25 border border-[#f0b400]/20">
                       {loadingMs === idx ? t("flow.approving") : t("flow.approveMs")}
