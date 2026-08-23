@@ -361,6 +361,7 @@ export default function PersonalDashboardPage() {
   const [kycCountry, setKycCountry] = useState("");
   const [kycSubmitting, setKycSubmitting] = useState(false);
   const [kycError, setKycError] = useState<string | null>(null);
+  const [activeKycStatus, setActiveKycStatus] = useState<KycVerificationStatus | null>(null);
 
   // Fetch user profile
   useEffect(() => {
@@ -378,7 +379,8 @@ export default function PersonalDashboardPage() {
     setKycCountry(userProfile?.country ?? "");
   }, [userProfile]);
 
-  const kycStatus = (userProfile as any)?.kyc_status as KycVerificationStatus ?? "not_started";
+  const profileKycStatus = (userProfile as any)?.kyc_status as KycVerificationStatus ?? "not_started";
+  const kycStatus = activeKycStatus ?? profileKycStatus;
   const kycVerified = isKycVerified(kycStatus);
   const userId = userProfile?.id ?? walletAddress;
 
@@ -386,13 +388,21 @@ export default function PersonalDashboardPage() {
     if (!walletAddress || !uid) return;
     const statusResult = await getKycStatus(uid, token);
     if (!statusResult.success || !statusResult.data) return;
-    const nextStatus = statusResult.data.status === "pending" ? "in_review" : statusResult.data.status;
+    const rawStatus = statusResult.data.status;
+    const nextStatus: KycVerificationStatus = rawStatus === "pending" ? "in_review" : rawStatus;
+    setActiveKycStatus(nextStatus);
     const updated = await updateProfile(walletAddress, { kyc_status: nextStatus });
     if (!updated.error && updated.profile) setUserProfile(updated.profile);
   }, [walletAddress, token]);
 
   useEffect(() => {
-    if (!userId || kycStatus === "verified" || kycStatus === "rejected") return;
+    if (!userId) return;
+    // Initial fetch of Kyc status from backend API response
+    void refreshKycStatus(userId);
+  }, [userId, refreshKycStatus]);
+
+  useEffect(() => {
+    if (!userId || kycStatus === "verified") return;
     const interval = window.setInterval(() => {
       void refreshKycStatus(userId);
     }, 15000);
@@ -415,7 +425,8 @@ export default function PersonalDashboardPage() {
       const session = await startKycSession(dto, token);
       if (!session.success || !session.data) throw new Error(session.error ?? "Failed to start KYC session");
 
-      const nextStatus = nextKycStatusAfterSessionStart();
+      const nextStatus = session.data.status === "pending" ? "in_review" : session.data.status || nextKycStatusAfterSessionStart();
+      setActiveKycStatus(nextStatus);
       const statusUpdate = await updateProfile(walletAddress, {
         kyc_status: nextStatus,
         kyc_session_id: session.data.id ?? null,

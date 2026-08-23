@@ -75,7 +75,7 @@ export async function getKycStatus(
   token?: string | null
 ): Promise<ApiResponse<KycStatusResponse>> {
   const result = await apiRequest<BackendKycVerificationEnvelope>(
-    `/v1/verification/user/${encodeURIComponent(userId)}`,
+    `/verification/user/${encodeURIComponent(userId)}`,
     { method: "GET" },
     token ?? undefined
   )

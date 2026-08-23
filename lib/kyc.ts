@@ -1,4 +1,4 @@
-export type KycVerificationStatus = "not_started" | "pending" | "in_review" | "verified" | "rejected"
+export type KycVerificationStatus = "not_started" | "pending" | "in_review" | "verified" | "rejected" | "expired" | "unverified"
 
 export type KycProfileFields = {
   full_name?: string | null
