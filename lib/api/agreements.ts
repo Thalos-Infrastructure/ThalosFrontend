@@ -1,14 +1,14 @@
 import { apiRequest, type ApiResponse } from "./client"
+import type { AgreementStatus, MilestoneStatus } from "@/lib/types/status"
 
-// Re-export types from actions for backwards compatibility
-export type AgreementStatus = "pending" | "funded" | "active" | "completed" | "disputed" | "resolved" | "cancelled"
+export type { AgreementStatus, MilestoneStatus }
 export type AgreementType = "single" | "multi" | "bounty"
 export type ParticipantRole = "payer" | "payee" | "approver" | "dispute_resolver" | "validator"
 
 export interface AgreementMilestone {
   description: string
   amount: string
-  status: "pending" | "approved" | "released"
+  status: MilestoneStatus
 }
 
 export interface Agreement {

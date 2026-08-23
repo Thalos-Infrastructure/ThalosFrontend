@@ -3,6 +3,7 @@
 // Re-export types and functions from the backend API client
 export type {
   AgreementStatus,
+  MilestoneStatus,
   AgreementType,
   ParticipantRole,
   AgreementMilestone,

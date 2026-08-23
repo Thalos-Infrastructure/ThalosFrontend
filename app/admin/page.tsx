@@ -11,12 +11,11 @@ import { LanguageToggle } from "@/lib/i18n"
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area,
 } from "recharts"
+import type { AgreementStatus } from "@/lib/types/status"
 
 /* ────────────────────────────────────────────────
    Mock Data
    ──────────────────────────────────────────────── */
-
-type AgreementStatus = "draft" | "funded" | "in_progress" | "completed" | "disputed"
 
 interface Agreement {
   id: string
@@ -32,13 +31,13 @@ interface Agreement {
 
 const mockAgreements: Agreement[] = [
   { id: "ESC-001", type: "milestone", sellerWallet: "GBXK7F...4R2P", buyerWallet: "GCQV8L...9T1M", totalAmount: 12500, platformFee: 250, status: "completed", createdAt: "2025-11-15", completedAt: "2025-12-20" },
-  { id: "ESC-002", type: "one-time", sellerWallet: "GDMR3T...7K5N", buyerWallet: "GFPL2Q...8W3J", totalAmount: 3200, platformFee: 64, status: "in_progress", createdAt: "2025-12-01", completedAt: null },
+  { id: "ESC-002", type: "one-time", sellerWallet: "GDMR3T...7K5N", buyerWallet: "GFPL2Q...8W3J", totalAmount: 3200, platformFee: 64, status: "active", createdAt: "2025-12-01", completedAt: null },
   { id: "ESC-003", type: "milestone", sellerWallet: "GHNW9P...1L6R", buyerWallet: "GBXK7F...4R2P", totalAmount: 45000, platformFee: 900, status: "funded", createdAt: "2025-12-10", completedAt: null },
   { id: "ESC-004", type: "one-time", sellerWallet: "GCQV8L...9T1M", buyerWallet: "GDMR3T...7K5N", totalAmount: 800, platformFee: 16, status: "completed", createdAt: "2025-10-05", completedAt: "2025-10-12" },
   { id: "ESC-005", type: "milestone", sellerWallet: "GFPL2Q...8W3J", buyerWallet: "GHNW9P...1L6R", totalAmount: 18750, platformFee: 375, status: "disputed", createdAt: "2025-11-20", completedAt: null },
   { id: "ESC-006", type: "one-time", sellerWallet: "GBXK7F...4R2P", buyerWallet: "GCQV8L...9T1M", totalAmount: 5400, platformFee: 108, status: "completed", createdAt: "2025-09-18", completedAt: "2025-09-25" },
-  { id: "ESC-007", type: "milestone", sellerWallet: "GDMR3T...7K5N", buyerWallet: "GFPL2Q...8W3J", totalAmount: 22000, platformFee: 440, status: "in_progress", createdAt: "2026-01-05", completedAt: null },
-  { id: "ESC-008", type: "one-time", sellerWallet: "GHNW9P...1L6R", buyerWallet: "GBXK7F...4R2P", totalAmount: 1500, platformFee: 30, status: "draft", createdAt: "2026-01-10", completedAt: null },
+  { id: "ESC-007", type: "milestone", sellerWallet: "GDMR3T...7K5N", buyerWallet: "GFPL2Q...8W3J", totalAmount: 22000, platformFee: 440, status: "active", createdAt: "2026-01-05", completedAt: null },
+  { id: "ESC-008", type: "one-time", sellerWallet: "GHNW9P...1L6R", buyerWallet: "GBXK7F...4R2P", totalAmount: 1500, platformFee: 30, status: "pending", createdAt: "2026-01-10", completedAt: null },
   { id: "ESC-009", type: "milestone", sellerWallet: "GCQV8L...9T1M", buyerWallet: "GDMR3T...7K5N", totalAmount: 35000, platformFee: 700, status: "completed", createdAt: "2025-08-22", completedAt: "2025-11-30" },
   { id: "ESC-010", type: "one-time", sellerWallet: "GFPL2Q...8W3J", buyerWallet: "GHNW9P...1L6R", totalAmount: 6800, platformFee: 136, status: "funded", createdAt: "2026-01-15", completedAt: null },
   { id: "ESC-011", type: "milestone", sellerWallet: "GBXK7F...4R2P", buyerWallet: "GFPL2Q...8W3J", totalAmount: 9200, platformFee: 184, status: "completed", createdAt: "2025-07-10", completedAt: "2025-08-15" },
@@ -67,24 +66,30 @@ const volumeData = [
   { month: "Jan", volume: 30300 },
 ]
 
+import { agreementStatusColor, agreementStatusLabel } from "@/lib/types/status"
+
 /* ────────────────────────────────────────────────
    Helpers
    ──────────────────────────────────────────────── */
 
 const statusColors: Record<AgreementStatus, string> = {
-  draft: "bg-muted text-muted-foreground",
+  pending: "bg-muted text-muted-foreground",
   funded: "bg-blue-500/10 text-blue-400 border-blue-500/20",
-  in_progress: "bg-[#f0b400]/10 text-[#f0b400] border-[#f0b400]/20",
+  active: "bg-[#f0b400]/10 text-[#f0b400] border-[#f0b400]/20",
   completed: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
   disputed: "bg-red-500/10 text-red-400 border-red-500/20",
+  resolved: "bg-purple-500/10 text-purple-400 border-purple-500/20",
+  cancelled: "bg-gray-500/10 text-gray-400 border-gray-500/20",
 }
 
 const statusLabels: Record<AgreementStatus, string> = {
-  draft: "Draft",
+  pending: "Pending",
   funded: "Funded",
-  in_progress: "In Progress",
+  active: "In Progress",
   completed: "Completed",
   disputed: "Disputed",
+  resolved: "Resolved",
+  cancelled: "Cancelled",
 }
 
 const PAGE_SIZE = 6
