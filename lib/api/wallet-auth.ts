@@ -36,6 +36,12 @@ export async function requestWalletChallenge(address: string): Promise<WalletCha
   if (typeof data.message !== "string" || !data.message) {
     throw new Error("El challenge de la wallet no trae el campo message");
   }
+  // Our BFF always sends both fields; a payload missing `expires_at` would
+  // otherwise satisfy `WalletChallenge` at the type level while holding
+  // `undefined`, which is the exact class of bug this issue is about.
+  if (typeof data.expires_at !== "string" || !data.expires_at) {
+    throw new Error("El challenge de la wallet no trae el campo expires_at");
+  }
   // Clock skew or a stale response would make us sign something the server will
   // reject anyway — fail early with an actionable error instead.
   if (isChallengeExpired(data.expires_at)) throw new WalletChallengeExpired();

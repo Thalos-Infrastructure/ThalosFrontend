@@ -62,6 +62,11 @@ describe("requestWalletChallenge", () => {
     await expect(requestWalletChallenge(ADDRESS)).rejects.toThrow(/message/)
   })
 
+  it("fails loudly when the payload has no expires_at", async () => {
+    mockFetch(200, { message: "sign me" })
+    await expect(requestWalletChallenge(ADDRESS)).rejects.toThrow(/expires_at/)
+  })
+
   it("rejects a challenge that is already expired on arrival", async () => {
     mockFetch(200, { message: "sign me", expires_at: inMinutes(-1) })
     await expect(requestWalletChallenge(ADDRESS)).rejects.toBeInstanceOf(WalletChallengeExpired)

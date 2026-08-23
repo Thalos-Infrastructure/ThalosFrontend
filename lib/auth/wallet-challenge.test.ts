@@ -5,7 +5,7 @@
  * rather than as a generic verification failure.
  */
 
-import { describe, it, expect, beforeAll } from "vitest"
+import { describe, it, expect, beforeAll, afterEach, vi } from "vitest"
 
 const ADDRESS = "GAAZI4TCR3TY5OJHCTJC2A4QSY6CJWJH5IAJTGKIN2ER7LBNVKOCCWN7"
 const OTHER_ADDRESS = "GDNRXSPCHNU2LGJHKZBPMSWFJHCSKAFTXRXA7NGDN6MOJTMPY3TZUEXW"
@@ -15,6 +15,10 @@ let mod: typeof import("./wallet-challenge")
 beforeAll(async () => {
   process.env.JWT_SECRET = "test-secret-for-wallet-challenge"
   mod = await import("./wallet-challenge")
+})
+
+afterEach(() => {
+  vi.useRealTimers()
 })
 
 describe("buildWalletChallenge", () => {
@@ -61,19 +65,31 @@ describe("verifyWalletChallenge", () => {
   })
 
   it("reports an expired challenge with the challenge_expired code", () => {
-    const { message } = mod.buildWalletChallenge(ADDRESS)
-    const realNow = Date.now
-    // 10 minutes on: past the 5-minute TTL.
-    Date.now = () => realNow() + 10 * 60 * 1000
-    try {
-      expect(() => mod.verifyWalletChallenge(message, ADDRESS)).toThrow(mod.WalletChallengeExpiredError)
+    const { message, expires_at } = mod.buildWalletChallenge(ADDRESS)
+
+    vi.useFakeTimers()
+    // One second past the advertised expiry.
+    vi.setSystemTime(new Date(Date.parse(expires_at) + 1000))
+
+    const error = (() => {
       try {
         mod.verifyWalletChallenge(message, ADDRESS)
+        return null
       } catch (e) {
-        expect((e as InstanceType<typeof mod.WalletChallengeExpiredError>).code).toBe("challenge_expired")
+        return e
       }
-    } finally {
-      Date.now = realNow
-    }
+    })()
+
+    expect(error).toBeInstanceOf(mod.WalletChallengeExpiredError)
+    expect((error as InstanceType<typeof mod.WalletChallengeExpiredError>).code).toBe("challenge_expired")
+  })
+
+  it("still accepts the challenge one second before it expires", () => {
+    const { message, expires_at } = mod.buildWalletChallenge(ADDRESS)
+
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date(Date.parse(expires_at) - 1000))
+
+    expect(mod.verifyWalletChallenge(message, ADDRESS).addr).toBe(ADDRESS)
   })
 })

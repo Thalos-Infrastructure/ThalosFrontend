@@ -147,8 +147,7 @@ export function LinkedWallets({ onWalletSelect, selectedWallet, showBalances = t
     try {
       // Step 1: Request verification challenge from backend
       const challengeResult = await getWalletVerificationChallenge(walletAddress, token)
-      const message = challengeResult.data ? challengeMessage(challengeResult.data) : null
-      if (!challengeResult.success || !message) {
+      if (!challengeResult.success || !challengeResult.data) {
         // Backend may not support challenge endpoint yet — link without proof
         const result = await linkWallet(
           { wallet_address: walletAddress, wallet_type: "freighter" },
@@ -159,6 +158,14 @@ export function LinkedWallets({ onWalletSelect, selectedWallet, showBalances = t
           return true
         }
         setError(result.error || t("linkedWallets.linkError"))
+        return false
+      }
+
+      // The endpoint answered, so it does support challenges: a payload we cannot
+      // read is an error, not a reason to link without proof.
+      const message = challengeMessage(challengeResult.data)
+      if (!message) {
+        setError(t("linkedWallets.linkError"))
         return false
       }
 
