@@ -73,15 +73,19 @@ wallet just connected.
 URL `API_URL`, Bearer token passed **explicitly** (callers read `token` from `useAuthStore`);
 the header is simply omitted when there is no token.
 
-`services/escrowMigration.ts` is a migration wrapper with per-operation flags:
+`services/escrowMigration.ts` is a migration wrapper with per-operation flags
+configured by `NEXT_PUBLIC_ESCROW_MIGRATION_*_USE_NEST`. See
+`docs/escrow-migration.md` for the full list, defaults, and telemetry schema:
 
-- **Reads** (`getEscrowsBySigner`, `getEscrowsByRole`) → backend, **token optional**. The
-  backend exposes them as `@Public()`, so a freshly connected wallet lists its agreements
-  with no signature. There is **no** direct-Trustless-Work fallback on these: a failure
-  fails closed.
-- **Writes** (create, fund, approve, release, dispute, sendTransaction) → flags are still
+- **Reads** (`getEscrowsBySigner`, `getEscrowsByRole`) → backend by default, **token
+  optional**. The backend exposes them as `@Public()`, so a freshly connected wallet
+  lists its agreements with no signature. Setting a read flag to `false` explicitly
+  selects the direct Trustless Work path; failures never auto-fallback between paths.
+- **Writes** (create, fund, approve, changeMilestoneStatus, release, dispute,
+  sendTransaction) → default to
   `false`, so they call `services/trustlessworkService.ts`, which hits
-  `dev.api.trustlesswork.com` **straight from the browser**.
+  `dev.api.trustlesswork.com` **straight from the browser**. Enable each Nest path
+  independently during rollout.
 
 > ⚠️ `services/trustlessworkService.ts` carries a **hardcoded Trustless Work API key** as a
 > fallback for `NEXT_PUBLIC_TRUSTLESSWORK_API_KEY`. It is committed to a public repo and
