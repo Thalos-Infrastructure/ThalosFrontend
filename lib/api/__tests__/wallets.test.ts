@@ -1,18 +1,19 @@
-import { describe, it, expect, vi, afterEach } from "vitest"
+import { afterEach, describe, expect, it, vi } from "vitest"
 
 vi.mock("@/lib/config", () => ({ API_URL: "http://localhost:3001/v1" }))
 
 import {
   getLinkedWallets,
-  getWalletsWithBalances,
-  getWalletsWithAgreements,
   getPrimaryWallet,
   getWalletBalance,
-  linkWallet,
+  getWalletsWithAgreements,
+  getWalletsWithBalances,
   getWalletVerificationChallenge,
-  updateWallet,
+  linkWallet,
   unlinkWallet,
-  type LinkedWallet,
+  updateWallet,
+  walletVerificationMessageToSign,
+  type UserWallet,
   type WalletWithBalance,
 } from "../wallets"
 
@@ -22,140 +23,223 @@ function mockFetch(body: unknown, status = 200) {
   )
 }
 
-const WALLET: LinkedWallet = {
+const WALLET: UserWallet = {
   id: "w1",
+  user_id: "u1",
   wallet_address: "GABC...",
   wallet_type: "freighter",
   label: "main",
   is_primary: true,
   is_verified: true,
-  linked_at: "2025-01-01T00:00:00Z",
+  verified_at: "2025-01-01T00:00:00Z",
+  created_at: "2025-01-01T00:00:00Z",
+  updated_at: "2025-01-01T00:00:00Z",
   auth_provider: "freighter",
   c_address: null,
 }
 
+const WALLET_WITH_BALANCE: WalletWithBalance = {
+  ...WALLET,
+  balance: { xlm: "10.5", usdc: "100" },
+  agreements_count: 3,
+}
+
+const AGREEMENT_SUMMARY = {
+  wallet_address: WALLET.wallet_address,
+  wallet_type: WALLET.wallet_type,
+  label: WALLET.label,
+  agreements: [{
+    id: "a1",
+    title: "Deal",
+    status: "active",
+    amount: "500",
+    role: "buyer",
+    created_at: "2025-01-02T00:00:00Z",
+  }],
+}
+
 afterEach(() => vi.restoreAllMocks())
 
-describe("wallets contract", () => {
-  describe("getLinkedWallets", () => {
-    it("parses an array of wallets", async () => {
-      mockFetch([WALLET])
-      const res = await getLinkedWallets("tok")
-      expect(res.success).toBe(true)
-      expect(res.data).toHaveLength(1)
-      expect(res.data![0].wallet_type).toBe("freighter")
-      expect(res.data![0].wallet_address).toBe("GABC...")
+describe("Nest wallet response normalization", () => {
+  describe("wallet lists", () => {
+    it.each([
+      { shape: "bare array", body: [WALLET] },
+      { shape: "{ wallets } envelope", body: { wallets: [WALLET], error: null } },
+    ])("normalizes GET /wallets from a $shape", async ({ body }) => {
+      mockFetch(body)
+
+      const result = await getLinkedWallets("token")
+
+      expect(result).toEqual({ success: true, data: [WALLET] })
     })
 
-    it("drift test: missing required field causes undefined", async () => {
-      mockFetch([{ id: "w1" }])
-      const res = await getLinkedWallets("tok")
-      expect(res.success).toBe(true)
-      expect(res.data![0].wallet_address).toBeUndefined()
-    })
-  })
+    it.each([
+      { shape: "bare array", body: [WALLET_WITH_BALANCE] },
+      {
+        shape: "{ wallets } envelope",
+        body: { wallets: [WALLET_WITH_BALANCE], error: null },
+      },
+    ])("normalizes GET /wallets/with-balances from a $shape", async ({ body }) => {
+      mockFetch(body)
 
-  describe("getWalletsWithBalances", () => {
-    it("parses wallets with balance envelope", async () => {
-      const w: WalletWithBalance = { ...WALLET, balance: { xlm: "10.5", usdc: "100" }, agreements_count: 3 }
-      mockFetch([w])
-      const res = await getWalletsWithBalances("tok")
-      expect(res.success).toBe(true)
-      expect(res.data![0].balance.xlm).toBe("10.5")
-      expect(res.data![0].balance.usdc).toBe("100")
-      expect(res.data![0].agreements_count).toBe(3)
-    })
-  })
+      const result = await getWalletsWithBalances("token")
 
-  describe("getWalletsWithAgreements", () => {
-    it("unwraps { wallets: [...] } envelope", async () => {
-      mockFetch({
-        wallets: [
-          {
-            ...WALLET,
-            agreements_count: 1,
-            agreements: [{ id: "a1", title: "Deal", status: "active", amount: "500", role: "buyer" }],
-          },
-        ],
+      expect(result.success).toBe(true)
+      expect(result.data).toEqual([WALLET_WITH_BALANCE])
+      expect(result.data?.[0].balance).toEqual({ xlm: "10.5", usdc: "100" })
+    })
+
+    it.each([
+      { shape: "bare array", body: [AGREEMENT_SUMMARY] },
+      {
+        shape: "{ wallets } envelope",
+        body: { wallets: [AGREEMENT_SUMMARY], error: null },
+      },
+    ])("normalizes GET /wallets/agreements from a $shape", async ({ body }) => {
+      mockFetch(body)
+
+      const result = await getWalletsWithAgreements("token")
+
+      expect(result.success).toBe(true)
+      expect(result.data).toEqual([{
+        ...AGREEMENT_SUMMARY,
+        agreements_count: 1,
+      }])
+    })
+
+    it("turns an embedded backend error into a failed API response", async () => {
+      mockFetch({ wallets: [], error: "wallet query failed" })
+
+      await expect(getLinkedWallets("token")).resolves.toEqual({
+        success: false,
+        error: "wallet query failed",
       })
-      const res = await getWalletsWithAgreements("tok")
-      expect(res.success).toBe(true)
-      expect(res.data!).toHaveLength(1)
-      expect(res.data![0].agreements).toHaveLength(1)
-      expect(res.data![0].agreements[0].role).toBe("buyer")
     })
 
-    it("handles flat array response", async () => {
-      mockFetch([{ ...WALLET, agreements_count: 0, agreements: [] }])
-      const res = await getWalletsWithAgreements("tok")
-      expect(res.success).toBe(true)
-      expect(res.data!).toHaveLength(1)
-      expect(res.data![0].agreements).toEqual([])
-    })
+    it("rejects malformed wallet rows instead of leaking undefined fields", async () => {
+      mockFetch({ wallets: [{ id: "w1" }], error: null })
 
-    it("falls back to empty array on missing envelope", async () => {
-      mockFetch({})
-      const res = await getWalletsWithAgreements("tok")
-      expect(res.success).toBe(true)
-      expect(res.data!).toEqual([])
+      await expect(getLinkedWallets("token")).resolves.toEqual({
+        success: false,
+        error: "Invalid wallet list response",
+      })
     })
   })
 
-  describe("getPrimaryWallet", () => {
-    it("parses a single wallet object", async () => {
-      mockFetch(WALLET)
-      const res = await getPrimaryWallet("tok")
-      expect(res.success).toBe(true)
-      expect(res.data!.is_primary).toBe(true)
+  describe("single-resource envelopes", () => {
+    it("unwraps GET /wallets/primary from { wallet }", async () => {
+      mockFetch({ wallet: WALLET })
+
+      await expect(getPrimaryWallet("token")).resolves.toEqual({
+        success: true,
+        data: WALLET,
+      })
+    })
+
+    it("preserves a null primary wallet", async () => {
+      mockFetch({ wallet: null })
+
+      await expect(getPrimaryWallet("token")).resolves.toEqual({
+        success: true,
+        data: null,
+      })
+    })
+
+    it.each([
+      { shape: "bare balance", body: { xlm: "42.0", usdc: "7.5" } },
+      {
+        shape: "{ balance } envelope",
+        body: { balance: { xlm: "42.0", usdc: "7.5" } },
+      },
+    ])("normalizes GET /wallets/:address/balance from a $shape", async ({ body }) => {
+      mockFetch(body)
+
+      await expect(getWalletBalance("GABC...", "token")).resolves.toEqual({
+        success: true,
+        data: { xlm: "42.0", usdc: "7.5" },
+      })
+    })
+
+    it("unwraps POST /wallets from { wallet, error }", async () => {
+      mockFetch({ wallet: WALLET, error: null })
+
+      await expect(linkWallet({
+        wallet_address: WALLET.wallet_address,
+        wallet_type: "freighter",
+        signed_message: "challenge",
+        signature: "signature",
+      }, "token")).resolves.toEqual({ success: true, data: WALLET })
+    })
+
+    it("unwraps PATCH /wallets/:id from { wallet, error }", async () => {
+      const updated = { ...WALLET, label: "updated" }
+      mockFetch({ wallet: updated, error: null })
+
+      await expect(updateWallet("w1", { label: "updated" }, "token"))
+        .resolves.toEqual({ success: true, data: updated })
+    })
+
+    it("normalizes a successful DELETE /wallets/:id payload", async () => {
+      mockFetch({ success: true, error: null })
+
+      await expect(unlinkWallet("w1", "token")).resolves.toEqual({
+        success: true,
+        data: { success: true },
+      })
     })
   })
 
-  describe("getWalletBalance", () => {
-    it("parses { xlm, usdc } balance", async () => {
-      mockFetch({ xlm: "42.0", usdc: "0" })
-      const res = await getWalletBalance("GABC...", "tok")
-      expect(res.success).toBe(true)
-      expect(res.data!.xlm).toBe("42.0")
-      expect(res.data!.usdc).toBe("0")
-    })
-  })
+  describe("verification challenge", () => {
+    it("parses the documented { challenge } payload", async () => {
+      mockFetch({ challenge: "challenge-text" })
 
-  describe("linkWallet", () => {
-    it("parses linked wallet response", async () => {
-      mockFetch(WALLET)
-      const res = await linkWallet(
-        { wallet_address: "GABC...", wallet_type: "freighter" },
-        "tok",
-      )
-      expect(res.success).toBe(true)
-      expect(res.data!.wallet_type).toBe("freighter")
+      await expect(getWalletVerificationChallenge("GABC...", "token"))
+        .resolves.toEqual({
+          success: true,
+          data: { challenge: "challenge-text" },
+        })
     })
-  })
 
-  describe("getWalletVerificationChallenge", () => {
-    it("parses { challenge } envelope", async () => {
-      mockFetch({ challenge: "abc-123" })
-      const res = await getWalletVerificationChallenge("GABC...", "tok")
-      expect(res.success).toBe(true)
-      expect(res.data!.challenge).toBe("abc-123")
+    it("maps the current Nest { message, expires_at } payload to the canonical shape", async () => {
+      mockFetch({
+        message: "signed-message",
+        expires_at: "2026-08-24T12:05:00.000Z",
+      })
+
+      await expect(getWalletVerificationChallenge("GABC...", "token"))
+        .resolves.toEqual({
+          success: true,
+          data: {
+            challenge: "signed-message",
+            expires_at: "2026-08-24T12:05:00.000Z",
+          },
+        })
     })
-  })
 
-  describe("updateWallet", () => {
-    it("parses updated wallet", async () => {
-      mockFetch({ ...WALLET, label: "updated" })
-      const res = await updateWallet("w1", { label: "updated" }, "tok")
-      expect(res.success).toBe(true)
-      expect(res.data!.label).toBe("updated")
+    it("prepares the exact Nest challenge body for SEP-53 signing", () => {
+      const challenge = [
+        "Stellar Signed Message:",
+        "Thalos Wallet Ownership Proof",
+        "",
+        "I authorize linking this wallet to my Thalos account.",
+        "Wallet: GABC...",
+        "Expires At: 2026-08-24T12:05:00.000Z",
+        "",
+        "Proof: payload.signature",
+      ].join("\n")
+
+      expect(walletVerificationMessageToSign(challenge)).toBe([
+        "Thalos Wallet Ownership Proof",
+        "",
+        "I authorize linking this wallet to my Thalos account.",
+        "Wallet: GABC...",
+        "Expires At: 2026-08-24T12:05:00.000Z",
+      ].join("\n"))
     })
-  })
 
-  describe("unlinkWallet", () => {
-    it("parses { success: boolean }", async () => {
-      mockFetch({ success: true })
-      const res = await unlinkWallet("w1", "tok")
-      expect(res.success).toBe(true)
-      expect(res.data!.success).toBe(true)
+    it("leaves an unframed challenge body unchanged", () => {
+      expect(walletVerificationMessageToSign("challenge-text"))
+        .toBe("challenge-text")
     })
   })
 })
