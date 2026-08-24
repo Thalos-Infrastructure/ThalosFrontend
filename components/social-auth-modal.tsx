@@ -4,7 +4,8 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/lib/i18n";
 import { useRouter } from "next/navigation";
-import { AcceslyAuthModal } from "@/components/accesly-auth-modal";
+// Commented with the render below while Accesly is unmounted (see layout.tsx).
+// import { AcceslyAuthModal } from "@/components/accesly-auth-modal";
 import { PollarLoginOptions } from "@/components/auth/pollar-login-options";
 import { dashboardPathFor } from "@/lib/dashboard-path";
 import Image from "next/image";
@@ -152,8 +153,11 @@ export function SocialAuthModal({ open, onClose }: SocialAuthModalProps) {
         </div>
       </div>
 
-      {/* Accesly passkey login (#109) */}
+      {/* Accesly passkey login (#109). Unmounted along with the layout's
+          ThalosAcceslyProvider: it calls useAccesly(), which throws without
+          the provider even while closed. Uncomment together with the provider.
       <AcceslyAuthModal open={showAccesly} onClose={() => setShowAccesly(false)} />
+      */}
     </div>
   );
 }
