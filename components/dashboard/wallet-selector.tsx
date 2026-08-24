@@ -6,12 +6,29 @@ import { useAuthStore } from "@/lib/auth-store"
 import { useStellarWallet } from "@/lib/stellar-wallet"
 import { useCurrentAddress } from "@/lib/use-current-address"
 import { getWalletsWithBalances, type WalletWithBalance } from "@/lib/api/wallets"
-import { API_URL } from "@/lib/config"
 
 interface WalletSelectorProps {
   selectedWallet: string | null
   onWalletChange: (wallet: string | null) => void
   className?: string
+}
+
+function connectedWalletFallback(address: string): WalletWithBalance {
+  const timestamp = new Date().toISOString()
+  return {
+    id: "connected",
+    user_id: "",
+    wallet_address: address,
+    wallet_type: "other",
+    label: "Connected Wallet",
+    is_primary: true,
+    is_verified: false,
+    verified_at: null,
+    created_at: timestamp,
+    updated_at: timestamp,
+    balance: { xlm: "0", usdc: "0" },
+    agreements_count: 0,
+  }
 }
 
 export function WalletSelector({ selectedWallet, onWalletChange, className }: WalletSelectorProps) {
@@ -34,17 +51,7 @@ export function WalletSelector({ selectedWallet, onWalletChange, className }: Wa
     if (!token) {
       if (currentAddress) {
         // Create a mock wallet entry for the connected wallet
-        setWallets([{
-          id: "connected",
-          user_id: "",
-          wallet_address: currentAddress,
-          wallet_type: "external" as const,
-          label: "Connected Wallet",
-          is_primary: true,
-          created_at: new Date().toISOString(),
-          balance: { xlm: "0", usdc: "0" },
-          agreements_count: 0,
-        }])
+        setWallets([connectedWalletFallback(currentAddress)])
       }
       setIsLoading(false)
       return
@@ -56,34 +63,14 @@ export function WalletSelector({ selectedWallet, onWalletChange, className }: Wa
         setWallets(result.data)
       } else if (currentAddress) {
         // Fallback to connected wallet if no wallets from API
-        setWallets([{
-          id: "connected",
-          user_id: "",
-          wallet_address: currentAddress,
-          wallet_type: "external" as const,
-          label: "Connected Wallet",
-          is_primary: true,
-          created_at: new Date().toISOString(),
-          balance: { xlm: "0", usdc: "0" },
-          agreements_count: 0,
-        }])
+        setWallets([connectedWalletFallback(currentAddress)])
       }
     } catch (err) {
       console.error("Failed to load wallets:", err)
       setError("Could not load wallets")
       // Fallback to connected wallet on error
       if (currentAddress) {
-        setWallets([{
-          id: "connected",
-          user_id: "",
-          wallet_address: currentAddress,
-          wallet_type: "external" as const,
-          label: "Connected Wallet",
-          is_primary: true,
-          created_at: new Date().toISOString(),
-          balance: { xlm: "0", usdc: "0" },
-          agreements_count: 0,
-        }])
+        setWallets([connectedWalletFallback(currentAddress)])
       }
     } finally {
       setIsLoading(false)
@@ -95,30 +82,37 @@ export function WalletSelector({ selectedWallet, onWalletChange, className }: Wa
     return `${addr.slice(0, 6)}...${addr.slice(-4)}`
   }
 
+  const formatBalance = (value: string) => {
+    const amount = Number(value)
+    return Number.isFinite(amount)
+      ? amount.toLocaleString(undefined, { maximumFractionDigits: 2 })
+      : "0"
+  }
+
   // Don't show loading forever - show nothing if taking too long
   if (isLoading) {
     return null
   }
 
-  if (wallets.length <= 1) {
-    return null // Don't show selector if only one wallet
-  }
+  if (wallets.length === 0) return null
 
   return (
     <div className={cn("flex items-center gap-2 flex-wrap", className)}>
       <span className="text-xs text-muted-foreground mr-1">Filter by wallet:</span>
       
-      <button
-        onClick={() => onWalletChange(null)}
-        className={cn(
-          "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all",
-          selectedWallet === null
-            ? "bg-[#f0b400] text-black"
-            : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
-        )}
-      >
-        All Wallets
-      </button>
+      {wallets.length > 1 && (
+        <button
+          onClick={() => onWalletChange(null)}
+          className={cn(
+            "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all",
+            selectedWallet === null
+              ? "bg-[#f0b400] text-black"
+              : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
+          )}
+        >
+          All Wallets
+        </button>
+      )}
 
       {wallets.map((wallet) => {
         const isSelected = selectedWallet === wallet.wallet_address
@@ -141,6 +135,9 @@ export function WalletSelector({ selectedWallet, onWalletChange, className }: Wa
               </svg>
             )}
             <span className="font-mono">{truncateAddress(wallet.wallet_address)}</span>
+            <span className="text-[10px] opacity-70">
+              {formatBalance(wallet.balance.xlm)} XLM · {formatBalance(wallet.balance.usdc)} USDC
+            </span>
             {isConnected && (
               <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
             )}
