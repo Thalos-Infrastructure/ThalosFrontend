@@ -170,6 +170,13 @@ Thalos uses the [Stellar Wallets Kit](https://github.com/nicofunke/stellar-walle
 
 Your connected address is used for all escrow operations: funding agreements as a payer, or receiving released funds as a payee.
 
+### Wallet data stores
+
+Wallet UI uses the Nest-backed `user_wallets` store through `lib/api/wallets.ts`.
+The Next BFF routes under `app/api/wallets/*` use a separate legacy
+`linked_wallets` table; the stores are not interchangeable. See
+[`docs/wallet-stores.md`](docs/wallet-stores.md) for ownership and current consumers.
+
 ## How Escrows Work
 
 Thalos orchestrates escrow agreements through the [Trustless Work](https://docs.trustlesswork.com/) protocol on Stellar. The platform handles the complexity; you just define the terms.
