@@ -5,7 +5,11 @@ import { cn } from "@/lib/utils"
 import { useAuthStore } from "@/lib/auth-store"
 import { useStellarWallet } from "@/lib/stellar-wallet"
 import { useCurrentAddress } from "@/lib/use-current-address"
-import { getWalletsWithAgreements, type WalletWithAgreements } from "@/lib/api/wallets"
+import {
+  getWalletsWithBalances,
+  type WalletWithAgreements,
+  type WalletWithBalance,
+} from "@/lib/api/wallets"
 
 interface WalletSelectorProps {
   selectedWallet: string | null
@@ -14,33 +18,52 @@ interface WalletSelectorProps {
   className?: string
 }
 
-function connectedWalletFallback(address: string): WalletWithAgreements {
+type WalletSelectorWallet = WalletWithAgreements | WalletWithBalance
+
+function connectedWalletFallback(address: string): WalletWithBalance {
+  const timestamp = new Date().toISOString()
   return {
+    id: "connected",
+    user_id: "",
     wallet_address: address,
     wallet_type: "other",
     label: "Connected Wallet",
     is_primary: true,
     is_verified: false,
-    agreements: [],
+    verified_at: null,
+    created_at: timestamp,
+    updated_at: timestamp,
+    balance: { xlm: "0", usdc: "0" },
     agreements_count: 0,
   }
 }
 
-export function WalletSelector({ selectedWallet, onWalletChange, walletsData: propsWalletsData, className }: WalletSelectorProps) {
+function hasBalance(wallet: WalletSelectorWallet): wallet is WalletWithBalance {
+  return "balance" in wallet
+}
+
+export function WalletSelector({
+  selectedWallet,
+  onWalletChange,
+  walletsData: propsWalletsData,
+  className,
+}: WalletSelectorProps) {
   const { token } = useAuthStore()
   const { address: connectedWallet } = useStellarWallet()
   const currentAddress = useCurrentAddress()
-  const [internalWallets, setInternalWallets] = useState<WalletWithAgreements[]>([])
+  const [internalWallets, setInternalWallets] = useState<WalletWithBalance[]>([])
   const [isLoading, setIsLoading] = useState(false)
 
-  const wallets = propsWalletsData ?? internalWallets
+  const wallets: WalletSelectorWallet[] = propsWalletsData ?? internalWallets
 
   useEffect(() => {
     if (propsWalletsData !== undefined) return
 
     let isMounted = true
+
     async function load() {
       setIsLoading(true)
+
       if (!token) {
         if (currentAddress && isMounted) {
           setInternalWallets([connectedWalletFallback(currentAddress)])
@@ -50,7 +73,7 @@ export function WalletSelector({ selectedWallet, onWalletChange, walletsData: pr
       }
 
       try {
-        const result = await getWalletsWithAgreements(token)
+        const result = await getWalletsWithBalances(token)
         if (isMounted && result.success && result.data && result.data.length > 0) {
           setInternalWallets(result.data)
         } else if (isMounted && currentAddress) {
@@ -67,6 +90,7 @@ export function WalletSelector({ selectedWallet, onWalletChange, walletsData: pr
     }
 
     load()
+
     return () => {
       isMounted = false
     }
@@ -77,6 +101,13 @@ export function WalletSelector({ selectedWallet, onWalletChange, walletsData: pr
     return `${addr.slice(0, 6)}...${addr.slice(-4)}`
   }
 
+  const formatBalance = (value: string) => {
+    const amount = Number(value)
+    return Number.isFinite(amount)
+      ? amount.toLocaleString(undefined, { maximumFractionDigits: 2 })
+      : "0"
+  }
+
   if (isLoading && !wallets.length) {
     return null
   }
@@ -84,9 +115,11 @@ export function WalletSelector({ selectedWallet, onWalletChange, walletsData: pr
   if (wallets.length === 0) return null
 
   const totalAgreementsCount = wallets.reduce(
-    (sum, w) => sum + (w.agreements_count ?? w.agreements?.length ?? 0),
-    0
+    (sum, wallet) => sum + wallet.agreements_count,
+    0,
   )
+  const isAllSelected =
+    selectedWallet === null || selectedWallet === "all" || selectedWallet === "All"
 
   return (
     <div className={cn("flex items-center gap-2 flex-wrap", className)}>
@@ -98,18 +131,18 @@ export function WalletSelector({ selectedWallet, onWalletChange, walletsData: pr
           onClick={() => onWalletChange(null)}
           className={cn(
             "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all",
-            selectedWallet === null || selectedWallet === "all" || selectedWallet === "All"
+            isAllSelected
               ? "bg-[#f0b400] text-black"
-              : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
+              : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground",
           )}
         >
           <span>All Wallets</span>
           <span
             className={cn(
               "rounded-full px-1.5 py-0.5 text-[10px] font-bold",
-              selectedWallet === null || selectedWallet === "all" || selectedWallet === "All"
+              isAllSelected
                 ? "bg-black/20 text-black"
-                : "bg-white/10 text-white/70"
+                : "bg-white/10 text-white/70",
             )}
           >
             {totalAgreementsCount}
@@ -120,7 +153,6 @@ export function WalletSelector({ selectedWallet, onWalletChange, walletsData: pr
       {wallets.map((wallet) => {
         const isSelected = selectedWallet === wallet.wallet_address
         const isConnected = connectedWallet === wallet.wallet_address
-        const count = wallet.agreements_count ?? wallet.agreements?.length ?? 0
 
         return (
           <button
@@ -131,7 +163,7 @@ export function WalletSelector({ selectedWallet, onWalletChange, walletsData: pr
               "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all",
               isSelected
                 ? "bg-[#f0b400] text-black"
-                : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
+                : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground",
             )}
           >
             {wallet.is_primary && (
@@ -140,16 +172,22 @@ export function WalletSelector({ selectedWallet, onWalletChange, walletsData: pr
               </svg>
             )}
             <span className="font-mono">{truncateAddress(wallet.wallet_address)}</span>
-            <span
-              className={cn(
-                "rounded-full px-1.5 py-0.5 text-[10px] font-bold",
-                isSelected
-                  ? "bg-black/20 text-black"
-                  : "bg-white/10 text-white/70"
-              )}
-            >
-              {count}
-            </span>
+            {hasBalance(wallet) ? (
+              <span className="text-[10px] opacity-70">
+                {formatBalance(wallet.balance.xlm)} XLM · {formatBalance(wallet.balance.usdc)} USDC
+              </span>
+            ) : (
+              <span
+                className={cn(
+                  "rounded-full px-1.5 py-0.5 text-[10px] font-bold",
+                  isSelected
+                    ? "bg-black/20 text-black"
+                    : "bg-white/10 text-white/70",
+                )}
+              >
+                {wallet.agreements_count}
+              </span>
+            )}
             {isConnected && (
               <span className="h-1.5 w-1.5 rounded-full bg-green-500" title="Connected" />
             )}
