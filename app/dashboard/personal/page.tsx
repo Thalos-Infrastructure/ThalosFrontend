@@ -34,7 +34,10 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area,
 } from "recharts"
 import { createAgreement, sendTransaction, AgreementPayload, approveMilestone } from "@/services/trustlessworkService"
-import { STELLAR_EXPLORER_BASE_URL, TRUSTLINE_USDC } from "@/lib/config";
+import { STELLAR_EXPLORER_BASE_URL, TRUSTLINE_USDC, SHOW_MOCKED_AGREEMENTS } from "@/lib/config";
+import { getKycStatus, startKycSession } from "@/lib/api/kyc";
+import { isKycVerified, canStartKycSession, buildCreateKycSessionDto, nextKycStatusAfterSessionStart, type KycVerificationStatus } from "@/lib/kyc";
+import { updateProfile } from "@/lib/actions/profile";
 
 /* ── Use-Case Presets ── */
 const useCases = [
@@ -196,6 +199,7 @@ const sidebarItems = [
   { id: "agreements", label: "Agreements", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> },
   { id: "wallets", label: "My Wallet", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg> },
   { id: "analytics", label: "Analytics", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg> },
+  { id: "verification", label: "Identity Verification", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg> },
 ]
 
 /* ── "More" section items ── */
@@ -340,6 +344,13 @@ export default function PersonalDashboardPage() {
   const [userProfile, setUserProfile] = useState<Profile | null>(null);
   const [showEditProfile, setShowEditProfile] = useState(false);
 
+  // Person KYC State
+  const [kycFullName, setKycFullName] = useState("");
+  const [kycCountry, setKycCountry] = useState("");
+  const [kycSubmitting, setKycSubmitting] = useState(false);
+  const [kycError, setKycError] = useState<string | null>(null);
+  const [activeKycStatus, setActiveKycStatus] = useState<KycVerificationStatus | null>(null);
+
   // Fetch user profile
   useEffect(() => {
     async function fetchProfile() {
@@ -350,6 +361,73 @@ export default function PersonalDashboardPage() {
     }
     fetchProfile();
   }, [walletAddress]);
+
+  useEffect(() => {
+    setKycFullName(userProfile?.display_name ?? "");
+    setKycCountry(userProfile?.country ?? "");
+  }, [userProfile]);
+
+  const profileKycStatus = (userProfile as any)?.kyc_status as KycVerificationStatus ?? "not_started";
+  const kycStatus = activeKycStatus ?? profileKycStatus;
+  const kycVerified = isKycVerified(kycStatus);
+  const userId = userProfile?.id ?? walletAddress;
+
+  const refreshKycStatus = useCallback(async (uid: string) => {
+    if (!walletAddress || !uid) return;
+    const statusResult = await getKycStatus(uid, token);
+    if (!statusResult.success || !statusResult.data) return;
+    const rawStatus = statusResult.data.status;
+    const nextStatus: KycVerificationStatus = rawStatus === "pending" ? "in_review" : rawStatus;
+    setActiveKycStatus(nextStatus);
+    const updated = await updateProfile(walletAddress, { kyc_status: nextStatus });
+    if (!updated.error && updated.profile) setUserProfile(updated.profile);
+  }, [walletAddress, token]);
+
+  useEffect(() => {
+    if (!userId) return;
+    // Initial fetch of Kyc status from backend API response
+    void refreshKycStatus(userId);
+  }, [userId, refreshKycStatus]);
+
+  useEffect(() => {
+    if (!userId || kycStatus === "verified") return;
+    const interval = window.setInterval(() => {
+      void refreshKycStatus(userId);
+    }, 15000);
+    return () => window.clearInterval(interval);
+  }, [userId, kycStatus, refreshKycStatus]);
+
+  const handleStartKycSession = async () => {
+    if (!walletAddress) return;
+    setKycSubmitting(true);
+    setKycError(null);
+    try {
+      const saved = await updateProfile(walletAddress, {
+        display_name: kycFullName.trim(),
+        country: kycCountry.trim(),
+      });
+      if (saved.error) throw new Error(saved.error);
+
+      const kycFields = { full_name: kycFullName, country: kycCountry, kyc_status: kycStatus };
+      const dto = buildCreateKycSessionDto(walletAddress, userId, kycFields);
+      const session = await startKycSession(dto, token);
+      if (!session.success || !session.data) throw new Error(session.error ?? "Failed to start KYC session");
+
+      const nextStatus = session.data.status === "pending" ? "in_review" : session.data.status || nextKycStatusAfterSessionStart();
+      setActiveKycStatus(nextStatus);
+      const statusUpdate = await updateProfile(walletAddress, {
+        kyc_status: nextStatus,
+        kyc_session_id: session.data.id ?? null,
+      });
+      if (statusUpdate.error) throw new Error(statusUpdate.error);
+      setUserProfile(statusUpdate.profile ?? saved.profile);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to start KYC session";
+      setKycError(message);
+    } finally {
+      setKycSubmitting(false);
+    }
+  };
 
   /* ── Agreements filter/sort state ── */
   const [searchQuery, setSearchQuery] = useState("")
@@ -1007,7 +1085,84 @@ const res = await getEscrowsByRole({ role: "approver", address: walletAddress },
             </div>
           )}
           
-          {/* ═══��══ ANALYTICS ══════ */}
+          {/* ══════ VERIFICATION (Person KYC) ══════ */}
+          {activeSection === "verification" && (
+            <div className="mx-auto max-w-4xl animate-in fade-in slide-in-from-bottom-2 duration-300">
+              <h1 className="mb-2 text-2xl font-semibold text-white">Identity Verification (Person KYC)</h1>
+              <p className="mb-6 text-sm text-white/50">
+                Complete individual identity verification to access unrestricted personal escrow transactions.
+              </p>
+
+              <div className="rounded-2xl border border-white/10 bg-[#0c1220] p-6 shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
+                <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-6">
+                  <div>
+                    <p className="text-xs uppercase font-bold tracking-wider text-white/40">Current Status</p>
+                    <p className="text-lg font-bold text-white capitalize mt-0.5">{kycStatus.replace("_", " ")}</p>
+                  </div>
+                  <span className={cn(
+                    "rounded-full px-3 py-1 text-xs font-semibold border",
+                    kycStatus === "verified" ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" :
+                    kycStatus === "rejected" ? "bg-red-500/10 text-red-400 border-red-500/20" :
+                    kycStatus === "in_review" || kycStatus === "pending" ? "bg-[#f0b400]/10 text-[#f0b400] border-[#f0b400]/20" :
+                    "bg-white/10 text-white/60 border-white/15"
+                  )}>
+                    {kycStatus === "verified" ? "Verified" : kycStatus === "rejected" ? "Rejected" : kycStatus === "in_review" || kycStatus === "pending" ? "In Review" : "Not Started"}
+                  </span>
+                </div>
+
+                {!kycVerified ? (
+                  <div className="flex flex-col gap-4">
+                    <FormInput
+                      label="Full Name"
+                      value={kycFullName}
+                      onChange={setKycFullName}
+                      placeholder="Jane Doe"
+                      required
+                    />
+                    <FormInput
+                      label="Country of Residence"
+                      value={kycCountry}
+                      onChange={setKycCountry}
+                      placeholder="United States"
+                      required
+                    />
+
+                    {kycError && (
+                      <div className="rounded-lg bg-red-500/10 border border-red-500/20 p-3 text-xs text-red-400">
+                        {kycError}
+                      </div>
+                    )}
+
+                    <div className="pt-2 flex items-center gap-3">
+                      <Button
+                        onClick={handleStartKycSession}
+                        disabled={kycSubmitting || !canStartKycSession({ full_name: kycFullName, country: kycCountry, kyc_status: kycStatus })}
+                        className="rounded-full bg-[#f0b400] text-background font-semibold hover:bg-[#d4a000] disabled:opacity-40"
+                      >
+                        {kycSubmitting ? "Starting Session..." : kycStatus === "in_review" || kycStatus === "pending" ? "Resubmit KYC Session" : "Start KYC Session"}
+                      </Button>
+                      {userId && (
+                        <Button
+                          variant="outline"
+                          onClick={() => userId && refreshKycStatus(userId)}
+                          className="rounded-full border-white/15 bg-white/5 text-xs text-white/70 hover:bg-white/10 hover:text-white"
+                        >
+                          Check Status
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 p-4 text-emerald-400 text-sm font-medium">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg>
+                    <span>Your personal identity (KYC) has been successfully verified.</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ══════ ANALYTICS ══════ */}
           {activeSection === "analytics" && (
             <div className="mx-auto max-w-5xl animate-in fade-in slide-in-from-bottom-2 duration-300">
               <h1 className="mb-6 text-2xl font-semibold text-white">{t("dashPage.analytics")}</h1>

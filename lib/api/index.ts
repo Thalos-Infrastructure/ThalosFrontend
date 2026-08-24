@@ -6,6 +6,7 @@ export * from "./disputes"
 export * from "./notifications"
 export * from "./escrow"
 export * from "./kyb"
+export * from "./kyc"
 export * from "./agreements"
 
 
