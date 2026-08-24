@@ -53,6 +53,14 @@ export const HORIZON_URL = stellarNetworkConfig.horizonUrl;
 export const STELLAR_EXPLORER_BASE_URL =
   process.env.NEXT_PUBLIC_STELLAR_EXPLORER_URL || stellarNetworkConfig.explorerBaseUrl;
 
+// El base de arriba enlaza contratos (escrows). Una wallet (G-address) vive en
+// `/account/` en stellar.expert; derivarlo del mismo base mantiene ambas URLs en
+// la misma red y respeta el override de NEXT_PUBLIC_STELLAR_EXPLORER_URL.
+export const STELLAR_EXPLORER_ACCOUNT_BASE_URL = STELLAR_EXPLORER_BASE_URL.replace(
+  /contract\/?$/,
+  "account/",
+);
+
 // Friendbot is used for testnet wallet activation (free, no funding required)
 
 // Pollar — social/email login with an auto-provisioned custodial wallet (#108).
