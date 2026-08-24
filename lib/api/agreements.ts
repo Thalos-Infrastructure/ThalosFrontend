@@ -426,9 +426,7 @@ export async function linkContractToAgreementApi(
       error: e instanceof Error ? e.message : "Failed to link contract",
     }
   }
-}
-
-/**
+}/**
  * Get agreement by ID with participants
  * Backend returns: { agreement, participants, error }
  */
@@ -439,8 +437,7 @@ export async function getAgreementByIdWithParticipants(
   try {
     const response = await apiRequest<unknown>(
       `/agreements/${agreementId}`,
-      { method: "GET" },
-      token
+      { method: "GET" }, token
     )
 
     if (!response.success) {
@@ -461,6 +458,98 @@ export async function getAgreementByIdWithParticipants(
     return {
       success: false,
       error: e instanceof Error ? e.message : "Failed to fetch agreement",
+    }
+  }
+}
+
+// ── Agreement Chat (messages via Nest + JWT) ──────────────────────────
+
+export interface AgreementMessage {
+  id: string
+  agreement_id: string
+  sender_wallet: string
+  message: string
+  created_at: string
+  read_at: string | null
+}
+
+/**
+ * Fetch messages for an agreement via Nest JWT endpoint.
+ * GET /v1/agreements/:agreementId/messages
+ */
+export async function getAgreementMessagesApi(
+  agreementId: string,
+  token?: string
+): Promise<ApiResponse<AgreementMessage[]>> {
+  try {
+    const response = await apiRequest<unknown>(
+      `/agreements/${agreementId}/messages`,
+      { method: "GET" },
+      token
+    )
+
+    if (!response.success) {
+      return { success: false, error: response.error }
+    }
+
+    const payload = response.data as Record<string, unknown>
+    const messages = (payload.messages as AgreementMessage[]) || []
+    const error = payload.error as string | undefined
+
+    if (error) {
+      return { success: false, error }
+    }
+
+    return { success: true, data: messages }
+  } catch (e) {
+    return {
+      success: false,
+      error: e instanceof Error ? e.message : "Failed to fetch messages",
+    }
+  }
+}
+
+/**
+ * Send a message in an agreement chat via Nest JWT endpoint.
+ * POST /v1/agreements/:agreementId/messages
+ */
+export async function sendAgreementMessageApi(
+  agreementId: string,
+  message: string,
+  senderWallet: string,
+  token?: string
+): Promise<ApiResponse<AgreementMessage>> {
+  try {
+    const response = await apiRequest<unknown>(
+      `/agreements/${agreementId}/messages`,
+      {
+        method: "POST",
+        body: JSON.stringify({ message: message.trim(), sender_wallet: senderWallet }),
+      },
+      token
+    )
+
+    if (!response.success) {
+      return { success: false, error: response.error }
+    }
+
+    const payload = response.data as Record<string, unknown>
+    const msg = payload.message as AgreementMessage | undefined
+    const error = payload.error as string | undefined
+
+    if (error) {
+      return { success: false, error }
+    }
+
+    if (!msg) {
+      return { success: false, error: "No message returned" }
+    }
+
+    return { success: true, data: msg }
+  } catch (e) {
+    return {
+      success: false,
+      error: e instanceof Error ? e.message : "Failed to send message",
     }
   }
 }

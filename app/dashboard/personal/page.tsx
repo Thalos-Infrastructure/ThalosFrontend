@@ -1742,9 +1742,9 @@ const res = await getEscrowsByRole({ role: "approver", address: walletAddress },
                               setError,
                               setSubmitted,
                               onStatus: setCreateTxStatus,
-                              onSuccess: () => {
+                              onSuccess: (agreementId?: string) => {
 const newAgr: Agreement = {
-  id: `AGR-${Date.now().toString(36).toUpperCase()}`,
+  id: agreementId || `AGR-${Date.now().toString(36).toUpperCase()}`,
   title: payload.title,
   status: "funded",
   type: payload.serviceType === "single-release" ? "Single Release" : "Multi Release",
@@ -1821,6 +1821,7 @@ const newAgr: Agreement = {
                 agreementId={showAgreementChat}
                 currentUserWallet={walletAddress || ""}
                 counterpartyWallet={agreements.find(a => a.id === showAgreementChat)?.receiver || ""}
+                token={token}
                 defaultOpen={true}
                 embedded={true}
               />
