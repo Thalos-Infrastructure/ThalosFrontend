@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, type ReactNode } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
@@ -11,13 +11,14 @@ import {
   getWalletsWithBalances,
   getWalletVerificationChallenge,
   linkWallet,
+  walletVerificationMessageToSign,
   updateWallet,
   unlinkWallet,
   type WalletWithBalance,
 } from "@/lib/api/wallets"
 import { Wallet } from "lucide-react"
 
-const walletTypeLabels: Record<string, { label: string; icon: JSX.Element }> = {
+const walletTypeLabels: Record<string, { label: string; icon: ReactNode }> = {
   custodial: {
     label: "Email Wallet",
     icon: (
@@ -104,12 +105,7 @@ export function LinkedWallets({ onWalletSelect, selectedWallet, showBalances = t
       const result = await getWalletsWithBalances(token)
 
       if (result.success && result.data) {
-        // The backend may return the array bare or wrapped in { wallets: [...] };
-        // never trust the shape — a non-array here crashed the whole profile page.
-        const raw: unknown = Array.isArray(result.data)
-          ? result.data
-          : (result.data as unknown as { wallets?: unknown }).wallets
-        setWallets(Array.isArray(raw) ? (raw as WalletWithBalance[]) : [])
+        setWallets(result.data)
       } else {
         setError(result.error || t("linkedWallets.loadError"))
         setWallets([])
@@ -160,9 +156,11 @@ export function LinkedWallets({ onWalletSelect, selectedWallet, showBalances = t
         return false
       }
 
-      // Step 2: Sign the challenge message with the connected wallet
-      const signature = await signMessage(challengeResult.data.challenge)
-      if (!signature) {
+      // Step 2: Nest's Proof line is server metadata, and SEP-53 wallets add
+      // the canonical prefix themselves. Sign only the user-visible body.
+      const challenge = challengeResult.data.challenge
+      const signed = await signMessage(walletVerificationMessageToSign(challenge))
+      if (!signed) {
         setError(t("linkedWallets.signatureCancelled"))
         return false
       }
@@ -172,8 +170,9 @@ export function LinkedWallets({ onWalletSelect, selectedWallet, showBalances = t
         {
           wallet_address: walletAddress,
           wallet_type: "freighter",
-          signed_message: challengeResult.data.challenge,
-          signature,
+          // Nest still needs the original envelope to validate its HMAC proof.
+          signed_message: challenge,
+          signature: signed.signedMessage,
         },
         token
       )
