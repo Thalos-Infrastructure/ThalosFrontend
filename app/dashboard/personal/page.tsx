@@ -36,7 +36,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area,
 } from "recharts"
 import { createAgreement, sendTransaction, AgreementPayload, approveMilestone } from "@/services/trustlessworkService"
-import { STELLAR_EXPLORER_BASE_URL, STELLAR_EXPLORER_ACCOUNT_BASE_URL, TRUSTLINE_USDC, SHOW_MOCKED_AGREEMENTS } from "@/lib/config";
+import { STELLAR_EXPLORER_BASE_URL, STELLAR_EXPLORER_ACCOUNT_BASE_URL, TRUSTLINE_USDC } from "@/lib/config";
 import { getWalletBalance } from "@/lib/api/wallets";
 import { getKycStatus, startKycSession } from "@/lib/api/kyc";
 import { isKycVerified, canStartKycSession, buildCreateKycSessionDto, nextKycStatusAfterSessionStart, type KycVerificationStatus } from "@/lib/kyc";
@@ -114,12 +114,7 @@ const wizardStepKeys = ["wizard.escrowType", "wizard.useCase", "wizard.agreement
 interface Milestone { description: string; amount: string; status: "pending" | "approved" | "released" }
 interface Agreement { id: string; title: string; status: string; type: "Single Release" | "Multi Release"; counterparty: string; amount: string; currency: string; date: string; releaseStrategy?: "per-milestone" | "all-at-once" | "upon-completion"; milestones: Milestone[]; receiver: string; role?: "buyer" | "seller" }
 
-const initialAgreements: Agreement[] = SHOW_MOCKED_AGREEMENTS ? [
-  { id: "AGR-001", title: "Website Redesign", status: "funded", type: "Single Release", counterparty: "G...FRE3", amount: "2,500", currency: "USDC", date: "2026-01-15", milestones: [{ description: "Full delivery", amount: "2,500", status: "pending" }], receiver: "GBXGQJWVLWOYHFLVTKWV5FGHA3PERSONAL02", role: "buyer" },
-  { id: "AGR-002", title: "Moving Service", status: "in_progress", type: "Multi Release", counterparty: "G...MOV7", amount: "1,800", currency: "USDC", date: "2026-01-20", releaseStrategy: "per-milestone", milestones: [{ description: "Packing & Loading", amount: "600", status: "released" }, { description: "Transport", amount: "600", status: "approved" }, { description: "Unloading & Setup", amount: "600", status: "pending" }], receiver: "GBXGQJWVLWOYHFLVTKWV5FGHA3MOV7", role: "buyer" },
-  { id: "AGR-003", title: "Online Course Bundle", status: "released", type: "Multi Release", counterparty: "G...EDU4", amount: "1,200", currency: "USDC", date: "2025-12-10", releaseStrategy: "upon-completion", milestones: [{ description: "Module 1 - Basics", amount: "400", status: "released" }, { description: "Module 2 - Advanced", amount: "400", status: "released" }, { description: "Final Assessment", amount: "400", status: "released" }], receiver: "GBXGQJWVLWOYHFLVTKWV5FGHA3EDU4", role: "seller" },
-  { id: "AGR-004", title: "Coaching Sessions", status: "in_progress", type: "Multi Release", counterparty: "G...CCH1", amount: "900", currency: "USDC", date: "2026-02-01", releaseStrategy: "all-at-once", milestones: [{ description: "Session 1", amount: "300", status: "approved" }, { description: "Session 2", amount: "300", status: "approved" }, { description: "Session 3", amount: "300", status: "pending" }], receiver: "GBXGQJWVLWOYHFLVTKWV5FGHA3CCH1", role: "seller" },
-] : [];
+const initialAgreements: Agreement[] = [];
 
 // Agreements listing is sourced from Nest (source of truth); TW escrow reads are
 // still used only for the approver tab, which needs live on-chain milestone state
@@ -700,11 +695,7 @@ export default function PersonalDashboardPage() {
         return;
       }
       const mapped = nestAgreements.map(a => mapNestAgreementToUi(a, walletAddress));
-      setAgreements(prev => {
-        // Merge with any existing mock agreements
-        const mockAgreements = prev.filter(a => a.id.startsWith("AGR-"));
-        return [...mockAgreements, ...mapped];
-      });
+      setAgreements(mapped);
       setAgreementsLoading(false);
     }
 

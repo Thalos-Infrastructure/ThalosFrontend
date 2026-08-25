@@ -36,7 +36,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area,
 } from "recharts"
 import { createAgreement, sendTransaction, AgreementPayload, approveMilestone } from "@/services/trustlessworkService"
-import { STELLAR_EXPLORER_BASE_URL, SHOW_MOCKED_AGREEMENTS } from "@/lib/config"
+import { STELLAR_EXPLORER_BASE_URL } from "@/lib/config"
 import { getKybStatus, startKybSession } from "@/lib/api/kyb"
 import { KYB_ENTITY_TYPES, buildCreateKybSessionDto, canStartKybSession, isKybVerified, nextKybStatusAfterSessionStart, type KybEntityType } from "@/lib/kyb"
 import {
@@ -136,12 +136,7 @@ interface Agreement {
   client?: string
 }
 
-const initialAgreements: Agreement[] = SHOW_MOCKED_AGREEMENTS ? [
-  { id: "ENT-001", title: "Fleet Vehicle Purchase", status: "funded", type: "Multi Release", counterparty: "G...DLR5", amount: "125,000", date: "2026-01-20", releaseStrategy: "per-milestone", milestones: [{ description: "Down Payment (10 units)", amount: "50,000", status: "released" }, { description: "Delivery of first batch", amount: "37,500", status: "approved" }, { description: "Final batch + inspection", amount: "37,500", status: "pending" }], receiver: "GBXGQJWVLWOYHFLVTKWV5FGHA3DLR5", currency: "USDC" },
-  { id: "ENT-002", title: "Resort Partnership Q2", status: "in_progress", type: "Multi Release", counterparty: "G...TRV8", amount: "48,000", date: "2026-01-15", releaseStrategy: "upon-completion", milestones: [{ description: "Contract signing", amount: "12,000", status: "approved" }, { description: "Marketing materials", amount: "12,000", status: "approved" }, { description: "Launch campaign", amount: "12,000", status: "pending" }, { description: "Performance review", amount: "12,000", status: "pending" }], receiver: "GBXGQJWVLWOYHFLVTKWV5FGHA3TRV8", currency: "USDC" },
-  { id: "ENT-003", title: "Corporate Event Setup", status: "released", type: "Single Release", counterparty: "G...EVT2", amount: "15,000", date: "2025-12-18", milestones: [{ description: "Full event delivery", amount: "15,000", status: "released" }], receiver: "GBXGQJWVLWOYHFLVTKWV5FGHA3EVT2", currency: "USDC" },
-  { id: "ENT-004", title: "Property Management Fee", status: "in_progress", type: "Multi Release", counterparty: "G...RNT9", amount: "6,500", date: "2025-12-05", releaseStrategy: "all-at-once", milestones: [{ description: "Q1 management fee", amount: "1,625", status: "approved" }, { description: "Q2 management fee", amount: "1,625", status: "approved" }, { description: "Q3 management fee", amount: "1,625", status: "approved" }, { description: "Q4 management fee", amount: "1,625", status: "pending" }], receiver: "GBXGQJWVLWOYHFLVTKWV5FGHA3RNT9", currency: "USDC" },
-] : []
+const initialAgreements: Agreement[] = []
 
 // Agreements listing is sourced from Nest (source of truth); TW escrow reads are
 // still used only for the approver tab, which needs live on-chain milestone state
@@ -544,11 +539,7 @@ export default function BusinessDashboardPage() {
         return;
       }
       const mapped = nestAgreements.map(a => mapNestAgreementToUi(a, workspaceWallet));
-      setAgreements(prev => {
-        // Merge with any existing mock agreements (only present when SHOW_MOCKED_AGREEMENTS is on)
-        const mockAgreements = prev.filter(a => a.id.startsWith("ENT-"));
-        return [...mockAgreements, ...mapped];
-      });
+      setAgreements(mapped);
       setAgreementsLoading(false);
     }
 
