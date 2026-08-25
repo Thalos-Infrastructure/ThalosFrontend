@@ -12,7 +12,7 @@ import { useStellarWallet } from "@/lib/stellar-wallet"
 import { useSignOut } from "@/lib/use-sign-out"
 import { useAuthStore } from "@/lib/auth-store"
 import { updateProfile, type ProfileUpdateInput } from "@/lib/actions/profile"
-import { LinkedWallets } from "@/components/profile/linked-wallets"
+import { LinkedWallets } from "@/components/profile/wallet-selector"
 import { ReputationSummary } from "@/components/profile/reputation-summary"
 import { fetchReputation, type ReputationSummary as ReputationData } from "@/lib/api/reputation"
 
