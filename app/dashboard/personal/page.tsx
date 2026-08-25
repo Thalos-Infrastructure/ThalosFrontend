@@ -30,6 +30,7 @@ import { AgreementChat } from "@/components/agreements/agreement-chat"
 import { ProfileEditor } from "@/components/profile/profile-editor"
 import { WalletSelector } from "@/components/dashboard/wallet-selector"
 import { WalletAgreementsPanel } from "@/components/dashboard/wallet-agreements-panel"
+import { getWalletsWithAgreements, type WalletWithAgreements, type WalletAgreement } from "@/lib/api/wallets"
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area,
 } from "recharts"
@@ -119,7 +120,7 @@ const initialAgreements: Agreement[] = SHOW_MOCKED_AGREEMENTS ? [
 // MIGRATION: Using escrowMigration wrapper to gradually migrate to backend
 import { getEscrowsBySigner } from "@/services/escrowMigration";
 
-function mapEscrowToAgreement(escrow) {
+function mapEscrowToAgreement(escrow: any) {
   const isMulti = escrow.type === "multi-release";
   let amount = "";
   if (isMulti) {
@@ -353,8 +354,29 @@ export default function PersonalDashboardPage() {
   const [agreements, setAgreements] = useState<Agreement[]>(initialAgreements);
   const [approverEscrows, setApproverEscrows] = useState<Agreement[]>([]);
   const [approverLoading, setApproverLoading] = useState(false);
+  const [walletsData, setWalletsData] = useState<WalletWithAgreements[]>([]);
   const [userProfile, setUserProfile] = useState<Profile | null>(null);
   const [showEditProfile, setShowEditProfile] = useState(false);
+
+  // Fetch wallets with agreements
+  useEffect(() => {
+    if (!token) return;
+    let isMounted = true;
+    async function fetchWalletsData() {
+      try {
+        const res = await getWalletsWithAgreements(token!);
+        if (isMounted && res.success && res.data) {
+          setWalletsData(res.data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch wallets with agreements:", err);
+      }
+    }
+    fetchWalletsData();
+    return () => {
+      isMounted = false;
+    };
+  }, [token]);
 
   // Person KYC State
   const [kycFullName, setKycFullName] = useState("");
@@ -445,48 +467,69 @@ export default function PersonalDashboardPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState<"all" | "funded" | "in_progress" | "released">("all")
   const [sortBy, setSortBy] = useState<"date" | "amount" | "title">("date")
-const [currentPage, setCurrentPage] = useState(1)
+  const [currentPage, setCurrentPage] = useState(1)
   const [walletFilter, setWalletFilter] = useState<string | null>(null)
   const ITEMS_PER_PAGE = 10
   
   const filteredAgreements = useMemo(() => {
-  let filtered = [...agreements]
-  
-  // Wallet filter - filter by agreements where the selected wallet is involved
-  if (walletFilter) {
-    filtered = filtered.filter(a => {
-      // Check if wallet is involved in the agreement (as sender, receiver, serviceProvider, etc.)
-      return a.receiver === walletFilter || 
-             a.id.includes(walletFilter.slice(0, 8)) || // Check if wallet created it
-             (a as unknown as { serviceProvider?: string }).serviceProvider === walletFilter
-    })
-  }
-  
-  // Status filter
-  if (statusFilter !== "all") {
-      filtered = filtered.filter(agr => {
-        const allReleased = agr.milestones.every(m => m.status === "released")
-        const effectiveStatus = allReleased ? "released" : agr.status
-        return effectiveStatus === statusFilter
-      })
+    if (walletsData && walletsData.length > 0) {
+      if (!walletFilter || walletFilter === "all" || walletFilter === "All") {
+        // Flatten all agreements arrays from walletsData into one combined array
+        return walletsData.flatMap((w) =>
+          w.agreements.map((a) => ({
+            id: a.id,
+            title: a.title,
+            status: a.status,
+            amount: a.amount,
+            currency: "USDC",
+            type: "Single Release" as const,
+            counterparty: w.wallet_address ? `${w.wallet_address.slice(0, 6)}...${w.wallet_address.slice(-4)}` : "Unknown",
+            date: a.created_at ? a.created_at.split("T")[0] : new Date().toISOString().split("T")[0],
+            updatedAt: a.created_at,
+            role: (a.role === "seller" ? "seller" : "buyer") as "buyer" | "seller",
+            receiver: w.wallet_address,
+            serviceProvider: w.wallet_address,
+            milestones: [{ status: a.status }],
+          }))
+        );
+      }
+
+      // Specific wallet selected
+      const targetWallet = walletsData.find((w) => w.wallet_address === walletFilter);
+      if (!targetWallet) return [];
+      return targetWallet.agreements.map((a) => ({
+        id: a.id,
+        title: a.title,
+        status: a.status,
+        amount: a.amount,
+        currency: "USDC",
+        type: "Single Release" as const,
+        counterparty: targetWallet.wallet_address ? `${targetWallet.wallet_address.slice(0, 6)}...${targetWallet.wallet_address.slice(-4)}` : "Unknown",
+        date: a.created_at ? a.created_at.split("T")[0] : new Date().toISOString().split("T")[0],
+        updatedAt: a.created_at,
+        role: (a.role === "seller" ? "seller" : "buyer") as "buyer" | "seller",
+        receiver: targetWallet.wallet_address,
+        serviceProvider: targetWallet.wallet_address,
+        milestones: [{ status: a.status }],
+      }));
     }
-    // Search
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase()
-      filtered = filtered.filter(agr =>
-        agr.title.toLowerCase().includes(q) ||
-        agr.counterparty.toLowerCase().includes(q) ||
-        agr.id.toLowerCase().includes(q)
-      )
+
+    // Fallback when walletsData is not yet loaded / available
+    let filtered = [...agreements];
+    if (walletFilter && walletFilter !== "all" && walletFilter !== "All") {
+      filtered = filtered.filter(
+        (a) =>
+          a.receiver === walletFilter ||
+          a.id.includes(walletFilter.slice(0, 8)) ||
+          (a as unknown as { serviceProvider?: string }).serviceProvider === walletFilter
+      );
     }
-    // Sort
-    filtered.sort((a, b) => {
-      if (sortBy === "date") return b.date.localeCompare(a.date)
-      if (sortBy === "amount") return parseFloat(b.amount.replace(/,/g, "")) - parseFloat(a.amount.replace(/,/g, ""))
-      return a.title.localeCompare(b.title)
-    })
-    return filtered
-  }, [agreements, statusFilter, searchQuery, sortBy, walletFilter])
+    return filtered.map((a) => ({
+      ...a,
+      updatedAt: a.date,
+      currency: a.currency || "USDC",
+    }));
+  }, [walletsData, walletFilter, agreements]);
 
   // Pagination
   const totalPages = Math.ceil(filteredAgreements.length / ITEMS_PER_PAGE)
@@ -512,21 +555,22 @@ const [currentPage, setCurrentPage] = useState(1)
 
   useEffect(() => {
     if (!walletAddress) return;
+    const activeAddress: string = walletAddress;
     // Only fetch if we haven't already for this address + token combination.
     // Including the token means we re-fetch once auth loads, so we route through
     // the backend instead of falling back to the direct Trustless Work service.
-    const fetchKey = `${walletAddress}::${token ?? ""}`;
+    const fetchKey = `${activeAddress}::${token ?? ""}`;
     if (fetchedEscrowsRef.current === fetchKey) return;
     fetchedEscrowsRef.current = fetchKey;
 
-async function fetchAllEscrows() {
-// MIGRATION: Using escrowMigration wrapper
-const { getEscrowsByRole } = await import("@/services/escrowMigration");
+    async function fetchAllEscrows() {
+      // MIGRATION: Using escrowMigration wrapper
+      const { getEscrowsByRole } = await import("@/services/escrowMigration");
       const seenIds = new Set<string>();
       const allAgreements: Agreement[] = [];
       
       // Fetch escrows by signer (main method)
-      const signerRes = await getEscrowsBySigner(walletAddress, token);
+      const signerRes = await getEscrowsBySigner(activeAddress, token ?? undefined);
       if (signerRes.success && Array.isArray(signerRes.data)) {
         signerRes.data.forEach(escrow => {
           if (!seenIds.has(escrow.contractId)) {
@@ -537,9 +581,9 @@ const { getEscrowsByRole } = await import("@/services/escrowMigration");
       }
       
       // Fetch by each role to ensure we get all escrows
-const roles = ["receiver", "service_provider", "approver"] as const;
-for (const role of roles) {
-const res = await getEscrowsByRole({ role, address: walletAddress }, token);
+      const roles = ["receiver", "service_provider", "approver"] as const;
+      for (const role of roles) {
+        const res = await getEscrowsByRole({ role, address: activeAddress }, token ?? undefined);
         if (res.success && Array.isArray(res.data)) {
           res.data.forEach(escrow => {
             if (!seenIds.has(escrow.contractId)) {
@@ -563,10 +607,10 @@ const res = await getEscrowsByRole({ role, address: walletAddress }, token);
     
     // Fetch escrows where user is approver (for approver tab)
     async function fetchApproverEscrows() {
-setApproverLoading(true);
-// MIGRATION: Using escrowMigration wrapper
-const { getEscrowsByRole } = await import("@/services/escrowMigration");
-const res = await getEscrowsByRole({ role: "approver", address: walletAddress }, token);
+      setApproverLoading(true);
+      // MIGRATION: Using escrowMigration wrapper
+      const { getEscrowsByRole } = await import("@/services/escrowMigration");
+      const res = await getEscrowsByRole({ role: "approver", address: activeAddress }, token ?? undefined);
       if (res.success && Array.isArray(res.data)) {
         setApproverEscrows(res.data.map(mapEscrowToAgreement));
       } else {
@@ -648,13 +692,13 @@ const res = await getEscrowsByRole({ role: "approver", address: walletAddress },
     description,
     amount: totalAmount.toString(),
     platformFee: platformFee.toString(),
-    signer: walletAddress,
+    signer: walletAddress || "",
     serviceType: escrowType === "single" ? "single-release" : "multi-release",
     roles: {
       approver: signerWallet,
-      serviceProvider: walletAddress,
+      serviceProvider: walletAddress || "",
       releaseSigner: signerWallet,
-      receiver: walletAddress,
+      receiver: walletAddress || "",
     },
     milestones: escrowType === "single"
       ? [{ description: milestones[0]?.description || "Full delivery", amount: totalAmount.toString(), status: "pending" }]
@@ -1286,30 +1330,17 @@ const res = await getEscrowsByRole({ role: "approver", address: walletAddress },
   <WalletSelector 
     selectedWallet={walletFilter} 
     onWalletChange={setWalletFilter}
+    walletsData={walletsData}
     className="mb-6"
   />
   
   {/* Agreements view — pre-filtered by selected wallet when active */}
-              <AgreementsView
-                agreements={[
-                  ...filteredAgreements.map(a => ({ ...a, updatedAt: a.date, currency: "USDC" })),
-                  ...approverEscrows.map(e => ({
-                    id: e.id,
-                    title: e.title,
-                    counterparty: (e as unknown as { serviceProvider?: string }).serviceProvider?.slice(0, 8) + "..." || "Unknown",
-                    status: e.status || "pending",
-                    amount: typeof e.amount === "number" ? (e.amount as number).toLocaleString() : e.amount || "0",
-                    currency: "USDC",
-                    type: "Single Release" as const,
-                    updatedAt: e.date,
-                    milestones: e.milestones || [{ status: "pending" }],
-                    role: "buyer" as const,
-                  })),
-                ]}
-                onAgreementClick={(id) => setViewingAgreement(id)}
-                onOpenChat={(id) => setShowAgreementChat(id)}
-                currentUserWallet={walletAddress}
-              />
+  <AgreementsView
+    agreements={filteredAgreements}
+    onAgreementClick={(id) => setViewingAgreement(id)}
+    onOpenChat={(id) => setShowAgreementChat(id)}
+    currentUserWallet={walletAddress || undefined}
+  />
             </div>
           )}
 

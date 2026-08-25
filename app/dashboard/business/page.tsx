@@ -30,6 +30,7 @@ import { ContactSelector } from "@/components/agreements/contact-selector"
 import { AgreementChat } from "@/components/agreements/agreement-chat"
 import { WalletSelector } from "@/components/dashboard/wallet-selector"
 import { WalletAgreementsPanel } from "@/components/dashboard/wallet-agreements-panel"
+import { getWalletsWithAgreements, type WalletWithAgreements, type WalletAgreement } from "@/lib/api/wallets"
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area,
 } from "recharts"
@@ -421,12 +422,33 @@ export default function BusinessDashboardPage() {
   }
 
   const [agreements, setAgreements] = useState<Agreement[]>(initialAgreements)
+  const [walletsData, setWalletsData] = useState<WalletWithAgreements[]>([])
   const [viewingAgreement, setViewingAgreement] = useState<string | null>(null)
   const [showAgreementChat, setShowAgreementChat] = useState<string | null>(null)
   const [disputedMs, setDisputedMs] = useState<Set<string>>(new Set())
   const [showDisputeConfirm, setShowDisputeConfirm] = useState<{ agrId: string; msIdx: number } | null>(null)
   const [approverEscrows, setApproverEscrows] = useState<Agreement[]>([])
   const [approverLoading, setApproverLoading] = useState(false)
+
+  // Fetch wallets with agreements
+  useEffect(() => {
+    if (!token) return;
+    let isMounted = true;
+    async function fetchWalletsData() {
+      try {
+        const res = await getWalletsWithAgreements(token!);
+        if (isMounted && res.success && res.data) {
+          setWalletsData(res.data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch wallets with agreements:", err);
+      }
+    }
+    fetchWalletsData();
+    return () => {
+      isMounted = false;
+    };
+  }, [token]);
   
   // Helper to map escrow to agreement format
   const mapEscrowToAgreement = (e: any): Agreement => {
@@ -656,29 +678,63 @@ export default function BusinessDashboardPage() {
   const [sortBy, setSortBy] = useState<"date" | "amount" | "title">("date")
 
   const filteredAgreements = useMemo(() => {
-    let filtered = [...agreements]
-    if (statusFilter !== "all") {
-      filtered = filtered.filter(agr => {
-        const allReleased = agr.milestones.every(m => m.status === "released")
-        const effectiveStatus = allReleased ? "released" : agr.status
-        return effectiveStatus === statusFilter
-      })
+    if (walletsData && walletsData.length > 0) {
+      if (!walletFilter || walletFilter === "all" || walletFilter === "All") {
+        // Flatten all agreements arrays from walletsData into one combined array
+        return walletsData.flatMap((w) =>
+          w.agreements.map((a) => ({
+            id: a.id,
+            title: a.title,
+            status: a.status,
+            amount: a.amount,
+            currency: "USDC",
+            type: "Single Release" as const,
+            counterparty: w.wallet_address ? `${w.wallet_address.slice(0, 6)}...${w.wallet_address.slice(-4)}` : "Unknown",
+            date: a.created_at ? a.created_at.split("T")[0] : new Date().toISOString().split("T")[0],
+            updatedAt: a.created_at,
+            role: (a.role === "seller" ? "seller" : "buyer") as "buyer" | "seller",
+            receiver: w.wallet_address,
+            serviceProvider: w.wallet_address,
+            milestones: [{ status: a.status }],
+          }))
+        );
+      }
+
+      // Specific wallet selected
+      const targetWallet = walletsData.find((w) => w.wallet_address === walletFilter);
+      if (!targetWallet) return [];
+      return targetWallet.agreements.map((a) => ({
+        id: a.id,
+        title: a.title,
+        status: a.status,
+        amount: a.amount,
+        currency: "USDC",
+        type: "Single Release" as const,
+        counterparty: targetWallet.wallet_address ? `${targetWallet.wallet_address.slice(0, 6)}...${targetWallet.wallet_address.slice(-4)}` : "Unknown",
+        date: a.created_at ? a.created_at.split("T")[0] : new Date().toISOString().split("T")[0],
+        updatedAt: a.created_at,
+        role: (a.role === "seller" ? "seller" : "buyer") as "buyer" | "seller",
+        receiver: targetWallet.wallet_address,
+        serviceProvider: targetWallet.wallet_address,
+        milestones: [{ status: a.status }],
+      }));
     }
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase()
-      filtered = filtered.filter(agr =>
-        agr.title.toLowerCase().includes(q) ||
-        agr.counterparty.toLowerCase().includes(q) ||
-        agr.id.toLowerCase().includes(q)
-      )
+
+    // Fallback when walletsData is not yet loaded / available
+    let filtered = [...agreements];
+    if (walletFilter && walletFilter !== "all" && walletFilter !== "All") {
+      filtered = filtered.filter(
+        (a) =>
+          (a as unknown as { receiver?: string }).receiver === walletFilter ||
+          (a as unknown as { serviceProvider?: string }).serviceProvider === walletFilter
+      );
     }
-    filtered.sort((a, b) => {
-      if (sortBy === "date") return b.date.localeCompare(a.date)
-      if (sortBy === "amount") return parseFloat(b.amount.replace(/,/g, "")) - parseFloat(a.amount.replace(/,/g, ""))
-      return a.title.localeCompare(b.title)
-    })
-    return filtered
-  }, [agreements, statusFilter, searchQuery, sortBy])
+    return filtered.map((a) => ({
+      ...a,
+      updatedAt: a.date,
+      currency: a.currency || "USDC",
+    }));
+  }, [walletsData, walletFilter, agreements]);
 
   const statusCounts = useMemo(() => {
     const counts = { all: agreements.length, funded: 0, in_progress: 0, released: 0 }
@@ -701,8 +757,9 @@ export default function BusinessDashboardPage() {
 
   useEffect(() => {
     if (!walletAddress) return
+    const activeWallet = walletAddress
     setTemplatesLoading(true)
-    getTemplatesByOwner(walletAddress)
+    getTemplatesByOwner(activeWallet)
       .then(({ templates: data }) => {
         setTemplates(
           (data ?? []).map((t) => ({
@@ -717,11 +774,12 @@ export default function BusinessDashboardPage() {
 
   const saveAsTemplate = async () => {
     if (!walletAddress) return
+    const activeWallet = walletAddress
     const milestoneData = milestones.map(m => ({ description: m.description, amount: m.amount, status: "pending" as const }))
     const meta = { useCase: useCase || "" }
 
     if (editingTemplate) {
-      const { template, error } = await updateTemplate(editingTemplate, walletAddress, {
+      const { template, error } = await updateTemplate(editingTemplate, activeWallet, {
         name: templateName.trim() || title,
         title,
         description,
@@ -741,7 +799,7 @@ export default function BusinessDashboardPage() {
       )
     } else {
       const { template, error } = await createTemplate({
-        owner_wallet: walletAddress,
+        owner_wallet: activeWallet,
         name: templateName.trim() || title,
         title,
         description,
@@ -774,8 +832,9 @@ export default function BusinessDashboardPage() {
 
   const deleteTemplate = async (id: string) => {
     if (!walletAddress || deletingTemplateId) return
+    const activeWallet = walletAddress
     setDeletingTemplateId(id)
-    const { success } = await deleteTemplateAction(id, walletAddress)
+    const { success } = await deleteTemplateAction(id, activeWallet)
     if (success) {
       setTemplates(prev => prev.filter(t => t.id !== id))
       toast.success(t("dashPage.templateDeleted"))
@@ -1130,33 +1189,13 @@ export default function BusinessDashboardPage() {
               <WalletSelector
                 selectedWallet={walletFilter}
                 onWalletChange={setWalletFilter}
+                walletsData={walletsData}
                 className="mb-6"
               />
 
               {/* Agreements view, pre-filtered by selected wallet */}
               <AgreementsView
-                agreements={(() => {
-                  const all = [
-                    ...agreements.map(a => ({ ...a, updatedAt: a.date, currency: "USDC" })),
-                    ...approverEscrows.map(e => ({
-                      id: e.id,
-                      title: e.title,
-                      counterparty: e.counterparty,
-                      status: e.status,
-                      amount: e.amount,
-                      currency: "USDC",
-                      type: e.type,
-                      updatedAt: e.date,
-                      milestones: e.milestones,
-                      role: (e as unknown as { role?: "buyer" | "seller" }).role,
-                    })),
-                  ]
-                  if (!walletFilter) return all
-                  return all.filter(a =>
-                    (a as unknown as { receiver?: string }).receiver === walletFilter ||
-                    (a as unknown as { serviceProvider?: string }).serviceProvider === walletFilter
-                  )
-                })()}
+                agreements={filteredAgreements}
                 onAgreementClick={(id) => setViewingAgreement(id)}
                 onOpenChat={(id) => setShowAgreementChat(id)}
                 currentUserWallet={walletAddress || undefined}
