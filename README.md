@@ -254,3 +254,5 @@ type AuthUser = {
 | `components/social-auth-modal.tsx` | Email login and registration | `normalizeAuthUser(data.user)` |
 | `app/auth/callback/success/page.tsx` | OAuth callback (Google) | `normalizeAuthUser(data.user)` |
 | `lib/auth-provider.tsx` | Hydration from `localStorage` | `normalizeAuthUser(JSON.parse(...))` |
+
+Preview deployment verification.
