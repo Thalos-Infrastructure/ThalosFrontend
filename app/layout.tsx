@@ -4,8 +4,11 @@ import { Inter, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { LanguageProvider } from '@/lib/i18n'
 import { StellarWalletProvider } from '@/lib/stellar-wallet'
+import { PollarWalletProvider } from '@/lib/pollar-wallet'
 import { AuthProvider } from '@/lib/auth-provider'
-import { ThalosAcceslyProvider } from '@/lib/accesly/accesly-provider'
+// Unmounted while Accesly's infra is disabled (see below) — keep the import
+// commented alongside the JSX so restoring it is a two-line uncomment.
+// import { ThalosAcceslyProvider } from '@/lib/accesly/accesly-provider'
 import './globals.css'
 
 const _inter = Inter({ subsets: ["latin"] });
@@ -52,11 +55,22 @@ export default function RootLayout({
       <body className="font-sans antialiased transition-colors duration-300">
         <LanguageProvider>
           <AuthProvider>
-            <ThalosAcceslyProvider>
-              <StellarWalletProvider>
+            {/* All wallet providers sit inside AuthProvider so any login
+                method can mint the app JWT via useAuthStore().login().
+                ThalosAcceslyProvider is unmounted while Accesly's infra is
+                disabled: its SDK bootstrap fetch (app-config) fails CORS and
+                retries in a loop on every page. Costs: an existing Accesly
+                session cannot sign, and logout session-coherence for Accesly
+                does not run — both moot with the login button hidden
+                (components/social-auth-modal.tsx). Uncomment here and the
+                import above to restore. */}
+            {/* <ThalosAcceslyProvider> */}
+            <StellarWalletProvider>
+              <PollarWalletProvider>
                 {children}
-              </StellarWalletProvider>
-            </ThalosAcceslyProvider>
+              </PollarWalletProvider>
+            </StellarWalletProvider>
+            {/* </ThalosAcceslyProvider> */}
           </AuthProvider>
         </LanguageProvider>
         <Analytics />

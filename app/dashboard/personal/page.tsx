@@ -10,6 +10,7 @@ import { ThalosLoader } from "@/components/thalos-loader"
 import { LanguageToggle, ThemeToggle, useLanguage } from "@/lib/i18n"
 import { useStellarWallet } from "@/lib/stellar-wallet"
 import { useCurrentAddress, useHasSigningWallet } from "@/lib/use-current-address"
+import { useSignOut } from "@/lib/use-sign-out"
 import { WalletGuard, WalletPrompt } from "@/components/shared/wallet-guard"
 import { useAuthStore } from "@/lib/auth-store"
 import { WalletAddress } from "@/components/ui/wallet-address"
@@ -34,7 +35,8 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area,
 } from "recharts"
 import { createAgreement, sendTransaction, AgreementPayload, approveMilestone } from "@/services/trustlessworkService"
-import { STELLAR_EXPLORER_BASE_URL, TRUSTLINE_USDC, SHOW_MOCKED_AGREEMENTS } from "@/lib/config";
+import { STELLAR_EXPLORER_BASE_URL, STELLAR_EXPLORER_ACCOUNT_BASE_URL, TRUSTLINE_USDC, SHOW_MOCKED_AGREEMENTS } from "@/lib/config";
+import { getWalletBalance } from "@/lib/api/wallets";
 import { getKycStatus, startKycSession } from "@/lib/api/kyc";
 import { isKycVerified, canStartKycSession, buildCreateKycSessionDto, nextKycStatusAfterSessionStart, type KycVerificationStatus } from "@/lib/kyc";
 import { updateProfile } from "@/lib/actions/profile";
@@ -98,10 +100,13 @@ function FormSelect({ label, value, onChange, options, info, required = false }:
 }
 
 /* ── Constants ── */
-const connectedWallets = [
-  { value: "GBXGQJWVLWOYHFLVTKWV5FGHA3PERSONAL01", labelKey: "wallet.main", short: "G...AL01", balance: "12,450.00" },
-  { value: "GBXGQJWVLWOYHFLVTKWV5FGHA3PERSONAL02", labelKey: "wallet.secondary", short: "G...AL02", balance: "3,200.50" },
-]
+const shortAddress = (address: string) => `${address.slice(0, 4)}...${address.slice(-4)}`
+
+/** Horizon returns "12.3456789"; the UI shows two decimals, or "—" while unknown. */
+const formatUsdc = (raw: string | null) =>
+  raw === null
+    ? "—"
+    : Number(raw).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
 const wizardStepKeys = ["wizard.escrowType", "wizard.useCase", "wizard.agreementInfo", "wizard.paymentWallets", "wizard.reviewSend"]
 
@@ -243,7 +248,6 @@ function SellerMilestoneList({ agr, agreements, setAgreements, t }: {
       serviceProvider: walletAddress,
       serviceType: agr.type === "Multi Release" ? "multi-release" : "single-release",
       walletAddress,
-      openWalletModal,
       setSubmitting: (v: boolean) => v === false && setSubmitting(null),
       setError: (msg: string | null) => msg && alert(msg),
       onSuccess: () => {
@@ -341,6 +345,7 @@ export default function PersonalDashboardPage() {
   const { t } = useLanguage();
   const { openWalletModal } = useStellarWallet();
   const walletAddress = useCurrentAddress();
+  const signOut = useSignOut();
   const { user: socialUser, token } = useAuthStore();
   // A signing-capable wallet: external Kit wallet, or a custodial wallet whose
   // provider signs through the unified signer (Accesly #109; social with #108).
@@ -348,6 +353,44 @@ export default function PersonalDashboardPage() {
   const [loading, setLoading] = useState(false);
 
   const [activeSection, setActiveSection] = useState("home");
+
+  // Session wallet (the one Pollar provisioned, or a Kit wallet with no session)
+  // with its on-chain USDC balance. Replaces the hardcoded demo wallets.
+  const [usdcBalance, setUsdcBalance] = useState<string | null>(null);
+  const [copiedAddress, setCopiedAddress] = useState<string | null>(null);
+
+  useEffect(() => {
+    setUsdcBalance(null);
+    if (!walletAddress || !token) return;
+    let cancelled = false;
+    getWalletBalance(walletAddress, token).then((res) => {
+      if (cancelled) return;
+      if (res.success && res.data) setUsdcBalance(res.data.usdc);
+      else console.warn("[wallets] could not load USDC balance:", res.error);
+    });
+    return () => { cancelled = true };
+    // `activeSection` is a deliberate dependency: coming back to a section that
+    // shows the balance (e.g. after a deposit in Ramps) re-reads it from chain.
+  }, [walletAddress, token, activeSection]);
+
+  const usdcDisplay = formatUsdc(usdcBalance);
+
+  const connectedWallets = useMemo(
+    () => walletAddress
+      ? [{ value: walletAddress, labelKey: "wallet.main", short: shortAddress(walletAddress), balance: usdcDisplay }]
+      : [],
+    [walletAddress, usdcDisplay],
+  );
+
+  const copyWalletAddress = async (address: string) => {
+    try {
+      await navigator.clipboard.writeText(address);
+      setCopiedAddress(address);
+      setTimeout(() => setCopiedAddress((current) => (current === address ? null : current)), 2000);
+    } catch (e) {
+      console.warn("[wallets] clipboard write failed:", e);
+    }
+  };
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [agreements, setAgreements] = useState<Agreement[]>(initialAgreements);
@@ -605,7 +648,8 @@ const res = await getEscrowsByRole({ role: "approver", address: walletAddress },
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
   const [guidePrefilled, setGuidePrefilled] = useState(false)
-  const [selectedWallet, setSelectedWallet] = useState(connectedWallets[0].value)
+  const [selectedWallet, setSelectedWallet] = useState(walletAddress ?? "")
+  useEffect(() => { if (walletAddress) setSelectedWallet(walletAddress) }, [walletAddress])
   const [signerWallet, setSignerWallet] = useState("")
   const [milestones, setMilestones] = useState([{ description: "Full delivery", amount: "" }])
   const [showCustomize, setShowCustomize] = useState(false)
@@ -680,7 +724,7 @@ const res = await getEscrowsByRole({ role: "approver", address: walletAddress },
     setStep(0); setSubmitted(false); setEscrowType("single"); setUseCase(null); setCustomUseCase("")
     setTitle(""); setDescription(""); setSignerWallet(""); setGuidePrefilled(false)
     setMilestones([{ description: "Full delivery", amount: "" }]); setShowCustomize(false)
-    setNotifyEmail(""); setSignerEmail(""); setSelectedWallet(connectedWallets[0].value)
+    setNotifyEmail(""); setSignerEmail(""); setSelectedWallet(walletAddress ?? "")
   }
 
   const agreementUrl = typeof window !== "undefined" ? `${window.location.origin}/dashboard/personal` : "https://thalos.app/dashboard/personal"
@@ -750,10 +794,10 @@ const res = await getEscrowsByRole({ role: "approver", address: walletAddress },
                     {t("dashPage.ramps")}
                   </button>
                   <div className="my-1 h-px bg-white/6" />
-                  <Link href="/" className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-white/70 hover:bg-white/8 hover:text-white transition-colors">
+                  <button onClick={signOut} className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-white/70 hover:bg-white/8 hover:text-white transition-colors">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
                     {t("dashPage.signOut")}
-                  </Link>
+                  </button>
                 </div>
               )}
             </div>
@@ -886,9 +930,8 @@ const res = await getEscrowsByRole({ role: "approver", address: walletAddress },
               <div className="p-3 rounded-xl bg-gradient-to-br from-white/[0.04] to-transparent border border-white/[0.06]">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">Balance</span>
-                  <span className="text-xs text-emerald-400">+2.4%</span>
                 </div>
-                <p className="text-lg font-bold text-white">$15,650<span className="text-sm font-normal text-white/40">.50</span></p>
+                <p className="text-lg font-bold text-white">{usdcDisplay} <span className="text-sm font-normal text-white/40">USDC</span></p>
               </div>
               
               {/* Help Button */}
@@ -929,7 +972,7 @@ const res = await getEscrowsByRole({ role: "approver", address: walletAddress },
                 <div className="flex items-center gap-6">
                   <div>
                     <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">Balance</p>
-                    <p className="text-xl font-bold text-white">15,650.50 <span className="text-sm text-white/40">USDC</span></p>
+                    <p className="text-xl font-bold text-white">{usdcDisplay} <span className="text-sm text-white/40">USDC</span></p>
                   </div>
                   <div className="h-8 w-px bg-white/10" />
                   <div>
@@ -1454,8 +1497,24 @@ const res = await getEscrowsByRole({ role: "approver", address: walletAddress },
                       </div>
                     </div>
                     <div className="mt-4 flex gap-2">
-                      <Button variant="outline" size="sm" className="rounded-full border-white/10 bg-white/5 text-xs text-white/60 hover:bg-white/10 hover:text-white">Copy Address</Button>
-                      <Button variant="outline" size="sm" className="rounded-full border-white/10 bg-white/5 text-xs text-white/60 hover:bg-white/10 hover:text-white">View on Explorer</Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => copyWalletAddress(w.value)}
+                        className="rounded-full border-white/10 bg-white/5 text-xs text-white/60 hover:bg-white/10 hover:text-white"
+                      >
+                        {copiedAddress === w.value ? t("wizard.copied") : t("dashPage.copyAddress")}
+                      </Button>
+                      <Button
+                        asChild
+                        variant="outline"
+                        size="sm"
+                        className="rounded-full border-white/10 bg-white/5 text-xs text-white/60 hover:bg-white/10 hover:text-white"
+                      >
+                        <a href={`${STELLAR_EXPLORER_ACCOUNT_BASE_URL}${w.value}`} target="_blank" rel="noopener noreferrer">
+                          {t("dashPage.viewExplorer")}
+                        </a>
+                      </Button>
                     </div>
                   </div>
                 ))}
@@ -1737,7 +1796,6 @@ const res = await getEscrowsByRole({ role: "approver", address: walletAddress },
                               payload,
                               token,
                               walletAddress,
-                              openWalletModal,
                               setCreating,
                               setError,
                               setSubmitted,

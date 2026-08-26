@@ -17,6 +17,7 @@ import {
   type Bounty,
 } from "@/lib/actions/bounties"
 import { getBountyShareableLink } from "@/lib/utils/bounty"
+import { dashboardPathFor } from "@/lib/dashboard-path"
 
 /* ── Icons ── */
 const Icons = {
@@ -181,7 +182,7 @@ export default function BountiesDashboardPage() {
       <header className="sticky top-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
           <div className="flex items-center gap-4">
-            <Link href={profile?.account_type === "enterprise" ? "/dashboard/business" : "/dashboard/personal"}>
+            <Link href={dashboardPathFor(profile)}>
               <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground hover:text-foreground">
                 {Icons.arrowLeft}
                 Back

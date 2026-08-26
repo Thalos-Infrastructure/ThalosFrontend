@@ -6,13 +6,14 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useSectionReveal } from "@/hooks/use-section-reveal"
 import { useLanguage } from "@/lib/i18n"
+import { dashboardPathFor } from "@/lib/dashboard-path"
 
 export function AuthSection() {
   const { ref, isVisible } = useSectionReveal()
   const { t } = useLanguage()
   const [profileType, setProfileType] = useState<"personal" | "business">("personal")
 
-  const dashboardHref = profileType === "personal" ? "/dashboard/personal" : "/dashboard/business"
+  const dashboardHref = dashboardPathFor(null, profileType === "personal" ? "personal" : "enterprise")
 
   return (
     <section id="auth" className="relative py-28" ref={ref}>

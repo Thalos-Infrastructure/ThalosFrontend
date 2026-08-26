@@ -777,3 +777,14 @@ main {
   transform: scale(1);
   filter: blur(0);
 }
+
+/*
+ * Pollar's login modal ships with z-index: 50 on .pollar-overlay, which is below
+ * Thalos's own auth modals (z-[80]/z-[90]) and dialogs (up to z-[100]) — the
+ * modal opens but stays behind them. The extra `body` raises specificity so this
+ * wins regardless of whether globals.css or @pollar/react/styles.css is emitted
+ * first.
+ */
+body .pollar-overlay {
+  z-index: 110;
+}

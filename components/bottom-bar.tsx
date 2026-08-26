@@ -5,6 +5,7 @@ import Image from "next/image"
 import { useState, useEffect, useRef, useCallback } from "react"
 import { cn } from "@/lib/utils"
 import { SignInPanel } from "@/components/sign-in-panel"
+import { useLoginEntry } from "@/lib/use-login-entry"
 import { useLanguage } from "@/lib/i18n"
 
 export function BottomBar({ onNavigate }: { onNavigate: (section: string) => void }) {
@@ -12,6 +13,7 @@ export function BottomBar({ onNavigate }: { onNavigate: (section: string) => voi
   const [showQR, setShowQR] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
   const [showSignIn, setShowSignIn] = useState(false)
+  const { startLogin, resuming } = useLoginEntry()
   const [isVisible, setIsVisible] = useState(false)
   const barRef = useRef<HTMLDivElement>(null)
   const menuRef = useRef<HTMLDivElement>(null)
@@ -125,7 +127,8 @@ export function BottomBar({ onNavigate }: { onNavigate: (section: string) => voi
               {/* Menu items */}
               <div className="flex flex-col gap-0.5 py-1">
                 <button
-                  onClick={() => { setShowSignIn(true); setShowMenu(false) }}
+                  onClick={() => { startLogin(() => setShowSignIn(true)); setShowMenu(false) }}
+                  disabled={resuming}
                   className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-white/80 transition-all duration-300 hover:bg-white/10 hover:text-white shadow-[inset_0_0_0_0_rgba(255,255,255,0)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_1px_3px_rgba(0,0,0,0.2)] active:scale-[0.97]"
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
