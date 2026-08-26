@@ -17,41 +17,12 @@ import { STELLAR_NETWORK } from "@/lib/config"
 /** El Kit 2.x expone todo como estáticos, así que "el kit" es la propia clase. */
 type Kit = typeof import("@creit.tech/stellar-wallets-kit/sdk").StellarWalletsKit
 
+export const FREIGHTER_ID = "freighter"
+
 let kitPromise: Promise<Kit | null> | null = null
-
-/**
- * Wait for Freighter to be available in window
- * Freighter injects its API asynchronously, so we need to wait for it
- */
-async function waitForFreighter(maxWaitMs = 3000): Promise<boolean> {
-  if (typeof window === "undefined") return false
-
-  const startTime = Date.now()
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  if ((window as any).freighter) {
-    return true
-  }
-
-  // Poll for Freighter every 100ms
-  return new Promise((resolve) => {
-    const checkInterval = setInterval(() => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      if ((window as any).freighter) {
-        clearInterval(checkInterval)
-        resolve(true)
-      } else if (Date.now() - startTime > maxWaitMs) {
-        clearInterval(checkInterval)
-        resolve(false)
-      }
-    }, 100)
-  })
-}
+let prewarmed = false
 
 async function initKit(): Promise<Kit> {
-  // Wait for Freighter to inject its API (up to 3 seconds)
-  await waitForFreighter(3000)
-
   const [{ StellarWalletsKit }, { defaultModules }, { Networks }] = await Promise.all([
     import("@creit.tech/stellar-wallets-kit/sdk"),
     import("@creit.tech/stellar-wallets-kit/modules/utils"),
@@ -87,13 +58,63 @@ export async function getKit(): Promise<Kit | null> {
 /** Fuerza que el siguiente getKit() vuelva a inicializar el Kit. */
 export function clearKit(): void {
   kitPromise = null
+  prewarmed = false
 }
 
 /**
- * Check if Freighter is installed and available
+ * Synchronous fast path only.
+ *
+ * `@stellar/freighter-api`'s `isConnected()` short-circuits on this global, but
+ * not every Freighter build sets it — so `false` here does NOT mean the extension
+ * is missing. Use it for wording an error, never to decide availability; that is
+ * what {@link detectFreighter} is for.
  */
 export function isFreighterAvailable(): boolean {
   if (typeof window === "undefined") return false
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return !!(window as any).freighter
+}
+
+/**
+ * Asks the Kit whether Freighter is actually reachable, retrying before giving up.
+ *
+ * Why the retry: the Kit's `FreighterModule.isAvailable()` calls `isConnected()`
+ * from `@stellar/freighter-api`, which — absent the `window.freighter` fast path —
+ * does a `postMessage` handshake with the extension's content script and
+ * **resolves `{isConnected: false}` after a 2s timeout**. On a cold browser or a
+ * busy tab that timeout wins the race, the Kit concludes Freighter is missing, and
+ * the modal offers to install an extension the user already has. A second attempt
+ * lands after the content script is listening and answers immediately.
+ *
+ * Never blocks the modal: a `false` result just means we could not confirm it.
+ */
+export async function detectFreighter(attempts = 2): Promise<boolean> {
+  if (typeof window === "undefined") return false
+  if (isFreighterAvailable()) return true
+
+  const kit = await getKit()
+  if (!kit) return false
+
+  for (let attempt = 0; attempt < attempts; attempt++) {
+    try {
+      const wallets = await kit.refreshSupportedWallets()
+      if (wallets.some((w) => w.id === FREIGHTER_ID && w.isAvailable)) return true
+    } catch (e) {
+      console.warn(`[wallet-kit] freighter detection attempt ${attempt + 1} failed:`, e)
+    }
+  }
+
+  return false
+}
+
+/**
+ * Warms wallet detection in the background at app start, so the handshake above
+ * has already completed by the time the user clicks "Connect Wallet".
+ *
+ * Fire-and-forget and idempotent; failures are swallowed on purpose.
+ */
+export function prewarmWalletDetection(): void {
+  if (typeof window === "undefined" || prewarmed) return
+  prewarmed = true
+  void detectFreighter(1).catch(() => false)
 }

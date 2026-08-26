@@ -135,7 +135,7 @@ export function WalletAgreementsPanel({
           </button>
           {wallets.map((w) => (
             <button
-              key={w.id}
+              key={w.id ?? w.wallet_address}
               onClick={() => onWalletSelect(w.wallet_address)}
               className={cn(
                 "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all",
@@ -160,13 +160,14 @@ export function WalletAgreementsPanel({
 
       {/* Per-wallet cards */}
       {wallets.map((wallet) => {
+        const walletId = wallet.id
         const isExpanded = expandedWallet === wallet.wallet_address
         const isSelected = selectedWallet === wallet.wallet_address
-        const isActing = actionLoading === wallet.id
+        const isActing = actionLoading === walletId
 
         return (
           <div
-            key={wallet.id}
+            key={wallet.id ?? wallet.wallet_address}
             className={cn(
               "rounded-2xl border transition-all",
               isSelected
@@ -224,17 +225,17 @@ export function WalletAgreementsPanel({
               </button>
 
               {/* Wallet actions — hidden for primary */}
-              {!wallet.is_primary && (
+              {walletId && !wallet.is_primary && (
                 <div className="flex items-center gap-1 border-l border-white/10 pl-3 shrink-0">
                   <button
-                    onClick={() => handleSetPrimary(wallet.id)}
+                    onClick={() => handleSetPrimary(walletId)}
                     disabled={isActing}
                     className="rounded-lg px-2.5 py-1.5 text-[11px] font-medium text-white/50 hover:bg-white/10 hover:text-white disabled:opacity-30 transition-colors"
                   >
                     {t("walletPanel.setPrimary")}
                   </button>
                   <button
-                    onClick={() => handleUnlink(wallet.id)}
+                    onClick={() => handleUnlink(walletId)}
                     disabled={isActing}
                     className="rounded-lg px-2.5 py-1.5 text-[11px] font-medium text-red-400/70 hover:bg-red-500/10 hover:text-red-400 disabled:opacity-30 transition-colors"
                   >

@@ -1,27 +1,14 @@
-import { API_URL } from "@/lib/config"
-import {
-  AgreementStatus as AgreementStatusEnum,
-  AgreementType as AgreementTypeEnum,
-  ParticipantRole as ParticipantRoleEnum,
-  MilestoneStatus,
-  type AgreementStatusType,
-  type AgreementTypeType,
-  type ParticipantRoleType,
-  type MilestoneStatusType,
-} from "@/lib/enums"
+import { apiRequest, type ApiResponse } from "./client"
+import type { AgreementStatus, MilestoneStatus } from "@/lib/types/status"
 
-// Re-export types from shared enum module for backwards compatibility
-export type AgreementStatus = AgreementStatusType
-export type AgreementType = AgreementTypeType
-export type ParticipantRole = ParticipantRoleType
-
-// Re-export enums
-export { AgreementStatusEnum, AgreementTypeEnum, ParticipantRoleEnum, MilestoneStatus }
+export type { AgreementStatus, MilestoneStatus }
+export type AgreementType = "single" | "multi" | "bounty"
+export type ParticipantRole = "payer" | "payee" | "approver" | "dispute_resolver" | "validator"
 
 export interface AgreementMilestone {
   description: string
   amount: string
-  status: MilestoneStatusType
+  status: MilestoneStatus
 }
 
 export interface Agreement {
@@ -77,43 +64,6 @@ export interface MutationResponse {
   error?: string
 }
 
-interface ApiResponse<T> {
-  success: boolean
-  data?: T
-  error?: string
-}
-
-async function apiRequest<T>(
-  endpoint: string,
-  options: RequestInit = {},
-  token?: string
-): Promise<ApiResponse<T>> {
-  try {
-    const headers: HeadersInit = {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...options.headers,
-    }
-
-    const response = await fetch(`${API_URL}${endpoint}`, {
-      ...options,
-      headers,
-    })
-
-    const data = await response.json()
-
-    if (!response.ok) {
-      return { success: false, error: data.message || data.error || "Request failed" }
-    }
-
-    return { success: true, data }
-  } catch (error) {
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : "Network error" 
-    }
-  }
-}
 
 /**
  * Create a new agreement
@@ -476,9 +426,7 @@ export async function linkContractToAgreementApi(
       error: e instanceof Error ? e.message : "Failed to link contract",
     }
   }
-}
-
-/**
+}/**
  * Get agreement by ID with participants
  * Backend returns: { agreement, participants, error }
  */
@@ -489,8 +437,7 @@ export async function getAgreementByIdWithParticipants(
   try {
     const response = await apiRequest<unknown>(
       `/agreements/${agreementId}`,
-      { method: "GET" },
-      token
+      { method: "GET" }, token
     )
 
     if (!response.success) {
@@ -511,6 +458,98 @@ export async function getAgreementByIdWithParticipants(
     return {
       success: false,
       error: e instanceof Error ? e.message : "Failed to fetch agreement",
+    }
+  }
+}
+
+// ── Agreement Chat (messages via Nest + JWT) ──────────────────────────
+
+export interface AgreementMessage {
+  id: string
+  agreement_id: string
+  sender_wallet: string
+  message: string
+  created_at: string
+  read_at: string | null
+}
+
+/**
+ * Fetch messages for an agreement via Nest JWT endpoint.
+ * GET /v1/agreements/:agreementId/messages
+ */
+export async function getAgreementMessagesApi(
+  agreementId: string,
+  token?: string
+): Promise<ApiResponse<AgreementMessage[]>> {
+  try {
+    const response = await apiRequest<unknown>(
+      `/agreements/${agreementId}/messages`,
+      { method: "GET" },
+      token
+    )
+
+    if (!response.success) {
+      return { success: false, error: response.error }
+    }
+
+    const payload = response.data as Record<string, unknown>
+    const messages = (payload.messages as AgreementMessage[]) || []
+    const error = payload.error as string | undefined
+
+    if (error) {
+      return { success: false, error }
+    }
+
+    return { success: true, data: messages }
+  } catch (e) {
+    return {
+      success: false,
+      error: e instanceof Error ? e.message : "Failed to fetch messages",
+    }
+  }
+}
+
+/**
+ * Send a message in an agreement chat via Nest JWT endpoint.
+ * POST /v1/agreements/:agreementId/messages
+ */
+export async function sendAgreementMessageApi(
+  agreementId: string,
+  message: string,
+  senderWallet: string,
+  token?: string
+): Promise<ApiResponse<AgreementMessage>> {
+  try {
+    const response = await apiRequest<unknown>(
+      `/agreements/${agreementId}/messages`,
+      {
+        method: "POST",
+        body: JSON.stringify({ message: message.trim(), sender_wallet: senderWallet }),
+      },
+      token
+    )
+
+    if (!response.success) {
+      return { success: false, error: response.error }
+    }
+
+    const payload = response.data as Record<string, unknown>
+    const msg = payload.message as AgreementMessage | undefined
+    const error = payload.error as string | undefined
+
+    if (error) {
+      return { success: false, error }
+    }
+
+    if (!msg) {
+      return { success: false, error: "No message returned" }
+    }
+
+    return { success: true, data: msg }
+  } catch (e) {
+    return {
+      success: false,
+      error: e instanceof Error ? e.message : "Failed to send message",
     }
   }
 }

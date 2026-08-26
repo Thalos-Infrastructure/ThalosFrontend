@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils"
 import { ThalosLoader } from "@/components/thalos-loader"
 import { Button } from "@/components/ui/button"
 import { SocialAuthModal } from "@/components/social-auth-modal"
+import { useLoginEntry } from "@/lib/use-login-entry"
 
 /* ── THALOS vertical letters ── */
 const THALOS_LETTERS = ["T", "h", "a", "l", "o", "s"]
@@ -83,6 +84,7 @@ export default function AboutPage() {
   const [scrollDarken, setScrollDarken] = useState(0)
   const [letterOpacities, setLetterOpacities] = useState<number[]>([1, 1, 1, 1, 1, 1])
   const [showAuthModal, setShowAuthModal] = useState<"login" | "signup" | null>(null)
+  const { startLogin, resuming } = useLoginEntry()
 
   useEffect(() => {
     const timer = setTimeout(() => setLoading(false), 400)
@@ -170,10 +172,11 @@ export default function AboutPage() {
             <ThemeToggle />
             <Button
               size="sm"
-              onClick={() => setShowAuthModal("login")}
+              onClick={() => startLogin(() => setShowAuthModal("login"))}
+              disabled={resuming}
               className="rounded-full border border-[#f0b400]/40 bg-[#f0b400]/10 px-5 py-2 text-sm text-[#f0b400] font-bold hover:bg-[#f0b400]/20 hover:border-[#f0b400]/60 transition-all duration-300"
             >
-              Login
+              {resuming ? "…" : "Login"}
             </Button>
           </div>
         </nav>
@@ -441,7 +444,6 @@ export default function AboutPage() {
       {/* Auth Modal */}
       <SocialAuthModal
         open={showAuthModal !== null}
-        mode={showAuthModal === "signup" ? "signup" : "login"}
         onClose={() => setShowAuthModal(null)}
       />
     </div>

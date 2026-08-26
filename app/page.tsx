@@ -8,6 +8,7 @@ import { ThalosLoader } from "@/components/thalos-loader"
 import { Navbar } from "@/components/navbar"
 import { HeroSection } from "@/components/hero-section"
 import { SocialAuthModal } from "@/components/social-auth-modal"
+import { useLoginEntry } from "@/lib/use-login-entry"
 
 
 
@@ -28,6 +29,7 @@ export default function Home() {
   const [showAuthModal, setShowAuthModal] = useState<"login" | "signup" | null>(null)
   const [introComplete, setIntroComplete] = useState(false)
   const [scrollDarken, setScrollDarken] = useState(0)
+  const { startLogin, resuming } = useLoginEntry()
 
   // Brief brand flash then render
   useEffect(() => {
@@ -51,14 +53,14 @@ export default function Home() {
   const handleNavigate = useCallback((section: string) => {
     // Handle sign-in navigation - open modal instead of navigating
     if (section === "sign-in") {
-      setShowAuthModal("login")
+      startLogin(() => setShowAuthModal("login"))
       return
     }
     const el = sectionsRef.current[section] || document.getElementById(section)
     if (el) {
       el.scrollIntoView({ behavior: "smooth", block: "start" })
     }
-  }, [])
+  }, [startLogin])
 
   const setRef = useCallback((section: string) => (el: HTMLDivElement | null) => {
     sectionsRef.current[section] = el
@@ -67,7 +69,9 @@ export default function Home() {
   // Overlay opacity: starts lighter so images show, goes darker at footer
   const overlayOpacity = 0.25 + scrollDarken * 0.55
 
-  if (loading) return <ThalosLoader />
+  // Resuming re-mints the JWT and reads the profile, so it takes a moment. Show
+  // the same brand loader instead of a Login button that looks unresponsive.
+  if (loading || resuming) return <ThalosLoader />
 
   return (
     <div className="relative min-h-screen bg-background text-foreground">
@@ -134,7 +138,6 @@ export default function Home() {
       {/* Auth Modal */}
       <SocialAuthModal
         open={showAuthModal !== null}
-        mode={showAuthModal === "signup" ? "signup" : "login"}
         onClose={() => setShowAuthModal(null)}
       />
       

@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { cn, isMockAgreement } from "@/lib/utils"
-import { getAgreementMessages, sendAgreementMessage, type AgreementMessage } from "@/lib/actions/agreement-chat"
+import { getAgreementMessagesApi, sendAgreementMessageApi, type AgreementMessage } from "@/lib/api/agreements"
 import { Send, MessageCircle, AlertTriangle } from "lucide-react"
 
 interface AgreementChatProps {
@@ -12,18 +12,21 @@ interface AgreementChatProps {
   currentUserWallet: string
   counterpartyWallet: string
   counterpartyName?: string
+  /** App JWT from useAuthStore — required for Nest endpoints. */
+  token?: string | null
   className?: string
   defaultOpen?: boolean
   embedded?: boolean // When true, removes the header and shows full height
 }
 
-export function AgreementChat({ agreementId, currentUserWallet, counterpartyWallet, counterpartyName, className, defaultOpen = false, embedded = false }: AgreementChatProps) {
+export function AgreementChat({ agreementId, currentUserWallet, counterpartyWallet, counterpartyName, token, className, defaultOpen = false, embedded = false }: AgreementChatProps) {
   const isMock = useMemo(() => isMockAgreement(agreementId), [agreementId])
   const [messages, setMessages] = useState<AgreementMessage[]>([])
   const [newMessage, setNewMessage] = useState("")
   const [loading, setLoading] = useState(false)
   const [sending, setSending] = useState(false)
   const [isOpen, setIsOpen] = useState(defaultOpen)
+  const [chatError, setChatError] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const pollInterval = useRef<NodeJS.Timeout | null>(null)
 
@@ -44,8 +47,14 @@ export function AgreementChat({ agreementId, currentUserWallet, counterpartyWall
 
   async function loadMessages() {
     setLoading(true)
-    const { messages: data } = await getAgreementMessages(agreementId)
-    setMessages(data)
+    setChatError(null)
+    const { data, error } = await getAgreementMessagesApi(agreementId, token ?? undefined)
+    if (error) {
+      setChatError(error)
+      setMessages([])
+    } else {
+      setMessages(data || [])
+    }
     setLoading(false)
   }
 
@@ -55,18 +64,19 @@ export function AgreementChat({ agreementId, currentUserWallet, counterpartyWall
 
   async function handleSend() {
     if (!newMessage.trim() || sending) return
-    
+
     setSending(true)
-    const { message, error } = await sendAgreementMessage(agreementId, newMessage, currentUserWallet)
+    setChatError(null)
+    const { data, error } = await sendAgreementMessageApi(agreementId, newMessage, currentUserWallet, token ?? undefined)
     setSending(false)
 
     if (error) {
-      console.error("Error sending message:", error)
+      setChatError(error)
       return
     }
 
-    if (message) {
-      setMessages([...messages, message])
+    if (data) {
+      setMessages([...messages, data])
       setNewMessage("")
     }
   }
@@ -75,7 +85,7 @@ export function AgreementChat({ agreementId, currentUserWallet, counterpartyWall
     const date = new Date(dateString)
     const now = new Date()
     const isToday = date.toDateString() === now.toDateString()
-    
+
     if (isToday) {
       return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
     }
@@ -151,6 +161,9 @@ export function AgreementChat({ agreementId, currentUserWallet, counterpartyWall
                 </div>
               )
             })
+          )}
+          {chatError && (
+            <div className="text-xs text-red-400 text-center py-2">{chatError}</div>
           )}
           <div ref={messagesEndRef} />
         </div>
@@ -291,6 +304,9 @@ export function AgreementChat({ agreementId, currentUserWallet, counterpartyWall
               </div>
             )
           })
+        )}
+        {chatError && (
+          <div className="text-xs text-red-400 text-center py-2">{chatError}</div>
         )}
         <div ref={messagesEndRef} />
       </div>
