@@ -38,6 +38,9 @@ import { createAgreement, sendTransaction, AgreementPayload, approveMilestone } 
 import { STELLAR_EXPLORER_BASE_URL, STELLAR_EXPLORER_ACCOUNT_BASE_URL, TRUSTLINE_USDC, SHOW_MOCKED_AGREEMENTS } from "@/lib/config";
 import { getWalletBalance } from "@/lib/api/wallets";
 import { getKycStatus, startKycSession } from "@/lib/api/kyc";
+import { MilestonePrPicker } from "@/components/github/milestone-pr-picker";
+import { AttachedPullRequests } from "@/components/github/attached-prs";
+import { getAttachedPullRequests, type GithubPullRequest } from "@/lib/api/github";
 import { isKycVerified, canStartKycSession, buildCreateKycSessionDto, nextKycStatusAfterSessionStart, type KycVerificationStatus } from "@/lib/kyc";
 import { updateProfile } from "@/lib/actions/profile";
 
@@ -228,10 +231,31 @@ function SellerMilestoneList({ agr, agreements, setAgreements, t }: {
   const [submittedEvidence, setSubmittedEvidence] = React.useState<Record<number, string>>({})
   const [submitting, setSubmitting] = React.useState<number | null>(null)
   const [expandedMs, setExpandedMs] = React.useState<number | null>(null)
+  const [attachedPrs, setAttachedPrs] = React.useState<Record<number, GithubPullRequest[]>>({})
 
   const { address: walletAddress, openWalletModal } = require("@/lib/stellar-wallet").useStellarWallet();
   const { changeMilestoneStatusAgreement } = require("@/lib/agreementActions");
+  const { token } = useAuthStore();
   const isMock = isMockAgreement(agr.id);
+
+  // Best-effort load of any GitHub PRs already attached to each milestone, so
+  // existing evidence renders. Backed by the Nest route (BE#140); failures are
+  // silent until the backend is available.
+  React.useEffect(() => {
+    if (isMock || !token) return
+    let active = true
+    Promise.all(agr.milestones.map((_, idx) => getAttachedPullRequests(agr.id, idx, token)))
+      .then((results) => {
+        if (!active) return
+        const map: Record<number, GithubPullRequest[]> = {}
+        results.forEach((res, idx) => {
+          if (res.success && res.data && res.data.length) map[idx] = res.data
+        })
+        if (Object.keys(map).length) setAttachedPrs(map)
+      })
+      .catch(() => {})
+    return () => { active = false }
+  }, [agr.id, isMock, token])
   const handleSubmitEvidence = async (idx: number) => {
     if (isMock) {
       alert("Demo agreement — actions are unavailable. Create a real agreement to use this feature.");
@@ -320,6 +344,17 @@ function SellerMilestoneList({ agr, agreements, setAgreements, t }: {
                     {submitting === idx ? "..." : t("flow.submit")}
                   </Button>
                 </div>
+                {/* GitHub-backed evidence: verified merged PRs scoped to the project repo (#128) */}
+                <div className="mt-3 border-t border-white/[0.06] pt-3">
+                  <MilestonePrPicker
+                    agreementId={agr.id}
+                    milestoneIndex={idx}
+                    token={token ?? undefined}
+                    attached={attachedPrs[idx] ?? []}
+                    onAttached={(prs) => setAttachedPrs(prev => ({ ...prev, [idx]: prs }))}
+                    disabled={isMock}
+                  />
+                </div>
               </div>
             )}
             {/* Show submitted evidence */}
@@ -327,6 +362,13 @@ function SellerMilestoneList({ agr, agreements, setAgreements, t }: {
               <div className="mt-3 rounded-lg border border-cyan-500/10 bg-cyan-500/5 px-3 py-2">
                 <p className="text-xs text-cyan-400/60 font-medium">{t("flow.viewEvidence")}:</p>
                 <p className="text-xs text-white/60 mt-0.5 break-all">{hasEvidence ? submittedEvidence[idx] : ms.evidence}</p>
+              </div>
+            )}
+            {/* Attached GitHub PRs (verified evidence), always rendered when present */}
+            {(attachedPrs[idx]?.length ?? 0) > 0 && (
+              <div className="mt-3">
+                <p className="mb-1.5 text-xs font-medium text-white/40">GitHub evidence</p>
+                <AttachedPullRequests pullRequests={attachedPrs[idx]} />
               </div>
             )}
           </div>
