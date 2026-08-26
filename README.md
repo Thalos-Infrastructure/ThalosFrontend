@@ -119,6 +119,9 @@ the **required** ones are:
 
 Everything else (email, Stellar/UI, Trustless Work) is optional and documented in `.env.example`.
 
+Escrow read/write cutover flags, safe defaults, rollout guidance, and structured
+telemetry examples are documented in [Escrow migration flags and telemetry](docs/escrow-migration.md).
+
 > `NEXT_PUBLIC_*` values are inlined at **build time** — changing them requires a rebuild/redeploy.
 
 ### 4. Run the development server
@@ -169,6 +172,13 @@ Thalos uses the [Stellar Wallets Kit](https://github.com/nicofunke/stellar-walle
 4. Approve the connection in your wallet extension.
 
 Your connected address is used for all escrow operations: funding agreements as a payer, or receiving released funds as a payee.
+
+### Wallet data stores
+
+Wallet UI uses the Nest-backed `user_wallets` store through `lib/api/wallets.ts`.
+The Next BFF routes under `app/api/wallets/*` use a separate legacy
+`linked_wallets` table; the stores are not interchangeable. See
+[`docs/wallet-stores.md`](docs/wallet-stores.md) for ownership and current consumers.
 
 ## How Escrows Work
 
