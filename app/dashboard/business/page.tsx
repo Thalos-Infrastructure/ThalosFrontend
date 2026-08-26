@@ -461,7 +461,9 @@ export default function BusinessDashboardPage() {
     return {
       id: e.contractId as string || `escrow-${Date.now()}`,
       title: e.title as string || "Escrow Agreement",
-      counterparty: ((e.serviceProvider as string) || (e.receiver as string) || "").slice(0, 8) + "...",
+      counterparty: ((e.serviceProvider as string) || (e.receiver as string))
+        ? ((e.serviceProvider as string) || (e.receiver as string)).slice(0, 8) + "..."
+        : "-",
       status: e.status as string || "pending",
       amount,
       currency: "USDC",
@@ -472,7 +474,8 @@ export default function BusinessDashboardPage() {
         amount: String(m.amount || 0),
         status: m.released ? "released" : m.approved ? "approved" : "pending" as "pending" | "approved" | "released",
       })),
-      receiver: e.receiver as string || "",
+      receiver: (e.receiver as string) || "-",
+      serviceProvider: (e.serviceProvider as string) || "-",
       role: currentWorkspaceWallet === e.serviceProvider ? "seller" : "buyer",
     };
   };
@@ -678,10 +681,27 @@ export default function BusinessDashboardPage() {
   const [sortBy, setSortBy] = useState<"date" | "amount" | "title">("date")
 
   const filteredAgreements = useMemo(() => {
+    // Step A: Resolve the wallet set (flatten all or filter by selectedWalletPubKey)
+    let list: Array<{
+      id: string;
+      title: string;
+      status: string;
+      amount: string;
+      currency: string;
+      type: "Single Release" | "Multi Release";
+      counterparty: string;
+      date: string;
+      updatedAt?: string;
+      role?: "buyer" | "seller";
+      receiver?: string;
+      serviceProvider?: string;
+      milestones: Array<{ status: string; description?: string; amount?: string; approved?: boolean }>;
+    }> = [];
+
     if (walletsData && walletsData.length > 0) {
       if (!walletFilter || walletFilter === "all" || walletFilter === "All") {
         // Flatten all agreements arrays from walletsData into one combined array
-        return walletsData.flatMap((w) =>
+        list = walletsData.flatMap((w) =>
           w.agreements.map((a) => ({
             id: a.id,
             title: a.title,
@@ -689,52 +709,86 @@ export default function BusinessDashboardPage() {
             amount: a.amount,
             currency: "USDC",
             type: "Single Release" as const,
-            counterparty: w.wallet_address ? `${w.wallet_address.slice(0, 6)}...${w.wallet_address.slice(-4)}` : "Unknown",
+            counterparty: "-",
             date: a.created_at ? a.created_at.split("T")[0] : new Date().toISOString().split("T")[0],
             updatedAt: a.created_at,
             role: (a.role === "seller" ? "seller" : "buyer") as "buyer" | "seller",
-            receiver: w.wallet_address,
-            serviceProvider: w.wallet_address,
+            receiver: "-",
+            serviceProvider: "-",
             milestones: [{ status: a.status }],
           }))
         );
+      } else {
+        // Specific wallet selected
+        const targetWallet = walletsData.find((w) => w.wallet_address === walletFilter);
+        list = targetWallet
+          ? targetWallet.agreements.map((a) => ({
+              id: a.id,
+              title: a.title,
+              status: a.status,
+              amount: a.amount,
+              currency: "USDC",
+              type: "Single Release" as const,
+              counterparty: "-",
+              date: a.created_at ? a.created_at.split("T")[0] : new Date().toISOString().split("T")[0],
+              updatedAt: a.created_at,
+              role: (a.role === "seller" ? "seller" : "buyer") as "buyer" | "seller",
+              receiver: "-",
+              serviceProvider: "-",
+              milestones: [{ status: a.status }],
+            }))
+          : [];
       }
-
-      // Specific wallet selected
-      const targetWallet = walletsData.find((w) => w.wallet_address === walletFilter);
-      if (!targetWallet) return [];
-      return targetWallet.agreements.map((a) => ({
-        id: a.id,
-        title: a.title,
-        status: a.status,
-        amount: a.amount,
-        currency: "USDC",
-        type: "Single Release" as const,
-        counterparty: targetWallet.wallet_address ? `${targetWallet.wallet_address.slice(0, 6)}...${targetWallet.wallet_address.slice(-4)}` : "Unknown",
-        date: a.created_at ? a.created_at.split("T")[0] : new Date().toISOString().split("T")[0],
-        updatedAt: a.created_at,
-        role: (a.role === "seller" ? "seller" : "buyer") as "buyer" | "seller",
-        receiver: targetWallet.wallet_address,
-        serviceProvider: targetWallet.wallet_address,
-        milestones: [{ status: a.status }],
+    } else {
+      // Fallback when walletsData is not yet loaded / available
+      let filtered = [...agreements];
+      if (walletFilter && walletFilter !== "all" && walletFilter !== "All") {
+        filtered = filtered.filter(
+          (a) =>
+            (a as unknown as { receiver?: string }).receiver === walletFilter ||
+            (a as unknown as { serviceProvider?: string }).serviceProvider === walletFilter
+        );
+      }
+      list = filtered.map((a) => ({
+        ...a,
+        updatedAt: a.date,
+        currency: a.currency || "USDC",
       }));
     }
 
-    // Fallback when walletsData is not yet loaded / available
-    let filtered = [...agreements];
-    if (walletFilter && walletFilter !== "all" && walletFilter !== "All") {
-      filtered = filtered.filter(
-        (a) =>
-          (a as unknown as { receiver?: string }).receiver === walletFilter ||
-          (a as unknown as { serviceProvider?: string }).serviceProvider === walletFilter
+    // Step B: Apply searchQuery filtering
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      list = list.filter(
+        (agr) =>
+          (agr.title && agr.title.toLowerCase().includes(q)) ||
+          (agr.counterparty && agr.counterparty.toLowerCase().includes(q)) ||
+          (agr.id && agr.id.toLowerCase().includes(q))
       );
     }
-    return filtered.map((a) => ({
-      ...a,
-      updatedAt: a.date,
-      currency: a.currency || "USDC",
-    }));
-  }, [walletsData, walletFilter, agreements]);
+
+    // Step C: Apply statusFilter filtering
+    if (statusFilter !== "all") {
+      list = list.filter((a) => {
+        const allReleased = a.milestones && a.milestones.length > 0 && a.milestones.every((m) => m.status === "released");
+        const actualStatus = allReleased ? "released" : a.status;
+        return actualStatus === statusFilter;
+      });
+    }
+
+    // Step D: Apply sortBy ordering
+    list.sort((a, b) => {
+      if (sortBy === "date") return (b.date || "").localeCompare(a.date || "");
+      if (sortBy === "amount") {
+        const amountA = parseFloat(String(a.amount || "0").replace(/,/g, "")) || 0;
+        const amountB = parseFloat(String(b.amount || "0").replace(/,/g, "")) || 0;
+        return amountB - amountA;
+      }
+      return (a.title || "").localeCompare(b.title || "");
+    });
+
+    return list;
+  }, [walletsData, walletFilter, agreements, searchQuery, statusFilter, sortBy]);
 
   const statusCounts = useMemo(() => {
     const counts = { all: agreements.length, funded: 0, in_progress: 0, released: 0 }

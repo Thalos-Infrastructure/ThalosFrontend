@@ -152,10 +152,10 @@ function mapEscrowToAgreement(escrow: any) {
     title: escrow.title,
     status,
     type: isMulti ? "Multi Release" : "Single Release",
-    counterparty: escrow.roles.serviceProvider?.slice(0, 8) + "...",
+    counterparty: escrow.roles?.serviceProvider ? `${escrow.roles.serviceProvider.slice(0, 8)}...` : "-",
     amount,
     currency: "USDC",
-    date: new Date(escrow.createdAt?._seconds * 1000).toISOString().split("T")[0],
+    date: escrow.createdAt?._seconds ? new Date(escrow.createdAt._seconds * 1000).toISOString().split("T")[0] : new Date().toISOString().split("T")[0],
     milestones: milestones.map(m => ({
       approved: m.approved,
       description: m.description,
@@ -165,12 +165,12 @@ function mapEscrowToAgreement(escrow: any) {
       status: m.flags?.released ? "released" : m.flags?.approved ? "approved" : m.status || "pending",
       evidence: m.evidence,
     })),
-    receiver: escrow.roles.receiver || escrow.roles.serviceProvider,
+    receiver: escrow.roles?.receiver || escrow.roles?.serviceProvider || "-",
     balance: escrow.balance,
-    serviceProvider: escrow.roles.serviceProvider,
-    approver: escrow.roles.approver,
-    releaseSigner: escrow.roles.releaseSigner,
-    disputeResolver: escrow.roles.disputeResolver,
+    serviceProvider: escrow.roles?.serviceProvider || "-",
+    approver: escrow.roles?.approver,
+    releaseSigner: escrow.roles?.releaseSigner,
+    disputeResolver: escrow.roles?.disputeResolver,
     released: escrow.flags?.released ?? false,
     role: "buyer" as const, // Default to buyer, can be determined by comparing wallet addresses
   };
@@ -472,10 +472,27 @@ export default function PersonalDashboardPage() {
   const ITEMS_PER_PAGE = 10
   
   const filteredAgreements = useMemo(() => {
+    // Step A: Resolve the wallet set (flatten all or filter by selectedWalletPubKey)
+    let list: Array<{
+      id: string;
+      title: string;
+      status: string;
+      amount: string;
+      currency: string;
+      type: "Single Release" | "Multi Release";
+      counterparty: string;
+      date: string;
+      updatedAt?: string;
+      role?: "buyer" | "seller";
+      receiver?: string;
+      serviceProvider?: string;
+      milestones: Array<{ status: string; description?: string; amount?: string; approved?: boolean }>;
+    }> = [];
+
     if (walletsData && walletsData.length > 0) {
       if (!walletFilter || walletFilter === "all" || walletFilter === "All") {
         // Flatten all agreements arrays from walletsData into one combined array
-        return walletsData.flatMap((w) =>
+        list = walletsData.flatMap((w) =>
           w.agreements.map((a) => ({
             id: a.id,
             title: a.title,
@@ -483,53 +500,87 @@ export default function PersonalDashboardPage() {
             amount: a.amount,
             currency: "USDC",
             type: "Single Release" as const,
-            counterparty: w.wallet_address ? `${w.wallet_address.slice(0, 6)}...${w.wallet_address.slice(-4)}` : "Unknown",
+            counterparty: "-",
             date: a.created_at ? a.created_at.split("T")[0] : new Date().toISOString().split("T")[0],
             updatedAt: a.created_at,
             role: (a.role === "seller" ? "seller" : "buyer") as "buyer" | "seller",
-            receiver: w.wallet_address,
-            serviceProvider: w.wallet_address,
+            receiver: "-",
+            serviceProvider: "-",
             milestones: [{ status: a.status }],
           }))
         );
+      } else {
+        // Specific wallet selected
+        const targetWallet = walletsData.find((w) => w.wallet_address === walletFilter);
+        list = targetWallet
+          ? targetWallet.agreements.map((a) => ({
+              id: a.id,
+              title: a.title,
+              status: a.status,
+              amount: a.amount,
+              currency: "USDC",
+              type: "Single Release" as const,
+              counterparty: "-",
+              date: a.created_at ? a.created_at.split("T")[0] : new Date().toISOString().split("T")[0],
+              updatedAt: a.created_at,
+              role: (a.role === "seller" ? "seller" : "buyer") as "buyer" | "seller",
+              receiver: "-",
+              serviceProvider: "-",
+              milestones: [{ status: a.status }],
+            }))
+          : [];
       }
-
-      // Specific wallet selected
-      const targetWallet = walletsData.find((w) => w.wallet_address === walletFilter);
-      if (!targetWallet) return [];
-      return targetWallet.agreements.map((a) => ({
-        id: a.id,
-        title: a.title,
-        status: a.status,
-        amount: a.amount,
-        currency: "USDC",
-        type: "Single Release" as const,
-        counterparty: targetWallet.wallet_address ? `${targetWallet.wallet_address.slice(0, 6)}...${targetWallet.wallet_address.slice(-4)}` : "Unknown",
-        date: a.created_at ? a.created_at.split("T")[0] : new Date().toISOString().split("T")[0],
-        updatedAt: a.created_at,
-        role: (a.role === "seller" ? "seller" : "buyer") as "buyer" | "seller",
-        receiver: targetWallet.wallet_address,
-        serviceProvider: targetWallet.wallet_address,
-        milestones: [{ status: a.status }],
+    } else {
+      // Fallback when walletsData is not yet loaded / available
+      let filtered = [...agreements];
+      if (walletFilter && walletFilter !== "all" && walletFilter !== "All") {
+        filtered = filtered.filter(
+          (a) =>
+            a.receiver === walletFilter ||
+            a.id.includes(walletFilter.slice(0, 8)) ||
+            (a as unknown as { serviceProvider?: string }).serviceProvider === walletFilter
+        );
+      }
+      list = filtered.map((a) => ({
+        ...a,
+        updatedAt: a.date,
+        currency: a.currency || "USDC",
       }));
     }
 
-    // Fallback when walletsData is not yet loaded / available
-    let filtered = [...agreements];
-    if (walletFilter && walletFilter !== "all" && walletFilter !== "All") {
-      filtered = filtered.filter(
-        (a) =>
-          a.receiver === walletFilter ||
-          a.id.includes(walletFilter.slice(0, 8)) ||
-          (a as unknown as { serviceProvider?: string }).serviceProvider === walletFilter
+    // Step B: Apply searchQuery filtering
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      list = list.filter(
+        (agr) =>
+          (agr.title && agr.title.toLowerCase().includes(q)) ||
+          (agr.counterparty && agr.counterparty.toLowerCase().includes(q)) ||
+          (agr.id && agr.id.toLowerCase().includes(q))
       );
     }
-    return filtered.map((a) => ({
-      ...a,
-      updatedAt: a.date,
-      currency: a.currency || "USDC",
-    }));
-  }, [walletsData, walletFilter, agreements]);
+
+    // Step C: Apply statusFilter filtering
+    if (statusFilter !== "all") {
+      list = list.filter((a) => {
+        const allReleased = a.milestones && a.milestones.length > 0 && a.milestones.every((m) => m.status === "released");
+        const actualStatus = allReleased ? "released" : a.status;
+        return actualStatus === statusFilter;
+      });
+    }
+
+    // Step D: Apply sortBy ordering
+    list.sort((a, b) => {
+      if (sortBy === "date") return (b.date || "").localeCompare(a.date || "");
+      if (sortBy === "amount") {
+        const amountA = parseFloat(String(a.amount || "0").replace(/,/g, "")) || 0;
+        const amountB = parseFloat(String(b.amount || "0").replace(/,/g, "")) || 0;
+        return amountB - amountA;
+      }
+      return (a.title || "").localeCompare(b.title || "");
+    });
+
+    return list;
+  }, [walletsData, walletFilter, agreements, searchQuery, statusFilter, sortBy]);
 
   // Pagination
   const totalPages = Math.ceil(filteredAgreements.length / ITEMS_PER_PAGE)
@@ -541,7 +592,7 @@ export default function PersonalDashboardPage() {
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1)
-  }, [statusFilter, searchQuery, sortBy])
+  }, [statusFilter, searchQuery, sortBy, walletFilter])
 
   const statusCounts = useMemo(() => {
     const counts = { all: agreements.length, funded: 0, in_progress: 0, released: 0 }
