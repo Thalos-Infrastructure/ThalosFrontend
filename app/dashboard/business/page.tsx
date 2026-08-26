@@ -1979,6 +1979,7 @@ export default function BusinessDashboardPage() {
                 agreementId={showAgreementChat}
                 currentUserWallet={walletAddress || ""}
                 counterpartyWallet={agreements.find(a => a.id === showAgreementChat)?.receiver || ""}
+                token={token}
                 defaultOpen={true}
                 embedded={true}
               />

@@ -18,7 +18,7 @@ export interface CreateAndSignAgreementParams {
   setSubmitted: (v: boolean) => void;
   /** Transaction progress for the UI: building → signing → submitting → confirmed. */
   onStatus?: (status: TxStatus) => void;
-  onSuccess?: () => void;
+  onSuccess?: (agreementId?: string) => void;
 }
 
 export interface FundAndSignEscrowParams {
@@ -162,22 +162,24 @@ async function persistAgreementRecord(
   createdBy: string,
   contractId: string | undefined,
   token: string,
-) {
+): Promise<string | undefined> {
   try {
     const res = await createAgreementRecord(toAgreementRecord(payload, createdBy, contractId), token);
-    if (!res.success) {
+    if (!res.success || !res.data) {
       console.error(
         "[agreements] escrow deployed but the agreement record did NOT persist — no participants, no notification:",
         res.error,
       );
-      return;
+      return undefined;
     }
-    console.info("[agreements] agreement persisted, creation event emitted", { contractId });
+    console.info("[agreements] agreement persisted, creation event emitted", { agreementId: res.data.id, contractId });
+    return res.data.id;
   } catch (e) {
     console.error(
       "[agreements] escrow deployed but the agreement record did NOT persist — no participants, no notification:",
       e,
     );
+    return undefined;
   }
 }
 
@@ -190,7 +192,7 @@ export async function createAndSignAgreement({
   setSubmitted,
   onStatus,
   onSuccess,
-}: CreateAndSignAgreementParams) {
+}: CreateAndSignAgreementParams): Promise<string | undefined> {
   setCreating(true);
   setError(null);
   try {
@@ -230,17 +232,19 @@ export async function createAndSignAgreement({
 
     // 4. Persist the agreement so participants, activity and the email
     //    notification happen. Non-fatal — see persistAgreementRecord.
-    await persistAgreementRecord(payload, signerAddress, contractId, token);
+    const agreementId = await persistAgreementRecord(payload, signerAddress, contractId, token);
 
     onStatus?.("confirmed");
     setSubmitted(true);
-    onSuccess?.();
+    onSuccess?.(agreementId);
+    return agreementId;
   } catch (e: any) {
     onStatus?.("error");
     setError(e.message || "Unknown error");
   } finally {
     setCreating(false);
   }
+  return undefined;
 }
 
 /**
