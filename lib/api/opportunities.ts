@@ -55,7 +55,6 @@ export interface CreateOpportunityInput {
 }
 
 export type OpportunityInput = CreateOpportunityInput
-
 type OpportunityEnvelope = Opportunity | { opportunity: Opportunity }
 type OpportunityListEnvelope = Opportunity[] | { opportunities: Opportunity[] }
 
@@ -86,7 +85,6 @@ export async function getOpenOpportunities(): Promise<ApiResponse<Opportunity[]>
 export async function discoverOpenOpportunities(): Promise<ApiResponse<Opportunity[]>> {
   return getOpenOpportunities()
 }
-
 /** Authenticated project owner's opportunities, including non-open records. */
 export async function getMyOpportunities(token: string): Promise<ApiResponse<Opportunity[]>> {
   return many(await apiRequest<OpportunityListEnvelope>("/opportunities/mine", { method: "GET" }, token))
@@ -136,7 +134,6 @@ export async function deleteOpportunity(id: string, token: string): Promise<ApiR
 export async function removeOpportunity(id: string, token: string): Promise<ApiResponse<void>> {
   return deleteOpportunity(id, token)
 }
-
 export async function discoverOpportunities(
   params: OpportunityDiscoveryParams = {},
   token?: string
