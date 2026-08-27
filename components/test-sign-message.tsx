@@ -2,15 +2,12 @@
 
 import { useState } from "react"
 import { useStellarWallet } from "@/lib/stellar-wallet"
-import { SHOW_SIGN_MESSAGE_TEST } from "@/lib/config"
 
 export function TestSignMessage() {
   const { signMessage, address, openWalletModal } = useStellarWallet()
   const [result, setResult] = useState<string>("")
 
-  // Dev-only widget: hidden unless explicitly enabled. Guard runs after the hooks
-  // above so React's rules-of-hooks stay satisfied.
-  if (!SHOW_SIGN_MESSAGE_TEST) return null
+  // Dev-only widget — reachable only from the /dev/sign-test route.
 
   const handleSign = async () => {
     if (!address) {

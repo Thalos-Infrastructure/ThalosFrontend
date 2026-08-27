@@ -102,9 +102,24 @@ const BASE_URL =
   process.env.NEXT_PUBLIC_TRUSTLESSWORK_API_URL ??
   "https://dev.api.trustlesswork.com";
 
-const API_KEY =
-  process.env.NEXT_PUBLIC_TRUSTLESSWORK_API_KEY ??
-  "bJJ8-62SYFUzv3kwajoLEw.2b170e199a57120ec56de4bdece08f54b03e5242fea50c5e44ca810b987412ea";
+/**
+ * Trustless Work API key, read from the environment ONLY.
+ *
+ * This used to fall back to a key hardcoded right here, which meant the secret
+ * shipped inside the browser bundle and sat in a public repo. Without the env var
+ * the direct calls below now fail loudly instead of quietly working off a
+ * committed credential.
+ *
+ * The real fix is migrating these writes to the backend relay (see the migration
+ * flags in `services/escrowMigration.ts`), which keeps the key server-side.
+ */
+const API_KEY = process.env.NEXT_PUBLIC_TRUSTLESSWORK_API_KEY ?? "";
+
+if (typeof window !== "undefined" && !API_KEY) {
+  console.error(
+    "[trustlesswork] NEXT_PUBLIC_TRUSTLESSWORK_API_KEY is not set — direct Trustless Work calls will be rejected. Add it to .env.local.",
+  );
+}
 
 const PLATFORM_ADDRESS =
   process.env.NEXT_PUBLIC_PLATFORM_ADDRESS ?? "GBTTKTSBLHGMRY3T65JXT423MHQZXTD26TTHQEY5HNF2KWFFDKKVHVPD";
@@ -239,7 +254,7 @@ function buildAgreementBody(payload: AgreementPayload) {
 
 export async function createAgreement(
   payload: AgreementPayload
-): Promise<AgreementResponse> {
+): Promise<AgreementResponse<{ unsignedTransaction: string }>> {
   // Validate receiver wallet has USDC trustline before creating escrow
   const receiverWallet = payload.roles.receiver;
   if (receiverWallet) {
@@ -265,7 +280,7 @@ export async function createAgreement(
   ? endpoints.deployer.multi
   : endpoints.deployer.single;
 
-  return safeFetch(url, {
+  return safeFetch<{ unsignedTransaction: string }>(url, {
     method: "POST",
     body: JSON.stringify(body),
   });

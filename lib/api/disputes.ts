@@ -1,4 +1,4 @@
-import { API_URL } from "@/lib/config"
+import { apiRequest, type ApiResponse } from "./client"
 
 export interface Dispute {
   id: string
@@ -14,43 +14,6 @@ export interface Dispute {
   resolved_at: string | null
 }
 
-interface ApiResponse<T> {
-  success: boolean
-  data?: T
-  error?: string
-}
-
-async function apiRequest<T>(
-  endpoint: string,
-  options: RequestInit = {},
-  token?: string
-): Promise<ApiResponse<T>> {
-  try {
-    const headers: HeadersInit = {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...options.headers,
-    }
-
-    const response = await fetch(`${API_URL}${endpoint}`, {
-      ...options,
-      headers,
-    })
-
-    const data = await response.json()
-
-    if (!response.ok) {
-      return { success: false, error: data.message || data.error || "Request failed" }
-    }
-
-    return { success: true, data }
-  } catch (error) {
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : "Network error" 
-    }
-  }
-}
 
 // Open a new dispute
 export async function openDispute(

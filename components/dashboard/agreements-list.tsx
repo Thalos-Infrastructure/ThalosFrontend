@@ -25,15 +25,17 @@ import {
   Check,
 } from "lucide-react"
 
+import type { AgreementStatus, MilestoneStatus } from "@/lib/types/status"
+
 export interface Agreement {
   id: string
   title: string
-  status: "draft" | "pending" | "funded" | "in_progress" | "completed" | "released" | "dispute"
+  status: AgreementStatus | "draft"
   type: "freelancer" | "rental" | "car-sale" | "coaching" | "home-repair" | "bounty" | "other"
   counterparty: string
   amount: string
   date: string
-  milestones?: { description: string; amount: string; status: string }[]
+  milestones?: { description: string; amount: string; status: MilestoneStatus }[]
 }
 
 interface AgreementsListProps {
@@ -57,10 +59,13 @@ const statusConfig: Record<string, { icon: React.ReactNode; label: string; color
   draft: { icon: <FileText className="h-3 w-3" />, label: "Draft", color: "text-white/50", bgColor: "bg-white/10" },
   pending: { icon: <Clock className="h-3 w-3" />, label: "Pending", color: "text-amber-400", bgColor: "bg-amber-400/10" },
   funded: { icon: <DollarSign className="h-3 w-3" />, label: "Funded", color: "text-sky-400", bgColor: "bg-sky-400/10" },
+  active: { icon: <Clock className="h-3 w-3" />, label: "In Progress", color: "text-violet-400", bgColor: "bg-violet-400/10" },
   in_progress: { icon: <Clock className="h-3 w-3" />, label: "In Progress", color: "text-violet-400", bgColor: "bg-violet-400/10" },
   completed: { icon: <CheckCircle className="h-3 w-3" />, label: "Completed", color: "text-emerald-400", bgColor: "bg-emerald-400/10" },
   released: { icon: <CheckCircle className="h-3 w-3" />, label: "Released", color: "text-emerald-400", bgColor: "bg-emerald-400/10" },
-  dispute: { icon: <AlertCircle className="h-3 w-3" />, label: "Dispute", color: "text-rose-400", bgColor: "bg-rose-400/10" },
+  disputed: { icon: <AlertCircle className="h-3 w-3" />, label: "Dispute", color: "text-rose-400", bgColor: "bg-rose-400/10" },
+  resolved: { icon: <CheckCircle className="h-3 w-3" />, label: "Resolved", color: "text-purple-400", bgColor: "bg-purple-400/10" },
+  cancelled: { icon: <AlertCircle className="h-3 w-3" />, label: "Cancelled", color: "text-gray-400", bgColor: "bg-gray-400/10" },
 }
 
 export function AgreementsList({
@@ -72,7 +77,7 @@ export function AgreementsList({
   const { t } = useLanguage()
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedType, setSelectedType] = useState<string | null>(null)
-  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set(["in_progress", "funded", "pending"]))
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set(["active", "funded", "pending"]))
   const [copiedId, setCopiedId] = useState<string | null>(null)
 
   // Group agreements by status

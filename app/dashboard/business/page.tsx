@@ -11,7 +11,8 @@ import { ThalosLoader } from "@/components/thalos-loader"
 import { LanguageToggle, ThemeToggle, useLanguage } from "@/lib/i18n"
 import { Footer } from "@/components/footer"
 import { useStellarWallet } from "@/lib/stellar-wallet"
-import { useCurrentAddress, useWalletType } from "@/lib/use-current-address"
+import { useCurrentAddress, useHasSigningWallet } from "@/lib/use-current-address"
+import { useSignOut } from "@/lib/use-sign-out"
 import { WalletGuard, WalletPrompt } from "@/components/shared/wallet-guard"
 import { useAuthStore } from "@/lib/auth-store"
 import { WalletAddress } from "@/components/ui/wallet-address"
@@ -30,6 +31,7 @@ import { ContactSelector } from "@/components/agreements/contact-selector"
 import { AgreementChat } from "@/components/agreements/agreement-chat"
 import { WalletSelector } from "@/components/dashboard/wallet-selector"
 import { WalletAgreementsPanel } from "@/components/dashboard/wallet-agreements-panel"
+import { getWalletsWithAgreements, type WalletWithAgreements, type WalletAgreement } from "@/lib/api/wallets"
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area,
 } from "recharts"
@@ -247,9 +249,10 @@ export default function BusinessDashboardPage() {
   const { t, theme } = useLanguage()
   const isLight = theme === "light"
   const { openWalletModal, address: walletAddress } = useStellarWallet()
+  const signOut = useSignOut()
   const { token } = useAuthStore()
-  const walletType = useWalletType()
-  const isExternalWallet = walletType === "external"
+  // Signing capability, not wallet origin — same rule as the personal dashboard.
+  const isExternalWallet = useHasSigningWallet()
   const [loading, setLoading] = useState(false)
 
   const [activeSection, setActiveSection] = useState("agreements")
@@ -421,12 +424,33 @@ export default function BusinessDashboardPage() {
   }
 
   const [agreements, setAgreements] = useState<Agreement[]>(initialAgreements)
+  const [walletsData, setWalletsData] = useState<WalletWithAgreements[]>([])
   const [viewingAgreement, setViewingAgreement] = useState<string | null>(null)
   const [showAgreementChat, setShowAgreementChat] = useState<string | null>(null)
   const [disputedMs, setDisputedMs] = useState<Set<string>>(new Set())
   const [showDisputeConfirm, setShowDisputeConfirm] = useState<{ agrId: string; msIdx: number } | null>(null)
   const [approverEscrows, setApproverEscrows] = useState<Agreement[]>([])
   const [approverLoading, setApproverLoading] = useState(false)
+
+  // Fetch wallets with agreements
+  useEffect(() => {
+    if (!token) return;
+    let isMounted = true;
+    async function fetchWalletsData() {
+      try {
+        const res = await getWalletsWithAgreements(token!);
+        if (isMounted && res.success && res.data) {
+          setWalletsData(res.data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch wallets with agreements:", err);
+      }
+    }
+    fetchWalletsData();
+    return () => {
+      isMounted = false;
+    };
+  }, [token]);
   
   // Helper to map escrow to agreement format
   const mapEscrowToAgreement = (e: any): Agreement => {
@@ -439,7 +463,9 @@ export default function BusinessDashboardPage() {
     return {
       id: e.contractId as string || `escrow-${Date.now()}`,
       title: e.title as string || "Escrow Agreement",
-      counterparty: ((e.serviceProvider as string) || (e.receiver as string) || "").slice(0, 8) + "...",
+      counterparty: ((e.serviceProvider as string) || (e.receiver as string))
+        ? ((e.serviceProvider as string) || (e.receiver as string)).slice(0, 8) + "..."
+        : "-",
       status: e.status as string || "pending",
       amount,
       currency: "USDC",
@@ -450,7 +476,8 @@ export default function BusinessDashboardPage() {
         amount: String(m.amount || 0),
         status: m.released ? "released" : m.approved ? "approved" : "pending" as "pending" | "approved" | "released",
       })),
-      receiver: e.receiver as string || "",
+      receiver: (e.receiver as string) || "-",
+      serviceProvider: (e.serviceProvider as string) || "-",
       role: currentWorkspaceWallet === e.serviceProvider ? "seller" : "buyer",
     };
   };
@@ -656,29 +683,114 @@ export default function BusinessDashboardPage() {
   const [sortBy, setSortBy] = useState<"date" | "amount" | "title">("date")
 
   const filteredAgreements = useMemo(() => {
-    let filtered = [...agreements]
-    if (statusFilter !== "all") {
-      filtered = filtered.filter(agr => {
-        const allReleased = agr.milestones.every(m => m.status === "released")
-        const effectiveStatus = allReleased ? "released" : agr.status
-        return effectiveStatus === statusFilter
-      })
+    // Step A: Resolve the wallet set (flatten all or filter by selectedWalletPubKey)
+    let list: Array<{
+      id: string;
+      title: string;
+      status: string;
+      amount: string;
+      currency: string;
+      type: "Single Release" | "Multi Release";
+      counterparty: string;
+      date: string;
+      updatedAt?: string;
+      role?: "buyer" | "seller";
+      receiver?: string;
+      serviceProvider?: string;
+      milestones: Array<{ status: string; description?: string; amount?: string; approved?: boolean }>;
+    }> = [];
+
+    if (walletsData && walletsData.length > 0) {
+      if (!walletFilter || walletFilter === "all" || walletFilter === "All") {
+        // Flatten all agreements arrays from walletsData into one combined array
+        list = walletsData.flatMap((w) =>
+          w.agreements.map((a) => ({
+            id: a.id,
+            title: a.title,
+            status: a.status,
+            amount: a.amount,
+            currency: "USDC",
+            type: "Single Release" as const,
+            counterparty: "-",
+            date: a.created_at ? a.created_at.split("T")[0] : new Date().toISOString().split("T")[0],
+            updatedAt: a.created_at,
+            role: (a.role === "seller" ? "seller" : "buyer") as "buyer" | "seller",
+            receiver: "-",
+            serviceProvider: "-",
+            milestones: [{ status: a.status }],
+          }))
+        );
+      } else {
+        // Specific wallet selected
+        const targetWallet = walletsData.find((w) => w.wallet_address === walletFilter);
+        list = targetWallet
+          ? targetWallet.agreements.map((a) => ({
+              id: a.id,
+              title: a.title,
+              status: a.status,
+              amount: a.amount,
+              currency: "USDC",
+              type: "Single Release" as const,
+              counterparty: "-",
+              date: a.created_at ? a.created_at.split("T")[0] : new Date().toISOString().split("T")[0],
+              updatedAt: a.created_at,
+              role: (a.role === "seller" ? "seller" : "buyer") as "buyer" | "seller",
+              receiver: "-",
+              serviceProvider: "-",
+              milestones: [{ status: a.status }],
+            }))
+          : [];
+      }
+    } else {
+      // Fallback when walletsData is not yet loaded / available
+      let filtered = [...agreements];
+      if (walletFilter && walletFilter !== "all" && walletFilter !== "All") {
+        filtered = filtered.filter(
+          (a) =>
+            (a as unknown as { receiver?: string }).receiver === walletFilter ||
+            (a as unknown as { serviceProvider?: string }).serviceProvider === walletFilter
+        );
+      }
+      list = filtered.map((a) => ({
+        ...a,
+        updatedAt: a.date,
+        currency: a.currency || "USDC",
+      }));
     }
+
+    // Step B: Apply searchQuery filtering
     if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase()
-      filtered = filtered.filter(agr =>
-        agr.title.toLowerCase().includes(q) ||
-        agr.counterparty.toLowerCase().includes(q) ||
-        agr.id.toLowerCase().includes(q)
-      )
+      const q = searchQuery.toLowerCase();
+      list = list.filter(
+        (agr) =>
+          (agr.title && agr.title.toLowerCase().includes(q)) ||
+          (agr.counterparty && agr.counterparty.toLowerCase().includes(q)) ||
+          (agr.id && agr.id.toLowerCase().includes(q))
+      );
     }
-    filtered.sort((a, b) => {
-      if (sortBy === "date") return b.date.localeCompare(a.date)
-      if (sortBy === "amount") return parseFloat(b.amount.replace(/,/g, "")) - parseFloat(a.amount.replace(/,/g, ""))
-      return a.title.localeCompare(b.title)
-    })
-    return filtered
-  }, [agreements, statusFilter, searchQuery, sortBy])
+
+    // Step C: Apply statusFilter filtering
+    if (statusFilter !== "all") {
+      list = list.filter((a) => {
+        const allReleased = a.milestones && a.milestones.length > 0 && a.milestones.every((m) => m.status === "released");
+        const actualStatus = allReleased ? "released" : a.status;
+        return actualStatus === statusFilter;
+      });
+    }
+
+    // Step D: Apply sortBy ordering
+    list.sort((a, b) => {
+      if (sortBy === "date") return (b.date || "").localeCompare(a.date || "");
+      if (sortBy === "amount") {
+        const amountA = parseFloat(String(a.amount || "0").replace(/,/g, "")) || 0;
+        const amountB = parseFloat(String(b.amount || "0").replace(/,/g, "")) || 0;
+        return amountB - amountA;
+      }
+      return (a.title || "").localeCompare(b.title || "");
+    });
+
+    return list;
+  }, [walletsData, walletFilter, agreements, searchQuery, statusFilter, sortBy]);
 
   const statusCounts = useMemo(() => {
     const counts = { all: agreements.length, funded: 0, in_progress: 0, released: 0 }
@@ -701,8 +813,9 @@ export default function BusinessDashboardPage() {
 
   useEffect(() => {
     if (!walletAddress) return
+    const activeWallet = walletAddress
     setTemplatesLoading(true)
-    getTemplatesByOwner(walletAddress)
+    getTemplatesByOwner(activeWallet)
       .then(({ templates: data }) => {
         setTemplates(
           (data ?? []).map((t) => ({
@@ -717,11 +830,12 @@ export default function BusinessDashboardPage() {
 
   const saveAsTemplate = async () => {
     if (!walletAddress) return
+    const activeWallet = walletAddress
     const milestoneData = milestones.map(m => ({ description: m.description, amount: m.amount, status: "pending" as const }))
     const meta = { useCase: useCase || "" }
 
     if (editingTemplate) {
-      const { template, error } = await updateTemplate(editingTemplate, walletAddress, {
+      const { template, error } = await updateTemplate(editingTemplate, activeWallet, {
         name: templateName.trim() || title,
         title,
         description,
@@ -741,7 +855,7 @@ export default function BusinessDashboardPage() {
       )
     } else {
       const { template, error } = await createTemplate({
-        owner_wallet: walletAddress,
+        owner_wallet: activeWallet,
         name: templateName.trim() || title,
         title,
         description,
@@ -774,8 +888,9 @@ export default function BusinessDashboardPage() {
 
   const deleteTemplate = async (id: string) => {
     if (!walletAddress || deletingTemplateId) return
+    const activeWallet = walletAddress
     setDeletingTemplateId(id)
-    const { success } = await deleteTemplateAction(id, walletAddress)
+    const { success } = await deleteTemplateAction(id, activeWallet)
     if (success) {
       setTemplates(prev => prev.filter(t => t.id !== id))
       toast.success(t("dashPage.templateDeleted"))
@@ -854,10 +969,10 @@ export default function BusinessDashboardPage() {
                     {t("dashPage.wallets")}
                   </button>
                   <div className="my-1 h-px bg-white/[0.06]" />
-                  <Link href="/" className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-white/70 hover:bg-white/8 hover:text-white transition-colors">
+                  <button onClick={signOut} className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-white/70 hover:bg-white/8 hover:text-white transition-colors">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
                     {t("dashPage.signOut")}
-                  </Link>
+                  </button>
                 </div>
               )}
             </div>
@@ -887,9 +1002,6 @@ export default function BusinessDashboardPage() {
                   Go to Personal Dashboard
                 </Button>
               </Link>
-              <Button variant="outline" className="w-full rounded-full border-white/10 text-white/60 bg-transparent" onClick={() => openWalletModal()}>
-                {!walletAddress ? "Connect Wallet" : "Switch Wallet"}
-              </Button>
             </div>
           </div>
         ) : (
@@ -1130,33 +1242,13 @@ export default function BusinessDashboardPage() {
               <WalletSelector
                 selectedWallet={walletFilter}
                 onWalletChange={setWalletFilter}
+                walletsData={walletsData}
                 className="mb-6"
               />
 
               {/* Agreements view, pre-filtered by selected wallet */}
               <AgreementsView
-                agreements={(() => {
-                  const all = [
-                    ...agreements.map(a => ({ ...a, updatedAt: a.date, currency: "USDC" })),
-                    ...approverEscrows.map(e => ({
-                      id: e.id,
-                      title: e.title,
-                      counterparty: e.counterparty,
-                      status: e.status,
-                      amount: e.amount,
-                      currency: "USDC",
-                      type: e.type,
-                      updatedAt: e.date,
-                      milestones: e.milestones,
-                      role: (e as unknown as { role?: "buyer" | "seller" }).role,
-                    })),
-                  ]
-                  if (!walletFilter) return all
-                  return all.filter(a =>
-                    (a as unknown as { receiver?: string }).receiver === walletFilter ||
-                    (a as unknown as { serviceProvider?: string }).serviceProvider === walletFilter
-                  )
-                })()}
+                agreements={filteredAgreements}
                 onAgreementClick={(id) => setViewingAgreement(id)}
                 onOpenChat={(id) => setShowAgreementChat(id)}
                 currentUserWallet={walletAddress || undefined}
@@ -1248,7 +1340,7 @@ export default function BusinessDashboardPage() {
                           <p className="text-lg font-bold text-white">{"$"}{ms.amount} <span className="text-xs font-normal text-white/35">USDC</span></p>
                           {ms.status === "pending" && !allReleased && activePermissions.approve && kybVerified && (
                             <Button size="sm" onClick={() => {
-                              if (!isExternalWallet) { openWalletModal(); return }
+                              if (!isExternalWallet) return
                               approveMilestone(agr.id, idx)
                             }}
                               className="rounded-full bg-white/10 px-4 text-xs font-semibold text-white hover:bg-white/20">
@@ -1257,7 +1349,7 @@ export default function BusinessDashboardPage() {
                           )}
                           {ms.status === "approved" && agr.releaseStrategy === "per-milestone" && activePermissions.release && kybVerified && (
                             <Button size="sm" onClick={() => {
-                              if (!isExternalWallet) { openWalletModal(); return }
+                              if (!isExternalWallet) return
                               releaseMilestone(agr.id, idx)
                             }}
                               className="rounded-full bg-[#3b82f6] px-4 text-xs font-semibold text-white hover:bg-[#2563eb] shadow-[0_2px_8px_rgba(59,130,246,0.2)]">
@@ -1268,7 +1360,7 @@ export default function BusinessDashboardPage() {
                             <Button 
                               size="sm" 
                               onClick={() => {
-                                if (!isExternalWallet) { openWalletModal(); return }
+                                if (!isExternalWallet) return
                                 setShowDisputeConfirm({ agrId: agr.id, msIdx: idx })
                               }}
                               className="rounded-full bg-red-500/10 px-3 text-xs font-semibold text-red-400 hover:bg-red-500/20 border border-red-500/20"
@@ -1292,7 +1384,7 @@ export default function BusinessDashboardPage() {
                     <div className="flex flex-wrap gap-3">
                       {agr.type === "Single Release" && agr.milestones[0]?.status === "pending" && activePermissions.approve && kybVerified && (
                         <Button onClick={() => {
-                          if (!isExternalWallet) { openWalletModal(); return }
+                          if (!isExternalWallet) return
                           approveMilestone(agr.id, 0)
                         }}
                           className="rounded-full bg-white/10 px-6 text-sm font-semibold text-white hover:bg-white/20">
@@ -1301,7 +1393,7 @@ export default function BusinessDashboardPage() {
                       )}
                       {agr.type === "Single Release" && agr.milestones[0]?.status === "approved" && activePermissions.release && kybVerified && (
                         <Button onClick={() => {
-                          if (!isExternalWallet) { openWalletModal(); return }
+                          if (!isExternalWallet) return
                           releaseMilestone(agr.id, 0)
                         }}
                           className="rounded-full bg-[#3b82f6] px-6 text-sm font-semibold text-white hover:bg-[#2563eb] shadow-[0_4px_16px_rgba(59,130,246,0.25)]">
@@ -1310,7 +1402,7 @@ export default function BusinessDashboardPage() {
                       )}
                       {agr.type === "Multi Release" && hasApproved && activePermissions.release && kybVerified && (
                         <Button onClick={() => {
-                          if (!isExternalWallet) { openWalletModal(); return }
+                          if (!isExternalWallet) return
                           releaseAllApproved(agr.id)
                         }}
                           className="rounded-full bg-[#3b82f6] px-6 text-sm font-semibold text-white hover:bg-[#2563eb] shadow-[0_4px_16px_rgba(59,130,246,0.25)]">
@@ -1319,7 +1411,7 @@ export default function BusinessDashboardPage() {
                       )}
                       {agr.type === "Multi Release" && !allApproved && activePermissions.approve && activePermissions.release && kybVerified && (
                         <Button onClick={() => {
-                          if (!isExternalWallet) { openWalletModal(); return }
+                          if (!isExternalWallet) return
                           approveAndReleaseAll(agr.id)
                         }}
                           className="rounded-full bg-emerald-600 px-6 text-sm font-semibold text-white hover:bg-emerald-700 shadow-[0_4px_16px_rgba(16,185,129,0.2)]">
@@ -1980,6 +2072,7 @@ export default function BusinessDashboardPage() {
                 agreementId={showAgreementChat}
                 currentUserWallet={walletAddress || ""}
                 counterpartyWallet={agreements.find(a => a.id === showAgreementChat)?.receiver || ""}
+                token={token}
                 defaultOpen={true}
                 embedded={true}
               />

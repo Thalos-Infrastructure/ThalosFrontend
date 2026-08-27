@@ -23,6 +23,15 @@ importers:
       '@hookform/resolvers':
         specifier: ^3.10.0
         version: 3.10.0(react-hook-form@7.84.0(react@19.2.0))
+      '@pollar/core':
+        specifier: 0.11.3
+        version: 0.11.3
+      '@pollar/react':
+        specifier: 0.11.3
+        version: 0.11.3(@pollar/core@0.11.3)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      '@pollar/stellar-wallets-kit-adapter':
+        specifier: 0.11.2
+        version: 0.11.2(@creit.tech/stellar-wallets-kit@2.5.0(@trezor/connect@9.7.3(@solana/sysvars@5.5.1(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3))(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(tslib@2.8.1)(typescript@5.9.3)(utf-8-validate@6.0.6)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)))(@types/react@19.2.18)(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(near-api-js@5.1.1)(react@19.2.0)(tslib@2.8.1)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.0))(utf-8-validate@6.0.6)(zod@3.25.76))(@pollar/core@0.11.3)
       '@radix-ui/react-accordion':
         specifier: 1.2.2
         version: 1.2.2(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
@@ -725,6 +734,33 @@ packages:
 
   '@phosphor-icons/webcomponents@2.1.5':
     resolution: {integrity: sha512-JcvQkZxvcX2jK+QCclm8+e8HXqtdFW9xV4/kk2aL9Y3dJA2oQVt+pzbv1orkumz3rfx4K9mn9fDoMr1He1yr7Q==}
+
+  '@pollar/core@0.11.3':
+    resolution: {integrity: sha512-B0HPpulWPO5CsPcRHnObkuluYc50mu2jLtV76hZrPtkRjI+cwApLyGh5meCIJVIp3dRBS8PaAo1UCp/m1Q0R6g==}
+    engines: {node: '>=20'}
+    peerDependencies:
+      expo-secure-store: '>=12'
+      react-native-keychain: '>=8'
+    peerDependenciesMeta:
+      expo-secure-store:
+        optional: true
+      react-native-keychain:
+        optional: true
+
+  '@pollar/react@0.11.3':
+    resolution: {integrity: sha512-o4mONtRN2BIaU8CTJcyiu87Unj9A9wacoGQZOobdAUC8SvRDbjgul1QjMGr9Sh/ZkWggYNvwzHmJMditNoLWug==}
+    engines: {node: '>=20'}
+    peerDependencies:
+      '@pollar/core': ^0.11.3
+      react: '>=18'
+      react-dom: '>=18'
+
+  '@pollar/stellar-wallets-kit-adapter@0.11.2':
+    resolution: {integrity: sha512-BG97pVcp9Nekh7wvSJTr/xrwxR6tYlecvR+p+NwCz0LCCjula23SIwa0qyBZso/kBb7AMF2AwbUUxOSMcq/L2g==}
+    engines: {node: '>=20'}
+    peerDependencies:
+      '@creit.tech/stellar-wallets-kit': ^2.0.0
+      '@pollar/core': ^0.11.2
 
   '@preact/signals-core@1.14.4':
     resolution: {integrity: sha512-HNB6HYeYKhQbJ1aKl+YRjrS4+QWHLKX6qKoUsfS/m0vqzsVaEBiZiaKbG/e+NKk2ch5ALQr/ihWaMHxiCuuWHA==}
@@ -1564,6 +1600,9 @@ packages:
 
   '@scure/bip39@1.6.0':
     resolution: {integrity: sha512-+lF0BbLiJNwVlev4eKelw1WWLaiKXw7sSl8T6FvBlWkdX+94aGJ4o8XjUdlyhTCjd8c+B3KT3JfS8P0bLRNU6A==}
+
+  '@simplewebauthn/browser@13.3.0':
+    resolution: {integrity: sha512-BE/UWv6FOToAdVk0EokzkqQQDOWtNydYlY6+OrmiZ5SCNmb41VehttboTetUM3T/fr6EAFYVXjz4My2wg230rQ==}
 
   '@sinclair/typebox@0.33.24':
     resolution: {integrity: sha512-91up4t0BLjfkCZ4Ap/BcgaPrMaX6n0I2YRu+kc03xGhLy9G3N05nbTpnK8q7GXdv0PxwUoxi67A8o3Wr5U7j3w==}
@@ -3995,6 +4034,12 @@ packages:
     resolution: {integrity: sha512-0eJJY6hXLGf1udHwfNftBqH+g73EU4B504nZeKpz1sYRKafAghwxEJunB2O7rDZkL4PGfsMVnTXZ2EjibbqcsA==}
     engines: {node: '>=14.0.0'}
 
+  openapi-fetch@0.17.0:
+    resolution: {integrity: sha512-PsbZR1wAPcG91eEthKhN+Zn92FMHxv+/faECIwjXdxfTODGSGegYv0sc1Olz+HYPvKOuoXfp+0pA2XVt2cI0Ig==}
+
+  openapi-typescript-helpers@0.1.0:
+    resolution: {integrity: sha512-OKTGPthhivLw/fHz6c3OPtg72vi86qaMlqbJuVJ23qOvQ+53uw1n7HdmkJFibloF7QEjDrDkzJiOJuockM/ljw==}
+
   ox@0.14.33:
     resolution: {integrity: sha512-rooA/4o7bBof4Ge2VH/eovfNPb/AEEYyrNj03wggc55g5HZD8Pjs/OeWhttgjic3dDcqn0r29bDuvQEdTiUemQ==}
     peerDependencies:
@@ -4132,6 +4177,9 @@ packages:
 
   qr-scanner@1.4.2:
     resolution: {integrity: sha512-kV1yQUe2FENvn59tMZW6mOVfpq9mGxGf8l6+EGaXUOd4RBOLg7tRC83OrirM5AtDvZRpdjdlXURsHreAOSPOUw==}
+
+  qr.js@0.0.0:
+    resolution: {integrity: sha512-c4iYnWb+k2E+vYpRimHqSu575b1/wKl4XFeJGpFmrJQz5I88v9aY2czh7s0w36srfCM1sXgC/xpoJz5dJfq+OQ==}
 
   qrcode@1.5.3:
     resolution: {integrity: sha512-puyri6ApkEHYiVl4CFzo1tDkAZ+ATcnbJrJ6RiBM1Fhctdn/ix9MTE3hRph33omisEbC/2fcfemsseiKgBPKZg==}
@@ -5507,6 +5555,26 @@ snapshots:
     dependencies:
       lit: 3.3.0
 
+  '@pollar/core@0.11.3':
+    dependencies:
+      '@noble/curves': 1.9.7
+      '@noble/hashes': 1.8.0
+      '@stellar/freighter-api': 6.0.0
+      openapi-fetch: 0.17.0
+
+  '@pollar/react@0.11.3(@pollar/core@0.11.3)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)':
+    dependencies:
+      '@pollar/core': 0.11.3
+      '@simplewebauthn/browser': 13.3.0
+      qr.js: 0.0.0
+      react: 19.2.0
+      react-dom: 19.2.0(react@19.2.0)
+
+  '@pollar/stellar-wallets-kit-adapter@0.11.2(@creit.tech/stellar-wallets-kit@2.5.0(@trezor/connect@9.7.3(@solana/sysvars@5.5.1(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3))(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(tslib@2.8.1)(typescript@5.9.3)(utf-8-validate@6.0.6)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)))(@types/react@19.2.18)(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(near-api-js@5.1.1)(react@19.2.0)(tslib@2.8.1)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.0))(utf-8-validate@6.0.6)(zod@3.25.76))(@pollar/core@0.11.3)':
+    dependencies:
+      '@creit.tech/stellar-wallets-kit': 2.5.0(@trezor/connect@9.7.3(@solana/sysvars@5.5.1(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3))(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(tslib@2.8.1)(typescript@5.9.3)(utf-8-validate@6.0.6)(ws@8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)))(@types/react@19.2.18)(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(near-api-js@5.1.1)(react@19.2.0)(tslib@2.8.1)(typescript@5.9.3)(use-sync-external-store@1.6.0(react@19.2.0))(utf-8-validate@6.0.6)(zod@3.25.76)
+      '@pollar/core': 0.11.3
+
   '@preact/signals-core@1.14.4': {}
 
   '@preact/signals@2.9.0(preact@10.29.8)':
@@ -6614,6 +6682,8 @@ snapshots:
     dependencies:
       '@noble/hashes': 1.8.0
       '@scure/base': 1.2.6
+
+  '@simplewebauthn/browser@13.3.0': {}
 
   '@sinclair/typebox@0.33.24': {}
 
@@ -9916,6 +9986,12 @@ snapshots:
 
   on-exit-leak-free@2.1.2: {}
 
+  openapi-fetch@0.17.0:
+    dependencies:
+      openapi-typescript-helpers: 0.1.0
+
+  openapi-typescript-helpers@0.1.0: {}
+
   ox@0.14.33(typescript@5.9.3)(zod@3.22.4):
     dependencies:
       '@adraffy/ens-normalize': 1.11.1
@@ -10118,6 +10194,8 @@ snapshots:
   qr-scanner@1.4.2:
     dependencies:
       '@types/offscreencanvas': 2019.7.3
+
+  qr.js@0.0.0: {}
 
   qrcode@1.5.3:
     dependencies:

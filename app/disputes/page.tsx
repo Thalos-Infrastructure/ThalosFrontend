@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils"
 import { ThalosLoader } from "@/components/thalos-loader"
 import { useLanguage } from "@/lib/i18n"
 import { useStellarWallet } from "@/lib/stellar-wallet"
+import { dashboardPathFor } from "@/lib/dashboard-path"
 import {
   getOpenDisputes,
   getDisputesByResolver,
@@ -193,7 +194,7 @@ export default function DisputesPage() {
       <header className="sticky top-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
           <div className="flex items-center gap-4">
-            <Link href={profile?.account_type === "enterprise" ? "/dashboard/business" : "/dashboard/personal"}>
+            <Link href={dashboardPathFor(profile)}>
               <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground hover:text-foreground">
                 {Icons.arrowLeft}
                 Back to Dashboard

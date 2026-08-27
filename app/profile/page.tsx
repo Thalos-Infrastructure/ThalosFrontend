@@ -9,9 +9,12 @@ import { cn } from "@/lib/utils"
 import { ThalosLoader } from "@/components/thalos-loader"
 import { useLanguage } from "@/lib/i18n"
 import { useStellarWallet } from "@/lib/stellar-wallet"
+import { useSignOut } from "@/lib/use-sign-out"
 import { useAuthStore } from "@/lib/auth-store"
 import { updateProfile, type ProfileUpdateInput } from "@/lib/actions/profile"
 import { LinkedWallets } from "@/components/profile/linked-wallets"
+import { ReputationSummary } from "@/components/profile/reputation-summary"
+import { fetchReputation, type ReputationSummary as ReputationData } from "@/lib/api/reputation"
 
 function FormInput({
   label,
@@ -98,7 +101,7 @@ export default function ProfilePage() {
   const { t } = useLanguage()
   const router = useRouter()
   const { address, profile, refreshProfile, disconnect } = useStellarWallet()
-  const { user, hydrated, logout } = useAuthStore()
+  const { user, token, hydrated } = useAuthStore()
 
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
@@ -108,6 +111,7 @@ export default function ProfilePage() {
   const [displayName, setDisplayName] = useState("")
   const [email, setEmail] = useState("")
   const [avatarUrl, setAvatarUrl] = useState("")
+  const [reputation, setReputation] = useState<ReputationData | null>(null)
 
   const isAuthUser = Boolean(user?.id)
   const isWalletOnly = Boolean(address && !user?.id)
@@ -157,6 +161,10 @@ export default function ProfilePage() {
     }
   }, [hydrated, user, address, profile, router, refreshProfile])
 
+  useEffect(() => {
+    if (hydrated && (user || address)) fetchReputation({ token: token || undefined }).then(setReputation)
+  }, [hydrated, user, address, token])
+
   const handleSave = async () => {
     if (!address) return
 
@@ -183,11 +191,9 @@ export default function ProfilePage() {
     setIsSaving(false)
   }
 
-  const handleSignOut = () => {
-    logout()
-    disconnect()
-    router.push("/")
-  }
+  // Shared so this can't drift from the dashboards again — and so it clears the
+  // Pollar session too, which this copy predated.
+  const handleSignOut = useSignOut()
 
   const handleDisconnectWallet = () => {
     disconnect()
@@ -337,6 +343,8 @@ export default function ProfilePage() {
             {isAuthUser && (
               <LinkedWallets />
             )}
+
+            <ReputationSummary reputation={reputation} />
 
             <div className={cn("rounded-2xl border border-border/40 bg-card/50 p-8", isAuthUser && "mt-8")}>
               <h3 className="mb-6 text-lg font-semibold text-foreground flex items-center gap-2">
