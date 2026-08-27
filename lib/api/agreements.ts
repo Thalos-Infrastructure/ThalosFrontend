@@ -104,6 +104,7 @@ export async function createAgreement(
   }
 }
 
+
 /**
  * Get all agreements (with optional filters)
  * Backend returns: { agreements, error }
