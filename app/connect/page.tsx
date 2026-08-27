@@ -72,9 +72,23 @@ export default function ConnectPage() {
   const { t } = useLanguage()
   const { token } = useAuthStore()
 
-  const [activeTab, setActiveTab] = useState("builders")
+  const [activeTab, setActiveTab] = useState(() => {
+    if (typeof window !== "undefined") {
+      const tab = new URLSearchParams(window.location.search).get("tab")
+      if (tab === "opportunities" || tab === "builders") return tab
+    }
+    return "builders"
+  })
   const [isLoading, setIsLoading] = useState(true)
   const [isSearching, setIsSearching] = useState(false)
+
+  // Tracks which tab's discovery data has been fetched, so switching tabs does
+  // NOT re-fetch (which flashes the full-screen loader) once a tab is loaded.
+  const loadedTabsRef = useRef({ builders: false, opportunities: false })
+  // Live current tab, usable from debounced callbacks that intentionally omit
+  // activeTab from their deps so typing in one tab does not refetch the other.
+  const activeTabRef = useRef(activeTab)
+  useEffect(() => { activeTabRef.current = activeTab }, [activeTab])
 
   // Builders state
   const [builders, setBuilders] = useState<BuilderProfile[]>([])
@@ -131,6 +145,7 @@ export default function ConnectPage() {
         setBuildersTotal(0)
       }
 
+      loadedTabsRef.current.builders = true
       setIsLoading(false)
       setIsSearching(false)
     },
@@ -167,6 +182,7 @@ export default function ConnectPage() {
         setOpportunitiesTotal(0)
       }
 
+      loadedTabsRef.current.opportunities = true
       setIsLoading(false)
       setIsSearching(false)
     },
@@ -176,15 +192,21 @@ export default function ConnectPage() {
   // ── Initial load ──
   useEffect(() => {
     fetchBuilders(1, true)
+    // If deep-linked to the opportunities tab, load it right away too.
+    if (activeTab === "opportunities") {
+      fetchOpportunities(opportunitiesPage, true)
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // ── Re-fetch when tab changes ──
+  // ── Load a tab's data once; do NOT re-fetch on every switch, so changing
+  // tabs is instant and never flashes the full-screen loader. Localized
+  // `isSearching` spinner is used (immediate=false), never the page-wide one.
   useEffect(() => {
     if (activeTab === "builders") {
-      fetchBuilders(buildersPage, true)
-    } else {
-      fetchOpportunities(opportunitiesPage, true)
+      if (!loadedTabsRef.current.builders) fetchBuilders(buildersPage, false)
+    } else if (!loadedTabsRef.current.opportunities) {
+      fetchOpportunities(opportunitiesPage, false)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab])
@@ -193,27 +215,27 @@ export default function ConnectPage() {
   useEffect(() => {
     if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current)
     searchTimeoutRef.current = setTimeout(() => {
-      if (activeTab === "builders") {
+      if (activeTabRef.current === "builders") {
         fetchBuilders(1)
       }
     }, 400)
     return () => {
       if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current)
     }
-  }, [builderSearch, builderSkills, builderTechStack, builderAvailability, activeTab, fetchBuilders])
+  }, [builderSearch, builderSkills, builderTechStack, builderAvailability, fetchBuilders])
 
   // ── Debounced search for opportunities ──
   useEffect(() => {
     if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current)
     searchTimeoutRef.current = setTimeout(() => {
-      if (activeTab === "opportunities") {
+      if (activeTabRef.current === "opportunities") {
         fetchOpportunities(1)
       }
     }, 400)
     return () => {
       if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current)
     }
-  }, [oppSearch, oppSkills, oppEngagementType, oppBudgetMin, oppBudgetMax, activeTab, fetchOpportunities])
+  }, [oppSearch, oppSkills, oppEngagementType, oppBudgetMin, oppBudgetMax, fetchOpportunities])
 
   // ── Tag helpers ──
   function addTag(

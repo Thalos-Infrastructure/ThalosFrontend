@@ -42,6 +42,8 @@ import {
 import { createAgreement, sendTransaction, AgreementPayload, approveMilestone } from "@/services/trustlessworkService"
 import { STELLAR_EXPLORER_BASE_URL } from "@/lib/config"
 import { getKybStatus, startKybSession } from "@/lib/api/kyb"
+import { updateOpportunityStatus, getOpportunity, type Opportunity, type Application } from "@/lib/api"
+import { OpportunitiesManager } from "@/components/connect/opportunities-manager"
 import { KYB_ENTITY_TYPES, buildCreateKybSessionDto, canStartKybSession, isKybVerified, nextKybStatusAfterSessionStart, type KybEntityType } from "@/lib/kyb"
 import {
   createTemplate,
@@ -51,7 +53,7 @@ import {
   type AgreementTemplate,
 } from "@/lib/actions/agreement-templates"
 
-/* ── Enterprise Use-Cases ── */
+/* ÔöÇÔöÇ Enterprise Use-Cases ÔöÇÔöÇ */
 const useCases = [
   { id: "car-rental", labelKey: "useCase.carRental", icon: "car", suggestedTitle: "Vehicle Rental Agreement", suggestedDesc: "Describe the fleet vehicle, rental duration, mileage limits, insurance terms, and return conditions." },
   { id: "travel", labelKey: "useCase.travel", icon: "plane", suggestedTitle: "Travel Package Agreement", suggestedDesc: "Describe the travel package details, destinations, dates, inclusions, cancellation policy, and payment schedule." },
@@ -61,7 +63,7 @@ const useCases = [
   { id: "other", labelKey: "useCase.other", icon: "plus", suggestedTitle: "", suggestedDesc: "" },
   ]
 
-/* ── Form Components ── */
+/* ÔöÇÔöÇ Form Components ÔöÇÔöÇ */
 function FormInput({ label, value, onChange, placeholder, type = "text", disabled = false, info, required = false }: {
   label: string; value: string; onChange: (v: string) => void; placeholder?: string; type?: string; disabled?: boolean; info?: string; required?: boolean
 }) {
@@ -109,7 +111,7 @@ function FormSelect({ label, value, onChange, options, info, required = false }:
   )
 }
 
-/* ── Constants ── */
+/* ÔöÇÔöÇ Constants ÔöÇÔöÇ */
 const PLATFORM_ADDRESS = "GBXGQJWVLWOYHFLVTKWV5FGHA3LNYY2JQKM7OAVRWPLXS"
 const DISPUTE_RESOLVER = "GBXGQJWVLWOYHFLVTKWV5FGHA3LNYY2JQKM7OAVDISPUTE"
 const TRUSTLINE_USDC = { symbol: "USDC", address: "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5" }
@@ -217,6 +219,7 @@ const sidebarItems = [
   { id: "analytics", labelKey: "dashPage.analytics", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg> },
   { id: "verification", labelKey: "dashPage.verification", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg> },
   { id: "team", labelKey: "dashPage.team", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg> },
+  { id: "opportunities", labelKey: "dashPage.opportunities", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M20 7h-4a3 3 0 01-3-3V1M20 7l-8 5-8-5M4 7v14h16V7"/></svg> },
 ]
 
 const permissions = {
@@ -228,6 +231,7 @@ const permissions = {
     approve: true,
     release: true,
     team: true,
+    opportunities: true,
   },
   Finance: {
     create: false,
@@ -237,6 +241,7 @@ const permissions = {
     approve: true,
     release: true,
     team: false,
+    opportunities: false,
   },
   Operator: {
     create: true,
@@ -246,6 +251,7 @@ const permissions = {
     approve: false,
     release: false,
     team: false,
+    opportunities: true,
   },
 }
 
@@ -280,16 +286,19 @@ function ChartTooltip({ active, payload, label }: {
   return null
 }
 
-/* ════════════════════════════════════════════════
+/* ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ
    PAGE
-   ════════════════════════════════════════════════ */
+   ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ */
 export default function BusinessDashboardPage() {
   const { t, theme } = useLanguage()
   const isLight = theme === "light"
-  const { openWalletModal, address: walletAddress } = useStellarWallet()
+  const { openWalletModal } = useStellarWallet()
+  // The session's wallet wins (same rule as the personal dashboard): a Pollar
+  // login carries the address on the JWT even before a Kitt wallet is connected.
+  const walletAddress = useCurrentAddress()
   const signOut = useSignOut()
-  const { token } = useAuthStore()
-  // Signing capability, not wallet origin — same rule as the personal dashboard.
+  const { token, user } = useAuthStore()
+  // Signing capability, not wallet origin ÔÇö same rule as the personal dashboard.
   const isExternalWallet = useHasSigningWallet()
   const [loading, setLoading] = useState(false)
 
@@ -318,6 +327,7 @@ export default function BusinessDashboardPage() {
       approve: false,
       release: false,
       team: false,
+      opportunities: false,
     }
   }, [memberRole])
 
@@ -425,7 +435,7 @@ export default function BusinessDashboardPage() {
     const updated = await updateProfile(currentWorkspaceWallet, { kyb_status: nextStatus })
     if (!updated.error && updated.profile) setCompanyProfile(updated.profile)
   }, [currentWorkspaceWallet, token])
-  const gatedSectionIds = new Set(["create", "templates", "wallets", "analytics", "team"])
+  const gatedSectionIds = new Set(["create", "templates", "wallets", "analytics", "team", "opportunities"])
   const isActiveSectionKybGated = gatedSectionIds.has(activeSection) && !kybVerified
 
   const handleStartKybSession = async () => {
@@ -615,7 +625,7 @@ export default function BusinessDashboardPage() {
     setAgreements(prev => prev.map(a => a.id === agrId ? { ...a, status: "released", milestones: a.milestones.map(m => ({ ...m, status: "released" as const })) } : a))
   }
 
-  /* ── Wizard State ── */
+  /* ÔöÇÔöÇ Wizard State ÔöÇÔöÇ */
   const [step, setStep] = useState(0)
   const [submitted, setSubmitted] = useState(false)
   const [escrowType, setEscrowType] = useState<"single" | "multi">("single")
@@ -677,6 +687,7 @@ export default function BusinessDashboardPage() {
   const canProceed = () => {
     if (step === 0) return true
     if (step === 1) {
+      if (guidePrefilled) return true // Opportunity pre-fill bypasses the Use Case picker
       if (escrowType === "single") return true // Optional for Quick Escrow
       return useCase === "other" ? customUseCase.trim().length > 0 : !!useCase
     }
@@ -706,10 +717,28 @@ export default function BusinessDashboardPage() {
     setShowAiAssistant(false)
   }
 
+  /* ── Connect: prefill wizard from an accepted application (C5) ── */
+  const [pendingOpportunityId, setPendingOpportunityId] = useState<string | null>(null)
+
+  const startAgreementFromOpportunity = (opportunity: Opportunity, application: Application, builderWallet: string) => {
+    resetWizard()
+    setPendingOpportunityId(opportunity.id)
+    setTitle(opportunity.title)
+    setDescription(opportunity.description)
+    setEscrowType(opportunity.engagement_type === "milestone" ? "multi" : "single")
+    setMilestones([{ description: opportunity.title || "Full delivery", amount: String(opportunity.budget_amount ?? "") }])
+    setSignerWallet(builderWallet)
+    setGuidePrefilled(true)
+    // Land on "Agreement Info" (step 2) so the pre-filled title/description are
+    // shown immediately and the empty Use Case picker (step 1) is passed over.
+    setStep(2)
+    setActiveSection("create")
+  }
+
   const agreementUrl = typeof window !== "undefined" ? `${window.location.origin}/dashboard/business` : "https://thalos.app/dashboard/business"
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(agreementUrl)}&bgcolor=0a0a0a&color=f0b400&qzone=3&format=png`
 
-  /* ── Agreements filter/sort state ── */
+  /* ÔöÇÔöÇ Agreements filter/sort state ÔöÇÔöÇ */
   const [walletFilter, setWalletFilter] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState<"all" | "funded" | "in_progress" | "released">("all")
@@ -835,7 +864,7 @@ export default function BusinessDashboardPage() {
     return counts
   }, [agreements])
 
-  /* ── Templates state ── */
+  /* ÔöÇÔöÇ Templates state ÔöÇÔöÇ */
   type Template = AgreementTemplate & { escrowType: "single" | "multi"; useCase: string }
   const [templates, setTemplates] = useState<Template[]>([])
   const [templatesLoading, setTemplatesLoading] = useState(false)
@@ -1085,6 +1114,7 @@ export default function BusinessDashboardPage() {
                       if (item.id === "wallets") return activePermissions.wallets;
                       if (item.id === "analytics") return activePermissions.analytics;
                       if (item.id === "team") return activePermissions.team;
+                      if (item.id === "opportunities") return activePermissions.opportunities;
                       if (item.id === "verification") return memberRole === "Admin";
                       return true;
                     })
@@ -1175,7 +1205,7 @@ export default function BusinessDashboardPage() {
         <main className="flex-1 overflow-y-auto p-4 lg:p-8">
           
 
-          {/* ══════ ANALYTICS ══════ */}
+          {/* ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ ANALYTICS ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ */}
           {activeSection === "analytics" && !isActiveSectionKybGated && activePermissions.analytics && (
             <div className="mx-auto max-w-5xl animate-in fade-in slide-in-from-bottom-2 duration-300">
               <h1 className="mb-6 text-2xl font-semibold text-white">{t("dashPage.enterprise")} {t("dashPage.analytics")}</h1>
@@ -1262,7 +1292,7 @@ export default function BusinessDashboardPage() {
             </div>
           )}
 
-          {/* ══════ AGREEMENTS ══════ */}
+          {/* ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ AGREEMENTS ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ */}
           {activeSection === "agreements" && !isActiveSectionKybGated && !viewingAgreement && (
             <div className="mx-auto max-w-4xl animate-in fade-in slide-in-from-bottom-2 duration-300">
               {/* Header */}
@@ -1277,7 +1307,7 @@ export default function BusinessDashboardPage() {
                 </div>
               </div>
 
-              {/* Wallet filter — only renders when user has multiple linked wallets */}
+              {/* Wallet filter ÔÇö only renders when user has multiple linked wallets */}
               <WalletSelector
                 selectedWallet={walletFilter}
                 onWalletChange={setWalletFilter}
@@ -1306,7 +1336,7 @@ export default function BusinessDashboardPage() {
             </div>
           )}
 
-          {/* ══════ AGREEMENT DETAIL ══════ */}
+          {/* ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ AGREEMENT DETAIL ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ */}
           {activeSection === "agreements" && !isActiveSectionKybGated && viewingAgreement && (() => {
             const agr = agreements.find(a => a.id === viewingAgreement)
             if (!agr) return null
@@ -1522,7 +1552,7 @@ export default function BusinessDashboardPage() {
             </div>
           )}
 
-          {/* ══════ TEMPLATES ══════ */}
+          {/* ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ TEMPLATES ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ */}
           {activeSection === "templates" && !isActiveSectionKybGated && activePermissions.templates && (
             <div className="mx-auto max-w-4xl animate-in fade-in slide-in-from-bottom-2 duration-300">
               <div className="mb-2 flex items-center justify-between">
@@ -1595,7 +1625,7 @@ export default function BusinessDashboardPage() {
               {/* Template cards */}
               {templatesLoading ? (
                 <div className="mt-6 flex items-center justify-center py-16">
-                  <p className="text-sm text-white/40">Loading templates…</p>
+                  <p className="text-sm text-white/40">Loading templatesÔÇª</p>
                 </div>
               ) : templates.length === 0 && !showSaveTemplate ? (
                 <div className="mt-6 flex flex-col items-center justify-center rounded-2xl border border-white/10 bg-[#0c1220] py-16 px-6 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)] text-center">
@@ -1650,7 +1680,7 @@ export default function BusinessDashboardPage() {
             </div>
           )}
 
-          {/* ══════ WALLETS ══════ */}
+          {/* ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ WALLETS ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ */}
           {activeSection === "wallets" && !isActiveSectionKybGated && activePermissions.wallets && (
             <div className="mx-auto max-w-4xl animate-in fade-in slide-in-from-bottom-2 duration-300">
               <h1 className="mb-6 text-2xl font-semibold text-white">Enterprise Wallets</h1>
@@ -1692,7 +1722,7 @@ export default function BusinessDashboardPage() {
                 </button>
               </div>
 
-              {/* Agreements grouped by wallet — real data from API */}
+              {/* Agreements grouped by wallet ÔÇö real data from API */}
               <div className="mt-8">
                 <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-white/40">
                   Agreements by wallet
@@ -1707,7 +1737,7 @@ export default function BusinessDashboardPage() {
             </div>
           )}
 
-          {/* ══════ CREATE AGREEMENT ══════ */}
+          {/* ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ CREATE AGREEMENT ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ */}
           {activeSection === "create" && !isActiveSectionKybGated && activePermissions.create && (
             <div className="mx-auto max-w-4xl animate-in fade-in slide-in-from-bottom-2 duration-300">
               {!kybVerified ? (
@@ -1928,6 +1958,25 @@ export default function BusinessDashboardPage() {
     }
     setAgreements(prev => [newAgr, ...prev])
     setSubmitted(true)
+    if (pendingOpportunityId) {
+      const filledOppId = pendingOpportunityId
+      updateOpportunityStatus(filledOppId, "filled", token).then(async (res) => {
+        if (res.success) {
+          toast.success(t("connect.opportunityFilled"))
+          return
+        }
+        // The backend may have already flipped the opportunity to filled when
+        // the application was accepted (BE#149) ÔÇö open ÔåÆ filled is then an
+        // invalid transition. Verify and treat "already filled" as success.
+        const current = await getOpportunity(filledOppId, token)
+        if (current.success && current.data?.status === "filled") {
+          toast.success(t("connect.opportunityFilled"))
+        } else {
+          toast.error(res.error || t("connect.backendError"))
+        }
+      })
+      setPendingOpportunityId(null)
+    }
   }} disabled={!signerEmail.trim()} className="rounded-full bg-[#f0b400] px-8 text-sm font-semibold text-background hover:bg-[#d4a000] disabled:opacity-20 shadow-[0_4px_16px_rgba(240,180,0,0.25)]">{t("wizard.createNotify")}</Button>
                     )}
                   </div>
@@ -1937,7 +1986,7 @@ export default function BusinessDashboardPage() {
               )}
             </div>
           )}
-          {/* ══════ TEAM MANAGEMENT ══════ */}
+          {/* ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ TEAM MANAGEMENT ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ */}
           {activeSection === "team" && !isActiveSectionKybGated && activePermissions.team && (
             <div className="mx-auto max-w-4xl animate-in fade-in slide-in-from-bottom-2 duration-300">
               <div className="mb-6">
@@ -2064,6 +2113,17 @@ export default function BusinessDashboardPage() {
                   </div>
                 )}
               </div>
+            </div>
+          )}
+          {/* ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ OPPORTUNITIES (Thalos Connect C5) ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ */}
+          {activeSection === "opportunities" && !isActiveSectionKybGated && activePermissions.opportunities && (
+            <div className="mx-auto max-w-4xl">
+              <OpportunitiesManager
+                token={token}
+                profileId={profileOrganizationId}
+                userId={user?.id ?? null}
+                onStartAgreement={startAgreementFromOpportunity}
+              />
             </div>
           )}
         </main>

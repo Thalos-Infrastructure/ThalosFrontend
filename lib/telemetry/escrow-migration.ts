@@ -31,7 +31,10 @@ export function emitEscrowMigrationTelemetry(
 
   const serialized = JSON.stringify(record);
   if (record.outcome === "failure") {
-    globalThis.console.error(serialized);
+    // Failures are expected when the Nest escrow relay is down (e.g. backend not
+    // running locally) — log at debug so they don't spam the console, while
+    // still keeping them visible when debugging is enabled.
+    globalThis.console.debug(serialized);
   } else {
     globalThis.console.info(serialized);
   }

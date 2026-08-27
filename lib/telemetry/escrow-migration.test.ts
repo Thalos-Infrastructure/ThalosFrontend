@@ -37,9 +37,9 @@ describe("escrow migration telemetry", () => {
     });
   });
 
-  it("serializes failed route decisions as one structured error record", () => {
+  it("serializes failed route decisions as one structured debug record", () => {
     const info = vi.spyOn(console, "info").mockImplementation(() => undefined);
-    const error = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const debug = vi.spyOn(console, "debug").mockImplementation(() => undefined);
 
     emitEscrowMigrationTelemetry({
       operation: "releaseFunds",
@@ -50,8 +50,8 @@ describe("escrow migration telemetry", () => {
     });
 
     expect(info).not.toHaveBeenCalled();
-    expect(error).toHaveBeenCalledOnce();
-    expect(JSON.parse(error.mock.calls[0][0])).toEqual({
+    expect(debug).toHaveBeenCalledOnce();
+    expect(JSON.parse(debug.mock.calls[0][0])).toEqual({
       event: "escrow_migration.route",
       schemaVersion: 1,
       timestamp: "2026-08-23T12:34:56.000Z",
