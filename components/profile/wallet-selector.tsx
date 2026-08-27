@@ -247,8 +247,8 @@ setNewLabel("")
 } catch {
   setError("Failed to update wallet label.")
 }
-}  
-  
+}
+
   const handleRemoveWallet = async (walletId: string) => {
     if (!token) return
 
