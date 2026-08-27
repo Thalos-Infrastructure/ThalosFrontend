@@ -25,7 +25,9 @@ describe("opportunities API", () => {
   afterEach(() => vi.unstubAllGlobals())
 
   it("reads public open opportunities without authentication", async () => {
-    const fetchMock = vi.fn().mockResolvedValue({ ok: true, text: async () => JSON.stringify({ opportunities: [opportunity] }) })
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ opportunities: [opportunity] }), { status: 200 }),
+    )
     vi.stubGlobal("fetch", fetchMock)
     await expect(getOpenOpportunities()).resolves.toEqual({ success: true, data: [opportunity] })
     expect(fetchMock.mock.calls[0][1].headers).not.toHaveProperty("Authorization")
@@ -33,12 +35,16 @@ describe("opportunities API", () => {
 
   it("lists all opportunities for the authenticated owner", async () => {
     const closed = { ...opportunity, status: "closed" as const }
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, text: async () => JSON.stringify([closed]) }))
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(
+      new Response(JSON.stringify([closed]), { status: 200 }),
+    ))
     await expect(getMyOpportunities("jwt")).resolves.toEqual({ success: true, data: [closed] })
   })
 
   it("creates, edits, and transitions status through Nest", async () => {
-    const fetchMock = vi.fn().mockResolvedValue({ ok: true, text: async () => JSON.stringify({ opportunity }) })
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ opportunity }), { status: 200 }),
+    )
     vi.stubGlobal("fetch", fetchMock)
     const input: OpportunityInput = {
       title: opportunity.title,
@@ -60,7 +66,9 @@ describe("opportunities API", () => {
   })
 
   it("deletes an owner opportunity and accepts a 204 response", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, text: async () => "" }))
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(
+      new Response(null, { status: 204 }),
+    ))
     await expect(deleteOpportunity("opp-1", "jwt")).resolves.toEqual({ success: true, data: undefined })
   })
 })
