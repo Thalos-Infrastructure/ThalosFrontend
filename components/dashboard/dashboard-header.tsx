@@ -5,7 +5,7 @@ import { Bell, HelpCircle, Copy, Check, ChevronDown, User, Settings, LogOut } fr
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useLanguage } from "@/lib/i18n"
-import Link from "next/link"
+import { useSignOut } from "@/lib/use-sign-out"
 import Image from "next/image"
 
 interface DashboardHeaderProps {
@@ -28,6 +28,7 @@ export function DashboardHeader({
   notificationCount = 0,
 }: DashboardHeaderProps) {
   const { t } = useLanguage()
+  const signOut = useSignOut()
   const [copied, setCopied] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
 
@@ -112,13 +113,13 @@ export function DashboardHeader({
                 <Settings className="h-4 w-4" />
                 {t("dashboard.editProfile") || "Edit Profile"}
               </button>
-              <Link
-                href="/"
+              <button
+                onClick={signOut}
                 className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-white/70 hover:bg-white/8 hover:text-white transition-colors"
               >
                 <LogOut className="h-4 w-4" />
                 {t("dashboard.signOut") || "Sign Out"}
-              </Link>
+              </button>
             </div>
           )}
         </div>

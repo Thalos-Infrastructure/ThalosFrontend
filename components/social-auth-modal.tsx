@@ -1,110 +1,32 @@
 "use client";
 
-import React, { useState, useRef } from "react";
-import { toast } from "sonner";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/lib/i18n";
-import { useAuthStore, normalizeAuthUser } from "@/lib/auth-store";
 import { useRouter } from "next/navigation";
-import { signInWithOAuthAction } from "@/lib/actions/auth-oauth";
-import { useStellarWallet } from "@/lib/stellar-wallet";
-import { AcceslyAuthModal } from "@/components/accesly-auth-modal";
+// Commented with the render below while Accesly is unmounted (see layout.tsx).
+// import { AcceslyAuthModal } from "@/components/accesly-auth-modal";
+import { PollarLoginOptions } from "@/components/auth/pollar-login-options";
+import { dashboardPathFor } from "@/lib/dashboard-path";
 import Image from "next/image";
 
 interface SocialAuthModalProps {
-  mode: "login" | "signup";
   open: boolean;
   onClose: () => void;
 }
 
-export function SocialAuthModal({ mode, open, onClose }: SocialAuthModalProps) {
+/**
+ * There is no login/signup split any more: every provider here signs an
+ * existing user in or creates the account on the spot, so the old `mode` prop
+ * had nothing left to switch.
+ */
+export function SocialAuthModal({ open, onClose }: SocialAuthModalProps) {
   const { t } = useLanguage();
   const router = useRouter();
-  const { login, logout } = useAuthStore();
-  const { isConnecting, walletError, openWalletModal } = useStellarWallet();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [oauthLoading, setOauthLoading] = useState<"google" | "github" | null>(null);
   const [accountType, setAccountType] = useState<"personal" | "enterprise">("personal");
   const [showAccesly, setShowAccesly] = useState(false);
-  const emailInputRef = useRef<HTMLInputElement>(null);
-
-  const handleOAuth = async (provider: "google" | "github") => {
-    setOauthLoading(provider);
-    setError(null);
-    try {
-      const redirectTo = typeof window !== "undefined" ? `${window.location.origin}/auth/callback` : "";
-      await signInWithOAuthAction(provider, redirectTo);
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : "Could not connect";
-      setError(msg);
-      toast.error(msg);
-    } finally {
-      setOauthLoading(null);
-    }
-  };
 
   if (!open) return null;
-
-  const isLogin = mode === "login";
-
-  /** Maps raw API error strings to i18n translation keys */
-  const apiErrorToI18nKey: Record<string, string> = {
-    "Invalid credentials": "auth.error.invalidCredentials",
-    "This account uses Google or GitHub sign-in": "auth.error.oauthOnly",
-    "An account with this email already exists": "auth.error.duplicateEmail",
-    "Invalid or missing email": "auth.error.invalidEmail",
-    "Password must be at least 8 characters": "auth.error.passwordTooShort",
-    "Registration failed": "auth.error.registrationFailed",
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await fetch(isLogin ? "/api/auth/login" : "/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, name, accountType }),
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => null);
-        const apiError: string = data?.error ?? data?.message ?? "";
-        const i18nKey = apiErrorToI18nKey[apiError] ?? "auth.error.generic";
-        const message = t(i18nKey);
-        throw new Error(message);
-      }
-      const data = await res.json();
-      const user = normalizeAuthUser(data.user);
-      if (!user) throw new Error("Invalid response from server");
-      login(user, data.token);
-      onClose();
-      if (isLogin) {
-        // Returning user: go directly to dashboard
-        router.push("/dashboard/personal");
-      } else {
-        // New registration: route through select-profile
-        router.push("/auth/select-profile");
-      }
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : t("auth.error.generic");
-      setError(msg);
-      toast.error(msg);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleWalletConnect = () => {
-    openWalletModal(() => {
-      onClose();
-      router.push(accountType === "enterprise" ? "/dashboard/business" : "/dashboard/personal");
-    }, accountType === "enterprise" ? "business" : "personal");
-  };
 
   return (
     <div className="fixed inset-0 z-[90] flex items-center justify-center p-4 animate-in fade-in duration-200" onClick={onClose}>
@@ -191,136 +113,51 @@ export function SocialAuthModal({ mode, open, onClose }: SocialAuthModalProps) {
             </div>
           </div>
 
-          {/* OAuth buttons */}
-          <div className="flex flex-col gap-2.5">
-            <Button
-              type="button"
-              variant="outline"
-              className="h-11 w-full gap-3 rounded-xl border-white/15 bg-transparent text-sm font-medium text-white hover:bg-white/5 hover:border-white/25"
-              onClick={() => handleOAuth("google")}
-              disabled={oauthLoading !== null}
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24">
-                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
-                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
-                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
-                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
-              </svg>
-              {oauthLoading === "google" ? "Connecting..." : "Connect with Google"}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              className="h-11 w-full gap-3 rounded-xl border-white/15 bg-transparent text-sm font-medium text-white hover:bg-white/5 hover:border-white/25"
-              onClick={() => handleOAuth("github")}
-              disabled={oauthLoading !== null}
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
-              </svg>
-              {oauthLoading === "github" ? "Connecting..." : "Connect with GitHub"}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              className="h-11 w-full gap-3 rounded-xl border-white/15 bg-transparent text-sm font-medium text-white hover:bg-white/5 hover:border-white/25"
-              onClick={() => emailInputRef.current?.focus()}
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <rect x="2" y="4" width="20" height="16" rx="2" />
-                <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
-              </svg>
-              Continue with Email
-            </Button>
-          </div>
-
-          <div className="my-5 flex items-center gap-3">
-            <div className="h-px flex-1 bg-white/10" />
-            <span className="text-[10px] font-medium uppercase tracking-widest text-white/30">or</span>
-            <div className="h-px flex-1 bg-white/10" />
-          </div>
-
-          {/* Wallet button */}
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleWalletConnect}
-            disabled={isConnecting}
-            className="h-11 w-full gap-3 rounded-xl border-white/15 bg-transparent text-sm font-medium text-white hover:bg-white/5 hover:border-white/25"
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
-              <path d="M1 10h22" />
-            </svg>
-            {isConnecting ? "Connecting..." : "Connect Stellar Wallet"}
-          </Button>
-
-          {/* Accesly passkey button (non-custodial, no extension) */}
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => setShowAccesly(true)}
-            className="mt-2.5 h-11 w-full gap-3 rounded-xl border-[#f0b400]/25 bg-transparent text-sm font-medium text-white hover:bg-[#f0b400]/5 hover:border-[#f0b400]/40"
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f0b400" strokeWidth="1.5">
-              <path d="M12 1a5 5 0 0 0-5 5v4h10V6a5 5 0 0 0-5-5z" />
-              <rect x="4" y="10" width="16" height="12" rx="2" />
-              <circle cx="12" cy="16" r="1.5" fill="#f0b400" />
-            </svg>
-            Continue with Accesly (Passkey)
-          </Button>
-          {walletError && (
-            <p className="mt-2 text-xs text-red-400/90 text-center" role="alert">{walletError}</p>
-          )}
-
-          {/* Email Form */}
-          <form onSubmit={handleSubmit} className="mt-5 space-y-3">
-            <div>
-              <label className="block text-xs font-medium text-white/50 mb-1.5">Email</label>
-              <input
-                ref={emailInputRef}
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="h-10 w-full rounded-xl border border-white/15 bg-transparent px-3 text-sm text-white placeholder:text-white/30 focus:border-[#f0b400]/50 focus:outline-none transition-colors"
-                placeholder="you@example.com"
-              />
-            </div>
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="block text-xs font-medium text-white/50">Password</label>
-                <button type="button" className="text-xs text-[#f0b400] hover:text-[#f0b400]/80">Forgot?</button>
+          {/* Every provider goes through Pollar and is driven from here, so
+              Pollar's own modal never opens. */}
+          <PollarLoginOptions
+            accountType={accountType}
+            onAuthenticated={(_address, profile) => {
+              onClose();
+              router.push(dashboardPathFor(profile, accountType));
+            }}
+            divider={
+              <div className="my-2 flex items-center gap-3">
+                <div className="h-px flex-1 bg-white/10" />
+                <span className="text-[10px] font-medium uppercase tracking-widest text-white/30">
+                  {t("signin.or")}
+                </span>
+                <div className="h-px flex-1 bg-white/10" />
               </div>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="h-10 w-full rounded-xl border border-white/15 bg-transparent px-3 text-sm text-white placeholder:text-white/30 focus:border-[#f0b400]/50 focus:outline-none transition-colors"
-                placeholder="Enter your password"
-              />
-            </div>
-            {error && <p className="text-xs text-red-400" role="alert">{error}</p>}
+            }
+          >
+            {/* Accesly (#109) is hidden, not removed: the passkey login is a
+                separate auth system and its own PR owns it. Restore by
+                uncommenting — the modal below and its state stay wired.
             <Button
-              type="submit"
-              className="h-11 w-full rounded-xl bg-[#f0b400] text-sm font-semibold text-[#0c1220] hover:bg-[#d9a300] transition-colors"
-              disabled={loading}
+              type="button"
+              variant="outline"
+              onClick={() => setShowAccesly(true)}
+              className="h-11 w-full gap-3 rounded-xl border-[#f0b400]/25 bg-transparent text-sm font-medium text-white hover:bg-[#f0b400]/5 hover:border-[#f0b400]/40"
             >
-              {loading ? "Processing..." : "Sign in"}
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f0b400" strokeWidth="1.5">
+                <path d="M12 1a5 5 0 0 0-5 5v4h10V6a5 5 0 0 0-5-5z" />
+                <rect x="4" y="10" width="16" height="12" rx="2" />
+                <circle cx="12" cy="16" r="1.5" fill="#f0b400" />
+              </svg>
+              Continue with Accesly (Passkey)
             </Button>
-          </form>
+            */}
+          </PollarLoginOptions>
 
-          {/* Sign up link */}
-          <p className="mt-5 text-center text-sm text-white/50">
-            Don't have an account?{" "}
-            <button type="button" className="text-[#f0b400] hover:text-[#f0b400]/80 font-medium">
-              Sign up
-            </button>
-          </p>
         </div>
       </div>
 
-      {/* Accesly passkey login (#109) */}
+      {/* Accesly passkey login (#109). Unmounted along with the layout's
+          ThalosAcceslyProvider: it calls useAccesly(), which throws without
+          the provider even while closed. Uncomment together with the provider.
       <AcceslyAuthModal open={showAccesly} onClose={() => setShowAccesly(false)} />
+      */}
     </div>
   );
 }

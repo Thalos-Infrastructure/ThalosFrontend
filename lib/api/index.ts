@@ -6,9 +6,10 @@ export * from "./disputes"
 export * from "./notifications"
 export * from "./escrow"
 export * from "./kyb"
+export * from "./kyc"
 export * from "./agreements"
 export * from "./profiles"
-
+export * from "./opportunities"
 
 // Re-export API_URL for convenience
 export { API_URL } from "@/lib/config"

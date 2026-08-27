@@ -1,59 +1,67 @@
 import { apiRequest, type ApiResponse } from "./client"
 
-export type ProfileType = "builder" | "project"
-
 export interface BuilderProfile {
+  id: string
+  wallet_address: string
+  handle: string | null
+  display_name: string | null
+  avatar_url: string | null
   headline: string | null
   bio: string | null
   skills: string[]
   tech_stack: string[]
   hourly_rate: number | null
-  availability: string | null
-  portfolio_links: string[]
-  social_links: string[]
-  handle: string | null
+  availability: "available" | "open" | "unavailable" | null
+  portfolio_links: Record<string, string> | null
+  social_links: Record<string, string> | null
 }
 
-export interface ProjectProfile {
-  org_name: string | null
-  org_description: string | null
-  org_website: string | null
-  looking_for: string[]
-  org_links: string[]
+export interface ProfilePaginatedResponse<T> {
+  data: T[]
+  total: number
+  page: number
+  limit: number
+  totalPages: number
 }
 
-export interface ConnectProfile extends BuilderProfile, ProjectProfile {
-  id?: string
-  profile_types: ProfileType[]
-  created_at?: string
-  updated_at?: string
+export interface ProfileDiscoveryParams {
+  skills?: string[]
+  tech_stack?: string[]
+  availability?: "available" | "open" | "unavailable"
+  q?: string
+  page?: number
+  limit?: number
 }
 
-export type UpdateProfileInput = Partial<Omit<ConnectProfile, "id" | "created_at" | "updated_at">>
+export async function discoverProfiles(
+  params: ProfileDiscoveryParams = {},
+  token?: string
+): Promise<ApiResponse<ProfilePaginatedResponse<BuilderProfile>>> {
+  const query = new URLSearchParams()
 
-type ProfileEnvelope = ConnectProfile | { profile: ConnectProfile }
+  if (params.skills?.length) {
+    params.skills.forEach((s) => query.append("skills", s))
+  }
+  if (params.tech_stack?.length) {
+    params.tech_stack.forEach((t) => query.append("tech_stack", t))
+  }
+  if (params.availability) {
+    query.set("availability", params.availability)
+  }
+  if (params.q) {
+    query.set("q", params.q)
+  }
+  if (params.page) {
+    query.set("page", String(params.page))
+  }
+  if (params.limit) {
+    query.set("limit", String(params.limit))
+  }
 
-function unwrapProfile(data: ProfileEnvelope): ConnectProfile {
-  return "profile" in data ? data.profile : data
-}
-
-/** Load the authenticated account's Builder/Project profile. */
-export async function getProfile(token: string): Promise<ApiResponse<ConnectProfile>> {
-  const result = await apiRequest<ProfileEnvelope>("/profiles", { method: "GET" }, token)
-  if (!result.success || !result.data) return { success: false, error: result.error }
-  return { success: true, data: unwrapProfile(result.data) }
-}
-
-/** Create or update the authenticated account's additive profile types. */
-export async function saveProfile(
-  profile: UpdateProfileInput,
-  token: string
-): Promise<ApiResponse<ConnectProfile>> {
-  const result = await apiRequest<ProfileEnvelope>(
-    "/profiles",
-    { method: "PATCH", body: JSON.stringify(profile) },
+  const qs = query.toString()
+  return apiRequest<ProfilePaginatedResponse<BuilderProfile>>(
+    `/profiles${qs ? `?${qs}` : ""}`,
+    { method: "GET" },
     token
   )
-  if (!result.success || !result.data) return { success: false, error: result.error }
-  return { success: true, data: unwrapProfile(result.data) }
 }

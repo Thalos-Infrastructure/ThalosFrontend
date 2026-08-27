@@ -2,19 +2,23 @@ import { sendTransaction, AgreementPayload, fundEscrow, AgreementResponse, chang
 import { buildCreateEscrow, submitSignedTransaction, type BackendCreateEscrowDto } from "@/lib/api/escrow";
 import { signEscrowOperation, type EscrowOperation, type EscrowRolesInfo, type TxStatus } from "@/lib/signing";
 import { linkWallet } from "@/lib/api/wallets";
+import {
+  createAgreement as createAgreementRecord,
+  type CreateAgreementInput,
+  type ParticipantRole,
+} from "@/lib/api/agreements";
 
 export interface CreateAndSignAgreementParams {
   payload: AgreementPayload;
   /** App JWT (from useAuthStore). Required: escrow creation now goes through the Thalos backend. */
   token: string | null;
   walletAddress: string | null;
-  openWalletModal: (onConnected?: (address: string) => void) => Promise<void>;
   setCreating: (v: boolean) => void;
   setError: (msg: string | null) => void;
   setSubmitted: (v: boolean) => void;
   /** Transaction progress for the UI: building → signing → submitting → confirmed. */
   onStatus?: (status: TxStatus) => void;
-  onSuccess?: () => void;
+  onSuccess?: (agreementId?: string) => void;
 }
 
 export interface FundAndSignEscrowParams {
@@ -22,7 +26,6 @@ export interface FundAndSignEscrowParams {
   amount: string;
   walletAddress: string | null;
   serviceType?: ServiceType;
-  openWalletModal: (onConnected?: (address: string) => void) => Promise<void>;
   setFunding: (v: boolean) => void;
   setError: (msg: string | null) => void;
   setSuccess: (v: boolean) => void;
@@ -37,7 +40,6 @@ export interface ChangeMilestoneStatusParams {
   serviceProvider: string;
   serviceType: ServiceType;
   walletAddress: string | null;
-  openWalletModal: (onConnected?: (address: string) => void) => Promise<void>;
   setSubmitting: (v: boolean) => void;
   setError: (msg: string | null) => void;
   onStatus?: (status: TxStatus) => void;
@@ -85,17 +87,112 @@ async function persistKitWallet(address: string, token: string | null): Promise<
   }
 }
 
+/**
+ * Maps the wizard payload and the deployed contract onto the backend's agreement
+ * record.
+ *
+ * `POST /v1/agreements` is the ONLY thing that writes `agreements` +
+ * `agreement_participants` and emits `AGREEMENT_EVENTS.CREATED`, which the
+ * notifications listener turns into email. Deploying through `/v1/escrows/create`
+ * does none of that — it only relays to Trustless Work. Skipping this call is why
+ * agreements created from the dashboard never produced a notification.
+ */
+function toAgreementRecord(
+  payload: AgreementPayload,
+  createdBy: string,
+  contractId?: string,
+): CreateAgreementInput {
+  // Only roles that map to a real person become participants. `platformAddress`
+  // is ours, so including it would just add a row that resolves to no profile.
+  const roleMap: Array<[string, ParticipantRole]> = [
+    ["receiver", "payee"],
+    ["serviceProvider", "payee"],
+    ["approver", "approver"],
+    ["disputeResolver", "dispute_resolver"],
+    ["releaseSigner", "payer"],
+  ];
+
+  // The creator is always a participant; the rest are deduped against it, since
+  // one wallet commonly holds several roles and the backend emails per wallet.
+  const seen = new Set<string>([createdBy]);
+  const participants: CreateAgreementInput["participants"] = [
+    { wallet_address: createdBy, role: "payer" },
+  ];
+  for (const [roleKey, role] of roleMap) {
+    const wallet = payload.roles?.[roleKey];
+    if (!wallet || seen.has(wallet)) continue;
+    seen.add(wallet);
+    participants.push({ wallet_address: wallet, role });
+  }
+
+  return {
+    ...(contractId ? { contract_id: contractId } : {}),
+    title: payload.title,
+    description: payload.description,
+    amount: payload.amount,
+    asset: "USDC",
+    agreement_type: payload.serviceType === "multi-release" ? "multi" : "single",
+    milestones: payload.milestones.map((m) => ({
+      description: m.description,
+      amount: m.amount,
+      status: m.status === "approved" || m.status === "released" ? m.status : "pending",
+    })),
+    created_by: createdBy,
+    participants,
+  };
+}
+
+/** Trustless Work returns the deployed contract id on the submit response. */
+function contractIdFrom(sendResult: unknown): string | undefined {
+  if (!sendResult || typeof sendResult !== "object") return undefined;
+  const id = (sendResult as { contractId?: unknown }).contractId;
+  return typeof id === "string" && id.length > 0 ? id : undefined;
+}
+
+/**
+ * Writes the agreement record after the escrow is live on-chain.
+ *
+ * Deliberately non-fatal: the escrow already exists and the user's funds path is
+ * unaffected, so a failure here must not report the creation as failed. It is
+ * logged loudly instead — a silent miss here is precisely why the missing
+ * notifications went unnoticed for so long.
+ */
+async function persistAgreementRecord(
+  payload: AgreementPayload,
+  createdBy: string,
+  contractId: string | undefined,
+  token: string,
+): Promise<string | undefined> {
+  try {
+    const res = await createAgreementRecord(toAgreementRecord(payload, createdBy, contractId), token);
+    if (!res.success || !res.data) {
+      console.error(
+        "[agreements] escrow deployed but the agreement record did NOT persist — no participants, no notification:",
+        res.error,
+      );
+      return undefined;
+    }
+    console.info("[agreements] agreement persisted, creation event emitted", { agreementId: res.data.id, contractId });
+    return res.data.id;
+  } catch (e) {
+    console.error(
+      "[agreements] escrow deployed but the agreement record did NOT persist — no participants, no notification:",
+      e,
+    );
+    return undefined;
+  }
+}
+
 export async function createAndSignAgreement({
   payload,
   token,
   walletAddress,
-  openWalletModal,
   setCreating,
   setError,
   setSubmitted,
   onStatus,
   onSuccess,
-}: CreateAndSignAgreementParams) {
+}: CreateAndSignAgreementParams): Promise<string | undefined> {
   setCreating(true);
   setError(null);
   try {
@@ -126,17 +223,28 @@ export async function createAndSignAgreement({
     }
 
     // 2. Sign with the wallet and 3. submit the signed XDR through the backend.
-    await signAndSubmitViaBackend(build.data.unsignedTransaction, token, walletAddress, openWalletModal, onStatus);
+    const { signerAddress, contractId } = await signAndSubmitViaBackend(
+      build.data.unsignedTransaction,
+      token,
+      walletAddress,
+      onStatus,
+    );
+
+    // 4. Persist the agreement so participants, activity and the email
+    //    notification happen. Non-fatal — see persistAgreementRecord.
+    const agreementId = await persistAgreementRecord(payload, signerAddress, contractId, token);
 
     onStatus?.("confirmed");
     setSubmitted(true);
-    onSuccess?.();
+    onSuccess?.(agreementId);
+    return agreementId;
   } catch (e: any) {
     onStatus?.("error");
     setError(e.message || "Unknown error");
   } finally {
     setCreating(false);
   }
+  return undefined;
 }
 
 /**
@@ -148,15 +256,17 @@ export async function createAndSignAgreement({
  *
  * The Kit wallet is also persisted to `user_wallets` so it shows up in the
  * multi-wallet UI alongside the custodial wallet.
+ *
+ * Returns the signer and the deployed contract id, both of which the caller needs
+ * to write the agreement record.
  */
 async function signAndSubmitViaBackend(
   unsignedXdr: string,
   token: string,
   walletAddress: string | null,
-  openWalletModal: (onConnected?: (address: string) => void) => Promise<void>,
   onStatus?: (status: TxStatus) => void,
-) {
-  const currentAddress = await ensureWalletConnected(walletAddress, openWalletModal);
+): Promise<{ signerAddress: string; contractId?: string }> {
+  const currentAddress = requireWalletAddress(walletAddress);
 
   // Persist the Kit wallet to user_wallets (non-fatal)
   await persistKitWallet(currentAddress, token);
@@ -171,6 +281,8 @@ async function signAndSubmitViaBackend(
   onStatus?.("submitting");
   const sendRes = await submitSignedTransaction(signedResult.signedTxXdr, token);
   if (!sendRes.success) throw new Error(sendRes.error || "Transaction send failed");
+
+  return { signerAddress: currentAddress, contractId: contractIdFrom(sendRes.data) };
 }
 
 export async function fundAndSignEscrow({
@@ -178,7 +290,6 @@ export async function fundAndSignEscrow({
   amount,
   walletAddress,
   serviceType = "single-release",
-  openWalletModal,
   setFunding,
   setError,
   setSuccess,
@@ -193,7 +304,7 @@ export async function fundAndSignEscrow({
     }
     onStatus?.("building");
     const response = await fundEscrow(contractId, walletAddress, Number(amount), serviceType);
-    await processTransaction(response, "Fund escrow failed", walletAddress, openWalletModal, {
+    await processTransaction(response, "Fund escrow failed", walletAddress, {
       operation: "fund",
       onStatus,
     });
@@ -215,7 +326,6 @@ export async function changeMilestoneStatusAgreement({
   serviceProvider,
   serviceType,
   walletAddress,
-  openWalletModal,
   setSubmitting,
   setError,
   onStatus,
@@ -233,7 +343,7 @@ export async function changeMilestoneStatusAgreement({
       serviceProvider,
       serviceType
     );
-    await processTransaction(response, "Change milestone status failed", walletAddress, openWalletModal, {
+    await processTransaction(response, "Change milestone status failed", walletAddress, {
       operation: "changeMilestoneStatus",
       roles: { serviceProvider },
       onStatus,
@@ -257,7 +367,6 @@ async function processTransaction(
   response: AgreementResponse<unknown>,
   errorMessage: string,
   walletAddress: string | null,
-  openWalletModal: (onConnected?: (address: string) => void) => Promise<void>,
   opts: {
     operation: EscrowOperation;
     roles?: EscrowRolesInfo;
@@ -271,7 +380,7 @@ async function processTransaction(
   if (!xdr)
     throw new Error("No XDR returned from agreement API");
 
-  const currentAddress = await ensureWalletConnected(walletAddress, openWalletModal);
+  const currentAddress = requireWalletAddress(walletAddress);
 
   const signedResult = await signEscrowOperation({
     xdr: xdr as string,
@@ -288,23 +397,14 @@ async function processTransaction(
 }
 
 /** Resolve the connected wallet address, prompting the connect modal if needed. */
-async function ensureWalletConnected(
-  walletAddress: string | null,
-  openWalletModal: (onConnected?: (address: string) => void) => Promise<void>,
-): Promise<string> {
-  let currentAddress = walletAddress;
-  if (!currentAddress) {
-    await new Promise<void>((resolve, reject) => {
-      openWalletModal((addr) => {
-        if (addr) {
-          currentAddress = addr;
-          resolve();
-        } else {
-          reject(new Error("Wallet connection cancelled or failed"));
-        }
-      });
-    });
+/**
+ * The address to sign with. Every wallet now arrives through Pollar, so it is
+ * already on the session by the time any escrow action runs — there is nothing
+ * left to connect on demand, and a missing address means the session went away.
+ */
+function requireWalletAddress(walletAddress: string | null): string {
+  if (!walletAddress) {
+    throw new Error("Inicia sesión para firmar esta operación.");
   }
-  if (!currentAddress) throw new Error("Wallet connection required to sign transaction");
-  return currentAddress;
+  return walletAddress;
 }

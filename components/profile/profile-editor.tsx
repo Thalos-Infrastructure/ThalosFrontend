@@ -1,6 +1,8 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState, useRef, useEffect } from "react"
+import { cn } from "@/lib/utils"
+import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -75,6 +77,17 @@ export function ProfileEditor({ isOpen, onClose, token }: ProfileEditorProps) {
     })
     return () => { active = false }
   }, [isOpen, token])
+
+  // `useState(profile)` only reads the prop on first mount, and this modal
+  // mounts with the page: at that point the wallet and the profile have not
+  // resolved yet, so the form stayed frozen on the empty fallbacks. Re-seeding
+  // it on every open also discards half-finished edits after a Cancel, which is
+  // what a Cancel is expected to do.
+  useEffect(() => {
+    if (!isOpen) return
+    setFormData(profile)
+    setAvatarPreview(profile.avatar || null)
+  }, [isOpen, profile.displayName, profile.email, profile.walletAddress, profile.avatar, profile.company, profile.bio])
 
   if (!isOpen) return null
 
@@ -161,8 +174,64 @@ export function ProfileEditor({ isOpen, onClose, token }: ProfileEditorProps) {
                 </section>
               )}
             </div>
-          )}
-          {error && <p role="alert" className="mt-4 text-sm text-red-400">{error}</p>}
+
+            <div>
+              <label className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-white/50 mb-2">
+                <Mail className="h-3.5 w-3.5" />
+                Email
+              </label>
+              <Input
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                placeholder="you@example.com"
+                className="bg-white/5 border-white/10 text-white placeholder:text-white/30"
+              />
+            </div>
+
+            <div>
+              <label className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-white/50 mb-2">
+                <Wallet className="h-3.5 w-3.5" />
+                Wallet Address
+              </label>
+              {/* Solo lectura: la wallet identifica el perfil (es la clave del
+                  UPDATE en `updateProfile`), no es un campo editable. */}
+              <Input
+                value={formData.walletAddress}
+                readOnly
+                placeholder="G..."
+                className="bg-white/5 border-white/10 text-white/60 font-mono text-sm placeholder:text-white/30 cursor-default focus-visible:ring-0 focus-visible:ring-offset-0"
+              />
+            </div>
+
+            {type === "enterprise" && (
+              <div>
+                <label className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-white/50 mb-2">
+                  <Building className="h-3.5 w-3.5" />
+                  Industry
+                </label>
+                <Input
+                  value={formData.company || ""}
+                  onChange={(e) => setFormData(prev => ({ ...prev, company: e.target.value }))}
+                  placeholder="Technology, Finance, etc."
+                  className="bg-white/5 border-white/10 text-white placeholder:text-white/30"
+                />
+              </div>
+            )}
+
+            <div>
+              <label className="text-xs font-medium uppercase tracking-wider text-white/50 mb-2 block">
+                Bio
+              </label>
+              <textarea
+                value={formData.bio || ""}
+                onChange={(e) => setFormData(prev => ({ ...prev, bio: e.target.value }))}
+                placeholder="Tell us about yourself..."
+                rows={3}
+                className="w-full rounded-lg bg-white/5 border border-white/10 text-white placeholder:text-white/30 px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#f0b400]/50"
+              />
+            </div>
+          </div>
         </div>
 
         <div className="flex items-center justify-end gap-3 border-t border-white/10 bg-white/[0.02] px-6 py-4">

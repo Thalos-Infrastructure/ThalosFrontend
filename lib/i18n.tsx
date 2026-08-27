@@ -152,6 +152,21 @@ const translations: Record<Lang, Record<string, string>> = {
     "signin.getLobstr": "Don't have LOBSTR? Get it at lobstr.co",
     "signin.walletConnecting": "Connecting…",
     "signin.walletError": "Could not connect. Try another wallet or unlock it.",
+    "signin.noWalletDesc":
+      "Sign in with Google, GitHub or email and we'll set up a Stellar wallet for you — no extension, no XLM needed.",
+    // Email OTP — no password anywhere in this flow.
+    "signin.emailPlaceholder": "you@example.com",
+    "signin.emailSendCode": "Send code",
+    "signin.emailSending": "Sending…",
+    "signin.emailCodeLabel": "Enter the 6-digit code we sent you",
+    "signin.emailCodePlaceholder": "000000",
+    "signin.emailVerify": "Verify",
+    "signin.emailVerifying": "Verifying…",
+    "signin.emailResend": "Send another code",
+    "signin.emailChange": "Use a different address",
+    "signin.pickWallet": "Choose your wallet",
+    "signin.noWalletsAvailable": "No Stellar wallets detected in this browser.",
+    "signin.back": "Back",
     "signin.admin": "Admin",
     "signin.secured": "Secured by Thalos",
     "signin.walletExplanation": "Sign in with your Stellar wallet (e.g. Freighter, xBull, LOBSTR). Your connected wallet appears in your profile and is used to fund escrows or receive released funds depending on your role. Escrow flows are powered by the Trustlesswork API.",
@@ -974,6 +989,21 @@ const translations: Record<Lang, Record<string, string>> = {
     "signin.getLobstr": "¿No tienes LOBSTR? Descárgalo en lobstr.co",
     "signin.walletConnecting": "Conectando…",
     "signin.walletError": "No se pudo conectar. Prueba otra billetera o desbloquéala.",
+    "signin.noWalletDesc":
+      "Inicia sesión con Google, GitHub o email y te creamos una billetera Stellar — sin extensión y sin XLM.",
+    // Email OTP — no password anywhere in this flow.
+    "signin.emailPlaceholder": "tu@ejemplo.com",
+    "signin.emailSendCode": "Enviar código",
+    "signin.emailSending": "Enviando…",
+    "signin.emailCodeLabel": "Escribe el código de 6 dígitos que te enviamos",
+    "signin.emailCodePlaceholder": "000000",
+    "signin.emailVerify": "Verificar",
+    "signin.emailVerifying": "Verificando…",
+    "signin.emailResend": "Enviar otro código",
+    "signin.emailChange": "Usar otra dirección",
+    "signin.pickWallet": "Elige tu billetera",
+    "signin.noWalletsAvailable": "No se detectaron billeteras Stellar en este navegador.",
+    "signin.back": "Volver",
     "signin.admin": "Admin",
     "signin.secured": "Protegido por Thalos",
     "signin.walletExplanation": "Inicia sesión con tu billetera Stellar (Freighter, xBull, LOBSTR, etc.). La billetera conectada se muestra en tu perfil y se usa para fondear escrows o recibir fondos liberados según tu rol. Los escrows usan la API de Trustlesswork.",
@@ -1705,6 +1735,21 @@ interface LanguageContextType {
   toggleTheme: () => void
 }
 
+/**
+ * Sentinel telling "no provider" apart from the provider's initial state, which
+ * is identical (lang "en", theme "dark"). Without this marker a component
+ * mounted outside LanguageProvider looks exactly like one mounted inside, until
+ * the user picks Spanish or the light theme — so the bug only surfaced in
+ * production, and only for someone else. The default is kept rather than
+ * throwing because Next's `global-error.tsx` replaces the root layout, and with
+ * it the provider: a throw there would turn the error screen into a loop.
+ */
+const FALLBACK_CONTEXT = Symbol("language-context-fallback")
+
+const isDev = process.env.NODE_ENV !== "production"
+/** El aviso se dispararia en cada render del subarbol huerfano; con una vez basta. */
+let warnedAboutMissingProvider = false
+
 const LanguageContext = createContext<LanguageContextType>({
   lang: "en",
   setLang: () => {},
@@ -1712,7 +1757,8 @@ const LanguageContext = createContext<LanguageContextType>({
   theme: "dark",
   setTheme: () => {},
   toggleTheme: () => {},
-})
+  [FALLBACK_CONTEXT]: true,
+} as LanguageContextType)
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [lang, setLangState] = useState<Lang>("en")
@@ -1758,6 +1804,20 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
 
 export function useLanguage() {
   const ctx = useContext(LanguageContext)
+
+  if (isDev && !warnedAboutMissingProvider && (ctx as unknown as Record<PropertyKey, unknown>)[FALLBACK_CONTEXT]) {
+    warnedAboutMissingProvider = true
+    // We do not throw (see FALLBACK_CONTEXT), but degrading silently means
+    // rendering the raw keys — and `t()` already returns the key when a
+    // translation is missing, so the symptom is indistinguishable from that
+    // other bug.
+    console.error(
+      "[i18n] useLanguage() se ha llamado fuera de <LanguageProvider>. " +
+        "Se usara ingles + tema oscuro, y setLang/setTheme/toggleTheme no haran nada. " +
+        "Monta el provider por encima de este componente.",
+    )
+  }
+
   return { ...ctx, language: ctx.lang }
 }
 
