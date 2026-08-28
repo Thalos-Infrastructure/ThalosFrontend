@@ -56,33 +56,13 @@ export function WalletSelector({ selectedWallet, onWalletChange, walletsData: pr
         if (isMounted && result.success && result.data && result.data.length > 0) {
           setInternalWallets(result.data)
         } else if (isMounted && currentAddress) {
-          setInternalWallets([{
-            id: "connected",
-            user_id: "",
-            wallet_address: currentAddress,
-            wallet_type: "external" as const,
-            label: truncateAddress(currentAddress),
-            is_primary: true,
-            created_at: new Date().toISOString(),
-            balance: { xlm: "0", usdc: "0" },
-            agreements_count: 0,
-          }])
+          setInternalWallets([connectedWalletFallback(currentAddress)])
         }
       } catch (err) {
         console.error("Failed to load wallets:", err)
-        
+
         if (isMounted && currentAddress) {
-          setInternalWallets([{
-            id: "connected",
-            user_id: "",
-            wallet_address: currentAddress,
-            wallet_type: "external" as const,
-            label: truncateAddress(currentAddress),
-            is_primary: true,
-            created_at: new Date().toISOString(),
-            balance: { xlm: "0", usdc: "0" },
-            agreements_count: 0,
-          }])
+          setInternalWallets([connectedWalletFallback(currentAddress)])
         }
       } finally {
         if (isMounted) setIsLoading(false)
