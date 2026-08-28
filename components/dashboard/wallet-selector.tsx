@@ -69,8 +69,7 @@ export function WalletSelector({ selectedWallet, onWalletChange, walletsData: pr
         }
       } catch (err) {
         console.error("Failed to load wallets:", err)
-        if (isMounted) setError("Could not load wallets")
-
+        
         if (isMounted && currentAddress) {
           setInternalWallets([{
             id: "connected",
