@@ -37,7 +37,8 @@ export function WalletSelector({ selectedWallet, onWalletChange, walletsData: pr
 
   useEffect(() => {
     if (propsWalletsData !== undefined) return
-       let isMounted = true
+    
+    let isMounted = true
     async function load() {
       setIsLoading(true)
 
