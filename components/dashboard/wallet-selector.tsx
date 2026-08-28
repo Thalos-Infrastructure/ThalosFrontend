@@ -91,7 +91,7 @@ export function WalletSelector({ selectedWallet, onWalletChange, walletsData: pr
 
     load()
 
-       return () => {
+    return () => {
       isMounted = false
     }
   }, [propsWalletsData, token, currentAddress])
