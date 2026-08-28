@@ -128,7 +128,8 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
       const { disputeMilestone } = await import("@/services/escrowMigration");
       const { openDispute } = await import("@/lib/actions/disputes");
 
-      const res = await disputeMilestone(agr.id, idx.toString(), walletAddress, token ?? undefined);
+      const escrowType = agr.type === "Multi Release" ? "multi-release" : "single-release";
+      const res = await disputeMilestone(agr.id, idx.toString(), walletAddress, token ?? undefined, escrowType);
       const submitted = await signAndSubmit("dispute", res, "Error raising dispute");
 
       // Register dispute in Supabase only after the on-chain dispute actually

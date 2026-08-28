@@ -189,8 +189,8 @@ export async function fundEscrow(
     return { success: true, data: result.data }
   }
 
-  console.warn("[v0] MIGRATION: BACKEND error for fundEscrow, falling back to TW", { error: result.error })
-  return originalService.fundEscrow(contractId, signer, amount, type)
+  console.error("[v0] MIGRATION: BACKEND error for fundEscrow (fail-closed)", { error: result.error })
+  return { success: false, error: result.error ?? "Backend fund failed" }
 }
 
 export async function approveMilestone(
@@ -216,8 +216,8 @@ export async function approveMilestone(
     return { success: true, data: result.data }
   }
 
-  console.warn("[v0] MIGRATION: BACKEND error for approveMilestone, falling back to TW", { error: result.error })
-  return originalService.approveMilestone(contractId, milestoneIndex, approver, type)
+  console.error("[v0] MIGRATION: BACKEND error for approveMilestone (fail-closed)", { error: result.error })
+  return { success: false, error: result.error ?? "Backend approve failed" }
 }
 
 export async function changeMilestoneStatus(
@@ -245,8 +245,8 @@ export async function changeMilestoneStatus(
     return { success: true, data: result.data }
   }
 
-  console.warn("[v0] MIGRATION: BACKEND error for changeMilestoneStatus, falling back to TW", { error: result.error })
-  return originalService.changeMilestoneStatus(contractId, milestoneIndex, newEvidence, newStatus, serviceProvider, type)
+  console.error("[v0] MIGRATION: BACKEND error for changeMilestoneStatus (fail-closed)", { error: result.error })
+  return { success: false, error: result.error ?? "Backend change-status failed" }
 }
 
 export async function releaseFunds(
@@ -272,8 +272,8 @@ export async function releaseFunds(
     return { success: true, data: result.data }
   }
 
-  console.warn("[v0] MIGRATION: BACKEND error for releaseFunds, falling back to TW", { error: result.error })
-  return originalService.releaseFunds(contractId, releaseSigner, type, milestoneIndex)
+  console.error("[v0] MIGRATION: BACKEND error for releaseFunds (fail-closed)", { error: result.error })
+  return { success: false, error: result.error ?? "Backend release failed" }
 }
 
 export async function disputeMilestone(
@@ -281,15 +281,16 @@ export async function disputeMilestone(
   milestoneIndex: string,
   signer: string,
   token?: string,
+  type: ServiceType = "multi-release",
 ): Promise<originalService.AgreementResponse<{ unsignedTransaction: string }>> {
   if (!token || !MIGRATION_FLAGS.disputeMilestone) {
     console.log("[v0] MIGRATION: disputeMilestone - using original TW path (flag OFF or no token)")
     return originalService.disputeMilestone(contractId, milestoneIndex, signer)
   }
 
-  console.log("[v0] MIGRATION: Attempting BACKEND for disputeMilestone", { contractId, milestoneIndex })
+  console.log("[v0] MIGRATION: Attempting BACKEND for disputeMilestone", { contractId, milestoneIndex, type })
   const result = await escrowApi.buildDisputeMilestone(
-    { contractId, type: "multi-release", milestoneIndex, signer },
+    { contractId, type, milestoneIndex, signer },
     token,
   )
 
@@ -298,8 +299,9 @@ export async function disputeMilestone(
     return { success: true, data: result.data }
   }
 
-  console.warn("[v0] MIGRATION: BACKEND error for disputeMilestone, falling back to TW", { error: result.error })
-  return originalService.disputeMilestone(contractId, milestoneIndex, signer)
+  // Fail closed when flag is ON — do not fall back to browser-side TW.
+  console.error("[v0] MIGRATION: BACKEND error for disputeMilestone (fail-closed)", { error: result.error })
+  return { success: false, error: result.error ?? "Backend dispute failed" }
 }
 
 // createAgreement is already routed through Nest in agreementActions.ts

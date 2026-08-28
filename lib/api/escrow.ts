@@ -344,7 +344,7 @@ export interface BackendFundEscrowDto {
   contractId: string
   signer: string
   amount: number
-  type: ServiceType
+  type: EscrowServiceType
 }
 
 // POST /v1/escrows/fund → { unsignedTransaction }
@@ -363,7 +363,7 @@ export interface BackendApproveMilestoneDto {
   contractId: string
   milestoneIndex: string
   approver: string
-  type: ServiceType
+  type: EscrowServiceType
 }
 
 // POST /v1/escrows/approve-milestone → { unsignedTransaction }
@@ -384,7 +384,7 @@ export interface BackendChangeMilestoneStatusDto {
   newEvidence: string
   newStatus: string
   serviceProvider: string
-  type: ServiceType
+  type: EscrowServiceType
 }
 
 // POST /v1/escrows/change-milestone-status → { unsignedTransaction }
@@ -402,7 +402,7 @@ export async function buildChangeMilestoneStatus(
 export interface BackendReleaseFundsDto {
   contractId: string
   releaseSigner: string
-  type: ServiceType
+  type: EscrowServiceType
   milestoneIndex?: string
 }
 
@@ -420,7 +420,7 @@ export async function buildReleaseFunds(
 
 export interface BackendDisputeMilestoneDto {
   contractId: string
-  type: ServiceType
+  type: EscrowServiceType
   milestoneIndex?: string
   signer: string
 }
