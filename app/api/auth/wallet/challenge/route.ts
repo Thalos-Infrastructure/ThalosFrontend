@@ -24,8 +24,9 @@ export async function POST(req: Request) {
   }
 
   try {
-    const { challenge, expiresAt } = buildWalletChallenge(address);
-    return NextResponse.json({ challenge, expiresAt });
+    // Canonical wire shape, shared with Nest: { message, expires_at } (GF-8, #142).
+    const challenge = buildWalletChallenge(address);
+    return NextResponse.json(challenge);
   } catch (e) {
     console.error("auth/wallet/challenge error:", e);
     return NextResponse.json({ error: "No se pudo generar el challenge" }, { status: 500 });

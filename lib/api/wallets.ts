@@ -24,10 +24,13 @@ export interface UserWallet {
   verified_at: string | null
   created_at: string
   updated_at: string
+
   /** Login that provisioned this wallet; null for external ones (#108/#109). */
   auth_provider?: string | null
+
   /** Pollar user id when auth_provider is "pollar" (#108). */
   pollar_user_id?: string | null
+
   /** Smart Account contract address (C…) for account-abstraction wallets (#109). */
   c_address?: string | null
 }
@@ -69,6 +72,13 @@ export interface WalletWithAgreements {
   is_verified?: boolean
 }
 
+/**
+ * Normalized wallet verification challenge.
+ *
+ * The current Nest backend uses `message`, while older deployments may
+ * return `challenge`. `getWalletVerificationChallenge()` normalizes both
+ * shapes into the legacy-compatible `challenge` property.
+ */
 export interface WalletVerificationChallenge {
   challenge: string
   expires_at?: string
@@ -78,12 +88,29 @@ const SEP53_PREFIX = "Stellar Signed Message:\n"
 const TRAILING_CHALLENGE_PROOF = /\n\s*Proof:\s*.+$/
 
 /**
- * Convert Nest's proof-bearing challenge envelope into the user message a
- * SEP-53 wallet must sign. Freighter adds the SEP-53 prefix itself, while
- * Nest verifies that prefixed envelope after removing its server-only proof.
+ * Return the challenge message that should be used by the wallet-signing flow.
  */
-export function walletVerificationMessageToSign(challenge: string): string {
+export function challengeMessage(
+  challenge: WalletVerificationChallenge,
+): string | null {
+  return typeof challenge.challenge === "string" &&
+    challenge.challenge.length > 0
+    ? challenge.challenge
+    : null
+}
+
+/**
+ * Convert Nest's proof-bearing challenge envelope into the user message a
+ * SEP-53 wallet must sign.
+ *
+ * Freighter adds the SEP-53 prefix itself, while Nest verifies that prefixed
+ * envelope after removing its server-only proof.
+ */
+export function walletVerificationMessageToSign(
+  challenge: string,
+): string {
   const envelope = challenge.replace(TRAILING_CHALLENGE_PROOF, "").trimEnd()
+
   return envelope.startsWith(SEP53_PREFIX)
     ? envelope.slice(SEP53_PREFIX.length)
     : envelope
@@ -93,30 +120,45 @@ type UnknownRecord = Record<string, unknown>
 type ItemParser<T> = (value: unknown) => T | undefined
 
 function isRecord(value: unknown): value is UnknownRecord {
-  return typeof value === "object" && value !== null && !Array.isArray(value)
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    !Array.isArray(value)
+  )
 }
 
 function isStringOrNull(value: unknown): value is string | null {
   return typeof value === "string" || value === null
 }
 
-function isOptionalStringOrNull(value: unknown): value is string | null | undefined {
+function isOptionalStringOrNull(
+  value: unknown,
+): value is string | null | undefined {
   return value === undefined || isStringOrNull(value)
 }
 
 function isWalletType(value: unknown): value is WalletType {
-  return typeof value === "string" && (WALLET_TYPES as readonly string[]).includes(value)
+  return (
+    typeof value === "string" &&
+    (WALLET_TYPES as readonly string[]).includes(value)
+  )
 }
 
 function envelopeError(value: unknown): string | undefined {
   if (!isRecord(value)) return undefined
+
   return typeof value.error === "string" && value.error.length > 0
     ? value.error
     : undefined
 }
 
-function invalidResponse<T>(message: string): ApiResponse<T> {
-  return { success: false, error: message }
+function invalidResponse<T>(
+  message: string,
+): ApiResponse<T> {
+  return {
+    success: false,
+    error: message,
+  }
 }
 
 function normalizeResponse<T>(
@@ -125,19 +167,31 @@ function normalizeResponse<T>(
   invalidMessage: string,
 ): ApiResponse<T> {
   if (!response.success) {
-    return { success: false, error: response.error }
+    return {
+      success: false,
+      error: response.error,
+    }
   }
 
   const backendError = envelopeError(response.data)
-  if (backendError) return invalidResponse(backendError)
+
+  if (backendError) {
+    return invalidResponse(backendError)
+  }
 
   const data = parse(response.data)
+
   return data === undefined
     ? invalidResponse(invalidMessage)
-    : { success: true, data }
+    : {
+        success: true,
+        data,
+      }
 }
 
-/** The only place that handles Nest's `T[]` versus `{ wallets: T[] }` drift. */
+/**
+ * The only place that handles Nest's `T[]` versus `{ wallets: T[] }` drift.
+ */
 function normalizeWalletList<T>(
   response: ApiResponse<unknown>,
   parseItem: ItemParser<T>,
@@ -154,18 +208,26 @@ function normalizeWalletList<T>(
       if (!raw) return undefined
 
       const parsed: T[] = []
+
       for (const item of raw) {
         const normalized = parseItem(item)
-        if (normalized === undefined) return undefined
+
+        if (normalized === undefined) {
+          return undefined
+        }
+
         parsed.push(normalized)
       }
+
       return parsed
     },
     "Invalid wallet list response",
   )
 }
 
-function parseUserWallet(value: unknown): UserWallet | undefined {
+function parseUserWallet(
+  value: unknown,
+): UserWallet | undefined {
   if (
     !isRecord(value) ||
     typeof value.id !== "string" ||
@@ -188,7 +250,9 @@ function parseUserWallet(value: unknown): UserWallet | undefined {
   return value as unknown as UserWallet
 }
 
-function parseWalletBalance(value: unknown): WalletBalance | undefined {
+function parseWalletBalance(
+  value: unknown,
+): WalletBalance | undefined {
   if (
     !isRecord(value) ||
     typeof value.xlm !== "string" ||
@@ -196,20 +260,41 @@ function parseWalletBalance(value: unknown): WalletBalance | undefined {
   ) {
     return undefined
   }
-  return { xlm: value.xlm, usdc: value.usdc }
+
+  return {
+    xlm: value.xlm,
+    usdc: value.usdc,
+  }
 }
 
-function parseWalletWithBalance(value: unknown): WalletWithBalance | undefined {
+function parseWalletWithBalance(
+  value: unknown,
+): WalletWithBalance | undefined {
   const wallet = parseUserWallet(value)
-  if (!wallet || !isRecord(value)) return undefined
+
+  if (!wallet || !isRecord(value)) {
+    return undefined
+  }
 
   const balance = parseWalletBalance(value.balance)
-  if (!balance || typeof value.agreements_count !== "number") return undefined
 
-  return { ...wallet, balance, agreements_count: value.agreements_count }
+  if (
+    !balance ||
+    typeof value.agreements_count !== "number"
+  ) {
+    return undefined
+  }
+
+  return {
+    ...wallet,
+    balance,
+    agreements_count: value.agreements_count,
+  }
 }
 
-function parseWalletAgreement(value: unknown): WalletAgreement | undefined {
+function parseWalletAgreement(
+  value: unknown,
+): WalletAgreement | undefined {
   if (
     !isRecord(value) ||
     typeof value.id !== "string" ||
@@ -221,10 +306,13 @@ function parseWalletAgreement(value: unknown): WalletAgreement | undefined {
   ) {
     return undefined
   }
+
   return value as unknown as WalletAgreement
 }
 
-function parseWalletWithAgreements(value: unknown): WalletWithAgreements | undefined {
+function parseWalletWithAgreements(
+  value: unknown,
+): WalletWithAgreements | undefined {
   if (
     !isRecord(value) ||
     typeof value.wallet_address !== "string" ||
@@ -236,9 +324,14 @@ function parseWalletWithAgreements(value: unknown): WalletWithAgreements | undef
   }
 
   const agreements: WalletAgreement[] = []
+
   for (const rawAgreement of value.agreements) {
     const agreement = parseWalletAgreement(rawAgreement)
-    if (!agreement) return undefined
+
+    if (!agreement) {
+      return undefined
+    }
+
     agreements.push(agreement)
   }
 
@@ -248,9 +341,15 @@ function parseWalletWithAgreements(value: unknown): WalletWithAgreements | undef
     label: value.label,
     agreements,
     agreements_count: agreements.length,
-    ...(typeof value.id === "string" ? { id: value.id } : {}),
-    ...(typeof value.is_primary === "boolean" ? { is_primary: value.is_primary } : {}),
-    ...(typeof value.is_verified === "boolean" ? { is_verified: value.is_verified } : {}),
+    ...(typeof value.id === "string"
+      ? { id: value.id }
+      : {}),
+    ...(typeof value.is_primary === "boolean"
+      ? { is_primary: value.is_primary }
+      : {}),
+    ...(typeof value.is_verified === "boolean"
+      ? { is_verified: value.is_verified }
+      : {}),
   }
 }
 
@@ -259,17 +358,32 @@ function normalizeWalletResponse(
 ): ApiResponse<UserWallet> {
   return normalizeResponse(
     response,
-    (payload) => parseUserWallet(
-      isRecord(payload) && "wallet" in payload ? payload.wallet : payload,
-    ),
+    (payload) =>
+      parseUserWallet(
+        isRecord(payload) && "wallet" in payload
+          ? payload.wallet
+          : payload,
+      ),
     "Invalid wallet response",
   )
 }
 
 // Get all `user_wallets` rows for the authenticated Nest user.
-export async function getLinkedWallets(token: string): Promise<ApiResponse<UserWallet[]>> {
-  const response = await apiRequest<unknown>("/wallets", { method: "GET" }, token)
-  return normalizeWalletList(response, parseUserWallet)
+export async function getLinkedWallets(
+  token: string,
+): Promise<ApiResponse<UserWallet[]>> {
+  const response = await apiRequest<unknown>(
+    "/wallets",
+    {
+      method: "GET",
+    },
+    token,
+  )
+
+  return normalizeWalletList(
+    response,
+    parseUserWallet,
+  )
 }
 
 // Get wallets with canonical `{ xlm, usdc }` balances.
@@ -278,10 +392,16 @@ export async function getWalletsWithBalances(
 ): Promise<ApiResponse<WalletWithBalance[]>> {
   const response = await apiRequest<unknown>(
     "/wallets/with-balances",
-    { method: "GET" },
+    {
+      method: "GET",
+    },
     token,
   )
-  return normalizeWalletList(response, parseWalletWithBalance)
+
+  return normalizeWalletList(
+    response,
+    parseWalletWithBalance,
+  )
 }
 
 // Get agreements grouped by wallet.
@@ -290,22 +410,41 @@ export async function getWalletsWithAgreements(
 ): Promise<ApiResponse<WalletWithAgreements[]>> {
   const response = await apiRequest<unknown>(
     "/wallets/agreements",
-    { method: "GET" },
+    {
+      method: "GET",
+    },
     token,
   )
-  return normalizeWalletList(response, parseWalletWithAgreements)
+
+  return normalizeWalletList(
+    response,
+    parseWalletWithAgreements,
+  )
 }
 
 // Get the primary `user_wallets` row. Nest returns `{ wallet }`.
 export async function getPrimaryWallet(
   token: string,
 ): Promise<ApiResponse<UserWallet | null>> {
-  const response = await apiRequest<unknown>("/wallets/primary", { method: "GET" }, token)
+  const response = await apiRequest<unknown>(
+    "/wallets/primary",
+    {
+      method: "GET",
+    },
+    token,
+  )
+
   return normalizeResponse(
     response,
     (payload) => {
-      const raw = isRecord(payload) && "wallet" in payload ? payload.wallet : payload
-      return raw === null ? null : parseUserWallet(raw)
+      const raw =
+        isRecord(payload) && "wallet" in payload
+          ? payload.wallet
+          : payload
+
+      return raw === null
+        ? null
+        : parseUserWallet(raw)
     },
     "Invalid primary wallet response",
   )
@@ -318,14 +457,20 @@ export async function getWalletBalance(
 ): Promise<ApiResponse<WalletBalance>> {
   const response = await apiRequest<unknown>(
     `/wallets/${encodeURIComponent(walletAddress)}/balance`,
-    { method: "GET" },
+    {
+      method: "GET",
+    },
     token,
   )
+
   return normalizeResponse(
     response,
-    (payload) => parseWalletBalance(
-      isRecord(payload) && "balance" in payload ? payload.balance : payload,
-    ),
+    (payload) =>
+      parseWalletBalance(
+        isRecord(payload) && "balance" in payload
+          ? payload.balance
+          : payload,
+      ),
     "Invalid wallet balance response",
   )
 }
@@ -338,11 +483,13 @@ export async function linkWallet(
     label?: string
     signed_message?: string
     signature?: string
+
     // Accesly (#109) sends these from the browser. The backend does not take
     // the browser's word for an accesly wallet's provider — it pins
     // auth_provider itself from wallet_type — so this cannot forge an origin.
     auth_provider?: LinkedWallet["auth_provider"]
     c_address?: string
+
     // A Pollar wallet's auth_provider/pollar_user_id are NOT sent from here:
     // they only ever travel server-side (app/api/auth/pollar), so the browser
     // cannot choose the identity a wallet is recorded under.
@@ -351,39 +498,74 @@ export async function linkWallet(
 ): Promise<ApiResponse<UserWallet>> {
   const response = await apiRequest<unknown>(
     "/wallets",
-    { method: "POST", body: JSON.stringify(data) },
+    {
+      method: "POST",
+      body: JSON.stringify(data),
+    },
     token,
   )
+
   return normalizeWalletResponse(response)
 }
 
-// Request a wallet verification challenge. The canonical client key remains
-// `challenge`; current Nest uses `message` and also returns `expires_at`.
+/**
+ * Request a wallet verification challenge.
+ *
+ * Current Nest deployments use `message`, while older deployments may return
+ * `challenge`. Both are normalized into `WalletVerificationChallenge.challenge`
+ * so callers do not need to care which backend version they are talking to.
+ */
 export async function getWalletVerificationChallenge(
   walletAddress: string,
   token: string,
 ): Promise<ApiResponse<WalletVerificationChallenge>> {
   const response = await apiRequest<unknown>(
-    `/wallets/verification-challenge?address=${encodeURIComponent(walletAddress)}`,
-    { method: "GET" },
+    `/wallets/verification-challenge?address=${encodeURIComponent(
+      walletAddress,
+    )}`,
+    {
+      method: "GET",
+    },
     token,
   )
+
   return normalizeResponse(
     response,
     (payload) => {
-      if (!isRecord(payload)) return undefined
-      const challenge = typeof payload.challenge === "string"
-        ? payload.challenge
-        : typeof payload.message === "string"
-          ? payload.message
-          : undefined
-      if (!challenge) return undefined
-      if (payload.expires_at !== undefined && typeof payload.expires_at !== "string") {
+      if (!isRecord(payload)) {
         return undefined
       }
+
+      /*
+       * Canonical Nest field is `message`.
+       *
+       * `challenge` is retained as a legacy fallback for older deployments.
+       */
+      const challenge =
+        typeof payload.message === "string"
+          ? payload.message
+          : typeof payload.challenge === "string"
+            ? payload.challenge
+            : undefined
+
+      if (!challenge) {
+        return undefined
+      }
+
+      if (
+        payload.expires_at !== undefined &&
+        typeof payload.expires_at !== "string"
+      ) {
+        return undefined
+      }
+
       return {
         challenge,
-        ...(typeof payload.expires_at === "string" ? { expires_at: payload.expires_at } : {}),
+        ...(typeof payload.expires_at === "string"
+          ? {
+              expires_at: payload.expires_at,
+            }
+          : {}),
       }
     },
     "Invalid wallet verification challenge response",
@@ -393,14 +575,21 @@ export async function getWalletVerificationChallenge(
 // Update wallet label or primary status. Nest returns `{ wallet, error }`.
 export async function updateWallet(
   walletId: string,
-  data: { label?: string; is_primary?: boolean },
+  data: {
+    label?: string
+    is_primary?: boolean
+  },
   token: string,
 ): Promise<ApiResponse<UserWallet>> {
   const response = await apiRequest<unknown>(
     `/wallets/${encodeURIComponent(walletId)}`,
-    { method: "PATCH", body: JSON.stringify(data) },
+    {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    },
     token,
   )
+
   return normalizeWalletResponse(response)
 }
 
@@ -411,14 +600,20 @@ export async function unlinkWallet(
 ): Promise<ApiResponse<{ success: true }>> {
   const response = await apiRequest<unknown>(
     `/wallets/${encodeURIComponent(walletId)}`,
-    { method: "DELETE" },
+    {
+      method: "DELETE",
+    },
     token,
   )
+
   return normalizeResponse(
     response,
-    (payload) => isRecord(payload) && payload.success === true
-      ? { success: true as const }
-      : undefined,
+    (payload) =>
+      isRecord(payload) && payload.success === true
+        ? {
+            success: true as const,
+          }
+        : undefined,
     "Wallet unlink failed",
   )
 }

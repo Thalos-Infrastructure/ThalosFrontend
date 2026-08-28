@@ -3,7 +3,7 @@ import { createHash } from "crypto";
 import { Keypair } from "@stellar/stellar-sdk";
 import { createServiceClient } from "@/lib/supabase/service";
 import { signToken, type AuthUser } from "@/lib/auth/utils";
-import { verifyWalletChallenge } from "@/lib/auth/wallet-challenge";
+import { verifyWalletChallenge, WalletChallengeExpiredError } from "@/lib/auth/wallet-challenge";
 
 // Uses Node crypto + jsonwebtoken — force the Node.js runtime, not edge.
 export const runtime = "nodejs";
@@ -18,7 +18,7 @@ function decodeSignature(signature: string): Buffer {
 const SEP53_PREFIX = "Stellar Signed Message:\n";
 
 /**
- * Verifies wallet ownership over the EXACT challenge string. Wallets differ in
+ * Verifies wallet ownership over the EXACT challenge message. Wallets differ in
  * what bytes they actually sign, so we accept any of the known schemes and log
  * which one matched (so the flow is both wallet-agnostic and diagnosable):
  *   - "raw"     : the UTF-8 challenge bytes (matches the backend's current helper)
@@ -27,7 +27,7 @@ const SEP53_PREFIX = "Stellar Signed Message:\n";
  *   - "prefixed": UTF-8 of (prefix + challenge), unhashed
  * A forged signature matches none; a valid one matches exactly one.
  */
-function verifyStellarSignature(challenge: string, signature: string, address: string): void {
+function verifyStellarSignature(message: string, signature: string, address: string): void {
   let keypair: Keypair;
   try {
     keypair = Keypair.fromPublicKey(address);
@@ -37,8 +37,8 @@ function verifyStellarSignature(challenge: string, signature: string, address: s
   const sigBytes = decodeSignature(signature);
   if (sigBytes.length === 0) throw new Error("Firma vacía");
 
-  const raw = Buffer.from(challenge, "utf-8");
-  const prefixed = Buffer.from(SEP53_PREFIX + challenge, "utf-8");
+  const raw = Buffer.from(message, "utf-8");
+  const prefixed = Buffer.from(SEP53_PREFIX + message, "utf-8");
   const candidates: Array<{ scheme: string; bytes: Buffer }> = [
     { scheme: "raw", bytes: raw },
     { scheme: "sep53", bytes: createHash("sha256").update(prefixed).digest() },
@@ -66,21 +66,26 @@ function verifyStellarSignature(challenge: string, signature: string, address: s
 export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}));
   const address = body.address;
-  const challenge = body.challenge;
+  // `message` is the canonical field (GF-8, #142). `challenge` is accepted as a
+  // legacy alias so a client bundle from before the rename keeps working.
+  const message = typeof body.message === "string" ? body.message : body.challenge;
   const signature = body.signature;
   const provider = typeof body.provider === "string" && body.provider ? body.provider : "stellar-wallet";
 
-  if (typeof address !== "string" || typeof challenge !== "string" || typeof signature !== "string") {
-    return NextResponse.json({ error: "Faltan address, challenge o signature" }, { status: 400 });
+  if (typeof address !== "string" || typeof message !== "string" || typeof signature !== "string") {
+    return NextResponse.json({ error: "Faltan address, message o signature" }, { status: 400 });
   }
 
   // 1) Proof integrity + expiry (server-issued HMAC), then 2) wallet ownership (Ed25519).
   try {
-    verifyWalletChallenge(challenge, address);
-    verifyStellarSignature(challenge, signature, address);
+    verifyWalletChallenge(message, address);
+    verifyStellarSignature(message, signature, address);
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Verificación fallida";
-    return NextResponse.json({ error: msg }, { status: 401 });
+    // An expired challenge is recoverable — the client can ask for a fresh one,
+    // so it gets its own code instead of looking like a bad signature.
+    const code = e instanceof WalletChallengeExpiredError ? e.code : "verification_failed";
+    return NextResponse.json({ error: msg, code }, { status: 401 });
   }
 
   // 3) Resolve (or create) the auth_users row keyed by wallet, so the JWT `sub`
