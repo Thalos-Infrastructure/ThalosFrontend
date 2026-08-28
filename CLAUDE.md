@@ -29,6 +29,18 @@ defaults in `lib/config.ts`. There is **no `.env.example`** despite the README l
 `NEXT_PUBLIC_*` values are inlined at build time — changing one needs a dev-server restart,
 not just a reload.
 
+**Pollar** (social/email login with a provisioned wallet): `NEXT_PUBLIC_POLLAR_PUBLISHABLE_KEY`
+(`pub_…`, browser-safe) and `POLLAR_SECRET_KEY` (`sec_…`, **server-only**, never `NEXT_PUBLIC_*`
+— it authenticates `POST /v1/tokens/verify`). Both from dashboard.pollar.xyz → Build → API Keys,
+and both are **network-scoped** (`pub_testnet_` / `pub_mainnet_`), so they must match
+`NEXT_PUBLIC_STELLAR_NETWORK`. Optional `POLLAR_SERVER_API_URL` (default
+`https://server.api.pollar.xyz/v1` — that host, *not* the `api.pollar.xyz` in Pollar's
+server-api docs, which serves no routes; docs at https://server.api.pollar.xyz/docs). With no
+publishable key the Pollar login button is simply hidden
+(`POLLAR_ENABLED` in `lib/config.ts`), so a deploy without these vars still works. USDC must be
+an enabled asset with sponsoring ON in the Pollar dashboard, or trustline setup fails with an
+explicit error.
+
 ## Architecture — two auth systems that must stay in sync
 
 1. **App JWT** — `AuthProvider` / `useAuthStore()` (`lib/auth-provider.tsx`, re-exported by
@@ -39,9 +51,12 @@ not just a reload.
 2. **Stellar wallet** — `StellarWalletProvider` / `useStellarWallet()` (`lib/stellar-wallet.tsx`),
    state in `sessionStorage`. `useCurrentAddress()` resolves the active address (external
    wallet wins, else the JWT user's embedded wallet).
+3. **Pollar wallet** — `PollarWalletProvider` / `usePollarWallet()` (`lib/pollar-wallet.tsx`).
+   Social/email login that provisions a custodial G-address, so the user needs no extension
+   and no XLM. Feeds system 1: the JWT user's `wallet.publicKey`, which `useCurrentAddress()`
+   already resolves — no downstream changes.
 
-`AuthProvider` wraps `StellarWalletProvider` (see `app/layout.tsx`), so the wallet provider
-can call `login()`.
+`AuthProvider` wraps both wallet providers (see `app/layout.tsx`), so either can call `login()`.
 
 Because the address lives in `sessionStorage` and the JWT in `localStorage`, the two can
 drift: a tab can show a connected wallet with no session. After changing anything in this
@@ -67,21 +82,49 @@ wallet just connected.
 > default, so connecting a wallet minted no JWT at all. The flag is gone. If wallet login ever
 > stops working, check nobody reintroduced a gate before debugging the backend.
 
+### Pollar → app JWT flow (social/email login, #108)
+
+`openLogin()` (`lib/pollar-wallet.tsx`) runs: Pollar login modal → wait for a **`verified`**
+session (not just `isAuthenticated`; a cold-start session is optimistic) → wait for the
+provisioned G-address → `setTrustline(USDC)` (sponsored by the app, which is what makes "no XLM"
+work) → `loginWithPollar(accessToken)` → `login(user, token)` → `linkWallet(…, 'custodial')`.
+
+`app/api/auth/pollar/route.ts` takes **only** the Pollar access token and calls
+`POST /v1/tokens/verify` with `POLLAR_SECRET_KEY`; the wallet address, user id and provider all
+come from that response, never from the request body — otherwise anyone could claim someone
+else's G-address. It fills `auth_users.wallet_public_key`, which OAuth signup deliberately
+leaves NULL (`scripts/011`, `app/api/auth/oauth-callback/route.ts`).
+
+Three gotchas worth knowing. The login flow reads everything from the **PollarClient**
+(`getAuthState`/`getWallet`), never from `usePollar()` context values, which are per-render
+snapshots an awaiting callback would never see update — the access token included
+(`readAccessToken` in `lib/pollar-auth-state.ts`): reading it from `localStorage` instead picks
+whichever `pollar:<apiKeyHash>:session` key comes first, and on localhost several Pollar apps
+share the origin, so you get another app's token and a `SDK_TOKEN_WRONG_APPLICATION` rejection.
+`onAuthStateChange` replays the current state **synchronously on subscribe**, so the first
+emission is the pre-login state and must be ignored. And `@pollar/react/styles.css` has to be
+imported or the login modal mounts invisible (see `app/globals.css` for the z-index it needs to
+clear Thalos's own modals).
+
 ### Calling the backend
 
 `lib/api/*` (escrow.ts, wallets.ts, …) each define `apiRequest(endpoint, opts, token?)` — base
 URL `API_URL`, Bearer token passed **explicitly** (callers read `token` from `useAuthStore`);
 the header is simply omitted when there is no token.
 
-`services/escrowMigration.ts` is a migration wrapper with per-operation flags:
+`services/escrowMigration.ts` is a migration wrapper with per-operation flags
+configured by `NEXT_PUBLIC_ESCROW_MIGRATION_*_USE_NEST`. See
+`docs/escrow-migration.md` for the full list, defaults, and telemetry schema:
 
-- **Reads** (`getEscrowsBySigner`, `getEscrowsByRole`) → backend, **token optional**. The
-  backend exposes them as `@Public()`, so a freshly connected wallet lists its agreements
-  with no signature. There is **no** direct-Trustless-Work fallback on these: a failure
-  fails closed.
-- **Writes** (create, fund, approve, release, dispute, sendTransaction) → flags are still
+- **Reads** (`getEscrowsBySigner`, `getEscrowsByRole`) → backend by default, **token
+  optional**. The backend exposes them as `@Public()`, so a freshly connected wallet
+  lists its agreements with no signature. Setting a read flag to `false` explicitly
+  selects the direct Trustless Work path; failures never auto-fallback between paths.
+- **Writes** (create, fund, approve, changeMilestoneStatus, release, dispute,
+  sendTransaction) → default to
   `false`, so they call `services/trustlessworkService.ts`, which hits
-  `dev.api.trustlesswork.com` **straight from the browser**.
+  `dev.api.trustlesswork.com` **straight from the browser**. Enable each Nest path
+  independently during rollout.
 
 > ⚠️ `services/trustlessworkService.ts` carries a **hardcoded Trustless Work API key** as a
 > fallback for `NEXT_PUBLIC_TRUSTLESSWORK_API_KEY`. It is committed to a public repo and

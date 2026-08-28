@@ -119,6 +119,9 @@ the **required** ones are:
 
 Everything else (email, Stellar/UI, Trustless Work) is optional and documented in `.env.example`.
 
+Escrow read/write cutover flags, safe defaults, rollout guidance, and structured
+telemetry examples are documented in [Escrow migration flags and telemetry](docs/escrow-migration.md).
+
 > `NEXT_PUBLIC_*` values are inlined at **build time** — changing them requires a rebuild/redeploy.
 
 ### 4. Run the development server

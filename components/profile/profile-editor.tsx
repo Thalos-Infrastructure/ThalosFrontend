@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { cn } from "@/lib/utils"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -28,6 +28,17 @@ export function ProfileEditor({ isOpen, onClose, profile, onSave, type = "person
   const [saving, setSaving] = useState(false)
   const [avatarPreview, setAvatarPreview] = useState<string | null>(profile.avatar || null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // `useState(profile)` only reads the prop on first mount, and this modal
+  // mounts with the page: at that point the wallet and the profile have not
+  // resolved yet, so the form stayed frozen on the empty fallbacks. Re-seeding
+  // it on every open also discards half-finished edits after a Cancel, which is
+  // what a Cancel is expected to do.
+  useEffect(() => {
+    if (!isOpen) return
+    setFormData(profile)
+    setAvatarPreview(profile.avatar || null)
+  }, [isOpen, profile.displayName, profile.email, profile.walletAddress, profile.avatar, profile.company, profile.bio])
 
   if (!isOpen) return null
 
@@ -149,11 +160,13 @@ export function ProfileEditor({ isOpen, onClose, profile, onSave, type = "person
                 <Wallet className="h-3.5 w-3.5" />
                 Wallet Address
               </label>
+              {/* Solo lectura: la wallet identifica el perfil (es la clave del
+                  UPDATE en `updateProfile`), no es un campo editable. */}
               <Input
                 value={formData.walletAddress}
-                onChange={(e) => setFormData(prev => ({ ...prev, walletAddress: e.target.value }))}
+                readOnly
                 placeholder="G..."
-                className="bg-white/5 border-white/10 text-white font-mono text-sm placeholder:text-white/30"
+                className="bg-white/5 border-white/10 text-white/60 font-mono text-sm placeholder:text-white/30 cursor-default focus-visible:ring-0 focus-visible:ring-offset-0"
               />
             </div>
 

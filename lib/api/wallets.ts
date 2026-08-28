@@ -24,7 +24,11 @@ export interface UserWallet {
   verified_at: string | null
   created_at: string
   updated_at: string
+  /** Login that provisioned this wallet; null for external ones (#108/#109). */
   auth_provider?: string | null
+  /** Pollar user id when auth_provider is "pollar" (#108). */
+  pollar_user_id?: string | null
+  /** Smart Account contract address (C…) for account-abstraction wallets (#109). */
   c_address?: string | null
 }
 
@@ -175,6 +179,7 @@ function parseUserWallet(value: unknown): UserWallet | undefined {
     typeof value.created_at !== "string" ||
     typeof value.updated_at !== "string" ||
     !isOptionalStringOrNull(value.auth_provider) ||
+    !isOptionalStringOrNull(value.pollar_user_id) ||
     !isOptionalStringOrNull(value.c_address)
   ) {
     return undefined
@@ -333,8 +338,14 @@ export async function linkWallet(
     label?: string
     signed_message?: string
     signature?: string
-    auth_provider?: string
+    // Accesly (#109) sends these from the browser. The backend does not take
+    // the browser's word for an accesly wallet's provider — it pins
+    // auth_provider itself from wallet_type — so this cannot forge an origin.
+    auth_provider?: LinkedWallet["auth_provider"]
     c_address?: string
+    // A Pollar wallet's auth_provider/pollar_user_id are NOT sent from here:
+    // they only ever travel server-side (app/api/auth/pollar), so the browser
+    // cannot choose the identity a wallet is recorded under.
   },
   token: string,
 ): Promise<ApiResponse<UserWallet>> {

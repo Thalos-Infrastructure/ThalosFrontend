@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils"
 import { ThalosLoader } from "@/components/thalos-loader"
 import { useLanguage } from "@/lib/i18n"
 import { useStellarWallet } from "@/lib/stellar-wallet"
+import { useSignOut } from "@/lib/use-sign-out"
 import { useAuthStore } from "@/lib/auth-store"
 import { updateProfile, type ProfileUpdateInput } from "@/lib/actions/profile"
 import { LinkedWallets } from "@/components/profile/linked-wallets"
@@ -100,7 +101,7 @@ export default function ProfilePage() {
   const { t } = useLanguage()
   const router = useRouter()
   const { address, profile, refreshProfile, disconnect } = useStellarWallet()
-  const { user, token, hydrated, logout } = useAuthStore()
+  const { user, token, hydrated } = useAuthStore()
 
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
@@ -190,11 +191,9 @@ export default function ProfilePage() {
     setIsSaving(false)
   }
 
-  const handleSignOut = () => {
-    logout()
-    disconnect()
-    router.push("/")
-  }
+  // Shared so this can't drift from the dashboards again — and so it clears the
+  // Pollar session too, which this copy predated.
+  const handleSignOut = useSignOut()
 
   const handleDisconnectWallet = () => {
     disconnect()

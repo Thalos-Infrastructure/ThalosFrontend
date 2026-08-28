@@ -46,15 +46,28 @@ beforeEach(() => {
 })
 
 describe("resolveSigner", () => {
-  it("resolves the Kit provider for the connected external wallet address", () => {
+  it("reaches a side-connected wallet only when named, for ownership proofs", () => {
+    // Linking a second wallet in /profile needs THAT wallet to sign a
+    // challenge, so asking for its address by name must resolve to it.
     globalThis.sessionStorage.setItem(STELLAR_WALLET_KEY, KIT_ADDRESS)
     expect(resolveSigner(KIT_ADDRESS).id).toBe("kit")
   })
 
-  it("prefers the external Kit wallet over the auth-user wallet (useCurrentAddress priority)", () => {
+  it("never lets a side-connected wallet sign an escrow", async () => {
+    // The proof it can produce is a message signature. Signing a transaction
+    // with it would create the escrow under an address the account never
+    // authenticated as — the bug this arrangement replaced.
+    globalThis.sessionStorage.setItem(STELLAR_WALLET_KEY, KIT_ADDRESS)
+    const signer = resolveSigner(KIT_ADDRESS)
+    await expect(
+      signer.signTransaction("XDR", { networkPassphrase: "Test SDF Network ; September 2015" }),
+    ).rejects.toThrow(SignerUnavailableError)
+  })
+
+  it("signs with the session's wallet even when another is connected on the side", () => {
     globalThis.sessionStorage.setItem(STELLAR_WALLET_KEY, KIT_ADDRESS)
     setAuthWallet("accesly")
-    expect(resolveSigner().id).toBe("kit")
+    expect(resolveSigner().id).toBe("accesly")
   })
 
   it("resolves the accesly provider for the accesly auth wallet", () => {
@@ -67,9 +80,9 @@ describe("resolveSigner", () => {
     expect(resolveSigner(AUTH_ADDRESS).id).toBe("social")
   })
 
-  it("falls back to the active provider for an unknown address (multi-account Kit wallets)", () => {
-    globalThis.sessionStorage.setItem(STELLAR_WALLET_KEY, KIT_ADDRESS)
-    expect(resolveSigner("GUNKNOWNADDRESS").id).toBe("kit")
+  it("falls back to the active provider for an unknown address (multi-account wallets)", () => {
+    setAuthWallet("embedded")
+    expect(resolveSigner("GUNKNOWNADDRESS").id).toBe("social")
   })
 
   it("throws SignerUnavailableError when no wallet is available", () => {

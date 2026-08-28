@@ -1,20 +1,27 @@
 /**
- * Social/email login provider — the auto-generated custodial wallet from #108.
+ * Social/email login provider — the custodial wallet from #108.
  *
- * The wallet identity (auth_user.wallet, provider "embedded") already exists in
- * the session, but client-side signing for it lands with the Pollar
- * implementation (#108). Until that merges, this provider resolves the address
- * and fails cleanly with an actionable message instead of a broken Kit popup.
- * When #108 lands, implement signTransaction/signMessage here and every escrow
- * flow picks it up with no further changes.
+ * Pollar holds the key, so signing is a round-trip to their API. Trustless Work
+ * submits the XDR itself, so this must SIGN ONLY: hence PollarClient.signTx
+ * (custodial-capable, despite what @pollar/react's context docs say) rather
+ * than signAndSubmitTx.
  */
 
 import type { SignedMessage, SignedTransaction, SignTransactionOptions, WalletSigner } from "../types"
 import { SignerUnavailableError } from "../types"
 import { getStoredAuthWallet } from "../session"
+import { getPollarClient } from "@/lib/pollar-client"
 
-const NOT_READY_MESSAGE =
-  "Your account's embedded wallet can't sign transactions yet. Connect an external Stellar wallet to sign this operation."
+const NOT_LOGGED_IN_MESSAGE =
+  "Your account's embedded wallet isn't available. Log in again, or connect an external Stellar wallet to sign this operation."
+
+/**
+ * Unimplemented by design: Pollar exposes no arbitrary message signing for
+ * custodial wallets, and the flow that needed it (the wallet-ownership
+ * challenge) is replaced by server-side session validation.
+ */
+const NO_MESSAGE_SIGNING_MESSAGE =
+  "Message signing isn't available for embedded wallets. Connect an external Stellar wallet if a signature is required."
 
 function embeddedWallet() {
   const wallet = getStoredAuthWallet()
@@ -33,11 +40,45 @@ export const socialSigner: WalletSigner = {
     return embeddedWallet() !== null
   },
 
-  async signTransaction(_xdr: string, _opts: SignTransactionOptions): Promise<SignedTransaction | null> {
-    throw new SignerUnavailableError(NOT_READY_MESSAGE)
+  async signTransaction(xdr: string, opts: SignTransactionOptions): Promise<SignedTransaction | null> {
+    const wallet = embeddedWallet()
+    if (!wallet) {
+      throw new SignerUnavailableError(NOT_LOGGED_IN_MESSAGE)
+    }
+
+    const client = getPollarClient()
+    if (!client) {
+      throw new SignerUnavailableError(NOT_LOGGED_IN_MESSAGE)
+    }
+
+    // Signing with a different wallet yields a signature the network rejects,
+    // surfacing far from the cause.
+    if (opts.address && opts.address !== wallet.publicKey) {
+      throw new SignerUnavailableError(
+        "The embedded wallet can't sign for a different address. Connect that wallet to sign this operation.",
+      )
+    }
+
+    const outcome = await client.signTx(xdr)
+
+    if (outcome.status === "error") {
+      // Pollar's own message beats a generic failure.
+      const detail = outcome.message || outcome.details || outcome.code
+      console.error("[signing:social] Pollar signTx failed:", outcome)
+      throw new SignerUnavailableError(
+        detail ? `Pollar couldn't sign the transaction: ${detail}` : "Pollar couldn't sign the transaction.",
+      )
+    }
+
+    if (!outcome.signedXdr) {
+      console.error("[signing:social] Pollar returned no signed XDR", outcome)
+      return null
+    }
+
+    return { signedTxXdr: outcome.signedXdr }
   },
 
   async signMessage(_message: string, _address?: string): Promise<SignedMessage | null> {
-    throw new SignerUnavailableError(NOT_READY_MESSAGE)
+    throw new SignerUnavailableError(NO_MESSAGE_SIGNING_MESSAGE)
   },
 }

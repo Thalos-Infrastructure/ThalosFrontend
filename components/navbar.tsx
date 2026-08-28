@@ -6,6 +6,7 @@ import { useState, useEffect, useRef } from "react"
 import { cn } from "@/lib/utils"
 import { useLanguage, LanguageToggle, ThemeToggle } from "@/lib/i18n"
 import { SocialAuthModal } from "@/components/social-auth-modal"
+import { useLoginEntry } from "@/lib/use-login-entry"
 
 const useCaseCategories = {
   en: [
@@ -40,6 +41,8 @@ export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }
   const useCasesLabel = language === "es" ? "Casos de Uso" : "Use Cases"
   const [mobileOpen, setMobileOpen] = useState(false)
   const [showAuthModal, setShowAuthModal] = useState<"login" | "signup" | null>(null)
+  const { startLogin, resuming } = useLoginEntry()
+  const openLogin = () => startLogin(() => setShowAuthModal("login"))
   const [visible, setVisible] = useState(true)
   const [useCaseOpen, setUseCaseOpen] = useState(false)
   const [expandedCat, setExpandedCat] = useState<string | null>(null)
@@ -173,10 +176,11 @@ export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }
           <div className="hidden items-center gap-3 md:flex">
             <Button
               size="sm"
-              onClick={() => setShowAuthModal("login")}
+              onClick={openLogin}
+              disabled={resuming}
               className="rounded-full border border-[#f0b400]/40 bg-[#f0b400]/10 px-7 py-2 text-base text-[#f0b400] font-bold hover:bg-[#f0b400]/20 hover:border-[#f0b400]/60 transition-all duration-300"
             >
-              Login
+              {resuming ? "…" : "Login"}
             </Button>
             <LanguageToggle />
             <ThemeToggle />
@@ -210,10 +214,11 @@ export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }
               <div className="mt-2 flex items-center gap-2">
                 <Button
                   size="sm"
-                  onClick={() => { setShowAuthModal("login"); setMobileOpen(false) }}
+                  onClick={() => { openLogin(); setMobileOpen(false) }}
+                  disabled={resuming}
                   className="flex-1 rounded-full border border-[#f0b400]/40 bg-[#f0b400]/10 text-base font-bold text-[#f0b400] hover:bg-[#f0b400]/20 hover:border-[#f0b400]/60"
                 >
-                  Login
+                  {resuming ? "…" : "Login"}
                 </Button>
                 <LanguageToggle />
                 <ThemeToggle />
@@ -225,7 +230,6 @@ export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }
 
       <SocialAuthModal
         open={showAuthModal !== null}
-        mode={showAuthModal === "signup" ? "signup" : "login"}
         onClose={() => setShowAuthModal(null)}
       />
     </>

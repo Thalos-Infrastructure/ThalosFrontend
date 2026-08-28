@@ -254,7 +254,7 @@ function buildAgreementBody(payload: AgreementPayload) {
 
 export async function createAgreement(
   payload: AgreementPayload
-): Promise<AgreementResponse> {
+): Promise<AgreementResponse<{ unsignedTransaction: string }>> {
   // Validate receiver wallet has USDC trustline before creating escrow
   const receiverWallet = payload.roles.receiver;
   if (receiverWallet) {
@@ -280,7 +280,7 @@ export async function createAgreement(
   ? endpoints.deployer.multi
   : endpoints.deployer.single;
 
-  return safeFetch(url, {
+  return safeFetch<{ unsignedTransaction: string }>(url, {
     method: "POST",
     body: JSON.stringify(body),
   });
