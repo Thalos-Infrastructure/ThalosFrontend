@@ -37,7 +37,7 @@ export function WalletSelector({ selectedWallet, onWalletChange, walletsData: pr
 
   useEffect(() => {
     if (propsWalletsData !== undefined) return
-    
+
     let isMounted = true
     async function load() {
       setIsLoading(true)
@@ -75,6 +75,7 @@ export function WalletSelector({ selectedWallet, onWalletChange, walletsData: pr
       isMounted = false
     }
   }, [propsWalletsData, token, currentAddress])
+
   const truncateAddress = (addr: string) => {
     if (!addr) return ""
     return `${addr.slice(0, 6)}...${addr.slice(-4)}`
