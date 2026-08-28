@@ -632,7 +632,7 @@ export default function ConnectPage() {
 function BuilderCard({ builder }: { builder: BuilderProfile }) {
   return (
     <Link
-      href={builder.handle ? `/profile/${builder.handle}` : "#"}
+      href={builder.handle ? `/connect/${builder.handle}` : "#"}
       className="group rounded-xl border border-border/40 bg-card/50 p-5 transition-all duration-200 hover:border-[#f0b400]/30 hover:bg-card hover:shadow-lg hover:shadow-[#f0b400]/5"
     >
       <div className="flex items-start gap-3">
