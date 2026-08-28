@@ -28,14 +28,19 @@ import { getProfileByWallet, type Profile } from "@/lib/actions/profile"
 import { AgreementsView } from "@/components/agreements/agreements-view"
 import { ContactSelector } from "@/components/agreements/contact-selector"
 import { AgreementChat } from "@/components/agreements/agreement-chat"
+import { AiAgreementAssistant } from "@/components/agreements/ai-agreement-assistant"
+import {
+  Dialog, DialogContent, DialogTitle, DialogDescription,
+} from "@/components/ui/dialog"
 import { ProfileEditor } from "@/components/profile/profile-editor"
 import { WalletSelector } from "@/components/dashboard/wallet-selector"
 import { WalletAgreementsPanel } from "@/components/dashboard/wallet-agreements-panel"
+import { getWalletsWithAgreements, type WalletWithAgreements, type WalletAgreement } from "@/lib/api/wallets"
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area,
 } from "recharts"
 import { createAgreement, sendTransaction, AgreementPayload, approveMilestone } from "@/services/trustlessworkService"
-import { STELLAR_EXPLORER_BASE_URL, STELLAR_EXPLORER_ACCOUNT_BASE_URL, TRUSTLINE_USDC, SHOW_MOCKED_AGREEMENTS } from "@/lib/config";
+import { STELLAR_EXPLORER_BASE_URL, STELLAR_EXPLORER_ACCOUNT_BASE_URL, TRUSTLINE_USDC } from "@/lib/config";
 import { getWalletBalance } from "@/lib/api/wallets";
 import { getKycStatus, startKycSession } from "@/lib/api/kyc";
 import { isKycVerified, canStartKycSession, buildCreateKycSessionDto, nextKycStatusAfterSessionStart, type KycVerificationStatus } from "@/lib/kyc";
@@ -113,26 +118,59 @@ const wizardStepKeys = ["wizard.escrowType", "wizard.useCase", "wizard.agreement
 interface Milestone { description: string; amount: string; status: "pending" | "approved" | "released" }
 interface Agreement { id: string; title: string; status: string; type: "Single Release" | "Multi Release"; counterparty: string; amount: string; currency: string; date: string; releaseStrategy?: "per-milestone" | "all-at-once" | "upon-completion"; milestones: Milestone[]; receiver: string; role?: "buyer" | "seller" }
 
-// Mix between real escrows fetched from the backend and some hardcoded ones for demo purposes
-// MIGRATION: Using escrowMigration wrapper to gradually migrate to backend
-import { getEscrowsBySigner } from "@/services/escrowMigration";
+const initialAgreements: Agreement[] = [];
 
-function mapEscrowToAgreement(escrow) {
-  const isMulti = escrow.type === "multi-release";
-  let amount = "";
-  if (isMulti) {
-    amount = (escrow.milestones || [])
-      .reduce((sum, m) => sum + (typeof m.amount === "number" ? m.amount : 0), 0)
-      .toString();
-  } else {
-    amount = escrow.amount ? escrow.amount.toString() : "";
+// Agreements listing is sourced from Nest (source of truth); TW escrow reads are
+// still used only for the approver tab, which needs live on-chain milestone state
+// to drive the approve/release actions.
+import { getAgreementsByWallet } from "@/lib/actions/agreements";
+import type { AgreementWithParticipants, AgreementStatus as NestAgreementStatus } from "@/lib/actions/agreements";
+
+const NEST_STATUS_TO_UI: Record<NestAgreementStatus, string> = {
+  pending: "pending",
+  funded: "funded",
+  active: "in_progress",
+  completed: "released",
+  disputed: "awaiting",
+  resolved: "released",
+  cancelled: "cancelled",
+};
+
+function mapNestAgreementToUi(agreement: AgreementWithParticipants, currentWallet: string | null): Agreement {
+  const isMulti = agreement.agreement_type === "multi"
+  const counterparty = agreement.participants?.find(p => p.wallet_address !== currentWallet)?.wallet_address
+
+  return {
+    id: agreement.contract_id || agreement.id,
+    title: agreement.title,
+    status: NEST_STATUS_TO_UI[agreement.status] ?? agreement.status,
+    type: isMulti ? "Multi Release" : "Single Release",
+    counterparty: counterparty ? `${counterparty.slice(0, 8)}...` : `${agreement.created_by.slice(0, 8)}...`,
+    amount: agreement.amount,
+    currency: agreement.asset || "USDC",
+    date: agreement.created_at.split("T")[0],
+    milestones: agreement.milestones.map(m => ({
+      description: m.description,
+      amount: m.amount,
+      status: m.status,
+    })),
+    receiver: counterparty || "",
+    role: agreement.created_by === currentWallet ? "buyer" : "seller",
   }
+}
 
-  // Determinar estado del contrato
+// The approver tab still reads live TW escrow state (not Nest agreements): approving
+// a milestone is an on-chain action that needs the escrow's current approved/released
+// flags and roles, which the Nest listing does not carry.
+function mapEscrowToApproverAgreement(escrow) {
+  const isMulti = escrow.type === "multi-release";
+  const amount = isMulti
+    ? (escrow.milestones || []).reduce((sum, m) => sum + (typeof m.amount === "number" ? m.amount : 0), 0).toString()
+    : escrow.amount ? escrow.amount.toString() : "";
+
   const milestones = (escrow.milestones || []);
-  const allApproved = milestones.length > 0 && milestones.every(m => m.approved === true);
-  const allUnapproved = milestones.length > 0 && milestones.every(m => m.approved === false);
   const anyUnapproved = milestones.some(m => m.approved === false);
+  const allUnapproved = milestones.length > 0 && milestones.every(m => m.approved === false);
   const balanceNum = Number(escrow.balance);
   const amountNum = Number(amount);
   let status = "funded";
@@ -149,10 +187,10 @@ function mapEscrowToAgreement(escrow) {
     title: escrow.title,
     status,
     type: isMulti ? "Multi Release" : "Single Release",
-    counterparty: escrow.roles.serviceProvider?.slice(0, 8) + "...",
+    counterparty: escrow.roles?.serviceProvider ? `${escrow.roles.serviceProvider.slice(0, 8)}...` : "-",
     amount,
     currency: "USDC",
-    date: new Date(escrow.createdAt?._seconds * 1000).toISOString().split("T")[0],
+    date: escrow.createdAt?._seconds ? new Date(escrow.createdAt._seconds * 1000).toISOString().split("T")[0] : new Date().toISOString().split("T")[0],
     milestones: milestones.map(m => ({
       approved: m.approved,
       description: m.description,
@@ -162,14 +200,14 @@ function mapEscrowToAgreement(escrow) {
       status: m.flags?.released ? "released" : m.flags?.approved ? "approved" : m.status || "pending",
       evidence: m.evidence,
     })),
-    receiver: escrow.roles.receiver || escrow.roles.serviceProvider,
+    receiver: escrow.roles?.receiver || escrow.roles?.serviceProvider || "-",
     balance: escrow.balance,
-    serviceProvider: escrow.roles.serviceProvider,
-    approver: escrow.roles.approver,
-    releaseSigner: escrow.roles.releaseSigner,
-    disputeResolver: escrow.roles.disputeResolver,
+    serviceProvider: escrow.roles?.serviceProvider || "-",
+    approver: escrow.roles?.approver,
+    releaseSigner: escrow.roles?.releaseSigner,
+    disputeResolver: escrow.roles?.disputeResolver,
     released: escrow.flags?.released ?? false,
-    role: "buyer" as const, // Default to buyer, can be determined by comparing wallet addresses
+    role: "buyer" as const,
   };
 }
 
@@ -381,11 +419,35 @@ export default function PersonalDashboardPage() {
   };
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
-  const [agreements, setAgreements] = useState<Agreement[]>([]);
+  const [agreements, setAgreements] = useState<Agreement[]>(initialAgreements);
+  const [agreementsLoading, setAgreementsLoading] = useState(false);
+  const [agreementsError, setAgreementsError] = useState<string | null>(null);
   const [approverEscrows, setApproverEscrows] = useState<Agreement[]>([]);
   const [approverLoading, setApproverLoading] = useState(false);
+  const [walletsData, setWalletsData] = useState<WalletWithAgreements[]>([]);
   const [userProfile, setUserProfile] = useState<Profile | null>(null);
   const [showEditProfile, setShowEditProfile] = useState(false);
+  const [showAiAssistant, setShowAiAssistant] = useState(false);
+
+  // Fetch wallets with agreements
+  useEffect(() => {
+    if (!token) return;
+    let isMounted = true;
+    async function fetchWalletsData() {
+      try {
+        const res = await getWalletsWithAgreements(token!);
+        if (isMounted && res.success && res.data) {
+          setWalletsData(res.data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch wallets with agreements:", err);
+      }
+    }
+    fetchWalletsData();
+    return () => {
+      isMounted = false;
+    };
+  }, [token]);
 
   // Person KYC State
   const [kycFullName, setKycFullName] = useState("");
@@ -476,48 +538,120 @@ export default function PersonalDashboardPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState<"all" | "funded" | "in_progress" | "released">("all")
   const [sortBy, setSortBy] = useState<"date" | "amount" | "title">("date")
-const [currentPage, setCurrentPage] = useState(1)
+  const [currentPage, setCurrentPage] = useState(1)
   const [walletFilter, setWalletFilter] = useState<string | null>(null)
   const ITEMS_PER_PAGE = 10
   
   const filteredAgreements = useMemo(() => {
-  let filtered = [...agreements]
-  
-  // Wallet filter - filter by agreements where the selected wallet is involved
-  if (walletFilter) {
-    filtered = filtered.filter(a => {
-      // Check if wallet is involved in the agreement (as sender, receiver, serviceProvider, etc.)
-      return a.receiver === walletFilter || 
-             a.id.includes(walletFilter.slice(0, 8)) || // Check if wallet created it
-             (a as unknown as { serviceProvider?: string }).serviceProvider === walletFilter
-    })
-  }
-  
-  // Status filter
-  if (statusFilter !== "all") {
-      filtered = filtered.filter(agr => {
-        const allReleased = agr.milestones.every(m => m.status === "released")
-        const effectiveStatus = allReleased ? "released" : agr.status
-        return effectiveStatus === statusFilter
-      })
+    // Step A: Resolve the wallet set (flatten all or filter by selectedWalletPubKey)
+    let list: Array<{
+      id: string;
+      title: string;
+      status: string;
+      amount: string;
+      currency: string;
+      type: "Single Release" | "Multi Release";
+      counterparty: string;
+      date: string;
+      updatedAt?: string;
+      role?: "buyer" | "seller";
+      receiver?: string;
+      serviceProvider?: string;
+      milestones: Array<{ status: string; description?: string; amount?: string; approved?: boolean }>;
+    }> = [];
+
+    if (walletsData && walletsData.length > 0) {
+      if (!walletFilter || walletFilter === "all" || walletFilter === "All") {
+        // Flatten all agreements arrays from walletsData into one combined array
+        list = walletsData.flatMap((w) =>
+          w.agreements.map((a) => ({
+            id: a.id,
+            title: a.title,
+            status: a.status,
+            amount: a.amount,
+            currency: "USDC",
+            type: "Single Release" as const,
+            counterparty: "-",
+            date: a.created_at ? a.created_at.split("T")[0] : new Date().toISOString().split("T")[0],
+            updatedAt: a.created_at,
+            role: (a.role === "seller" ? "seller" : "buyer") as "buyer" | "seller",
+            receiver: "-",
+            serviceProvider: "-",
+            milestones: [{ status: a.status }],
+          }))
+        );
+      } else {
+        // Specific wallet selected
+        const targetWallet = walletsData.find((w) => w.wallet_address === walletFilter);
+        list = targetWallet
+          ? targetWallet.agreements.map((a) => ({
+              id: a.id,
+              title: a.title,
+              status: a.status,
+              amount: a.amount,
+              currency: "USDC",
+              type: "Single Release" as const,
+              counterparty: "-",
+              date: a.created_at ? a.created_at.split("T")[0] : new Date().toISOString().split("T")[0],
+              updatedAt: a.created_at,
+              role: (a.role === "seller" ? "seller" : "buyer") as "buyer" | "seller",
+              receiver: "-",
+              serviceProvider: "-",
+              milestones: [{ status: a.status }],
+            }))
+          : [];
+      }
+    } else {
+      // Fallback when walletsData is not yet loaded / available
+      let filtered = [...agreements];
+      if (walletFilter && walletFilter !== "all" && walletFilter !== "All") {
+        filtered = filtered.filter(
+          (a) =>
+            a.receiver === walletFilter ||
+            a.id.includes(walletFilter.slice(0, 8)) ||
+            (a as unknown as { serviceProvider?: string }).serviceProvider === walletFilter
+        );
+      }
+      list = filtered.map((a) => ({
+        ...a,
+        updatedAt: a.date,
+        currency: a.currency || "USDC",
+      }));
     }
-    // Search
+
+    // Step B: Apply searchQuery filtering
     if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase()
-      filtered = filtered.filter(agr =>
-        agr.title.toLowerCase().includes(q) ||
-        agr.counterparty.toLowerCase().includes(q) ||
-        agr.id.toLowerCase().includes(q)
-      )
+      const q = searchQuery.toLowerCase();
+      list = list.filter(
+        (agr) =>
+          (agr.title && agr.title.toLowerCase().includes(q)) ||
+          (agr.counterparty && agr.counterparty.toLowerCase().includes(q)) ||
+          (agr.id && agr.id.toLowerCase().includes(q))
+      );
     }
-    // Sort
-    filtered.sort((a, b) => {
-      if (sortBy === "date") return b.date.localeCompare(a.date)
-      if (sortBy === "amount") return parseFloat(b.amount.replace(/,/g, "")) - parseFloat(a.amount.replace(/,/g, ""))
-      return a.title.localeCompare(b.title)
-    })
-    return filtered
-  }, [agreements, statusFilter, searchQuery, sortBy, walletFilter])
+
+    // Step C: Apply statusFilter filtering
+    if (statusFilter !== "all") {
+      list = list.filter((a) => {
+        const allReleased = a.milestones && a.milestones.length > 0 && a.milestones.every((m) => m.status === "released");
+        const actualStatus = allReleased ? "released" : a.status;
+        return actualStatus === statusFilter;
+      });
+    }
+
+    // Step D: Apply sortBy ordering
+    list.sort((a, b) => {
+      if (sortBy === "date") return (b.date || "").localeCompare(a.date || "");
+      if (sortBy === "amount") {
+        const amountA = parseFloat(String(a.amount || "0").replace(/,/g, "")) || 0;
+        const amountB = parseFloat(String(b.amount || "0").replace(/,/g, "")) || 0;
+        return amountB - amountA;
+      }
+      return (a.title || "").localeCompare(b.title || "");
+    });
+
+    return list;
+  }, [walletsData, walletFilter, agreements, searchQuery, statusFilter, sortBy]);
 
   // Pagination
   const totalPages = Math.ceil(filteredAgreements.length / ITEMS_PER_PAGE)
@@ -529,7 +663,7 @@ const [currentPage, setCurrentPage] = useState(1)
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1)
-  }, [statusFilter, searchQuery, sortBy])
+  }, [statusFilter, searchQuery, sortBy, walletFilter])
 
   const statusCounts = useMemo(() => {
     const counts = { all: agreements.length, funded: 0, in_progress: 0, released: 0 }
@@ -543,57 +677,38 @@ const [currentPage, setCurrentPage] = useState(1)
 
   useEffect(() => {
     if (!walletAddress) return;
+    const activeAddress: string = walletAddress;
     // Only fetch if we haven't already for this address + token combination.
     // Including the token means we re-fetch once auth loads, so we route through
     // the backend instead of falling back to the direct Trustless Work service.
-    const fetchKey = `${walletAddress}::${token ?? ""}`;
+    const fetchKey = `${activeAddress}::${token ?? ""}`;
     if (fetchedEscrowsRef.current === fetchKey) return;
     fetchedEscrowsRef.current = fetchKey;
 
-async function fetchAllEscrows() {
-// MIGRATION: Using escrowMigration wrapper
-const { getEscrowsByRole } = await import("@/services/escrowMigration");
-      const seenIds = new Set<string>();
-      const allAgreements: Agreement[] = [];
-      
-      // Fetch escrows by signer (main method)
-      const signerRes = await getEscrowsBySigner(walletAddress, token);
-      if (signerRes.success && Array.isArray(signerRes.data)) {
-        signerRes.data.forEach(escrow => {
-          if (!seenIds.has(escrow.contractId)) {
-            seenIds.add(escrow.contractId);
-            allAgreements.push(mapEscrowToAgreement(escrow));
-          }
-        });
+    async function fetchAgreements() {
+      setAgreementsLoading(true);
+      setAgreementsError(null);
+      const { agreements: nestAgreements, error } = await getAgreementsByWallet(walletAddress, token ?? undefined);
+      if (error) {
+        setAgreementsError(error);
+        setAgreementsLoading(false);
+        return;
       }
-      
-      // Fetch by each role to ensure we get all escrows
-const roles = ["receiver", "service_provider", "approver"] as const;
-for (const role of roles) {
-const res = await getEscrowsByRole({ role, address: walletAddress }, token);
-        if (res.success && Array.isArray(res.data)) {
-          res.data.forEach(escrow => {
-            if (!seenIds.has(escrow.contractId)) {
-              seenIds.add(escrow.contractId);
-              allAgreements.push(mapEscrowToAgreement(escrow));
-            }
-          });
-        }
-      }
-      
-      setAgreements(allAgreements);
+      const mapped = nestAgreements.map(a => mapNestAgreementToUi(a, walletAddress));
+      setAgreements(mapped);
+      setAgreementsLoading(false);
     }
-    
-    fetchAllEscrows();
-    
+
+    fetchAgreements();
+
     // Fetch escrows where user is approver (for approver tab)
     async function fetchApproverEscrows() {
-setApproverLoading(true);
-// MIGRATION: Using escrowMigration wrapper
-const { getEscrowsByRole } = await import("@/services/escrowMigration");
-const res = await getEscrowsByRole({ role: "approver", address: walletAddress }, token);
+      setApproverLoading(true);
+      // MIGRATION: Using escrowMigration wrapper
+      const { getEscrowsByRole } = await import("@/services/escrowMigration");
+      const res = await getEscrowsByRole({ role: "approver", address: activeAddress }, token ?? undefined);
       if (res.success && Array.isArray(res.data)) {
-        setApproverEscrows(res.data.map(mapEscrowToAgreement));
+        setApproverEscrows(res.data.map(mapEscrowToApproverAgreement));
       } else {
         setApproverEscrows([]);
       }
@@ -674,13 +789,13 @@ const res = await getEscrowsByRole({ role: "approver", address: walletAddress },
     description,
     amount: totalAmount.toString(),
     platformFee: platformFee.toString(),
-    signer: walletAddress,
+    signer: walletAddress || "",
     serviceType: escrowType === "single" ? "single-release" : "multi-release",
     roles: {
       approver: signerWallet,
-      serviceProvider: walletAddress,
+      serviceProvider: walletAddress || "",
       releaseSigner: signerWallet,
-      receiver: walletAddress,
+      receiver: walletAddress || "",
     },
     milestones: escrowType === "single"
       ? [{ description: milestones[0]?.description || "Full delivery", amount: totalAmount.toString(), status: "pending" }]
@@ -707,6 +822,20 @@ const res = await getEscrowsByRole({ role: "approver", address: walletAddress },
     setTitle(""); setDescription(""); setSignerWallet(""); setGuidePrefilled(false)
     setMilestones([{ description: "Full delivery", amount: "" }]); setShowCustomize(false)
     setNotifyEmail(""); setSignerEmail(""); setSelectedWallet(walletAddress ?? "")
+  }
+
+  const handleAiDraft = (draft: { title: string; description: string; escrowType: "single" | "multi"; useCase: string | null; milestones: { description: string; amount: string }[] }) => {
+    setActiveSection("create")
+    setStep(2)
+    setEscrowType(draft.escrowType)
+    setTitle(draft.title)
+    setDescription(draft.description)
+    if (draft.useCase) setUseCase(draft.useCase)
+    setGuidePrefilled(true)
+    if (draft.milestones.length > 0) {
+      setMilestones(draft.milestones.map(m => ({ description: m.description, amount: m.amount || "" })))
+    }
+    setShowAiAssistant(false)
   }
 
   const agreementUrl = typeof window !== "undefined" ? `${window.location.origin}/dashboard/personal` : "https://thalos.app/dashboard/personal"
@@ -982,6 +1111,15 @@ const res = await getEscrowsByRole({ role: "approver", address: walletAddress },
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-[#f0b400]"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
                   </div>
                   <span className="text-xs font-medium text-white/60">New Agreement</span>
+                </button>
+                <button
+                  onClick={() => setShowAiAssistant(true)}
+                  className="flex flex-col items-center gap-2 rounded-xl border border-white/6 bg-[#0c1220] p-4 hover:border-white/15 hover:bg-[#0c1220]/80 transition-all"
+                >
+                  <div className="rounded-lg p-2.5 bg-purple-500/10">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-purple-400"><path d="M12 2a4 4 0 014 4c0 2-2 3-2 3s2 1 2 3a4 4 0 01-8 0c0-2 2-3 2-3s-2-1-2-3a4 4 0 014-4z"/><path d="M8 16c0-2 2-3 2-3s-2-1-2-3"/><path d="M16 16c0-2-2-3-2-3s2-1 2-3"/><path d="M12 22v-4"/></svg>
+                  </div>
+                  <span className="text-xs font-medium text-white/60">Create with AI</span>
                 </button>
                 <button
                   onClick={() => setActiveSection("agreements")}
@@ -1299,22 +1437,39 @@ const res = await getEscrowsByRole({ role: "approver", address: walletAddress },
           {activeSection === "agreements" && !viewingAgreement && (
             <div className="mx-auto max-w-4xl animate-in fade-in slide-in-from-bottom-2 duration-300">
 {/* Header */}
-  <div className="mb-6 flex items-center justify-between">
+  <div className="mb-6 flex flex-wrap items-center justify-between gap-2">
   <h1 className="text-2xl font-semibold text-white">{t("dashPage.myAgreements")}</h1>
+  <div className="flex items-center gap-2">
+  <Button onClick={() => setShowAiAssistant(true)}
+    className="rounded-full bg-purple-500/10 px-5 text-sm font-semibold text-purple-400 hover:bg-purple-500/20 border border-purple-500/20">
+    Create with AI
+  </Button>
   <Button onClick={() => { setActiveSection("create"); resetWizard() }}
   className="rounded-full bg-[#f0b400] px-6 text-sm font-semibold text-background hover:bg-[#d4a000] shadow-[0_4px_16px_rgba(240,180,0,0.25)]">
   + {t("dashPage.newAgreement")}
   </Button>
+  </div>
   </div>
   
   {/* Wallet Selector - only shows if user has multiple wallets */}
   <WalletSelector 
     selectedWallet={walletFilter} 
     onWalletChange={setWalletFilter}
+    walletsData={walletsData}
     className="mb-6"
   />
   
-  {/* Agreements view — pre-filtered by selected wallet when active */}
+  {agreementsError && (
+    <div className="mb-6 flex items-center gap-3 rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-3 text-sm text-red-400">
+      <AlertTriangle className="h-4 w-4 shrink-0" />
+      <span>{agreementsError}</span>
+    </div>
+  )}
+
+  {agreementsLoading ? (
+    <div className="flex items-center justify-center py-16 text-sm text-white/40">Loading agreements...</div>
+  ) : (
+  /* Agreements view — pre-filtered by selected wallet when active */
               <AgreementsView
                 agreements={[
                   ...filteredAgreements.map(a => ({ ...a, updatedAt: a.date, currency: "USDC" })),
@@ -1335,6 +1490,7 @@ const res = await getEscrowsByRole({ role: "approver", address: walletAddress },
                 onOpenChat={(id) => setShowAgreementChat(id)}
                 currentUserWallet={walletAddress}
               />
+  )}
             </div>
           )}
 
@@ -1565,12 +1721,18 @@ const res = await getEscrowsByRole({ role: "approver", address: walletAddress },
                 </div>
               ) : (
               <>
-              <div className="mb-6 flex items-center justify-between">
+              <div className="mb-6 flex flex-wrap items-center justify-between gap-2">
                 <h1 className="text-2xl font-semibold text-white">New Agreement</h1>
-                <Button onClick={() => { setActiveSection("agreements"); resetWizard() }}
-                  className="rounded-full bg-white/10 px-6 text-sm font-semibold text-white/70 hover:bg-white/15 hover:text-white">
-                  View Agreements
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button onClick={() => setShowAiAssistant(true)}
+                    className="rounded-full bg-purple-500/10 px-5 text-sm font-semibold text-purple-400 hover:bg-purple-500/20 border border-purple-500/20">
+                    Create with AI
+                  </Button>
+                  <Button onClick={() => { setActiveSection("agreements"); resetWizard() }}
+                    className="rounded-full bg-white/10 px-6 text-sm font-semibold text-white/70 hover:bg-white/15 hover:text-white">
+                    View Agreements
+                  </Button>
+                </div>
               </div>
 
               {/* Progress bar */}
@@ -1864,6 +2026,19 @@ const newAgr: Agreement = {
           </div>
         </div>
       )}
+
+      {/* AI Agreement Assistant Dialog */}
+      <Dialog open={showAiAssistant} onOpenChange={setShowAiAssistant}>
+        <DialogContent className="sm:max-w-xl max-h-[80vh] flex flex-col" showCloseButton={false}>
+          <DialogTitle className="sr-only">AI Agreement Assistant</DialogTitle>
+          <DialogDescription className="sr-only">Describe your deal to generate an agreement draft</DialogDescription>
+          <AiAgreementAssistant
+            profile="personal"
+            onDraftComplete={handleAiDraft}
+            onClose={() => setShowAiAssistant(false)}
+          />
+        </DialogContent>
+      </Dialog>
 
       {/* Profile Editor Modal */}
       <ProfileEditor
