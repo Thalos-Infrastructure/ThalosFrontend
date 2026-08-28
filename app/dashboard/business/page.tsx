@@ -36,7 +36,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area,
 } from "recharts"
 import { createAgreement, sendTransaction, AgreementPayload, approveMilestone } from "@/services/trustlessworkService"
-import { STELLAR_EXPLORER_BASE_URL, SHOW_MOCKED_AGREEMENTS } from "@/lib/config"
+import { STELLAR_EXPLORER_BASE_URL } from "@/lib/config"
 import { getKybStatus, startKybSession } from "@/lib/api/kyb"
 import { KYB_ENTITY_TYPES, buildCreateKybSessionDto, canStartKybSession, isKybVerified, nextKybStatusAfterSessionStart, type KybEntityType } from "@/lib/kyb"
 import {
@@ -136,12 +136,46 @@ interface Agreement {
   client?: string
 }
 
-const initialAgreements: Agreement[] = [
-  { id: "ENT-001", title: "Fleet Vehicle Purchase", status: "funded", type: "Multi Release", counterparty: "G...DLR5", amount: "125,000", date: "2026-01-20", releaseStrategy: "per-milestone", milestones: [{ description: "Down Payment (10 units)", amount: "50,000", status: "released" }, { description: "Delivery of first batch", amount: "37,500", status: "approved" }, { description: "Final batch + inspection", amount: "37,500", status: "pending" }], receiver: "GBXGQJWVLWOYHFLVTKWV5FGHA3DLR5", currency: "USDC" },
-  { id: "ENT-002", title: "Resort Partnership Q2", status: "in_progress", type: "Multi Release", counterparty: "G...TRV8", amount: "48,000", date: "2026-01-15", releaseStrategy: "upon-completion", milestones: [{ description: "Contract signing", amount: "12,000", status: "approved" }, { description: "Marketing materials", amount: "12,000", status: "approved" }, { description: "Launch campaign", amount: "12,000", status: "pending" }, { description: "Performance review", amount: "12,000", status: "pending" }], receiver: "GBXGQJWVLWOYHFLVTKWV5FGHA3TRV8", currency: "USDC" },
-  { id: "ENT-003", title: "Corporate Event Setup", status: "released", type: "Single Release", counterparty: "G...EVT2", amount: "15,000", date: "2025-12-18", milestones: [{ description: "Full event delivery", amount: "15,000", status: "released" }], receiver: "GBXGQJWVLWOYHFLVTKWV5FGHA3EVT2", currency: "USDC" },
-  { id: "ENT-004", title: "Property Management Fee", status: "in_progress", type: "Multi Release", counterparty: "G...RNT9", amount: "6,500", date: "2025-12-05", releaseStrategy: "all-at-once", milestones: [{ description: "Q1 management fee", amount: "1,625", status: "approved" }, { description: "Q2 management fee", amount: "1,625", status: "approved" }, { description: "Q3 management fee", amount: "1,625", status: "approved" }, { description: "Q4 management fee", amount: "1,625", status: "pending" }], receiver: "GBXGQJWVLWOYHFLVTKWV5FGHA3RNT9", currency: "USDC" },
-]
+const initialAgreements: Agreement[] = []
+
+// Agreements listing is sourced from Nest (source of truth); TW escrow reads are
+// still used only for the approver tab, which needs live on-chain milestone state
+// to drive the approve/release actions.
+import { getAgreementsByWallet } from "@/lib/actions/agreements"
+import type { AgreementWithParticipants, AgreementStatus as NestAgreementStatus } from "@/lib/actions/agreements"
+
+const NEST_STATUS_TO_UI: Record<NestAgreementStatus, string> = {
+  pending: "pending",
+  funded: "funded",
+  active: "in_progress",
+  completed: "released",
+  disputed: "awaiting",
+  resolved: "released",
+  cancelled: "cancelled",
+}
+
+function mapNestAgreementToUi(agreement: AgreementWithParticipants, workspaceWallet: string | null): Agreement {
+  const isMulti = agreement.agreement_type === "multi"
+  const counterparty = agreement.participants?.find(p => p.wallet_address !== workspaceWallet)?.wallet_address
+
+  return {
+    id: agreement.contract_id || agreement.id,
+    title: agreement.title,
+    counterparty: counterparty ? `${counterparty.slice(0, 8)}...` : `${agreement.created_by.slice(0, 8)}...`,
+    status: NEST_STATUS_TO_UI[agreement.status] ?? agreement.status,
+    amount: agreement.amount,
+    currency: agreement.asset || "USDC",
+    type: isMulti ? "Multi Release" : "Single Release",
+    date: agreement.created_at.split("T")[0],
+    milestones: agreement.milestones.map(m => ({
+      description: m.description,
+      amount: m.amount,
+      status: m.status,
+    })),
+    receiver: counterparty || "",
+    role: workspaceWallet === agreement.created_by ? "seller" : "buyer",
+  }
+}
 
 const statusConfig: Record<string, { labelKey: string; color: string }> = {
   funded: { labelKey: "status.funded", color: "bg-blue-500/10 text-blue-400 border-blue-500/20" },
@@ -425,6 +459,8 @@ export default function BusinessDashboardPage() {
 
   const [agreements, setAgreements] = useState<Agreement[]>(initialAgreements)
   const [walletsData, setWalletsData] = useState<WalletWithAgreements[]>([])
+  const [agreementsLoading, setAgreementsLoading] = useState(false)
+  const [agreementsError, setAgreementsError] = useState<string | null>(null)
   const [viewingAgreement, setViewingAgreement] = useState<string | null>(null)
   const [showAgreementChat, setShowAgreementChat] = useState<string | null>(null)
   const [disputedMs, setDisputedMs] = useState<Set<string>>(new Set())
@@ -451,9 +487,9 @@ export default function BusinessDashboardPage() {
       isMounted = false;
     };
   }, [token]);
-  
-  // Helper to map escrow to agreement format
-  const mapEscrowToAgreement = (e: any): Agreement => {
+
+  // Helper to map a TW escrow (approver tab only) to agreement format
+  const mapEscrowToApproverAgreement = (e: any): Agreement => {
     const milestones = e.milestones as Array<{ description?: string; amount?: number; approved?: boolean; released?: boolean; status?: string }> || [];
     const isMulti = (e.type as string) === "multi-release" || milestones.length > 1;
     const amount = isMulti 
@@ -482,7 +518,7 @@ export default function BusinessDashboardPage() {
     };
   };
 
-  // Fetch all escrows where user has any role
+  // Fetch agreements from Nest (source of truth) for the current workspace wallet
   const fetchedEscrowsRef = useRef<string | null>(null);
   useEffect(() => {
     if (!currentWorkspaceWallet) return;
@@ -493,43 +529,21 @@ export default function BusinessDashboardPage() {
     if (fetchedEscrowsRef.current === fetchKey) return;
     fetchedEscrowsRef.current = fetchKey;
 
-    async function fetchAllEscrows() {
-      // MIGRATION: Using escrowMigration wrapper
-      const { getEscrowsBySigner, getEscrowsByRole } = await import("@/services/escrowMigration");
-      const seenIds = new Set<string>();
-      const allAgreements: Agreement[] = [];
-      
-      // Fetch escrows by signer
-      const signerRes = await getEscrowsBySigner(workspaceWallet, token ?? undefined);
-      if (signerRes.success && Array.isArray(signerRes.data)) {
-        signerRes.data.forEach((escrow: any) => {
-          if (!seenIds.has(escrow.contractId)) {
-            seenIds.add(escrow.contractId);
-            allAgreements.push(mapEscrowToAgreement(escrow));
-          }
-        });
+    async function fetchAgreements() {
+      setAgreementsLoading(true);
+      setAgreementsError(null);
+      const { agreements: nestAgreements, error } = await getAgreementsByWallet(workspaceWallet, token ?? undefined);
+      if (error) {
+        setAgreementsError(error);
+        setAgreementsLoading(false);
+        return;
       }
-      
-      // Fetch by each role
-      const roles = ["receiver", "service_provider", "approver"] as const;
-      for (const role of roles) {
-        const res = await getEscrowsByRole({ role, address: workspaceWallet }, token ?? undefined);
-        if (res.success && Array.isArray(res.data)) {
-          res.data.forEach((escrow: any) => {
-            if (!seenIds.has(escrow.contractId)) {
-              seenIds.add(escrow.contractId);
-              allAgreements.push(mapEscrowToAgreement(escrow));
-            }
-          });
-        }
-      }
-      
-      if (allAgreements.length > 0) {
-        setAgreements(allAgreements);
-      }
+      const mapped = nestAgreements.map(a => mapNestAgreementToUi(a, workspaceWallet));
+      setAgreements(mapped);
+      setAgreementsLoading(false);
     }
-    
-    fetchAllEscrows();
+
+    fetchAgreements();
   }, [currentWorkspaceWallet, token]);
 
   // Fetch approver escrows (for approver tab)
@@ -542,7 +556,7 @@ export default function BusinessDashboardPage() {
         const { getEscrowsByRole } = await import("@/services/escrowMigration");
         const res = await getEscrowsByRole({ role: "approver", address: workspaceWallet }, token ?? undefined);
         if (res.success && Array.isArray(res.data)) {
-          setApproverEscrows(res.data.map((e: any) => mapEscrowToAgreement(e)));
+          setApproverEscrows(res.data.map((e: any) => mapEscrowToApproverAgreement(e)));
         }
       } catch (err) {
         console.error("Error fetching approver escrows:", err);
@@ -1246,13 +1260,24 @@ export default function BusinessDashboardPage() {
                 className="mb-6"
               />
 
-              {/* Agreements view, pre-filtered by selected wallet */}
+              {agreementsError && (
+                <div className="mb-6 flex items-center gap-3 rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-3 text-sm text-red-400">
+                  <AlertTriangle className="h-4 w-4 shrink-0" />
+                  <span>{agreementsError}</span>
+                </div>
+              )}
+
+              {agreementsLoading ? (
+                <div className="flex items-center justify-center py-16 text-sm text-white/40">Loading agreements...</div>
+              ) : (
+              /* Agreements view, pre-filtered by selected wallet */
               <AgreementsView
                 agreements={filteredAgreements}
                 onAgreementClick={(id) => setViewingAgreement(id)}
                 onOpenChat={(id) => setShowAgreementChat(id)}
                 currentUserWallet={walletAddress || undefined}
               />
+              )}
             </div>
           )}
 
