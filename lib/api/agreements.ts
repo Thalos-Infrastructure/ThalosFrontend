@@ -64,6 +64,10 @@ export interface MutationResponse {
   error?: string
 }
 
+/** Agreement as returned by the by-wallet listing, with participants when the backend embeds them. */
+export interface AgreementWithParticipants extends Agreement {
+  participants?: AgreementParticipant[]
+}
 
 /**
  * Create a new agreement
@@ -103,7 +107,6 @@ export async function createAgreement(
     }
   }
 }
-
 
 /**
  * Get all agreements (with optional filters)
@@ -145,16 +148,21 @@ export async function getAgreements(
 }
 
 /**
- * Get agreements by wallet address
+ * Get agreements a wallet participates in, optionally filtered by status/type.
  * Backend returns: { agreements, error }
  */
 export async function getAgreementsByWallet(
   walletAddress: string,
-  token?: string
-): Promise<ApiResponse<Agreement[]>> {
+  token?: string,
+  params?: { status?: string; type?: string }
+): Promise<ApiResponse<AgreementWithParticipants[]>> {
   try {
+    const queryParams = new URLSearchParams({ wallet: walletAddress })
+    if (params?.status) queryParams.set("status", params.status)
+    if (params?.type) queryParams.set("type", params.type)
+
     const response = await apiRequest<unknown>(
-      `/agreements/by-wallet?wallet=${encodeURIComponent(walletAddress)}`,
+      `/agreements/by-wallet?${queryParams.toString()}`,
       { method: "GET" },
       token
     )
@@ -164,7 +172,7 @@ export async function getAgreementsByWallet(
     }
 
     const payload = response.data as Record<string, unknown>
-    const agreements = (payload.agreements as Agreement[]) || []
+    const agreements = (payload.agreements as AgreementWithParticipants[]) || []
     const error = payload.error as string | undefined
 
     if (error) {

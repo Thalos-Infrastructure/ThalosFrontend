@@ -36,7 +36,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area,
 } from "recharts"
 import { createAgreement, sendTransaction, AgreementPayload, approveMilestone } from "@/services/trustlessworkService"
-import { STELLAR_EXPLORER_BASE_URL, STELLAR_EXPLORER_ACCOUNT_BASE_URL, TRUSTLINE_USDC, SHOW_MOCKED_AGREEMENTS } from "@/lib/config";
+import { STELLAR_EXPLORER_BASE_URL, STELLAR_EXPLORER_ACCOUNT_BASE_URL, TRUSTLINE_USDC } from "@/lib/config";
 import { getWalletBalance } from "@/lib/api/wallets";
 import { getKycStatus, startKycSession } from "@/lib/api/kyc";
 import { isKycVerified, canStartKycSession, buildCreateKycSessionDto, nextKycStatusAfterSessionStart, type KycVerificationStatus } from "@/lib/kyc";
@@ -114,33 +114,59 @@ const wizardStepKeys = ["wizard.escrowType", "wizard.useCase", "wizard.agreement
 interface Milestone { description: string; amount: string; status: "pending" | "approved" | "released" }
 interface Agreement { id: string; title: string; status: string; type: "Single Release" | "Multi Release"; counterparty: string; amount: string; currency: string; date: string; releaseStrategy?: "per-milestone" | "all-at-once" | "upon-completion"; milestones: Milestone[]; receiver: string; role?: "buyer" | "seller" }
 
-const initialAgreements: Agreement[] = SHOW_MOCKED_AGREEMENTS ? [
-  { id: "AGR-001", title: "Website Redesign", status: "funded", type: "Single Release", counterparty: "G...FRE3", amount: "2,500", currency: "USDC", date: "2026-01-15", milestones: [{ description: "Full delivery", amount: "2,500", status: "pending" }], receiver: "GBXGQJWVLWOYHFLVTKWV5FGHA3PERSONAL02", role: "buyer" },
-  { id: "AGR-002", title: "Moving Service", status: "in_progress", type: "Multi Release", counterparty: "G...MOV7", amount: "1,800", currency: "USDC", date: "2026-01-20", releaseStrategy: "per-milestone", milestones: [{ description: "Packing & Loading", amount: "600", status: "released" }, { description: "Transport", amount: "600", status: "approved" }, { description: "Unloading & Setup", amount: "600", status: "pending" }], receiver: "GBXGQJWVLWOYHFLVTKWV5FGHA3MOV7", role: "buyer" },
-  { id: "AGR-003", title: "Online Course Bundle", status: "released", type: "Multi Release", counterparty: "G...EDU4", amount: "1,200", currency: "USDC", date: "2025-12-10", releaseStrategy: "upon-completion", milestones: [{ description: "Module 1 - Basics", amount: "400", status: "released" }, { description: "Module 2 - Advanced", amount: "400", status: "released" }, { description: "Final Assessment", amount: "400", status: "released" }], receiver: "GBXGQJWVLWOYHFLVTKWV5FGHA3EDU4", role: "seller" },
-  { id: "AGR-004", title: "Coaching Sessions", status: "in_progress", type: "Multi Release", counterparty: "G...CCH1", amount: "900", currency: "USDC", date: "2026-02-01", releaseStrategy: "all-at-once", milestones: [{ description: "Session 1", amount: "300", status: "approved" }, { description: "Session 2", amount: "300", status: "approved" }, { description: "Session 3", amount: "300", status: "pending" }], receiver: "GBXGQJWVLWOYHFLVTKWV5FGHA3CCH1", role: "seller" },
-] : [];
+const initialAgreements: Agreement[] = [];
 
-// Mix between real escrows fetched from the backend and some hardcoded ones for demo purposes
-// MIGRATION: Using escrowMigration wrapper to gradually migrate to backend
-import { getEscrowsBySigner } from "@/services/escrowMigration";
+// Agreements listing is sourced from Nest (source of truth); TW escrow reads are
+// still used only for the approver tab, which needs live on-chain milestone state
+// to drive the approve/release actions.
+import { getAgreementsByWallet } from "@/lib/actions/agreements";
+import type { AgreementWithParticipants, AgreementStatus as NestAgreementStatus } from "@/lib/actions/agreements";
 
-function mapEscrowToAgreement(escrow: any) {
-  const isMulti = escrow.type === "multi-release";
-  let amount = "";
-  if (isMulti) {
-    amount = (escrow.milestones || [])
-      .reduce((sum, m) => sum + (typeof m.amount === "number" ? m.amount : 0), 0)
-      .toString();
-  } else {
-    amount = escrow.amount ? escrow.amount.toString() : "";
+const NEST_STATUS_TO_UI: Record<NestAgreementStatus, string> = {
+  pending: "pending",
+  funded: "funded",
+  active: "in_progress",
+  completed: "released",
+  disputed: "awaiting",
+  resolved: "released",
+  cancelled: "cancelled",
+};
+
+function mapNestAgreementToUi(agreement: AgreementWithParticipants, currentWallet: string | null): Agreement {
+  const isMulti = agreement.agreement_type === "multi"
+  const counterparty = agreement.participants?.find(p => p.wallet_address !== currentWallet)?.wallet_address
+
+  return {
+    id: agreement.contract_id || agreement.id,
+    title: agreement.title,
+    status: NEST_STATUS_TO_UI[agreement.status] ?? agreement.status,
+    type: isMulti ? "Multi Release" : "Single Release",
+    counterparty: counterparty ? `${counterparty.slice(0, 8)}...` : `${agreement.created_by.slice(0, 8)}...`,
+    amount: agreement.amount,
+    currency: agreement.asset || "USDC",
+    date: agreement.created_at.split("T")[0],
+    milestones: agreement.milestones.map(m => ({
+      description: m.description,
+      amount: m.amount,
+      status: m.status,
+    })),
+    receiver: counterparty || "",
+    role: agreement.created_by === currentWallet ? "buyer" : "seller",
   }
+}
 
-  // Determinar estado del contrato
+// The approver tab still reads live TW escrow state (not Nest agreements): approving
+// a milestone is an on-chain action that needs the escrow's current approved/released
+// flags and roles, which the Nest listing does not carry.
+function mapEscrowToApproverAgreement(escrow) {
+  const isMulti = escrow.type === "multi-release";
+  const amount = isMulti
+    ? (escrow.milestones || []).reduce((sum, m) => sum + (typeof m.amount === "number" ? m.amount : 0), 0).toString()
+    : escrow.amount ? escrow.amount.toString() : "";
+
   const milestones = (escrow.milestones || []);
-  const allApproved = milestones.length > 0 && milestones.every(m => m.approved === true);
-  const allUnapproved = milestones.length > 0 && milestones.every(m => m.approved === false);
   const anyUnapproved = milestones.some(m => m.approved === false);
+  const allUnapproved = milestones.length > 0 && milestones.every(m => m.approved === false);
   const balanceNum = Number(escrow.balance);
   const amountNum = Number(amount);
   let status = "funded";
@@ -177,7 +203,7 @@ function mapEscrowToAgreement(escrow: any) {
     releaseSigner: escrow.roles?.releaseSigner,
     disputeResolver: escrow.roles?.disputeResolver,
     released: escrow.flags?.released ?? false,
-    role: "buyer" as const, // Default to buyer, can be determined by comparing wallet addresses
+    role: "buyer" as const,
   };
 }
 
@@ -395,6 +421,8 @@ export default function PersonalDashboardPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [agreements, setAgreements] = useState<Agreement[]>(initialAgreements);
+  const [agreementsLoading, setAgreementsLoading] = useState(false);
+  const [agreementsError, setAgreementsError] = useState<string | null>(null);
   const [approverEscrows, setApproverEscrows] = useState<Agreement[]>([]);
   const [approverLoading, setApproverLoading] = useState(false);
   const [walletsData, setWalletsData] = useState<WalletWithAgreements[]>([]);
@@ -656,48 +684,22 @@ export default function PersonalDashboardPage() {
     if (fetchedEscrowsRef.current === fetchKey) return;
     fetchedEscrowsRef.current = fetchKey;
 
-    async function fetchAllEscrows() {
-      // MIGRATION: Using escrowMigration wrapper
-      const { getEscrowsByRole } = await import("@/services/escrowMigration");
-      const seenIds = new Set<string>();
-      const allAgreements: Agreement[] = [];
-      
-      // Fetch escrows by signer (main method)
-      const signerRes = await getEscrowsBySigner(activeAddress, token ?? undefined);
-      if (signerRes.success && Array.isArray(signerRes.data)) {
-        signerRes.data.forEach(escrow => {
-          if (!seenIds.has(escrow.contractId)) {
-            seenIds.add(escrow.contractId);
-            allAgreements.push(mapEscrowToAgreement(escrow));
-          }
-        });
+    async function fetchAgreements() {
+      setAgreementsLoading(true);
+      setAgreementsError(null);
+      const { agreements: nestAgreements, error } = await getAgreementsByWallet(walletAddress, token ?? undefined);
+      if (error) {
+        setAgreementsError(error);
+        setAgreementsLoading(false);
+        return;
       }
-      
-      // Fetch by each role to ensure we get all escrows
-      const roles = ["receiver", "service_provider", "approver"] as const;
-      for (const role of roles) {
-        const res = await getEscrowsByRole({ role, address: activeAddress }, token ?? undefined);
-        if (res.success && Array.isArray(res.data)) {
-          res.data.forEach(escrow => {
-            if (!seenIds.has(escrow.contractId)) {
-              seenIds.add(escrow.contractId);
-              allAgreements.push(mapEscrowToAgreement(escrow));
-            }
-          });
-        }
-      }
-      
-      setAgreements(prev => {
-        // Merge with any existing mock agreements
-        const existingIds = new Set(prev.filter(a => !a.id.startsWith("AGR-")).map(a => a.id));
-        const mockAgreements = prev.filter(a => a.id.startsWith("AGR-"));
-        const newReal = allAgreements.filter(a => !existingIds.has(a.id));
-        return [...mockAgreements, ...newReal];
-      });
+      const mapped = nestAgreements.map(a => mapNestAgreementToUi(a, walletAddress));
+      setAgreements(mapped);
+      setAgreementsLoading(false);
     }
-    
-    fetchAllEscrows();
-    
+
+    fetchAgreements();
+
     // Fetch escrows where user is approver (for approver tab)
     async function fetchApproverEscrows() {
       setApproverLoading(true);
@@ -705,7 +707,7 @@ export default function PersonalDashboardPage() {
       const { getEscrowsByRole } = await import("@/services/escrowMigration");
       const res = await getEscrowsByRole({ role: "approver", address: activeAddress }, token ?? undefined);
       if (res.success && Array.isArray(res.data)) {
-        setApproverEscrows(res.data.map(mapEscrowToAgreement));
+        setApproverEscrows(res.data.map(mapEscrowToApproverAgreement));
       } else {
         setApproverEscrows([]);
       }
@@ -1427,13 +1429,38 @@ export default function PersonalDashboardPage() {
     className="mb-6"
   />
   
-  {/* Agreements view — pre-filtered by selected wallet when active */}
-  <AgreementsView
-    agreements={filteredAgreements}
-    onAgreementClick={(id) => setViewingAgreement(id)}
-    onOpenChat={(id) => setShowAgreementChat(id)}
-    currentUserWallet={walletAddress || undefined}
-  />
+  {agreementsError && (
+    <div className="mb-6 flex items-center gap-3 rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-3 text-sm text-red-400">
+      <AlertTriangle className="h-4 w-4 shrink-0" />
+      <span>{agreementsError}</span>
+    </div>
+  )}
+
+  {agreementsLoading ? (
+    <div className="flex items-center justify-center py-16 text-sm text-white/40">Loading agreements...</div>
+  ) : (
+  /* Agreements view — pre-filtered by selected wallet when active */
+              <AgreementsView
+                agreements={[
+                  ...filteredAgreements.map(a => ({ ...a, updatedAt: a.date, currency: "USDC" })),
+                  ...approverEscrows.map(e => ({
+                    id: e.id,
+                    title: e.title,
+                    counterparty: (e as unknown as { serviceProvider?: string }).serviceProvider?.slice(0, 8) + "..." || "Unknown",
+                    status: e.status || "pending",
+                    amount: typeof e.amount === "number" ? (e.amount as number).toLocaleString() : e.amount || "0",
+                    currency: "USDC",
+                    type: "Single Release" as const,
+                    updatedAt: e.date,
+                    milestones: e.milestones || [{ status: "pending" }],
+                    role: "buyer" as const,
+                  })),
+                ]}
+                onAgreementClick={(id) => setViewingAgreement(id)}
+                onOpenChat={(id) => setShowAgreementChat(id)}
+                currentUserWallet={walletAddress}
+              />
+  )}
             </div>
           )}
 

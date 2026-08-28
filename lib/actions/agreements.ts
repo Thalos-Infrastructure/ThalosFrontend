@@ -10,12 +10,12 @@ export type {
   Agreement,
   AgreementParticipant,
   AgreementActivity,
+  AgreementWithParticipants,
   CreateAgreementInput,
 } from "@/lib/api/agreements"
 
 import {
   createAgreement as createAgreementApi,
-  getAgreements as getAgreementsApi,
   getAgreement as getAgreementApi,
   updateAgreementStatusApi,
   updateMilestoneStatus as updateMilestoneStatusApi,
@@ -29,6 +29,7 @@ import {
   type AgreementMilestone,
   type AgreementActivity,
   type AgreementParticipant,
+  type AgreementWithParticipants,
   type CreateAgreementInput,
 } from "@/lib/api/agreements"
 
@@ -151,16 +152,18 @@ export async function updateMilestoneStatus(
 }
 
 /**
- * Get agreements by wallet (as participant)
+ * Get agreements by wallet (as participant), optionally filtered by status/type
  * @param walletAddress Wallet address to filter by
  * @param token JWT token for authentication (optional for public queries)
+ * @param params Optional status/type filters
  */
 export async function getAgreementsByWallet(
   walletAddress: string,
-  token?: string
-): Promise<{ agreements: Agreement[]; error: string | null }> {
+  token?: string,
+  params?: { status?: string; type?: string }
+): Promise<{ agreements: AgreementWithParticipants[]; error: string | null }> {
   try {
-    const result = await getAgreementsByWalletApi(walletAddress, token)
+    const result = await getAgreementsByWalletApi(walletAddress, token, params)
     if (!result.success) {
       return { agreements: [], error: result.error || "Failed to fetch agreements" }
     }
