@@ -216,38 +216,38 @@ export function LinkedWallets({ onWalletSelect, selectedWallet, showBalances = t
 
   const MAX_WALLET_LABEL_LENGTH = 50
 
-const handleUpdateLabel = async (walletId: string) => {
-  if (!token) return
+  const handleUpdateLabel = async (walletId: string) => {
+    if (!token) return
 
-  const trimmedLabel = newLabel.trim()
+    const trimmedLabel = newLabel.trim()
 
-  if (!trimmedLabel) {
-    setError("Wallet label cannot be empty.")
-    return
+    if (!trimmedLabel) {
+      setError("Wallet label cannot be empty.")
+      return
+    }
+
+    if (trimmedLabel.length > MAX_WALLET_LABEL_LENGTH) {
+      setError(`Wallet label must be ${MAX_WALLET_LABEL_LENGTH} characters or fewer.`)
+      return
+    }
+
+    setError(null)
+
+    try {
+      const result = await updateWallet(walletId, { label: trimmedLabel }, token)
+
+      if (!result.success) {
+        setError(result.error || "Failed to update wallet label.")
+        return
+      }
+
+      await loadWallets()
+      setEditingLabel(null)
+      setNewLabel("")
+    } catch {
+      setError("Failed to update wallet label.")
+    }
   }
-
-  if (trimmedLabel.length > MAX_WALLET_LABEL_LENGTH) {
-    setError(`Wallet label must be ${MAX_WALLET_LABEL_LENGTH} characters or fewer.`)
-    return
-  }
-
-  setError(null)
-
-  try {
-    const result = await updateWallet(walletId, { label: trimmedLabel }, token)
-
-    if (!result.success) {
-    setError(result.error || "Failed to update wallet label.")
-  return
-}
-
-await loadWallets()
-setEditingLabel(null)
-setNewLabel("")
-} catch {
-  setError("Failed to update wallet label.")
-}
-}
 
   const handleRemoveWallet = async (walletId: string) => {
     if (!token) return
