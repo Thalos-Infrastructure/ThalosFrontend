@@ -255,4 +255,4 @@ type AuthUser = {
 | `app/auth/callback/success/page.tsx` | OAuth callback (Google) | `normalizeAuthUser(data.user)` |
 | `lib/auth-provider.tsx` | Hydration from `localStorage` | `normalizeAuthUser(JSON.parse(...))` |
 
-Preview deployment verification.
+
