@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils"
 import { useAuthStore } from "@/lib/auth-store"
 import { useStellarWallet } from "@/lib/stellar-wallet"
 import { useCurrentAddress } from "@/lib/use-current-address"
-import { getWalletsWithAgreements, type WalletWithAgreements } from "@/lib/api/wallets"
+import { getWalletsWithBalances, type WalletWithAgreements } from "@/lib/api/wallets"
 
 interface WalletSelectorProps {
   selectedWallet: string | null
@@ -53,9 +53,9 @@ export function WalletSelector({ selectedWallet, onWalletChange, walletsData: pr
         const result = await getWalletsWithBalances(token)
 
         if (isMounted && result.success && result.data && result.data.length > 0) {
-          setWallets(result.data)
+          setInternalWallets(result.data)
         } else if (isMounted && currentAddress) {
-          setWallets([{
+          setInternalWallets([{
             id: "connected",
             user_id: "",
             wallet_address: currentAddress,
@@ -72,7 +72,7 @@ export function WalletSelector({ selectedWallet, onWalletChange, walletsData: pr
         if (isMounted) setError("Could not load wallets")
 
         if (isMounted && currentAddress) {
-          setWallets([{
+          setInternalWallets([{
             id: "connected",
             user_id: "",
             wallet_address: currentAddress,
@@ -91,10 +91,10 @@ export function WalletSelector({ selectedWallet, onWalletChange, walletsData: pr
 
     load()
 
-    return () => {
+       return () => {
       isMounted = false
     }
-
+  }, [propsWalletsData, token, currentAddress])
   const truncateAddress = (addr: string) => {
     if (!addr) return ""
     return `${addr.slice(0, 6)}...${addr.slice(-4)}`
