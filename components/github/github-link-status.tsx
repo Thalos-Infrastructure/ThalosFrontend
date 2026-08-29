@@ -6,23 +6,26 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import {
   getGithubLinkStatus,
-  startGithubVerification,
+  getGithubOAuthUrl,
   type GithubLinkStatus,
 } from "@/lib/api/github"
 
 /**
  * Verified GitHub link status + a "Verify GitHub" action (C6 / issue #128).
  *
- * All GitHub work happens server-side (ThalosBackend#140): the button asks Nest
- * for an authorization URL and redirects to it — the token/secret never touch the
- * client. Reusable on the milestone evidence flow and reserved for the C7 profile
- * display.
+ * Status is read from the builder's profile (`github_username`); verification
+ * asks Nest for the OAuth authorization URL (ThalosBackend#157
+ * `GET /github-evidence/oauth/url`) and redirects to it. The token/secret never
+ * touch the client. Reusable on the milestone evidence flow and reserved for the
+ * C7 profile display.
  */
 export function GithubLinkStatusCard({
+  walletAddress,
   token,
   onLinked,
   className,
 }: {
+  walletAddress?: string
   token?: string
   onLinked?: (status: GithubLinkStatus) => void
   className?: string
@@ -35,7 +38,7 @@ export function GithubLinkStatusCard({
   const load = React.useCallback(async () => {
     setLoading(true)
     setError(null)
-    const res = await getGithubLinkStatus(token)
+    const res = await getGithubLinkStatus(walletAddress)
     if (res.success && res.data) {
       setStatus(res.data)
       if (res.data.linked) onLinked?.(res.data)
@@ -43,7 +46,7 @@ export function GithubLinkStatusCard({
       setError(res.error ?? "Could not load GitHub link status")
     }
     setLoading(false)
-  }, [token, onLinked])
+  }, [walletAddress, onLinked])
 
   React.useEffect(() => {
     void load()
@@ -52,11 +55,11 @@ export function GithubLinkStatusCard({
   const handleVerify = async () => {
     setVerifying(true)
     setError(null)
-    const res = await startGithubVerification(token)
-    if (res.success && res.data?.authorize_url) {
-      // Redirect to GitHub's authorization page; Nest handles the callback and
-      // stores the verified username server-side.
-      window.location.href = res.data.authorize_url
+    const res = await getGithubOAuthUrl(token)
+    if (res.success && res.data?.url) {
+      // Nest handles the callback and stores the verified username server-side,
+      // then redirects back to /settings?github_linked=true.
+      window.location.href = res.data.url
       return
     }
     setError(res.error ?? "Could not start GitHub verification")

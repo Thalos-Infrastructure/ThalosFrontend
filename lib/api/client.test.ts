@@ -21,7 +21,7 @@ describe("apiRequest", () => {
       "token-1",
     )
 
-    expect(result).toEqual({ success: true, data: { id: "agreement-1" } })
+    expect(result).toEqual({ success: true, data: { id: "agreement-1" }, status: 200 })
     expect(fetchMock).toHaveBeenCalledWith(
       expect.stringContaining("/agreements/agreement-1"),
       expect.objectContaining({
@@ -44,6 +44,7 @@ describe("apiRequest", () => {
     await expect(apiRequest("/agreements/missing")).resolves.toEqual({
       success: false,
       error: "Agreement not found",
+      status: 404,
     })
   })
 
@@ -59,6 +60,7 @@ describe("apiRequest", () => {
     await expect(apiRequest("/health")).resolves.toEqual({
       success: false,
       error: "Request failed",
+      status: 503,
     })
   })
 
@@ -80,6 +82,16 @@ describe("apiRequest", () => {
     await expect(apiRequest("/wallets")).resolves.toEqual({
       success: false,
       error: "wallet is required; amount must be positive",
+      status: 400,
     })
+  })
+
+  it("exposes the HTTP status so callers can distinguish 404 from other failures", async () => {
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({ error: "nope" }), { status: 404 }))
+    vi.stubGlobal("fetch", fetchMock)
+
+    const result = await apiRequest("/profiles/handle/ghost")
+    expect(result.success).toBe(false)
+    expect(result.status).toBe(404)
   })
 })

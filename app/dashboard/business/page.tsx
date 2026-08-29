@@ -29,13 +29,18 @@ import { ProfileEditor } from "@/components/profile/profile-editor"
 import { AgreementsView } from "@/components/agreements/agreements-view"
 import { ContactSelector } from "@/components/agreements/contact-selector"
 import { AgreementChat } from "@/components/agreements/agreement-chat"
+import { AiAgreementAssistant } from "@/components/agreements/ai-agreement-assistant"
+import {
+  Dialog, DialogContent, DialogTitle, DialogDescription,
+} from "@/components/ui/dialog"
 import { WalletSelector } from "@/components/dashboard/wallet-selector"
 import { WalletAgreementsPanel } from "@/components/dashboard/wallet-agreements-panel"
+import { getWalletsWithAgreements, type WalletWithAgreements, type WalletAgreement } from "@/lib/api/wallets"
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area,
 } from "recharts"
 import { createAgreement, sendTransaction, AgreementPayload, approveMilestone } from "@/services/trustlessworkService"
-import { STELLAR_EXPLORER_BASE_URL, SHOW_MOCKED_AGREEMENTS } from "@/lib/config"
+import { STELLAR_EXPLORER_BASE_URL } from "@/lib/config"
 import { getKybStatus, startKybSession } from "@/lib/api/kyb"
 import { KYB_ENTITY_TYPES, buildCreateKybSessionDto, canStartKybSession, isKybVerified, nextKybStatusAfterSessionStart, type KybEntityType } from "@/lib/kyb"
 import {
@@ -135,12 +140,46 @@ interface Agreement {
   client?: string
 }
 
-const initialAgreements: Agreement[] = [
-  { id: "ENT-001", title: "Fleet Vehicle Purchase", status: "funded", type: "Multi Release", counterparty: "G...DLR5", amount: "125,000", date: "2026-01-20", releaseStrategy: "per-milestone", milestones: [{ description: "Down Payment (10 units)", amount: "50,000", status: "released" }, { description: "Delivery of first batch", amount: "37,500", status: "approved" }, { description: "Final batch + inspection", amount: "37,500", status: "pending" }], receiver: "GBXGQJWVLWOYHFLVTKWV5FGHA3DLR5", currency: "USDC" },
-  { id: "ENT-002", title: "Resort Partnership Q2", status: "in_progress", type: "Multi Release", counterparty: "G...TRV8", amount: "48,000", date: "2026-01-15", releaseStrategy: "upon-completion", milestones: [{ description: "Contract signing", amount: "12,000", status: "approved" }, { description: "Marketing materials", amount: "12,000", status: "approved" }, { description: "Launch campaign", amount: "12,000", status: "pending" }, { description: "Performance review", amount: "12,000", status: "pending" }], receiver: "GBXGQJWVLWOYHFLVTKWV5FGHA3TRV8", currency: "USDC" },
-  { id: "ENT-003", title: "Corporate Event Setup", status: "released", type: "Single Release", counterparty: "G...EVT2", amount: "15,000", date: "2025-12-18", milestones: [{ description: "Full event delivery", amount: "15,000", status: "released" }], receiver: "GBXGQJWVLWOYHFLVTKWV5FGHA3EVT2", currency: "USDC" },
-  { id: "ENT-004", title: "Property Management Fee", status: "in_progress", type: "Multi Release", counterparty: "G...RNT9", amount: "6,500", date: "2025-12-05", releaseStrategy: "all-at-once", milestones: [{ description: "Q1 management fee", amount: "1,625", status: "approved" }, { description: "Q2 management fee", amount: "1,625", status: "approved" }, { description: "Q3 management fee", amount: "1,625", status: "approved" }, { description: "Q4 management fee", amount: "1,625", status: "pending" }], receiver: "GBXGQJWVLWOYHFLVTKWV5FGHA3RNT9", currency: "USDC" },
-]
+const initialAgreements: Agreement[] = []
+
+// Agreements listing is sourced from Nest (source of truth); TW escrow reads are
+// still used only for the approver tab, which needs live on-chain milestone state
+// to drive the approve/release actions.
+import { getAgreementsByWallet } from "@/lib/actions/agreements"
+import type { AgreementWithParticipants, AgreementStatus as NestAgreementStatus } from "@/lib/actions/agreements"
+
+const NEST_STATUS_TO_UI: Record<NestAgreementStatus, string> = {
+  pending: "pending",
+  funded: "funded",
+  active: "in_progress",
+  completed: "released",
+  disputed: "awaiting",
+  resolved: "released",
+  cancelled: "cancelled",
+}
+
+function mapNestAgreementToUi(agreement: AgreementWithParticipants, workspaceWallet: string | null): Agreement {
+  const isMulti = agreement.agreement_type === "multi"
+  const counterparty = agreement.participants?.find(p => p.wallet_address !== workspaceWallet)?.wallet_address
+
+  return {
+    id: agreement.contract_id || agreement.id,
+    title: agreement.title,
+    counterparty: counterparty ? `${counterparty.slice(0, 8)}...` : `${agreement.created_by.slice(0, 8)}...`,
+    status: NEST_STATUS_TO_UI[agreement.status] ?? agreement.status,
+    amount: agreement.amount,
+    currency: agreement.asset || "USDC",
+    type: isMulti ? "Multi Release" : "Single Release",
+    date: agreement.created_at.split("T")[0],
+    milestones: agreement.milestones.map(m => ({
+      description: m.description,
+      amount: m.amount,
+      status: m.status,
+    })),
+    receiver: counterparty || "",
+    role: workspaceWallet === agreement.created_by ? "seller" : "buyer",
+  }
+}
 
 const statusConfig: Record<string, { labelKey: string; color: string }> = {
   funded: { labelKey: "status.funded", color: "bg-blue-500/10 text-blue-400 border-blue-500/20" },
@@ -257,6 +296,7 @@ export default function BusinessDashboardPage() {
   const [activeSection, setActiveSection] = useState("agreements")
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [showProfileEditor, setShowProfileEditor] = useState(false)
+  const [showAiAssistant, setShowAiAssistant] = useState(false)
   const [companyProfile, setCompanyProfile] = useState<Profile | null>(null)
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
   
@@ -423,15 +463,38 @@ export default function BusinessDashboardPage() {
   }
 
   const [agreements, setAgreements] = useState<Agreement[]>(initialAgreements)
+  const [walletsData, setWalletsData] = useState<WalletWithAgreements[]>([])
+  const [agreementsLoading, setAgreementsLoading] = useState(false)
+  const [agreementsError, setAgreementsError] = useState<string | null>(null)
   const [viewingAgreement, setViewingAgreement] = useState<string | null>(null)
   const [showAgreementChat, setShowAgreementChat] = useState<string | null>(null)
   const [disputedMs, setDisputedMs] = useState<Set<string>>(new Set())
   const [showDisputeConfirm, setShowDisputeConfirm] = useState<{ agrId: string; msIdx: number } | null>(null)
   const [approverEscrows, setApproverEscrows] = useState<Agreement[]>([])
   const [approverLoading, setApproverLoading] = useState(false)
-  
-  // Helper to map escrow to agreement format
-  const mapEscrowToAgreement = (e: any): Agreement => {
+
+  // Fetch wallets with agreements
+  useEffect(() => {
+    if (!token) return;
+    let isMounted = true;
+    async function fetchWalletsData() {
+      try {
+        const res = await getWalletsWithAgreements(token!);
+        if (isMounted && res.success && res.data) {
+          setWalletsData(res.data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch wallets with agreements:", err);
+      }
+    }
+    fetchWalletsData();
+    return () => {
+      isMounted = false;
+    };
+  }, [token]);
+
+  // Helper to map a TW escrow (approver tab only) to agreement format
+  const mapEscrowToApproverAgreement = (e: any): Agreement => {
     const milestones = e.milestones as Array<{ description?: string; amount?: number; approved?: boolean; released?: boolean; status?: string }> || [];
     const isMulti = (e.type as string) === "multi-release" || milestones.length > 1;
     const amount = isMulti 
@@ -441,7 +504,9 @@ export default function BusinessDashboardPage() {
     return {
       id: e.contractId as string || `escrow-${Date.now()}`,
       title: e.title as string || "Escrow Agreement",
-      counterparty: ((e.serviceProvider as string) || (e.receiver as string) || "").slice(0, 8) + "...",
+      counterparty: ((e.serviceProvider as string) || (e.receiver as string))
+        ? ((e.serviceProvider as string) || (e.receiver as string)).slice(0, 8) + "..."
+        : "-",
       status: e.status as string || "pending",
       amount,
       currency: "USDC",
@@ -452,12 +517,13 @@ export default function BusinessDashboardPage() {
         amount: String(m.amount || 0),
         status: m.released ? "released" : m.approved ? "approved" : "pending" as "pending" | "approved" | "released",
       })),
-      receiver: e.receiver as string || "",
+      receiver: (e.receiver as string) || "-",
+      serviceProvider: (e.serviceProvider as string) || "-",
       role: currentWorkspaceWallet === e.serviceProvider ? "seller" : "buyer",
     };
   };
 
-  // Fetch all escrows where user has any role
+  // Fetch agreements from Nest (source of truth) for the current workspace wallet
   const fetchedEscrowsRef = useRef<string | null>(null);
   useEffect(() => {
     if (!currentWorkspaceWallet) return;
@@ -468,43 +534,21 @@ export default function BusinessDashboardPage() {
     if (fetchedEscrowsRef.current === fetchKey) return;
     fetchedEscrowsRef.current = fetchKey;
 
-    async function fetchAllEscrows() {
-      // MIGRATION: Using escrowMigration wrapper
-      const { getEscrowsBySigner, getEscrowsByRole } = await import("@/services/escrowMigration");
-      const seenIds = new Set<string>();
-      const allAgreements: Agreement[] = [];
-      
-      // Fetch escrows by signer
-      const signerRes = await getEscrowsBySigner(workspaceWallet, token ?? undefined);
-      if (signerRes.success && Array.isArray(signerRes.data)) {
-        signerRes.data.forEach((escrow: any) => {
-          if (!seenIds.has(escrow.contractId)) {
-            seenIds.add(escrow.contractId);
-            allAgreements.push(mapEscrowToAgreement(escrow));
-          }
-        });
+    async function fetchAgreements() {
+      setAgreementsLoading(true);
+      setAgreementsError(null);
+      const { agreements: nestAgreements, error } = await getAgreementsByWallet(workspaceWallet, token ?? undefined);
+      if (error) {
+        setAgreementsError(error);
+        setAgreementsLoading(false);
+        return;
       }
-      
-      // Fetch by each role
-      const roles = ["receiver", "service_provider", "approver"] as const;
-      for (const role of roles) {
-        const res = await getEscrowsByRole({ role, address: workspaceWallet }, token ?? undefined);
-        if (res.success && Array.isArray(res.data)) {
-          res.data.forEach((escrow: any) => {
-            if (!seenIds.has(escrow.contractId)) {
-              seenIds.add(escrow.contractId);
-              allAgreements.push(mapEscrowToAgreement(escrow));
-            }
-          });
-        }
-      }
-      
-      if (allAgreements.length > 0) {
-        setAgreements(allAgreements);
-      }
+      const mapped = nestAgreements.map(a => mapNestAgreementToUi(a, workspaceWallet));
+      setAgreements(mapped);
+      setAgreementsLoading(false);
     }
-    
-    fetchAllEscrows();
+
+    fetchAgreements();
   }, [currentWorkspaceWallet, token]);
 
   // Fetch approver escrows (for approver tab)
@@ -517,7 +561,7 @@ export default function BusinessDashboardPage() {
         const { getEscrowsByRole } = await import("@/services/escrowMigration");
         const res = await getEscrowsByRole({ role: "approver", address: workspaceWallet }, token ?? undefined);
         if (res.success && Array.isArray(res.data)) {
-          setApproverEscrows(res.data.map((e: any) => mapEscrowToAgreement(e)));
+          setApproverEscrows(res.data.map((e: any) => mapEscrowToApproverAgreement(e)));
         }
       } catch (err) {
         console.error("Error fetching approver escrows:", err);
@@ -648,6 +692,20 @@ export default function BusinessDashboardPage() {
     setNotifyEmail(""); setSignerEmail(""); setSelectedWallet(connectedWallets[0].value)
   }
 
+  const handleAiDraft = (draft: { title: string; description: string; escrowType: "single" | "multi"; useCase: string | null; milestones: { description: string; amount: string }[] }) => {
+    setActiveSection("create")
+    setStep(2)
+    setEscrowType(draft.escrowType)
+    setTitle(draft.title)
+    setDescription(draft.description)
+    if (draft.useCase) setUseCase(draft.useCase)
+    setGuidePrefilled(true)
+    if (draft.milestones.length > 0) {
+      setMilestones(draft.milestones.map(m => ({ description: m.description, amount: m.amount || "" })))
+    }
+    setShowAiAssistant(false)
+  }
+
   const agreementUrl = typeof window !== "undefined" ? `${window.location.origin}/dashboard/business` : "https://thalos.app/dashboard/business"
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(agreementUrl)}&bgcolor=0a0a0a&color=f0b400&qzone=3&format=png`
 
@@ -658,29 +716,114 @@ export default function BusinessDashboardPage() {
   const [sortBy, setSortBy] = useState<"date" | "amount" | "title">("date")
 
   const filteredAgreements = useMemo(() => {
-    let filtered = [...agreements]
-    if (statusFilter !== "all") {
-      filtered = filtered.filter(agr => {
-        const allReleased = agr.milestones.every(m => m.status === "released")
-        const effectiveStatus = allReleased ? "released" : agr.status
-        return effectiveStatus === statusFilter
-      })
+    // Step A: Resolve the wallet set (flatten all or filter by selectedWalletPubKey)
+    let list: Array<{
+      id: string;
+      title: string;
+      status: string;
+      amount: string;
+      currency: string;
+      type: "Single Release" | "Multi Release";
+      counterparty: string;
+      date: string;
+      updatedAt?: string;
+      role?: "buyer" | "seller";
+      receiver?: string;
+      serviceProvider?: string;
+      milestones: Array<{ status: string; description?: string; amount?: string; approved?: boolean }>;
+    }> = [];
+
+    if (walletsData && walletsData.length > 0) {
+      if (!walletFilter || walletFilter === "all" || walletFilter === "All") {
+        // Flatten all agreements arrays from walletsData into one combined array
+        list = walletsData.flatMap((w) =>
+          w.agreements.map((a) => ({
+            id: a.id,
+            title: a.title,
+            status: a.status,
+            amount: a.amount,
+            currency: "USDC",
+            type: "Single Release" as const,
+            counterparty: "-",
+            date: a.created_at ? a.created_at.split("T")[0] : new Date().toISOString().split("T")[0],
+            updatedAt: a.created_at,
+            role: (a.role === "seller" ? "seller" : "buyer") as "buyer" | "seller",
+            receiver: "-",
+            serviceProvider: "-",
+            milestones: [{ status: a.status }],
+          }))
+        );
+      } else {
+        // Specific wallet selected
+        const targetWallet = walletsData.find((w) => w.wallet_address === walletFilter);
+        list = targetWallet
+          ? targetWallet.agreements.map((a) => ({
+              id: a.id,
+              title: a.title,
+              status: a.status,
+              amount: a.amount,
+              currency: "USDC",
+              type: "Single Release" as const,
+              counterparty: "-",
+              date: a.created_at ? a.created_at.split("T")[0] : new Date().toISOString().split("T")[0],
+              updatedAt: a.created_at,
+              role: (a.role === "seller" ? "seller" : "buyer") as "buyer" | "seller",
+              receiver: "-",
+              serviceProvider: "-",
+              milestones: [{ status: a.status }],
+            }))
+          : [];
+      }
+    } else {
+      // Fallback when walletsData is not yet loaded / available
+      let filtered = [...agreements];
+      if (walletFilter && walletFilter !== "all" && walletFilter !== "All") {
+        filtered = filtered.filter(
+          (a) =>
+            (a as unknown as { receiver?: string }).receiver === walletFilter ||
+            (a as unknown as { serviceProvider?: string }).serviceProvider === walletFilter
+        );
+      }
+      list = filtered.map((a) => ({
+        ...a,
+        updatedAt: a.date,
+        currency: a.currency || "USDC",
+      }));
     }
+
+    // Step B: Apply searchQuery filtering
     if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase()
-      filtered = filtered.filter(agr =>
-        agr.title.toLowerCase().includes(q) ||
-        agr.counterparty.toLowerCase().includes(q) ||
-        agr.id.toLowerCase().includes(q)
-      )
+      const q = searchQuery.toLowerCase();
+      list = list.filter(
+        (agr) =>
+          (agr.title && agr.title.toLowerCase().includes(q)) ||
+          (agr.counterparty && agr.counterparty.toLowerCase().includes(q)) ||
+          (agr.id && agr.id.toLowerCase().includes(q))
+      );
     }
-    filtered.sort((a, b) => {
-      if (sortBy === "date") return b.date.localeCompare(a.date)
-      if (sortBy === "amount") return parseFloat(b.amount.replace(/,/g, "")) - parseFloat(a.amount.replace(/,/g, ""))
-      return a.title.localeCompare(b.title)
-    })
-    return filtered
-  }, [agreements, statusFilter, searchQuery, sortBy])
+
+    // Step C: Apply statusFilter filtering
+    if (statusFilter !== "all") {
+      list = list.filter((a) => {
+        const allReleased = a.milestones && a.milestones.length > 0 && a.milestones.every((m) => m.status === "released");
+        const actualStatus = allReleased ? "released" : a.status;
+        return actualStatus === statusFilter;
+      });
+    }
+
+    // Step D: Apply sortBy ordering
+    list.sort((a, b) => {
+      if (sortBy === "date") return (b.date || "").localeCompare(a.date || "");
+      if (sortBy === "amount") {
+        const amountA = parseFloat(String(a.amount || "0").replace(/,/g, "")) || 0;
+        const amountB = parseFloat(String(b.amount || "0").replace(/,/g, "")) || 0;
+        return amountB - amountA;
+      }
+      return (a.title || "").localeCompare(b.title || "");
+    });
+
+    return list;
+  }, [walletsData, walletFilter, agreements, searchQuery, statusFilter, sortBy]);
 
   const statusCounts = useMemo(() => {
     const counts = { all: agreements.length, funded: 0, in_progress: 0, released: 0 }
@@ -703,8 +846,9 @@ export default function BusinessDashboardPage() {
 
   useEffect(() => {
     if (!walletAddress) return
+    const activeWallet = walletAddress
     setTemplatesLoading(true)
-    getTemplatesByOwner(walletAddress)
+    getTemplatesByOwner(activeWallet)
       .then(({ templates: data }) => {
         setTemplates(
           (data ?? []).map((t) => ({
@@ -719,11 +863,12 @@ export default function BusinessDashboardPage() {
 
   const saveAsTemplate = async () => {
     if (!walletAddress) return
+    const activeWallet = walletAddress
     const milestoneData = milestones.map(m => ({ description: m.description, amount: m.amount, status: "pending" as const }))
     const meta = { useCase: useCase || "" }
 
     if (editingTemplate) {
-      const { template, error } = await updateTemplate(editingTemplate, walletAddress, {
+      const { template, error } = await updateTemplate(editingTemplate, activeWallet, {
         name: templateName.trim() || title,
         title,
         description,
@@ -743,7 +888,7 @@ export default function BusinessDashboardPage() {
       )
     } else {
       const { template, error } = await createTemplate({
-        owner_wallet: walletAddress,
+        owner_wallet: activeWallet,
         name: templateName.trim() || title,
         title,
         description,
@@ -776,8 +921,9 @@ export default function BusinessDashboardPage() {
 
   const deleteTemplate = async (id: string) => {
     if (!walletAddress || deletingTemplateId) return
+    const activeWallet = walletAddress
     setDeletingTemplateId(id)
-    const { success } = await deleteTemplateAction(id, walletAddress)
+    const { success } = await deleteTemplateAction(id, activeWallet)
     if (success) {
       setTemplates(prev => prev.filter(t => t.id !== id))
       toast.success(t("dashPage.templateDeleted"))
@@ -1120,46 +1266,43 @@ export default function BusinessDashboardPage() {
           {activeSection === "agreements" && !isActiveSectionKybGated && !viewingAgreement && (
             <div className="mx-auto max-w-4xl animate-in fade-in slide-in-from-bottom-2 duration-300">
               {/* Header */}
-              <div className="mb-6 flex items-center justify-between">
+              <div className="mb-6 flex flex-wrap items-center justify-between gap-2">
                 <h1 className="text-2xl font-semibold text-white">{t("dashPage.enterpriseAgreements")}</h1>
-                <Button onClick={() => { setActiveSection("create"); resetWizard() }} className="rounded-full bg-[#3b82f6] px-6 text-sm font-semibold text-white hover:bg-[#2563eb] shadow-[0_4px_16px_rgba(59,130,246,0.25)]">+ {t("dashPage.newAgreement")}</Button>
+                <div className="flex items-center gap-2">
+                  <Button onClick={() => setShowAiAssistant(true)}
+                    className="rounded-full bg-purple-500/10 px-5 text-sm font-semibold text-purple-400 hover:bg-purple-500/20 border border-purple-500/20">
+                    Create with AI
+                  </Button>
+                  <Button onClick={() => { setActiveSection("create"); resetWizard() }} className="rounded-full bg-[#3b82f6] px-6 text-sm font-semibold text-white hover:bg-[#2563eb] shadow-[0_4px_16px_rgba(59,130,246,0.25)]">+ {t("dashPage.newAgreement")}</Button>
+                </div>
               </div>
 
               {/* Wallet filter — only renders when user has multiple linked wallets */}
               <WalletSelector
                 selectedWallet={walletFilter}
                 onWalletChange={setWalletFilter}
+                walletsData={walletsData}
                 className="mb-6"
               />
 
-              {/* Agreements view, pre-filtered by selected wallet */}
+              {agreementsError && (
+                <div className="mb-6 flex items-center gap-3 rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-3 text-sm text-red-400">
+                  <AlertTriangle className="h-4 w-4 shrink-0" />
+                  <span>{agreementsError}</span>
+                </div>
+              )}
+
+              {agreementsLoading ? (
+                <div className="flex items-center justify-center py-16 text-sm text-white/40">Loading agreements...</div>
+              ) : (
+              /* Agreements view, pre-filtered by selected wallet */
               <AgreementsView
-                agreements={(() => {
-                  const all = [
-                    ...agreements.map(a => ({ ...a, updatedAt: a.date, currency: "USDC" })),
-                    ...approverEscrows.map(e => ({
-                      id: e.id,
-                      title: e.title,
-                      counterparty: e.counterparty,
-                      status: e.status,
-                      amount: e.amount,
-                      currency: "USDC",
-                      type: e.type,
-                      updatedAt: e.date,
-                      milestones: e.milestones,
-                      role: (e as unknown as { role?: "buyer" | "seller" }).role,
-                    })),
-                  ]
-                  if (!walletFilter) return all
-                  return all.filter(a =>
-                    (a as unknown as { receiver?: string }).receiver === walletFilter ||
-                    (a as unknown as { serviceProvider?: string }).serviceProvider === walletFilter
-                  )
-                })()}
+                agreements={filteredAgreements}
                 onAgreementClick={(id) => setViewingAgreement(id)}
                 onOpenChat={(id) => setShowAgreementChat(id)}
                 currentUserWallet={walletAddress || undefined}
               />
+              )}
             </div>
           )}
 
@@ -1581,9 +1724,15 @@ export default function BusinessDashboardPage() {
                 </div>
               ) : (
               <>
-              <div className="mb-6 flex items-center justify-between">
+              <div className="mb-6 flex flex-wrap items-center justify-between gap-2">
                 <h1 className="text-2xl font-semibold text-white">New Agreement</h1>
-                <Button onClick={() => { setActiveSection("agreements"); resetWizard() }} className="rounded-full bg-white/10 px-6 text-sm font-semibold text-white/70 hover:bg-white/15 hover:text-white">View Agreements</Button>
+                <div className="flex items-center gap-2">
+                  <Button onClick={() => setShowAiAssistant(true)}
+                    className="rounded-full bg-purple-500/10 px-5 text-sm font-semibold text-purple-400 hover:bg-purple-500/20 border border-purple-500/20">
+                    Create with AI
+                  </Button>
+                  <Button onClick={() => { setActiveSection("agreements"); resetWizard() }} className="rounded-full bg-white/10 px-6 text-sm font-semibold text-white/70 hover:bg-white/15 hover:text-white">View Agreements</Button>
+                </div>
               </div>
 
               {!submitted && (
@@ -1922,6 +2071,19 @@ export default function BusinessDashboardPage() {
     )}
   </div>
       
+      {/* AI Agreement Assistant Dialog */}
+      <Dialog open={showAiAssistant} onOpenChange={setShowAiAssistant}>
+        <DialogContent className="sm:max-w-xl max-h-[80vh] flex flex-col" showCloseButton={false}>
+          <DialogTitle className="sr-only">AI Agreement Assistant</DialogTitle>
+          <DialogDescription className="sr-only">Describe your deal to generate an agreement draft</DialogDescription>
+          <AiAgreementAssistant
+            profile="business"
+            onDraftComplete={handleAiDraft}
+            onClose={() => setShowAiAssistant(false)}
+          />
+        </DialogContent>
+      </Dialog>
+
       {/* Footer */}
       <Footer />
 

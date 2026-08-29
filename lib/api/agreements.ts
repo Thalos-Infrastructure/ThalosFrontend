@@ -104,56 +104,27 @@ export async function createAgreement(
   }
 }
 
-/**
- * Get all agreements (with optional filters)
- * Backend returns: { agreements, error }
- */
-export async function getAgreements(
-  params?: { status?: string; type?: string },
-  token?: string
-): Promise<ApiResponse<Agreement[]>> {
-  try {
-    const queryParams = new URLSearchParams()
-    if (params?.status) queryParams.set("status", params.status)
-    if (params?.type) queryParams.set("type", params.type)
-    
-    const query = queryParams.toString()
-    const endpoint = query ? `/agreements?${query}` : "/agreements"
-
-    const response = await apiRequest<unknown>(endpoint, { method: "GET" }, token)
-
-    if (!response.success) {
-      return { success: false, error: response.error }
-    }
-
-    const payload = response.data as Record<string, unknown>
-    const agreements = (payload.agreements as Agreement[]) || []
-    const error = payload.error as string | undefined
-
-    if (error) {
-      return { success: false, error }
-    }
-
-    return { success: true, data: agreements }
-  } catch (e) {
-    return {
-      success: false,
-      error: e instanceof Error ? e.message : "Failed to fetch agreements",
-    }
-  }
+/** Agreement as returned by the by-wallet listing, with participants when the backend embeds them. */
+export interface AgreementWithParticipants extends Agreement {
+  participants?: AgreementParticipant[]
 }
 
 /**
- * Get agreements by wallet address
+ * Get agreements a wallet participates in, optionally filtered by status/type.
  * Backend returns: { agreements, error }
  */
 export async function getAgreementsByWallet(
   walletAddress: string,
-  token?: string
-): Promise<ApiResponse<Agreement[]>> {
+  token?: string,
+  params?: { status?: string; type?: string }
+): Promise<ApiResponse<AgreementWithParticipants[]>> {
   try {
+    const queryParams = new URLSearchParams({ wallet: walletAddress })
+    if (params?.status) queryParams.set("status", params.status)
+    if (params?.type) queryParams.set("type", params.type)
+
     const response = await apiRequest<unknown>(
-      `/agreements/by-wallet?wallet=${encodeURIComponent(walletAddress)}`,
+      `/agreements/by-wallet?${queryParams.toString()}`,
       { method: "GET" },
       token
     )
@@ -163,7 +134,7 @@ export async function getAgreementsByWallet(
     }
 
     const payload = response.data as Record<string, unknown>
-    const agreements = (payload.agreements as Agreement[]) || []
+    const agreements = (payload.agreements as AgreementWithParticipants[]) || []
     const error = payload.error as string | undefined
 
     if (error) {
