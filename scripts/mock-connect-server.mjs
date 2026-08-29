@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 /**
  * Local mock for the Thalos Connect API (opportunities + applications).
- * Dev/testing aid ONLY — implements the documented contract of
- * ThalosBackend#138 (opportunities) and #149 (applications) against the
- * default frontend API_URL (http://localhost:3001/v1).
+ * Dev/testing aid ONLY — implements the contract of ThalosBackend#168
+ * (applications) and #138 (opportunities) against the default frontend
+ * API_URL (http://localhost:3001/v1).
  *
  * Run with:  pnpm mock:connect   (or: node scripts/mock-connect-server.mjs)
  * Then start the frontend:       pnpm dev  → http://localhost:3000
@@ -228,6 +228,12 @@ function handle(req, res) {
       if (!isUuid(opportunityId)) return send(res, 400, { application: null, error: "opportunity_id must be a UUID" })
       const opp = opportunities.get(opportunityId)
       if (!opp) return send(res, 404, { application: null, error: "Opportunity not found" })
+
+      // Owner cannot apply to their own opportunity (matches real BE#139).
+      if (opp.project_id === builderId) {
+        return send(res, 403, { application: null, error: "Projects cannot apply to their own opportunities" })
+      }
+
       if (opp.status !== "open") return send(res, 409, { application: null, error: "This opportunity is no longer open" })
 
       const duplicate = [...applications.values()].find(
@@ -255,8 +261,11 @@ function handle(req, res) {
   if (req.method === "GET" && path === `${V1}/applications`) {
     const opportunityId = url.searchParams.get("opportunity_id")
     if (!isUuid(opportunityId)) return send(res, 400, { applications: [], error: "opportunity_id is required" })
+    const callerId = callerSub(req)
+    const opp = opportunities.get(opportunityId)
+    const isOwner = opp && callerId && opp.project_id === callerId
     const rows = [...applications.values()]
-      .filter((a) => a.opportunity_id === opportunityId)
+      .filter((a) => a.opportunity_id === opportunityId && (isOwner || a.builder_id === callerId))
       .sort((a, b) => (a.created_at < b.created_at ? -1 : 1))
     return send(res, 200, { applications: rows, error: null })
   }
@@ -270,14 +279,29 @@ function handle(req, res) {
       }
       const application = applications.get(appPatch[1])
       if (!application) return send(res, 404, { application: null, error: "Application not found" })
+
+      // Only the opportunity owner can accept/reject (matches real BE#139).
+      const callerId = callerSub(req)
+      const opp = opportunities.get(application.opportunity_id)
+      if (!opp || opp.project_id !== callerId) {
+        return send(res, 403, { application: null, error: "Only the owning Project can perform this action" })
+      }
+
       if (application.status !== "pending") {
         return send(res, 409, { application: null, error: `Application is already ${application.status} and cannot be changed` })
       }
       application.status = body.status
       application.updated_at = new Date().toISOString()
       if (body.status === "accepted") {
-        const opp = opportunities.get(application.opportunity_id)
-        if (opp) opp.filled_at = new Date().toISOString()
+        // Mark opportunity as filled (matches real BE — status:"filled", not filled_at).
+        if (opp) opp.status = "filled"
+        // Reject all other pending applications for this opportunity.
+        for (const other of applications.values()) {
+          if (other.opportunity_id === application.opportunity_id && other.id !== application.id && other.status === "pending") {
+            other.status = "rejected"
+            other.updated_at = new Date().toISOString()
+          }
+        }
       }
       console.log(`[mock] PATCH /applications/${application.id} → ${application.status}`)
       return send(res, 200, { application, error: null })
