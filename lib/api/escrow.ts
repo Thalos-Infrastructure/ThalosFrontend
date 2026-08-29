@@ -235,12 +235,20 @@ export async function fundEscrow(
 }
 
 // Submit evidence for milestone
+/**
+ * @deprecated Use submitMilestoneEvidence from @/lib/api/evidence instead
+ * This endpoint is deprecated as part of GF-4-FE migration to canonical evidence path
+ * Will be removed in a future version
+ */
 export async function submitEvidence(
   contractId: string,
   milestoneIndex: number,
   evidence: { description: string; files?: string[] },
   token: string
 ): Promise<ApiResponse<Escrow>> {
+  console.warn(
+    "submitEvidence from escrow.ts is deprecated. Use submitMilestoneEvidence from @/lib/api/evidence instead"
+  )
   return apiRequest<Escrow>(
     `/escrow/${contractId}/milestones/${milestoneIndex}/evidence`,
     {
