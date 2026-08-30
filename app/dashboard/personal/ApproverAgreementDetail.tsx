@@ -27,7 +27,7 @@ interface ApproverAgreementDetailProps {
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { cn, isMockAgreement } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { statusConfig } from "./statusConfig";
 import { useLanguage } from "@/lib/i18n";
 import { useHasSigningWallet } from "@/lib/use-current-address";
@@ -117,10 +117,6 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
   }
 
   async function handleDispute(idx: number) {
-    if (isMockAgreement(agr.id)) {
-      alert("Demo agreement — actions are unavailable.");
-      return;
-    }
     setDisputingMs(idx);
     setErrorMs(null);
     setTxStatus("building");
@@ -154,10 +150,6 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
   }
 
   async function handleApprove(idx: number) {
-    if (isMockAgreement(agr.id)) {
-      alert("Demo agreement — actions are unavailable.");
-      return;
-    }
     setLoadingMs(idx);
     setErrorMs(null);
     setTxStatus("building");
@@ -175,10 +167,6 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
   }
 
   async function handleReleaseAll() {
-    if (isMockAgreement(agr.id)) {
-      alert("Demo agreement — actions are unavailable.");
-      return;
-    }
     setLoadingMs(-1);
     setErrorMs(null);
     setTxStatus("building");
@@ -278,10 +266,6 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
           </div>
           <Button
             onClick={() => {
-              if (isMockAgreement(agr.id)) {
-                alert("Demo agreement — actions are unavailable.");
-                return;
-              }
               fundAndSignEscrow({
               contractId: agr.id,
               amount: agr.amount,
