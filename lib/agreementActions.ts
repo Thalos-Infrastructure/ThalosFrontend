@@ -27,9 +27,8 @@ export interface FundAndSignEscrowParams {
   amount: string;
   walletAddress: string | null;
   serviceType?: ServiceType;
-  /** App JWT — required for routing through the Nest backend (GF-2). */
   token?: string | null;
-  openWalletModal: (onConnected?: (address: string) => void) => Promise<void>;
+  openWalletModal?: (onConnected?: (address: string) => void) => Promise<void>;
   setFunding: (v: boolean) => void;
   setError: (msg: string | null) => void;
   setSuccess: (v: boolean) => void;
@@ -44,9 +43,8 @@ export interface ChangeMilestoneStatusParams {
   serviceProvider: string;
   serviceType: ServiceType;
   walletAddress: string | null;
-  /** App JWT — required for routing through the Nest backend (GF-2). */
   token?: string | null;
-  openWalletModal: (onConnected?: (address: string) => void) => Promise<void>;
+  openWalletModal?: (onConnected?: (address: string) => void) => Promise<void>;
   setSubmitting: (v: boolean) => void;
   setError: (msg: string | null) => void;
   onStatus?: (status: TxStatus) => void;
@@ -315,7 +313,7 @@ export async function fundAndSignEscrow({
     // GF-2: route through migration layer — when flag ON, builds unsigned XDR
     // via Nest backend instead of calling Trustless Work directly from the browser.
     const response = await fundEscrow(contractId, walletAddress, Number(amount), serviceType, token ?? undefined);
-    await processTransaction(response, "Fund escrow failed", walletAddress, openWalletModal, {
+    await processTransaction(response, "Fund escrow failed", walletAddress, {
       operation: "fund",
       onStatus,
     }, token);

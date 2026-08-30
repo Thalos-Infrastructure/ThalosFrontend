@@ -287,6 +287,7 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
               amount: agr.amount,
               walletAddress,
               serviceType: agr.type === "Multi Release" ? "multi-release" : "single-release",
+              token: token ?? undefined,
               setFunding,
               setError: setFundError,
               setSuccess: setFundSuccess,
