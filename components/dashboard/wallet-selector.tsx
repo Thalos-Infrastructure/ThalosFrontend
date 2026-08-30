@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils"
 import { useAuthStore } from "@/lib/auth-store"
 import { useStellarWallet } from "@/lib/stellar-wallet"
 import { useCurrentAddress } from "@/lib/use-current-address"
-import { getWalletsWithAgreements, type WalletWithAgreements } from "@/lib/api/wallets"
+import { getWalletsWithBalances, type WalletWithAgreements } from "@/lib/api/wallets"
 
 interface WalletSelectorProps {
   selectedWallet: string | null
@@ -41,6 +41,7 @@ export function WalletSelector({ selectedWallet, onWalletChange, walletsData: pr
     let isMounted = true
     async function load() {
       setIsLoading(true)
+
       if (!token) {
         if (currentAddress && isMounted) {
           setInternalWallets([connectedWalletFallback(currentAddress)])
@@ -50,7 +51,8 @@ export function WalletSelector({ selectedWallet, onWalletChange, walletsData: pr
       }
 
       try {
-        const result = await getWalletsWithAgreements(token)
+        const result = await getWalletsWithBalances(token)
+
         if (isMounted && result.success && result.data && result.data.length > 0) {
           setInternalWallets(result.data)
         } else if (isMounted && currentAddress) {
@@ -58,6 +60,7 @@ export function WalletSelector({ selectedWallet, onWalletChange, walletsData: pr
         }
       } catch (err) {
         console.error("Failed to load wallets:", err)
+
         if (isMounted && currentAddress) {
           setInternalWallets([connectedWalletFallback(currentAddress)])
         }
@@ -67,6 +70,7 @@ export function WalletSelector({ selectedWallet, onWalletChange, walletsData: pr
     }
 
     load()
+
     return () => {
       isMounted = false
     }
@@ -139,7 +143,9 @@ export function WalletSelector({ selectedWallet, onWalletChange, walletsData: pr
                 <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
               </svg>
             )}
-            <span className="font-mono">{truncateAddress(wallet.wallet_address)}</span>
+            <span className="font-mono">
+              {wallet.label?.trim() || truncateAddress(wallet.wallet_address)}
+            </span>
             <span
               className={cn(
                 "rounded-full px-1.5 py-0.5 text-[10px] font-bold",

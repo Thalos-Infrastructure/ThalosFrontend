@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Eye, EyeOff, TrendingUp, ArrowDownToLine, ArrowUpFromLine } from "lucide-react"
+import { Eye, EyeOff, TrendingUp, ArrowDownToLine, ArrowUpFromLine, Loader2, AlertTriangle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useLanguage } from "@/lib/i18n"
 
@@ -14,6 +14,14 @@ interface BalanceCardProps {
   onDeposit: () => void
   onWithdraw: () => void
   className?: string
+  /** Show a loading skeleton while balances are being fetched. */
+  isLoading?: boolean
+  /** Show an error state instead of 0.00 when the fetch failed. */
+  isError?: boolean
+  /** Hide the yield stat (no backend source). */
+  hideYield?: boolean
+  /** Hide the in-escrow stat (no backend source). */
+  hideEscrow?: boolean
 }
 
 export function BalanceCard({
@@ -25,14 +33,28 @@ export function BalanceCard({
   onDeposit,
   onWithdraw,
   className,
+  isLoading = false,
+  isError = false,
+  hideYield = false,
+  hideEscrow = false,
 }: BalanceCardProps) {
   const { t } = useLanguage()
   const [showBalance, setShowBalance] = useState(true)
 
   const formatBalance = (value: string) => {
+    if (isLoading) return "——"
     if (!showBalance) return "••••••"
     return value
   }
+
+  // How many stats columns are visible
+  const visibleStats = [true, !hideEscrow, !hideYield].filter(Boolean).length
+  const statsGridClass =
+    visibleStats === 3
+      ? "grid-cols-3"
+      : visibleStats === 2
+        ? "grid-cols-2"
+        : "grid-cols-1"
 
   return (
     <div className={cn(
@@ -52,63 +74,102 @@ export function BalanceCard({
           <p className="text-xs font-bold uppercase tracking-widest text-white/40">
             {t("dashboard.totalBalance") || "Total Balance"}
           </p>
-          <button
-            onClick={() => setShowBalance(!showBalance)}
-            className="p-1.5 rounded-lg hover:bg-white/5 transition-colors"
-          >
-            {showBalance ? (
-              <Eye className="h-4 w-4 text-white/40" />
-            ) : (
-              <EyeOff className="h-4 w-4 text-white/40" />
-            )}
-          </button>
+          {isLoading ? (
+            <Loader2 className="h-4 w-4 text-white/40 animate-spin" />
+          ) : (
+            <button
+              onClick={() => setShowBalance(!showBalance)}
+              className="p-1.5 rounded-lg hover:bg-white/5 transition-colors"
+              aria-label={showBalance ? "Hide balance" : "Show balance"}
+            >
+              {showBalance ? (
+                <Eye className="h-4 w-4 text-white/40" />
+              ) : (
+                <EyeOff className="h-4 w-4 text-white/40" />
+              )}
+            </button>
+          )}
         </div>
 
-        {/* Main balance */}
-        <div className="mb-6">
-          <p className="text-3xl font-bold text-white">
-            {formatBalance(totalBalance)}{" "}
-            <span className="text-lg font-normal text-white/40">{currency}</span>
-          </p>
-        </div>
+        {/* Error state */}
+        {isError ? (
+          <div className="mb-6 flex items-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3">
+            <AlertTriangle className="h-4 w-4 shrink-0 text-red-400" />
+            <p className="text-sm text-red-400">
+              {t("dashboard.balanceFetchError") || "Could not load balance. Please try again."}
+            </p>
+          </div>
+        ) : (
+          <>
+            {/* Main balance */}
+            <div className="mb-6">
+              <p className={cn(
+                "text-3xl font-bold text-white",
+                isLoading && "animate-pulse text-white/40"
+              )}>
+                {formatBalance(totalBalance)}{" "}
+                <span className="text-lg font-normal text-white/40">{currency}</span>
+              </p>
+            </div>
 
-        {/* Stats row */}
-        <div className="grid grid-cols-3 gap-4 mb-6">
-          <div>
-            <p className="text-[10px] font-medium uppercase tracking-wider text-white/30 mb-1">
-              {t("dashboard.available") || "Available"}
-            </p>
-            <p className="text-sm font-semibold text-white">{formatBalance(availableBalance)}</p>
-          </div>
-          <div>
-            <p className="text-[10px] font-medium uppercase tracking-wider text-white/30 mb-1">
-              {t("dashboard.inEscrow") || "In Escrow"}
-            </p>
-            <p className="text-sm font-semibold text-[#f0b400]">{formatBalance(lockedInEscrow)}</p>
-          </div>
-          <div>
-            <p className="text-[10px] font-medium uppercase tracking-wider text-white/30 mb-1">
-              {t("dashboard.yieldEarned") || "Yield"}
-            </p>
-            <p className="text-sm font-semibold text-emerald-400 flex items-center gap-1">
-              <TrendingUp className="h-3 w-3" />
-              +{formatBalance(yieldEarned)}
-            </p>
-          </div>
-        </div>
+            {/* Stats row — only renders visible columns */}
+            <div className={cn("grid gap-4 mb-6", statsGridClass)}>
+              <div>
+                <p className="text-[10px] font-medium uppercase tracking-wider text-white/30 mb-1">
+                  {t("dashboard.available") || "Available"}
+                </p>
+                <p className={cn(
+                  "text-sm font-semibold text-white",
+                  isLoading && "animate-pulse text-white/40"
+                )}>
+                  {formatBalance(availableBalance)}
+                </p>
+              </div>
+              {!hideEscrow && (
+                <div>
+                  <p className="text-[10px] font-medium uppercase tracking-wider text-white/30 mb-1">
+                    {t("dashboard.inEscrow") || "In Escrow"}
+                  </p>
+                  <p className={cn(
+                    "text-sm font-semibold text-[#f0b400]",
+                    isLoading && "animate-pulse text-[#f0b400]/40"
+                  )}>
+                    {formatBalance(lockedInEscrow)}
+                  </p>
+                </div>
+              )}
+              {!hideYield && (
+                <div>
+                  <p className="text-[10px] font-medium uppercase tracking-wider text-white/30 mb-1">
+                    {t("dashboard.yieldEarned") || "Yield"}
+                  </p>
+                  <p className={cn(
+                    "text-sm font-semibold text-emerald-400 flex items-center gap-1",
+                    isLoading && "animate-pulse text-emerald-400/40"
+                  )}>
+                    <TrendingUp className="h-3 w-3" />
+                    +{formatBalance(yieldEarned)}
+                  </p>
+                </div>
+              )}
+            </div>
+          </>
+        )}
 
         {/* Action buttons */}
         <div className="flex gap-3">
           <button
             onClick={onDeposit}
-            className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#f0b400] py-3.5 text-sm font-semibold text-[#0c1220] hover:bg-[#e5ab00] transition-colors active:scale-[0.98]"
+            disabled={isLoading}
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#f0b400] py-3.5 text-sm font-semibold text-[#0c1220] hover:bg-[#e5ab00] transition-colors active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <ArrowDownToLine className="h-4 w-4" />
             {t("dashboard.deposit") || "Deposit"}
           </button>
           <button
             onClick={onWithdraw}
-            className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/5 py-3.5 text-sm font-semibold text-white hover:bg-white/10 transition-colors active:scale-[0.98]"
+            disabled={isLoading}
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/5 py-3.5 text-sm font-semibold text-white hover:bg-white/10 transition-colors active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <ArrowUpFromLine className="h-4 w-4" />
             {t("dashboard.withdraw") || "Withdraw"}
