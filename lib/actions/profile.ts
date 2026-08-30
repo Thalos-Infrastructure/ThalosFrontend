@@ -18,6 +18,10 @@ export type Profile = {
   entity_type: KybEntityType | null
   kyb_status: KybVerificationStatus
   kyb_session_id: string | null
+  /** Verified GitHub username (OAuth via Nest, not Supabase social) — C6. */
+  github_username?: string | null
+  /** ISO timestamp of GitHub ownership verification — C6. */
+  github_verified_at?: string | null
   created_at: string
   updated_at: string
 }
