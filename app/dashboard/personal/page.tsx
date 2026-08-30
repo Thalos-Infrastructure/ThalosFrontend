@@ -39,15 +39,13 @@ import { getWalletsWithAgreements, type WalletWithAgreements, type WalletAgreeme
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area,
 } from "recharts"
-import { createAgreement, sendTransaction, AgreementPayload, approveMilestone } from "@/services/trustlessworkService"
-import { STELLAR_EXPLORER_BASE_URL, STELLAR_EXPLORER_ACCOUNT_BASE_URL, TRUSTLINE_USDC } from "@/lib/config";
-import { getWalletBalance } from "@/lib/api/wallets";
+import { createAgreement, sendTransaction, AgreementPayload, approveMilestone } from "@/services/escrowMigration"
+import { STELLAR_EXPLORER_BASE_URL, TRUSTLINE_USDC, SHOW_MOCKED_AGREEMENTS } from "@/lib/config";
 import { getKycStatus, startKycSession } from "@/lib/api/kyc";
 import { MilestonePrPicker } from "@/components/github/milestone-pr-picker";
 import { AttachedPullRequests } from "@/components/github/attached-prs";
 import { getAttachedPrs, type GithubPullRequest } from "@/lib/api/github";
 import { isKycVerified, canStartKycSession, buildCreateKycSessionDto, nextKycStatusAfterSessionStart, type KycVerificationStatus } from "@/lib/kyc";
-import { updateProfile } from "@/lib/actions/profile";
 
 /* ── Use-Case Presets ── */
 const useCases = [
@@ -315,6 +313,8 @@ function SellerMilestoneList({ agr, agreements, setAgreements, t }: {
       serviceProvider: walletAddress,
       serviceType: agr.type === "Multi Release" ? "multi-release" : "single-release",
       walletAddress,
+      token,
+      openWalletModal,
       setSubmitting: (v: boolean) => v === false && setSubmitting(null),
       setError: (msg: string | null) => msg && alert(msg),
       onSuccess: () => {

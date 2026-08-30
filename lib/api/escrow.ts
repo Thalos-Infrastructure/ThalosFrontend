@@ -1,4 +1,4 @@
-import { apiRequest, type ApiResponse } from "./client"
+﻿import { apiRequest, type ApiResponse } from "./client"
 import type { MilestoneStatus, AgreementStatus } from "@/lib/types/status"
 
 export interface Milestone {
@@ -31,7 +31,7 @@ export interface Escrow {
 // Backend escrow WRITE relay (Trustless Work behind the Thalos backend)
 // ----------------------------------------------------------------------------
 // These match the real NestJS routes under /v1/escrows and their DTOs exactly.
-// The ValidationPipe uses forbidNonWhitelisted, so send ONLY these fields — the
+// The ValidationPipe uses forbidNonWhitelisted, so send ONLY these fields ΓÇö the
 // backend injects platformAddress/disputeResolver/engagementId/trustline itself.
 // Build endpoints return an UNSIGNED transaction; the wallet signs it client-side
 // and the signed XDR is submitted via submitSignedTransaction (send-transaction).
@@ -225,3 +225,4 @@ export async function getEscrowsByRole(
     token
   )
 }
+
