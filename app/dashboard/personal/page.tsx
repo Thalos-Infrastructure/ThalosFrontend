@@ -257,6 +257,7 @@ function SellerMilestoneList({ agr, agreements, setAgreements, t }: {
   const [expandedMs, setExpandedMs] = React.useState<number | null>(null)
 
   const { address: walletAddress, openWalletModal } = require("@/lib/stellar-wallet").useStellarWallet();
+  const { token } = require("@/lib/auth-store").useAuthStore();
   const { changeMilestoneStatusAgreement } = require("@/lib/agreementActions");
   const handleSubmitEvidence = async (idx: number) => {
     const evidence = evidenceInputs[idx]?.trim();
