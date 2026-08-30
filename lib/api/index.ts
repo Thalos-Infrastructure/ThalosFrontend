@@ -10,6 +10,7 @@ export * from "./agreements"
 export * from "./profiles"
 export * from "./opportunities"
 export * from "./applications"
+export * from "./github"
 
 // Re-export API_URL for convenience
 export { API_URL } from "@/lib/config"
