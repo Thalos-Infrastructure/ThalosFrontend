@@ -279,7 +279,6 @@ function SellerMilestoneList({ agr, agreements, setAgreements, t }: {
   const [attachedPrs, setAttachedPrs] = React.useState<Record<number, GithubPullRequest[]>>({})
 
   const { address: walletAddress, openWalletModal } = require("@/lib/stellar-wallet").useStellarWallet();
-  const { token } = require("@/lib/auth-store").useAuthStore();
   const { changeMilestoneStatusAgreement } = require("@/lib/agreementActions");
   const { token } = useAuthStore();
   const githubAgreementId = agr.nestId
