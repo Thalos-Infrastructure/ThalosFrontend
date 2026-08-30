@@ -10,6 +10,7 @@ import {
   getDispute,
   assignResolver,
   resolveDispute,
+  cancelDispute,
   type Dispute,
   type DisputeResolution,
 } from "../disputes"
@@ -100,12 +101,11 @@ describe("disputes contract", () => {
   })
 
   describe("assignResolver", () => {
-    it("parses dispute with resolver assigned", async () => {
-      mockFetch({ dispute: { ...DISPUTE, status: "under_review", resolver_wallet: "G5..." }, error: null })
+    it("returns success when resolver is assigned", async () => {
+      mockFetch({ success: true, error: null })
       const res = await assignResolver("d1", "G5...", "tok")
       expect(res.success).toBe(true)
-      expect(res.data!.status).toBe("under_review")
-      expect(res.data!.resolver_wallet).toBe("G5...")
+      expect(res.data!.success).toBe(true)
     })
   })
 
@@ -121,6 +121,15 @@ describe("disputes contract", () => {
       expect(res.data!.resolved_by).toBe("G5...")
       expect(res.data!.payer_percentage).toBe(60)
       expect(res.data!.payee_percentage).toBe(40)
+    })
+  })
+
+  describe("cancelDispute", () => {
+    it("returns success when dispute is cancelled", async () => {
+      mockFetch({ success: true, error: null })
+      const res = await cancelDispute("d1", "G1...", "tok")
+      expect(res.success).toBe(true)
+      expect(res.data!.success).toBe(true)
     })
   })
 

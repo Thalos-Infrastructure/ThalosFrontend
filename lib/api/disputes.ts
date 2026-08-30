@@ -222,13 +222,13 @@ export async function getDispute(
 
 /**
  * Assign resolver to dispute
- * Backend returns: { dispute, error }
+ * Backend returns: { success, error }
  */
 export async function assignResolver(
   disputeId: string,
   resolverWallet: string,
   token: string
-): Promise<ApiResponse<Dispute>> {
+): Promise<ApiResponse<{ success: boolean }>> {
   try {
     const response = await apiRequest<unknown>(
       `/disputes/${disputeId}/assign-resolver`,
@@ -244,14 +244,14 @@ export async function assignResolver(
     }
 
     const payload = response.data as Record<string, unknown>
-    const dispute = payload.dispute as Dispute
+    const success = payload.success as boolean
     const error = payload.error as string | undefined
 
     if (error) {
       return { success: false, error }
     }
 
-    return { success: true, data: dispute }
+    return { success: true, data: { success } }
   } catch (e) {
     return {
       success: false,
@@ -311,6 +311,7 @@ export async function resolveDispute(
  */
 export async function cancelDispute(
   disputeId: string,
+  cancelledBy: string,
   token: string
 ): Promise<ApiResponse<{ success: boolean }>> {
   try {
@@ -318,6 +319,7 @@ export async function cancelDispute(
       `/disputes/${disputeId}/cancel`,
       {
         method: "PATCH",
+        body: JSON.stringify({ cancelled_by: cancelledBy }),
       },
       token
     )
