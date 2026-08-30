@@ -6,17 +6,16 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { ThalosLoader } from "@/components/thalos-loader"
 import { useLanguage } from "@/lib/i18n"
 import { useStellarWallet } from "@/lib/stellar-wallet"
+import { useAuthStore } from "@/lib/auth-store"
 import { dashboardPathFor } from "@/lib/dashboard-path"
 import {
   getOpenDisputes,
-  getDisputesByResolver,
-  assignDisputeResolver,
+  assignResolver,
   resolveDispute,
   type DisputeWithAgreement,
-} from "@/lib/actions/disputes"
+} from "@/lib/api/disputes"
 
 /* ── Icons ── */
 const Icons = {
@@ -47,6 +46,7 @@ export default function DisputesPage() {
   const { t } = useLanguage()
   const router = useRouter()
   const { address, profile } = useStellarWallet()
+  const { token } = useAuthStore()
   
   const [isLoading, setIsLoading] = useState(true)
   const [disputes, setDisputes] = useState<DisputeWithAgreement[]>([])
@@ -71,40 +71,38 @@ export default function DisputesPage() {
     async function loadDisputes() {
       setIsLoading(true)
       
-      let result
-      if (canResolve) {
-        // Show all open disputes for resolvers
-        result = await getOpenDisputes()
-      } else {
-        // For regular users, this would show their own disputes (not implemented yet)
-        result = await getOpenDisputes()
+      if (!token) {
+        setIsLoading(false)
+        return
       }
+
+      const result = await getOpenDisputes(token)
       
-      if (result.error) {
+      if (!result.success) {
         console.error("Error loading disputes:", result.error)
       } else {
-        setDisputes(result.disputes)
+        setDisputes(result.data || [])
       }
       
       setIsLoading(false)
     }
 
     loadDisputes()
-  }, [address, router, canResolve])
+  }, [address, router, token])
 
   const handleAssignToMe = async (dispute: DisputeWithAgreement) => {
-    if (!address || !canResolve) return
+    if (!address || !canResolve || !token) return
     
     setIsAssigning(true)
-    const { success, error } = await assignDisputeResolver(dispute.id, address)
+    const result = await assignResolver(dispute.id, address, token)
     
-    if (error) {
-      console.error("Error assigning dispute:", error)
-    } else if (success) {
+    if (!result.success) {
+      console.error("Error assigning dispute:", result.error)
+    } else {
       // Refresh disputes
-      const result = await getOpenDisputes()
-      if (!result.error) {
-        setDisputes(result.disputes)
+      const refreshResult = await getOpenDisputes(token)
+      if (refreshResult.success) {
+        setDisputes(refreshResult.data || [])
       }
     }
     
@@ -112,28 +110,31 @@ export default function DisputesPage() {
   }
 
   const handleResolve = async () => {
-    if (!selectedDispute || !address || !canResolve) return
+    if (!selectedDispute || !address || !canResolve || !token) return
     
     setIsResolving(true)
     setResolveError(null)
     setResolveSuccess(false)
 
-    const { resolution, error } = await resolveDispute({
-      dispute_id: selectedDispute.id,
-      resolved_by: address,
-      payer_percentage: payerPercentage,
-      payee_percentage: 100 - payerPercentage,
-      resolution_notes: resolutionNotes,
-    })
+    const result = await resolveDispute(
+      selectedDispute.id,
+      {
+        resolved_by: address,
+        payer_percentage: payerPercentage,
+        payee_percentage: 100 - payerPercentage,
+        resolution_notes: resolutionNotes,
+      },
+      token
+    )
 
-    if (error) {
-      setResolveError(error)
-    } else if (resolution) {
+    if (!result.success) {
+      setResolveError(result.error || "Failed to resolve dispute")
+    } else {
       setResolveSuccess(true)
       // Refresh disputes
-      const result = await getOpenDisputes()
-      if (!result.error) {
-        setDisputes(result.disputes)
+      const refreshResult = await getOpenDisputes(token)
+      if (refreshResult.success) {
+        setDisputes(refreshResult.data || [])
       }
       setTimeout(() => {
         setSelectedDispute(null)
@@ -154,7 +155,9 @@ export default function DisputesPage() {
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
-        <ThalosLoader size="lg" />
+        <div className="relative w-16 h-16">
+          <div className="absolute inset-0 rounded-full border-4 border-border/20 border-t-purple-500 animate-spin"></div>
+        </div>
       </div>
     )
   }
@@ -223,7 +226,7 @@ export default function DisputesPage() {
           {/* Disputes List */}
           <div>
             <h2 className="mb-4 text-sm font-medium uppercase tracking-wider text-muted-foreground">
-              Open Disputes ({disputes.filter(d => d.status !== "resolved").length})
+              Open Disputes ({disputes.filter(d => d.status !== "resolved" && d.status !== "cancelled").length})
             </h2>
             
             {disputes.length === 0 ? (
@@ -257,9 +260,11 @@ export default function DisputesPage() {
                           <span className={cn("rounded-full border px-2 py-0.5 text-xs font-medium", statusColors[dispute.status])}>
                             {statusLabels[dispute.status]}
                           </span>
-                          <span className="text-xs text-muted-foreground">
-                            {dispute.agreement?.amount} USDC
-                          </span>
+                          {dispute.agreement?.amount && (
+                            <span className="text-xs text-muted-foreground">
+                              {dispute.agreement.amount} USDC
+                            </span>
+                          )}
                         </div>
                       </div>
                       <div className="text-right shrink-0">
@@ -332,7 +337,7 @@ export default function DisputesPage() {
                 )}
 
                 {/* Resolution Form */}
-                {(selectedDispute.resolver_wallet === address || profile?.role === "admin") && selectedDispute.status !== "resolved" && (
+                {(selectedDispute.resolver_wallet === address || profile?.role === "admin") && selectedDispute.status !== "resolved" && selectedDispute.status !== "cancelled" && (
                   <>
                     <div className="mb-6">
                       <p className="mb-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">
@@ -397,7 +402,7 @@ export default function DisputesPage() {
                     >
                       {isResolving ? (
                         <>
-                          <ThalosLoader size="sm" className="mr-2" />
+                          <span className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></span>
                           Resolving...
                         </>
                       ) : resolveSuccess ? (

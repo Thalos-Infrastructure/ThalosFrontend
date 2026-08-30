@@ -7,6 +7,7 @@ import { useLanguage } from "@/lib/i18n"
 import { useCurrentAddress } from "@/lib/use-current-address"
 import { useAuthStore } from "@/lib/auth-store"
 import { getProfileByWallet, type Profile } from "@/lib/actions/profile"
+import { getWalletsWithBalances } from "@/lib/api/wallets"
 import { WalletAddress } from "@/components/ui/wallet-address"
 import { BalanceCard } from "./balance-card"
 import { QuickActions, type QuickActionId } from "./quick-actions"
@@ -52,23 +53,26 @@ export function DashboardHome({
 }: DashboardHomeProps) {
   const { t } = useLanguage()
   const currentAddress = useCurrentAddress()
-  const { user } = useAuthStore()
+  const { user, token } = useAuthStore()
   const [profile, setProfile] = useState<Profile | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
-  // Mock data - replace with real data from API
-  const [balanceData] = useState({
-    totalBalance: "0.00",
-    availableBalance: "0.00",
-    lockedInEscrow: "0.00",
-    yieldEarned: "0.00",
-  })
+  // Balance state — driven by getWalletsWithBalances
+  const [totalBalance, setTotalBalance] = useState("0.00")
+  const [balanceLoading, setBalanceLoading] = useState(false)
+  const [balanceError, setBalanceError] = useState(false)
 
   useEffect(() => {
     if (currentAddress) {
       loadProfile()
     }
   }, [currentAddress])
+
+  useEffect(() => {
+    if (token) {
+      loadBalances(token)
+    }
+  }, [token])
 
   const loadProfile = async () => {
     if (!currentAddress) return
@@ -80,6 +84,52 @@ export function DashboardHome({
       console.error("Failed to load profile:", err)
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  /**
+   * Sum USDC balances from all linked wallets without floating-point loss.
+   * Each balance.usdc is a decimal string like "12.5000000". We split on "."
+   * to work with integer arithmetic via BigInt, preserving up to 7 decimal
+   * places (Stellar's native precision).
+   */
+  const sumUsdcBalances = (balances: string[]): string => {
+    const DECIMALS = 7
+    const SCALE = BigInt(10 ** DECIMALS)
+
+    let total = BigInt(0)
+    for (const raw of balances) {
+      const trimmed = raw.trim()
+      if (!trimmed || trimmed === "0") continue
+      const [intPart = "0", fracPart = ""] = trimmed.split(".")
+      const paddedFrac = fracPart.padEnd(DECIMALS, "0").slice(0, DECIMALS)
+      total += BigInt(intPart) * SCALE + BigInt(paddedFrac)
+    }
+
+    const intStr = (total / SCALE).toString()
+    const fracStr = (total % SCALE).toString().padStart(DECIMALS, "0")
+    // Trim trailing zeros but keep at least 2 decimal places (display format)
+    const trimmedFrac = fracStr.replace(/0+$/, "").padEnd(2, "0")
+    return `${intStr}.${trimmedFrac}`
+  }
+
+  const loadBalances = async (authToken: string) => {
+    setBalanceLoading(true)
+    setBalanceError(false)
+    try {
+      const result = await getWalletsWithBalances(authToken)
+      if (!result.success || !result.data) {
+        console.error("Failed to load balances:", result.error)
+        setBalanceError(true)
+        return
+      }
+      const usdcAmounts = result.data.map((w) => w.balance.usdc)
+      setTotalBalance(sumUsdcBalances(usdcAmounts))
+    } catch (err) {
+      console.error("Failed to load balances:", err)
+      setBalanceError(true)
+    } finally {
+      setBalanceLoading(false)
     }
   }
 
@@ -185,12 +235,15 @@ export function DashboardHome({
 
       {/* Balance Card */}
       <BalanceCard
-        totalBalance={balanceData.totalBalance}
-        availableBalance={balanceData.availableBalance}
-        lockedInEscrow={balanceData.lockedInEscrow}
-        yieldEarned={balanceData.yieldEarned}
+        totalBalance={totalBalance}
+        availableBalance={totalBalance}
+        lockedInEscrow="0.00"
         onDeposit={() => onNavigate("ramps")}
         onWithdraw={() => onNavigate("ramps")}
+        isLoading={balanceLoading}
+        isError={balanceError}
+        hideYield
+        hideEscrow
       />
 
       {/* Quick Action Cards */}

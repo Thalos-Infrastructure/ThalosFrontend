@@ -3,13 +3,13 @@
 
 export * from "./wallets"
 export * from "./disputes"
-export * from "./notifications"
 export * from "./escrow"
 export * from "./kyb"
 export * from "./kyc"
 export * from "./agreements"
 export * from "./profiles"
 export * from "./opportunities"
+export * from "./applications"
 export * from "./github"
 
 // Re-export API_URL for convenience
