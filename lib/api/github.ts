@@ -74,7 +74,8 @@ export async function getGithubLinkStatus(
  * Get the GitHub OAuth authorization URL. The backend builds it with its
  * server-side client id + an HMAC-signed state; the client only redirects to it.
  * After the user authorizes, Nest's callback stores the verified username and
- * redirects back to `/settings?github_linked=true&github_username=…`.
+ * redirects back to `/settings?github_linked=true&github_username=…`
+ * (`app/settings/page.tsx`).
  */
 export async function getGithubOAuthUrl(
   token?: string

@@ -119,7 +119,22 @@ const formatUsdc = (raw: string | null) =>
 const wizardStepKeys = ["wizard.escrowType", "wizard.useCase", "wizard.agreementInfo", "wizard.paymentWallets", "wizard.reviewSend"]
 
 interface Milestone { description: string; amount: string; status: "pending" | "approved" | "released" }
-interface Agreement { id: string; title: string; status: string; type: "Single Release" | "Multi Release"; counterparty: string; amount: string; currency: string; date: string; releaseStrategy?: "per-milestone" | "all-at-once" | "upon-completion"; milestones: Milestone[]; receiver: string; role?: "buyer" | "seller" }
+interface Agreement {
+  id: string
+  /** Nest `agreements.id` (UUID). Required by ThalosBackend#157 GitHub evidence routes. */
+  nestId?: string
+  title: string
+  status: string
+  type: "Single Release" | "Multi Release"
+  counterparty: string
+  amount: string
+  currency: string
+  date: string
+  releaseStrategy?: "per-milestone" | "all-at-once" | "upon-completion"
+  milestones: Milestone[]
+  receiver: string
+  role?: "buyer" | "seller"
+}
 
 const initialAgreements: Agreement[] = [];
 
@@ -145,6 +160,7 @@ function mapNestAgreementToUi(agreement: AgreementWithParticipants, currentWalle
 
   return {
     id: agreement.contract_id || agreement.id,
+    nestId: agreement.id,
     title: agreement.title,
     status: NEST_STATUS_TO_UI[agreement.status] ?? agreement.status,
     type: isMulti ? "Multi Release" : "Single Release",
@@ -267,14 +283,15 @@ function SellerMilestoneList({ agr, agreements, setAgreements, t }: {
   const { address: walletAddress, openWalletModal } = require("@/lib/stellar-wallet").useStellarWallet();
   const { changeMilestoneStatusAgreement } = require("@/lib/agreementActions");
   const { token } = useAuthStore();
+  const githubAgreementId = agr.nestId
 
   // Best-effort load of any GitHub PRs already attached to each milestone, so
-  // existing evidence renders. Backed by the Nest route (ThalosBackend#157);
-  // failures are silent until the backend is available.
+  // existing evidence renders. Backed by the Nest route (ThalosBackend#157),
+  // which keys by agreements.id (UUID) — not the Stellar contract id.
   React.useEffect(() => {
-    if (!token) return
+    if (!token || !githubAgreementId) return
     let active = true
-    Promise.all(agr.milestones.map((_, idx) => getAttachedPrs(agr.id, idx, token)))
+    Promise.all(agr.milestones.map((_, idx) => getAttachedPrs(githubAgreementId, idx, token)))
       .then((results) => {
         if (!active) return
         const map: Record<number, GithubPullRequest[]> = {}
@@ -285,7 +302,7 @@ function SellerMilestoneList({ agr, agreements, setAgreements, t }: {
       })
       .catch(() => {})
     return () => { active = false }
-  }, [agr.id, token])
+  }, [agr.milestones.length, githubAgreementId, token])
   const handleSubmitEvidence = async (idx: number) => {
     const evidence = evidenceInputs[idx]?.trim();
     if (!evidence) return;
@@ -371,9 +388,10 @@ function SellerMilestoneList({ agr, agreements, setAgreements, t }: {
                   </Button>
                 </div>
                 {/* GitHub-backed evidence: verified merged PRs scoped to the project repo (#128) */}
+                {githubAgreementId ? (
                 <div className="mt-3 border-t border-white/[0.06] pt-3">
                   <MilestonePrPicker
-                    agreementId={agr.id}
+                    agreementId={githubAgreementId}
                     milestoneIndex={idx}
                     walletAddress={walletAddress ?? undefined}
                     token={token ?? undefined}
@@ -381,6 +399,7 @@ function SellerMilestoneList({ agr, agreements, setAgreements, t }: {
                     onAttached={(prs) => setAttachedPrs(prev => ({ ...prev, [idx]: prs }))}
                   />
                 </div>
+                ) : null}
               </div>
             )}
             {/* Show submitted evidence */}
