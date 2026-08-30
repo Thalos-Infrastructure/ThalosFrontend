@@ -41,6 +41,8 @@ import {
 } from "recharts"
 import { createAgreement, sendTransaction, AgreementPayload, approveMilestone } from "@/services/escrowMigration"
 import { STELLAR_EXPLORER_BASE_URL, TRUSTLINE_USDC, SHOW_MOCKED_AGREEMENTS } from "@/lib/config";
+import { getKycStatus, startKycSession } from "@/lib/api/kyc";
+import { isKycVerified, canStartKycSession, buildCreateKycSessionDto, nextKycStatusAfterSessionStart, type KycVerificationStatus } from "@/lib/kyc";
 
 /* ── Use-Case Presets ── */
 const useCases = [
