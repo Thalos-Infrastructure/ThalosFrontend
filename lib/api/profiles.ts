@@ -53,6 +53,13 @@ export interface ProfileDiscoveryParams {
   limit?: number
 }
 
+export interface ProfilePaginatedResponse<T> {
+  items: T[]
+  page: number
+  limit: number
+  total: number
+}
+
 function unwrapConnectProfile(
   data: ConnectProfile | ConnectProfileEnvelope | undefined
 ): ConnectProfile | undefined {
@@ -136,6 +143,4 @@ export async function discoverProfiles(
     { method: "GET" },
     token
   )
-  if (!result.success || !result.data) return { success: false, error: result.error }
-  return { success: true, data: unwrapProfile(result.data) }
 }

@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, type ReactNode } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -9,7 +9,7 @@ import {
   type ConnectProfile,
   type ProfileType,
 } from "@/lib/api/profiles"
-import { AlertCircle, BriefcaseBusiness, FolderKanban, Save, X } from "lucide-react"
+import { BriefcaseBusiness, FolderKanban, Save, X } from "lucide-react"
 
 interface ProfileEditorProps {
   isOpen: boolean
@@ -35,7 +35,7 @@ const EMPTY_PROFILE: ConnectProfile = {
   org_links: [],
 }
 
-const inputClass = "border-white/10 bg-white/5 text-white placeholder:text-white/30"
+const inputClass = "bg-white/5 border-white/10 text-white placeholder:text-white/30"
 const textareaClass =
   "w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#f0b400]/50"
 
@@ -46,7 +46,7 @@ function toLines(value: string): string[] {
     .filter(Boolean)
 }
 
-function Field({ label, children }: { label: string; children: ReactNode }) {
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block">
       <span className="mb-2 block text-xs font-medium uppercase tracking-wider text-white/50">
@@ -65,6 +65,7 @@ export function ProfileEditor({ isOpen, onClose, token }: ProfileEditorProps) {
 
   useEffect(() => {
     if (!isOpen) return
+
     if (!token) {
       setForm(EMPTY_PROFILE)
       setError("Sign in to edit your profile.")
@@ -72,13 +73,12 @@ export function ProfileEditor({ isOpen, onClose, token }: ProfileEditorProps) {
     }
 
     let active = true
-    const authToken = token
 
     async function loadProfile() {
       setLoading(true)
       setError(null)
 
-      const result = await getProfile(authToken)
+      const result = await getProfile(token)
       if (!active) return
 
       if (result.success && result.data) {
@@ -89,7 +89,6 @@ export function ProfileEditor({ isOpen, onClose, token }: ProfileEditorProps) {
         })
       } else {
         setForm(EMPTY_PROFILE)
-        // A missing profile is expected for first-time editors; Nest will create it on save.
         if (result.error && !/not found/i.test(result.error)) {
           setError(result.error)
         }
@@ -110,32 +109,22 @@ export function ProfileEditor({ isOpen, onClose, token }: ProfileEditorProps) {
   const selected = (type: ProfileType) => form.profile_types.includes(type)
 
   const toggleType = (type: ProfileType) => {
-    setForm((current: ConnectProfile) => ({
+    setForm((current) => ({
       ...current,
       profile_types: current.profile_types.includes(type)
-        ? current.profile_types.filter((item: ProfileType) => item !== type)
+        ? current.profile_types.filter((item) => item !== type)
         : [...current.profile_types, type],
     }))
   }
 
   const handleSave = async () => {
-    if (!token) {
-      setError("Sign in to save your profile.")
-      return
-    }
-
+    if (!token) return setError("Sign in to save your profile.")
     if (form.profile_types.length === 0) {
-      setError("Select Builder, Project, or both.")
-      return
+      return setError("Select Builder, Project, or both.")
     }
 
-    if (
-      selected("builder") &&
-      form.handle &&
-      !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(form.handle)
-    ) {
-      setError("Handle must use lowercase letters, numbers, and single hyphens only.")
-      return
+    if (selected("builder") && form.handle && !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(form.handle)) {
+      return setError("Handle must use lowercase letters, numbers, and single hyphens only.")
     }
 
     setSaving(true)
@@ -146,7 +135,9 @@ export function ProfileEditor({ isOpen, onClose, token }: ProfileEditorProps) {
         ...form,
         handle: form.handle?.trim().toLowerCase() || null,
         hourly_rate:
-          form.hourly_rate === null || Number.isNaN(form.hourly_rate) ? null : form.hourly_rate,
+          form.hourly_rate === null || Number.isNaN(form.hourly_rate)
+            ? null
+            : form.hourly_rate,
       },
       token
     )
@@ -154,8 +145,7 @@ export function ProfileEditor({ isOpen, onClose, token }: ProfileEditorProps) {
     setSaving(false)
 
     if (!result.success) {
-      setError(result.error || "Could not save profile.")
-      return
+      return setError(result.error || "Could not save profile.")
     }
 
     onClose()
@@ -168,7 +158,6 @@ export function ProfileEditor({ isOpen, onClose, token }: ProfileEditorProps) {
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={onClose}
       />
-
       <div className="relative flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0c1220] shadow-[0_24px_80px_rgba(0,0,0,0.5)]">
         <div className="flex items-center justify-between border-b border-white/10 px-6 py-4">
           <div>
@@ -177,14 +166,20 @@ export function ProfileEditor({ isOpen, onClose, token }: ProfileEditorProps) {
           </div>
           <button
             aria-label="Close"
-            className="rounded-lg p-1.5 text-white/40 hover:bg-white/10 hover:text-white"
             onClick={onClose}
+            className="rounded-lg p-1.5 text-white/40 hover:bg-white/10 hover:text-white"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
         <div className="overflow-y-auto p-6">
+          {error ? (
+            <div className="mb-5 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-100">
+              {error}
+            </div>
+          ) : null}
+
           <div className="mb-6 grid gap-3 sm:grid-cols-2">
             {(["builder", "project"] as const).map((type) => (
               <button
@@ -208,13 +203,6 @@ export function ProfileEditor({ isOpen, onClose, token }: ProfileEditorProps) {
               </button>
             ))}
           </div>
-
-          {error ? (
-            <div className="mb-6 flex items-start gap-3 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-100">
-              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-300" />
-              <p>{error}</p>
-            </div>
-          ) : null}
 
           {loading ? (
             <p className="py-12 text-center text-white/50">Loading profile...</p>
@@ -436,7 +424,7 @@ export function ProfileEditor({ isOpen, onClose, token }: ProfileEditorProps) {
             className="gap-2 bg-[#f0b400] text-[#0c1220] hover:bg-[#dba500]"
           >
             <Save className="h-4 w-4" />
-            {saving ? "Saving..." : "Save profile"}
+            {saving ? "Saving…" : "Save profile"}
           </Button>
         </div>
       </div>
