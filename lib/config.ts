@@ -63,6 +63,10 @@ export const ESCROW_MIGRATION_FLAGS = Object.freeze({
 
 export type EscrowMigrationOperation = keyof typeof ESCROW_MIGRATION_FLAGS;
 
+// Mock/demo agreement toggle — when OFF (default), only real on-chain agreements
+// are shown on the dashboards.
+export const SHOW_MOCKED_AGREEMENTS = process.env.NEXT_PUBLIC_SHOW_MOCKED_AGREEMENTS === "true";
+
 // Email Configuration (Resend)
 export const EMAIL_FROM = process.env.EMAIL_FROM || "Thalos <notifications@thalosplatform.xyz>";
 export const EMAIL_REPLY_TO = process.env.EMAIL_REPLY_TO || "support@thalosplatform.xyz";
@@ -74,9 +78,6 @@ export const TRUSTLINE_USDC = {
 	symbol: "USDC",
 	address: "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5",
 };
-
-// show mocked agreements in the UI, set to true to show them (off by default for production safety)
-export const SHOW_MOCKED_AGREEMENTS = process.env.NEXT_PUBLIC_SHOW_MOCKED_AGREEMENTS === "true";
 
 // Stellar Network Configuration
 //

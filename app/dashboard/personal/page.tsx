@@ -5,7 +5,7 @@ import React, { useState, useEffect, useCallback, useId, useRef, useMemo } from 
 import Image from "next/image"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { cn, isMockAgreement } from "@/lib/utils"
+import { cn } from "@/lib/utils"
 import { ThalosLoader } from "@/components/thalos-loader"
 import { LanguageToggle, ThemeToggle, useLanguage } from "@/lib/i18n"
 import { useStellarWallet } from "@/lib/stellar-wallet"
@@ -28,6 +28,10 @@ import { getProfileByWallet, type Profile } from "@/lib/actions/profile"
 import { AgreementsView } from "@/components/agreements/agreements-view"
 import { ContactSelector } from "@/components/agreements/contact-selector"
 import { AgreementChat } from "@/components/agreements/agreement-chat"
+import { AiAgreementAssistant } from "@/components/agreements/ai-agreement-assistant"
+import {
+  Dialog, DialogContent, DialogTitle, DialogDescription,
+} from "@/components/ui/dialog"
 import { ProfileEditor } from "@/components/profile/profile-editor"
 import { WalletSelector } from "@/components/dashboard/wallet-selector"
 import { WalletAgreementsPanel } from "@/components/dashboard/wallet-agreements-panel"
@@ -35,12 +39,13 @@ import { getWalletsWithAgreements, type WalletWithAgreements, type WalletAgreeme
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area,
 } from "recharts"
-import { createAgreement, sendTransaction, AgreementPayload, approveMilestone } from "@/services/trustlessworkService"
-import { STELLAR_EXPLORER_BASE_URL, STELLAR_EXPLORER_ACCOUNT_BASE_URL, TRUSTLINE_USDC, SHOW_MOCKED_AGREEMENTS } from "@/lib/config";
-import { getWalletBalance } from "@/lib/api/wallets";
+import { createAgreement, sendTransaction, AgreementPayload, approveMilestone } from "@/services/escrowMigration"
+import { STELLAR_EXPLORER_BASE_URL, TRUSTLINE_USDC, SHOW_MOCKED_AGREEMENTS } from "@/lib/config";
 import { getKycStatus, startKycSession } from "@/lib/api/kyc";
+import { MilestonePrPicker } from "@/components/github/milestone-pr-picker";
+import { AttachedPullRequests } from "@/components/github/attached-prs";
+import { getAttachedPrs, type GithubPullRequest } from "@/lib/api/github";
 import { isKycVerified, canStartKycSession, buildCreateKycSessionDto, nextKycStatusAfterSessionStart, type KycVerificationStatus } from "@/lib/kyc";
-import { updateProfile } from "@/lib/actions/profile";
 
 /* ── Use-Case Presets ── */
 const useCases = [
@@ -112,35 +117,77 @@ const formatUsdc = (raw: string | null) =>
 const wizardStepKeys = ["wizard.escrowType", "wizard.useCase", "wizard.agreementInfo", "wizard.paymentWallets", "wizard.reviewSend"]
 
 interface Milestone { description: string; amount: string; status: "pending" | "approved" | "released" }
-interface Agreement { id: string; title: string; status: string; type: "Single Release" | "Multi Release"; counterparty: string; amount: string; currency: string; date: string; releaseStrategy?: "per-milestone" | "all-at-once" | "upon-completion"; milestones: Milestone[]; receiver: string; role?: "buyer" | "seller" }
+interface Agreement {
+  id: string
+  /** Nest `agreements.id` (UUID). Required by ThalosBackend#157 GitHub evidence routes. */
+  nestId?: string
+  title: string
+  status: string
+  type: "Single Release" | "Multi Release"
+  counterparty: string
+  amount: string
+  currency: string
+  date: string
+  releaseStrategy?: "per-milestone" | "all-at-once" | "upon-completion"
+  milestones: Milestone[]
+  receiver: string
+  role?: "buyer" | "seller"
+}
 
-const initialAgreements: Agreement[] = SHOW_MOCKED_AGREEMENTS ? [
-  { id: "AGR-001", title: "Website Redesign", status: "funded", type: "Single Release", counterparty: "G...FRE3", amount: "2,500", currency: "USDC", date: "2026-01-15", milestones: [{ description: "Full delivery", amount: "2,500", status: "pending" }], receiver: "GBXGQJWVLWOYHFLVTKWV5FGHA3PERSONAL02", role: "buyer" },
-  { id: "AGR-002", title: "Moving Service", status: "in_progress", type: "Multi Release", counterparty: "G...MOV7", amount: "1,800", currency: "USDC", date: "2026-01-20", releaseStrategy: "per-milestone", milestones: [{ description: "Packing & Loading", amount: "600", status: "released" }, { description: "Transport", amount: "600", status: "approved" }, { description: "Unloading & Setup", amount: "600", status: "pending" }], receiver: "GBXGQJWVLWOYHFLVTKWV5FGHA3MOV7", role: "buyer" },
-  { id: "AGR-003", title: "Online Course Bundle", status: "released", type: "Multi Release", counterparty: "G...EDU4", amount: "1,200", currency: "USDC", date: "2025-12-10", releaseStrategy: "upon-completion", milestones: [{ description: "Module 1 - Basics", amount: "400", status: "released" }, { description: "Module 2 - Advanced", amount: "400", status: "released" }, { description: "Final Assessment", amount: "400", status: "released" }], receiver: "GBXGQJWVLWOYHFLVTKWV5FGHA3EDU4", role: "seller" },
-  { id: "AGR-004", title: "Coaching Sessions", status: "in_progress", type: "Multi Release", counterparty: "G...CCH1", amount: "900", currency: "USDC", date: "2026-02-01", releaseStrategy: "all-at-once", milestones: [{ description: "Session 1", amount: "300", status: "approved" }, { description: "Session 2", amount: "300", status: "approved" }, { description: "Session 3", amount: "300", status: "pending" }], receiver: "GBXGQJWVLWOYHFLVTKWV5FGHA3CCH1", role: "seller" },
-] : [];
+const initialAgreements: Agreement[] = [];
 
-// Mix between real escrows fetched from the backend and some hardcoded ones for demo purposes
-// MIGRATION: Using escrowMigration wrapper to gradually migrate to backend
-import { getEscrowsBySigner } from "@/services/escrowMigration";
+// Agreements listing is sourced from Nest (source of truth); TW escrow reads are
+// still used only for the approver tab, which needs live on-chain milestone state
+// to drive the approve/release actions.
+import { getAgreementsByWallet } from "@/lib/actions/agreements";
+import type { AgreementWithParticipants, AgreementStatus as NestAgreementStatus } from "@/lib/actions/agreements";
 
-function mapEscrowToAgreement(escrow: any) {
-  const isMulti = escrow.type === "multi-release";
-  let amount = "";
-  if (isMulti) {
-    amount = (escrow.milestones || [])
-      .reduce((sum, m) => sum + (typeof m.amount === "number" ? m.amount : 0), 0)
-      .toString();
-  } else {
-    amount = escrow.amount ? escrow.amount.toString() : "";
+const NEST_STATUS_TO_UI: Record<NestAgreementStatus, string> = {
+  pending: "pending",
+  funded: "funded",
+  active: "in_progress",
+  completed: "released",
+  disputed: "awaiting",
+  resolved: "released",
+  cancelled: "cancelled",
+};
+
+function mapNestAgreementToUi(agreement: AgreementWithParticipants, currentWallet: string | null): Agreement {
+  const isMulti = agreement.agreement_type === "multi"
+  const counterparty = agreement.participants?.find(p => p.wallet_address !== currentWallet)?.wallet_address
+
+  return {
+    id: agreement.contract_id || agreement.id,
+    nestId: agreement.id,
+    title: agreement.title,
+    status: NEST_STATUS_TO_UI[agreement.status] ?? agreement.status,
+    type: isMulti ? "Multi Release" : "Single Release",
+    counterparty: counterparty ? `${counterparty.slice(0, 8)}...` : `${agreement.created_by.slice(0, 8)}...`,
+    amount: agreement.amount,
+    currency: agreement.asset || "USDC",
+    date: agreement.created_at.split("T")[0],
+    milestones: agreement.milestones.map(m => ({
+      description: m.description,
+      amount: m.amount,
+      status: m.status,
+    })),
+    receiver: counterparty || "",
+    role: agreement.created_by === currentWallet ? "buyer" : "seller",
   }
+}
 
-  // Determinar estado del contrato
+// The approver tab still reads live TW escrow state (not Nest agreements): approving
+// a milestone is an on-chain action that needs the escrow's current approved/released
+// flags and roles, which the Nest listing does not carry.
+function mapEscrowToApproverAgreement(escrow) {
+  const isMulti = escrow.type === "multi-release";
+  const amount = isMulti
+    ? (escrow.milestones || []).reduce((sum, m) => sum + (typeof m.amount === "number" ? m.amount : 0), 0).toString()
+    : escrow.amount ? escrow.amount.toString() : "";
+
   const milestones = (escrow.milestones || []);
-  const allApproved = milestones.length > 0 && milestones.every(m => m.approved === true);
-  const allUnapproved = milestones.length > 0 && milestones.every(m => m.approved === false);
   const anyUnapproved = milestones.some(m => m.approved === false);
+  const allUnapproved = milestones.length > 0 && milestones.every(m => m.approved === false);
   const balanceNum = Number(escrow.balance);
   const amountNum = Number(amount);
   let status = "funded";
@@ -177,7 +224,7 @@ function mapEscrowToAgreement(escrow: any) {
     releaseSigner: escrow.roles?.releaseSigner,
     disputeResolver: escrow.roles?.disputeResolver,
     released: escrow.flags?.released ?? false,
-    role: "buyer" as const, // Default to buyer, can be determined by comparing wallet addresses
+    role: "buyer" as const,
   };
 }
 
@@ -229,15 +276,32 @@ function SellerMilestoneList({ agr, agreements, setAgreements, t }: {
   const [submittedEvidence, setSubmittedEvidence] = React.useState<Record<number, string>>({})
   const [submitting, setSubmitting] = React.useState<number | null>(null)
   const [expandedMs, setExpandedMs] = React.useState<number | null>(null)
+  const [attachedPrs, setAttachedPrs] = React.useState<Record<number, GithubPullRequest[]>>({})
 
   const { address: walletAddress, openWalletModal } = require("@/lib/stellar-wallet").useStellarWallet();
   const { changeMilestoneStatusAgreement } = require("@/lib/agreementActions");
-  const isMock = isMockAgreement(agr.id);
+  const { token } = useAuthStore();
+  const githubAgreementId = agr.nestId
+
+  // Best-effort load of any GitHub PRs already attached to each milestone, so
+  // existing evidence renders. Backed by the Nest route (ThalosBackend#157),
+  // which keys by agreements.id (UUID) — not the Stellar contract id.
+  React.useEffect(() => {
+    if (!token || !githubAgreementId) return
+    let active = true
+    Promise.all(agr.milestones.map((_, idx) => getAttachedPrs(githubAgreementId, idx, token)))
+      .then((results) => {
+        if (!active) return
+        const map: Record<number, GithubPullRequest[]> = {}
+        results.forEach((res, idx) => {
+          if (res.success && res.data && res.data.length) map[idx] = res.data
+        })
+        if (Object.keys(map).length) setAttachedPrs(map)
+      })
+      .catch(() => {})
+    return () => { active = false }
+  }, [agr.milestones.length, githubAgreementId, token])
   const handleSubmitEvidence = async (idx: number) => {
-    if (isMock) {
-      alert("Demo agreement — actions are unavailable. Create a real agreement to use this feature.");
-      return;
-    }
     const evidence = evidenceInputs[idx]?.trim();
     if (!evidence) return;
     setSubmitting(idx);
@@ -249,6 +313,8 @@ function SellerMilestoneList({ agr, agreements, setAgreements, t }: {
       serviceProvider: walletAddress,
       serviceType: agr.type === "Multi Release" ? "multi-release" : "single-release",
       walletAddress,
+      token,
+      openWalletModal,
       setSubmitting: (v: boolean) => v === false && setSubmitting(null),
       setError: (msg: string | null) => msg && alert(msg),
       onSuccess: () => {
@@ -321,6 +387,19 @@ function SellerMilestoneList({ agr, agreements, setAgreements, t }: {
                     {submitting === idx ? "..." : t("flow.submit")}
                   </Button>
                 </div>
+                {/* GitHub-backed evidence: verified merged PRs scoped to the project repo (#128) */}
+                {githubAgreementId ? (
+                <div className="mt-3 border-t border-white/[0.06] pt-3">
+                  <MilestonePrPicker
+                    agreementId={githubAgreementId}
+                    milestoneIndex={idx}
+                    walletAddress={walletAddress ?? undefined}
+                    token={token ?? undefined}
+                    attached={attachedPrs[idx] ?? []}
+                    onAttached={(prs) => setAttachedPrs(prev => ({ ...prev, [idx]: prs }))}
+                  />
+                </div>
+                ) : null}
               </div>
             )}
             {/* Show submitted evidence */}
@@ -328,6 +407,13 @@ function SellerMilestoneList({ agr, agreements, setAgreements, t }: {
               <div className="mt-3 rounded-lg border border-cyan-500/10 bg-cyan-500/5 px-3 py-2">
                 <p className="text-xs text-cyan-400/60 font-medium">{t("flow.viewEvidence")}:</p>
                 <p className="text-xs text-white/60 mt-0.5 break-all">{hasEvidence ? submittedEvidence[idx] : ms.evidence}</p>
+              </div>
+            )}
+            {/* Attached GitHub PRs (verified evidence), always rendered when present */}
+            {(attachedPrs[idx]?.length ?? 0) > 0 && (
+              <div className="mt-3">
+                <p className="mb-1.5 text-xs font-medium text-white/40">GitHub evidence</p>
+                <AttachedPullRequests pullRequests={attachedPrs[idx]} />
               </div>
             )}
           </div>
@@ -395,11 +481,14 @@ export default function PersonalDashboardPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [agreements, setAgreements] = useState<Agreement[]>(initialAgreements);
+  const [agreementsLoading, setAgreementsLoading] = useState(false);
+  const [agreementsError, setAgreementsError] = useState<string | null>(null);
   const [approverEscrows, setApproverEscrows] = useState<Agreement[]>([]);
   const [approverLoading, setApproverLoading] = useState(false);
   const [walletsData, setWalletsData] = useState<WalletWithAgreements[]>([]);
   const [userProfile, setUserProfile] = useState<Profile | null>(null);
   const [showEditProfile, setShowEditProfile] = useState(false);
+  const [showAiAssistant, setShowAiAssistant] = useState(false);
 
   // Fetch wallets with agreements
   useEffect(() => {
@@ -657,48 +746,22 @@ export default function PersonalDashboardPage() {
     if (fetchedEscrowsRef.current === fetchKey) return;
     fetchedEscrowsRef.current = fetchKey;
 
-    async function fetchAllEscrows() {
-      // MIGRATION: Using escrowMigration wrapper
-      const { getEscrowsByRole } = await import("@/services/escrowMigration");
-      const seenIds = new Set<string>();
-      const allAgreements: Agreement[] = [];
-      
-      // Fetch escrows by signer (main method)
-      const signerRes = await getEscrowsBySigner(activeAddress, token ?? undefined);
-      if (signerRes.success && Array.isArray(signerRes.data)) {
-        signerRes.data.forEach(escrow => {
-          if (!seenIds.has(escrow.contractId)) {
-            seenIds.add(escrow.contractId);
-            allAgreements.push(mapEscrowToAgreement(escrow));
-          }
-        });
+    async function fetchAgreements() {
+      setAgreementsLoading(true);
+      setAgreementsError(null);
+      const { agreements: nestAgreements, error } = await getAgreementsByWallet(walletAddress, token ?? undefined);
+      if (error) {
+        setAgreementsError(error);
+        setAgreementsLoading(false);
+        return;
       }
-      
-      // Fetch by each role to ensure we get all escrows
-      const roles = ["receiver", "service_provider", "approver"] as const;
-      for (const role of roles) {
-        const res = await getEscrowsByRole({ role, address: activeAddress }, token ?? undefined);
-        if (res.success && Array.isArray(res.data)) {
-          res.data.forEach(escrow => {
-            if (!seenIds.has(escrow.contractId)) {
-              seenIds.add(escrow.contractId);
-              allAgreements.push(mapEscrowToAgreement(escrow));
-            }
-          });
-        }
-      }
-      
-      setAgreements(prev => {
-        // Merge with any existing mock agreements
-        const existingIds = new Set(prev.filter(a => !a.id.startsWith("AGR-")).map(a => a.id));
-        const mockAgreements = prev.filter(a => a.id.startsWith("AGR-"));
-        const newReal = allAgreements.filter(a => !existingIds.has(a.id));
-        return [...mockAgreements, ...newReal];
-      });
+      const mapped = nestAgreements.map(a => mapNestAgreementToUi(a, walletAddress));
+      setAgreements(mapped);
+      setAgreementsLoading(false);
     }
-    
-    fetchAllEscrows();
-    
+
+    fetchAgreements();
+
     // Fetch escrows where user is approver (for approver tab)
     async function fetchApproverEscrows() {
       setApproverLoading(true);
@@ -706,7 +769,7 @@ export default function PersonalDashboardPage() {
       const { getEscrowsByRole } = await import("@/services/escrowMigration");
       const res = await getEscrowsByRole({ role: "approver", address: activeAddress }, token ?? undefined);
       if (res.success && Array.isArray(res.data)) {
-        setApproverEscrows(res.data.map(mapEscrowToAgreement));
+        setApproverEscrows(res.data.map(mapEscrowToApproverAgreement));
       } else {
         setApproverEscrows([]);
       }
@@ -820,6 +883,20 @@ export default function PersonalDashboardPage() {
     setTitle(""); setDescription(""); setSignerWallet(""); setGuidePrefilled(false)
     setMilestones([{ description: "Full delivery", amount: "" }]); setShowCustomize(false)
     setNotifyEmail(""); setSignerEmail(""); setSelectedWallet(walletAddress ?? "")
+  }
+
+  const handleAiDraft = (draft: { title: string; description: string; escrowType: "single" | "multi"; useCase: string | null; milestones: { description: string; amount: string }[] }) => {
+    setActiveSection("create")
+    setStep(2)
+    setEscrowType(draft.escrowType)
+    setTitle(draft.title)
+    setDescription(draft.description)
+    if (draft.useCase) setUseCase(draft.useCase)
+    setGuidePrefilled(true)
+    if (draft.milestones.length > 0) {
+      setMilestones(draft.milestones.map(m => ({ description: m.description, amount: m.amount || "" })))
+    }
+    setShowAiAssistant(false)
   }
 
   const agreementUrl = typeof window !== "undefined" ? `${window.location.origin}/dashboard/personal` : "https://thalos.app/dashboard/personal"
@@ -1095,6 +1172,15 @@ export default function PersonalDashboardPage() {
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-[#f0b400]"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
                   </div>
                   <span className="text-xs font-medium text-white/60">New Agreement</span>
+                </button>
+                <button
+                  onClick={() => setShowAiAssistant(true)}
+                  className="flex flex-col items-center gap-2 rounded-xl border border-white/6 bg-[#0c1220] p-4 hover:border-white/15 hover:bg-[#0c1220]/80 transition-all"
+                >
+                  <div className="rounded-lg p-2.5 bg-purple-500/10">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-purple-400"><path d="M12 2a4 4 0 014 4c0 2-2 3-2 3s2 1 2 3a4 4 0 01-8 0c0-2 2-3 2-3s-2-1-2-3a4 4 0 014-4z"/><path d="M8 16c0-2 2-3 2-3s-2-1-2-3"/><path d="M16 16c0-2-2-3-2-3s2-1 2-3"/><path d="M12 22v-4"/></svg>
+                  </div>
+                  <span className="text-xs font-medium text-white/60">Create with AI</span>
                 </button>
                 <button
                   onClick={() => setActiveSection("agreements")}
@@ -1412,12 +1498,18 @@ export default function PersonalDashboardPage() {
           {activeSection === "agreements" && !viewingAgreement && (
             <div className="mx-auto max-w-4xl animate-in fade-in slide-in-from-bottom-2 duration-300">
 {/* Header */}
-  <div className="mb-6 flex items-center justify-between">
+  <div className="mb-6 flex flex-wrap items-center justify-between gap-2">
   <h1 className="text-2xl font-semibold text-white">{t("dashPage.myAgreements")}</h1>
+  <div className="flex items-center gap-2">
+  <Button onClick={() => setShowAiAssistant(true)}
+    className="rounded-full bg-purple-500/10 px-5 text-sm font-semibold text-purple-400 hover:bg-purple-500/20 border border-purple-500/20">
+    Create with AI
+  </Button>
   <Button onClick={() => { setActiveSection("create"); resetWizard() }}
   className="rounded-full bg-[#f0b400] px-6 text-sm font-semibold text-background hover:bg-[#d4a000] shadow-[0_4px_16px_rgba(240,180,0,0.25)]">
   + {t("dashPage.newAgreement")}
   </Button>
+  </div>
   </div>
   
   {/* Wallet Selector - only shows if user has multiple wallets */}
@@ -1428,13 +1520,38 @@ export default function PersonalDashboardPage() {
     className="mb-6"
   />
   
-  {/* Agreements view — pre-filtered by selected wallet when active */}
-  <AgreementsView
-    agreements={filteredAgreements}
-    onAgreementClick={(id) => setViewingAgreement(id)}
-    onOpenChat={(id) => setShowAgreementChat(id)}
-    currentUserWallet={walletAddress || undefined}
-  />
+  {agreementsError && (
+    <div className="mb-6 flex items-center gap-3 rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-3 text-sm text-red-400">
+      <AlertTriangle className="h-4 w-4 shrink-0" />
+      <span>{agreementsError}</span>
+    </div>
+  )}
+
+  {agreementsLoading ? (
+    <div className="flex items-center justify-center py-16 text-sm text-white/40">Loading agreements...</div>
+  ) : (
+  /* Agreements view — pre-filtered by selected wallet when active */
+              <AgreementsView
+                agreements={[
+                  ...filteredAgreements.map(a => ({ ...a, updatedAt: a.date, currency: "USDC" })),
+                  ...approverEscrows.map(e => ({
+                    id: e.id,
+                    title: e.title,
+                    counterparty: (e as unknown as { serviceProvider?: string }).serviceProvider?.slice(0, 8) + "..." || "Unknown",
+                    status: e.status || "pending",
+                    amount: typeof e.amount === "number" ? (e.amount as number).toLocaleString() : e.amount || "0",
+                    currency: "USDC",
+                    type: "Single Release" as const,
+                    updatedAt: e.date,
+                    milestones: e.milestones || [{ status: "pending" }],
+                    role: "buyer" as const,
+                  })),
+                ]}
+                onAgreementClick={(id) => setViewingAgreement(id)}
+                onOpenChat={(id) => setShowAgreementChat(id)}
+                currentUserWallet={walletAddress}
+              />
+  )}
             </div>
           )}
 
@@ -1459,15 +1576,10 @@ export default function PersonalDashboardPage() {
                   </button>
                   <button
                     onClick={() => setShowAgreementChat(viewingAgreement)}
-                    className={cn(
-                      "flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors",
-                      isMockAgreement(viewingAgreement!)
-                        ? "bg-amber-500/10 text-amber-400 hover:bg-amber-500/20"
-                        : "bg-[#f0b400]/10 text-[#f0b400] hover:bg-[#f0b400]/20"
-                    )}
+                    className="flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors bg-[#f0b400]/10 text-[#f0b400] hover:bg-[#f0b400]/20"
                   >
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
-                    {isMockAgreement(viewingAgreement!) ? "Chat (demo)" : "Chat"}
+                    Chat
                   </button>
                 </div>
 
@@ -1670,12 +1782,18 @@ export default function PersonalDashboardPage() {
                 </div>
               ) : (
               <>
-              <div className="mb-6 flex items-center justify-between">
+              <div className="mb-6 flex flex-wrap items-center justify-between gap-2">
                 <h1 className="text-2xl font-semibold text-white">New Agreement</h1>
-                <Button onClick={() => { setActiveSection("agreements"); resetWizard() }}
-                  className="rounded-full bg-white/10 px-6 text-sm font-semibold text-white/70 hover:bg-white/15 hover:text-white">
-                  View Agreements
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button onClick={() => setShowAiAssistant(true)}
+                    className="rounded-full bg-purple-500/10 px-5 text-sm font-semibold text-purple-400 hover:bg-purple-500/20 border border-purple-500/20">
+                    Create with AI
+                  </Button>
+                  <Button onClick={() => { setActiveSection("agreements"); resetWizard() }}
+                    className="rounded-full bg-white/10 px-6 text-sm font-semibold text-white/70 hover:bg-white/15 hover:text-white">
+                    View Agreements
+                  </Button>
+                </div>
               </div>
 
               {/* Progress bar */}
@@ -1969,6 +2087,19 @@ const newAgr: Agreement = {
           </div>
         </div>
       )}
+
+      {/* AI Agreement Assistant Dialog */}
+      <Dialog open={showAiAssistant} onOpenChange={setShowAiAssistant}>
+        <DialogContent className="sm:max-w-xl max-h-[80vh] flex flex-col" showCloseButton={false}>
+          <DialogTitle className="sr-only">AI Agreement Assistant</DialogTitle>
+          <DialogDescription className="sr-only">Describe your deal to generate an agreement draft</DialogDescription>
+          <AiAgreementAssistant
+            profile="personal"
+            onDraftComplete={handleAiDraft}
+            onClose={() => setShowAiAssistant(false)}
+          />
+        </DialogContent>
+      </Dialog>
 
       {/* Profile Editor Modal */}
       <ProfileEditor

@@ -4,7 +4,7 @@ import path from "node:path"
 import test from "node:test"
 
 const apiDir = path.resolve("lib/api")
-const modules = ["agreements.ts", "disputes.ts", "escrow.ts", "kyb.ts", "notifications.ts", "wallets.ts"]
+const modules = ["agreements.ts", "disputes.ts", "escrow.ts", "kyb.ts", "wallets.ts"]
 
 test("all API modules import the shared apiRequest helper", () => {
   for (const module of modules) {

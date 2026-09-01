@@ -1,6 +1,7 @@
 "use server"
 
 import { createClient } from "@/lib/supabase/server"
+import { createServiceClient } from "@/lib/supabase/service"
 import { type KybEntityType, type KybVerificationStatus } from "@/lib/kyb"
 
 export type Profile = {
@@ -17,6 +18,10 @@ export type Profile = {
   entity_type: KybEntityType | null
   kyb_status: KybVerificationStatus
   kyb_session_id: string | null
+  /** Verified GitHub username (OAuth via Nest, not Supabase social) — C6. */
+  github_username?: string | null
+  /** ISO timestamp of GitHub ownership verification — C6. */
+  github_verified_at?: string | null
   created_at: string
   updated_at: string
 }
@@ -114,6 +119,35 @@ export async function getProfileByWallet(
   } catch (e) {
     const message = e instanceof Error ? e.message : "Failed to fetch profile"
     return { profile: null, error: message }
+  }
+}
+
+/**
+ * Get a profile by auth user id (applications carry the builder's user UUID).
+ * Resolves auth_users.wallet_public_key first, then the wallet-keyed profile.
+ */
+export async function getProfileByUserId(
+  userId: string
+): Promise<{ profile: Profile | null; wallet: string | null; error: string | null }> {
+  try {
+    const service = createServiceClient()
+
+    const { data: user, error: userError } = await service
+      .from("auth_users")
+      .select("wallet_public_key")
+      .eq("id", userId)
+      .maybeSingle()
+
+    if (userError || !user?.wallet_public_key) {
+      return { profile: null, wallet: null, error: userError?.message ?? "User not found" }
+    }
+
+    const wallet = user.wallet_public_key as string
+    const { profile, error } = await getProfileByWallet(wallet)
+    return { profile, wallet, error }
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "Failed to fetch user profile"
+    return { profile: null, wallet: null, error: message }
   }
 }
 

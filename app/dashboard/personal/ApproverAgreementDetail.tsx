@@ -27,7 +27,7 @@ interface ApproverAgreementDetailProps {
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { cn, isMockAgreement } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { statusConfig } from "./statusConfig";
 import { useLanguage } from "@/lib/i18n";
 import { useHasSigningWallet } from "@/lib/use-current-address";
@@ -36,10 +36,12 @@ import { WalletPrompt } from "@/components/shared/wallet-guard";
 import { fundAndSignEscrow } from "@/lib/agreementActions";
 import { signEscrowOperation, type EscrowOperation, type TxStatus } from "@/lib/signing";
 import type { AgreementResponse } from "@/services/trustlessworkService";
+import { useAuthStore } from "@/lib/auth-store";
 import { AlertTriangle } from "lucide-react";
 
 export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreementDetailProps) {
   const { openWalletModal } = useStellarWallet();
+  const { token } = useAuthStore();
   // Signing-capable wallet: external Kit, or custodial with a signing provider
   // (Accesly #109) — all routed through the unified signer (#110).
   const isExternalWallet = useHasSigningWallet();
@@ -91,7 +93,6 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
       : undefined;
     if (!xdr) return false;
 
-    const { sendTransaction } = await import("@/services/trustlessworkService");
     const signedResult = await signEscrowOperation({
       xdr,
       operation,
@@ -100,25 +101,31 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
       onStatus: setTxStatus,
     });
     setTxStatus("submitting");
-    const sendRes = await sendTransaction(signedResult.signedTxXdr);
+    // GF-2: when token is available, submit through the Nest backend
+    // (keeps API key server-side and maintains auth audit trail).
+    let sendRes;
+    if (token) {
+      const { submitSignedTransaction } = await import("@/lib/api/escrow");
+      sendRes = await submitSignedTransaction(signedResult.signedTxXdr, token);
+    } else {
+      const { sendTransaction } = await import("@/services/trustlessworkService");
+      sendRes = await sendTransaction(signedResult.signedTxXdr);
+    }
     if (!sendRes.success) throw new Error(sendRes.error || "Error sending transaction");
     setTxStatus("confirmed");
     return true;
   }
 
   async function handleDispute(idx: number) {
-    if (isMockAgreement(agr.id)) {
-      alert("Demo agreement — actions are unavailable.");
-      return;
-    }
     setDisputingMs(idx);
     setErrorMs(null);
     setTxStatus("building");
     try {
-      const { disputeMilestone } = await import("@/services/trustlessworkService");
+      const { disputeMilestone } = await import("@/services/escrowMigration");
       const { openDispute } = await import("@/lib/actions/disputes");
 
-      const res = await disputeMilestone(agr.id, idx.toString(), walletAddress);
+      const escrowType = agr.type === "Multi Release" ? "multi-release" : "single-release";
+      const res = await disputeMilestone(agr.id, idx.toString(), walletAddress, token ?? undefined, escrowType);
       const submitted = await signAndSubmit("dispute", res, "Error raising dispute");
 
       // Register dispute in Supabase only after the on-chain dispute actually
@@ -143,16 +150,12 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
   }
 
   async function handleApprove(idx: number) {
-    if (isMockAgreement(agr.id)) {
-      alert("Demo agreement — actions are unavailable.");
-      return;
-    }
     setLoadingMs(idx);
     setErrorMs(null);
     setTxStatus("building");
     try {
-      const { approveMilestone } = await import("@/services/trustlessworkService");
-      const res = await approveMilestone(agr.id, idx.toString(), walletAddress, agr.type === "Multi Release" ? "multi-release" : "single-release");
+      const { approveMilestone } = await import("@/services/escrowMigration");
+      const res = await approveMilestone(agr.id, idx.toString(), walletAddress, agr.type === "Multi Release" ? "multi-release" : "single-release", token ?? undefined);
       await signAndSubmit("approveMilestone", res, "Error approving milestone");
       setLocalMilestones(ms => ms.map((m, i) => i === idx ? { ...m, status: "approved" as const, approved: true } : m));
     } catch (e: any) {
@@ -164,17 +167,13 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
   }
 
   async function handleReleaseAll() {
-    if (isMockAgreement(agr.id)) {
-      alert("Demo agreement — actions are unavailable.");
-      return;
-    }
     setLoadingMs(-1);
     setErrorMs(null);
     setTxStatus("building");
     try {
-      const { releaseFunds } = await import("@/services/trustlessworkService");
+      const { releaseFunds } = await import("@/services/escrowMigration");
       const type = agr.type === "Multi Release" ? "multi-release" : "single-release";
-      const res = await releaseFunds(agr.id, walletAddress, type);
+      const res = await releaseFunds(agr.id, walletAddress, type, undefined, token ?? undefined);
       await signAndSubmit("releaseFunds", res, "Error releasing funds");
       setLocalMilestones(ms => ms.map(m => ({ ...m, status: "released" as const })));
     } catch (e: any) {
@@ -267,15 +266,12 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
           </div>
           <Button
             onClick={() => {
-              if (isMockAgreement(agr.id)) {
-                alert("Demo agreement — actions are unavailable.");
-                return;
-              }
               fundAndSignEscrow({
               contractId: agr.id,
               amount: agr.amount,
               walletAddress,
               serviceType: agr.type === "Multi Release" ? "multi-release" : "single-release",
+              token: token ?? undefined,
               setFunding,
               setError: setFundError,
               setSuccess: setFundSuccess,
