@@ -5,9 +5,9 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { useAuthStore } from "@/lib/auth-store"
 import {
-  createOpportunity,
-  deleteOpportunity,
-  getMyOpportunities,
+  listMyOpportunities,
+  postOpportunity,
+  removeOpportunity,
   updateOpportunity,
   updateOpportunityStatus,
   type Opportunity,
@@ -32,7 +32,7 @@ export function OwnerOpportunities() {
     if (!token) return
     setLoading(true)
     setError(null)
-    const opportunitiesResult = await getMyOpportunities(token)
+    const opportunitiesResult = await listMyOpportunities(token)
     if (opportunitiesResult.success) setItems(opportunitiesResult.data ?? [])
     else setError(opportunitiesResult.error || "Could not load your opportunities.")
     setLoading(false)
@@ -44,7 +44,7 @@ export function OwnerOpportunities() {
     if (!token) return
     setSaving(true)
     setError(null)
-    const result = editing ? await updateOpportunity(editing.id, input, token) : await createOpportunity(input, token)
+    const result = editing ? await updateOpportunity(editing.id, input, token) : await postOpportunity(input, token)
     setSaving(false)
     if (!result.success) return setError(result.error || "Could not save the opportunity.")
     setEditing(undefined)
@@ -61,7 +61,7 @@ export function OwnerOpportunities() {
 
   const remove = async (item: Opportunity) => {
     if (!token || !window.confirm(`Delete “${item.title}”? This cannot be undone.`)) return
-    const result = await deleteOpportunity(item.id, token)
+    const result = await removeOpportunity(item.id, token)
     if (result.success) setItems((current) => current.filter((candidate) => candidate.id !== item.id))
     else setError(result.error || "Could not delete the opportunity.")
   }

@@ -1,9 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
 import {
-  createOpportunity,
-  deleteOpportunity,
-  getMyOpportunities,
-  getOpenOpportunities,
+  discoverOpportunities,
+  listMyOpportunities,
+  postOpportunity,
+  removeOpportunity,
   updateOpportunity,
   updateOpportunityStatus,
   type Opportunity,
@@ -26,10 +26,28 @@ describe("opportunities API", () => {
 
   it("reads public open opportunities without authentication", async () => {
     const fetchMock = vi.fn().mockResolvedValue(
-      new Response(JSON.stringify({ opportunities: [opportunity] }), { status: 200 }),
+      new Response(
+        JSON.stringify({
+          data: [opportunity],
+          total: 1,
+          page: 1,
+          limit: 20,
+          totalPages: 1,
+        }),
+        { status: 200 },
+      ),
     )
     vi.stubGlobal("fetch", fetchMock)
-    await expect(getOpenOpportunities()).resolves.toEqual({ success: true, data: [opportunity] })
+    await expect(discoverOpportunities()).resolves.toMatchObject({
+      success: true,
+      data: {
+        data: [opportunity],
+        total: 1,
+        page: 1,
+        limit: 20,
+        totalPages: 1,
+      },
+    })
     expect(fetchMock.mock.calls[0][1].headers).not.toHaveProperty("Authorization")
   })
 
@@ -38,7 +56,7 @@ describe("opportunities API", () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(
       new Response(JSON.stringify([closed]), { status: 200 }),
     ))
-    await expect(getMyOpportunities("jwt")).resolves.toEqual({ success: true, data: [closed] })
+    await expect(listMyOpportunities("jwt")).resolves.toEqual({ success: true, data: [closed] })
   })
 
   it("creates, edits, and transitions status through Nest", async () => {
@@ -56,7 +74,7 @@ describe("opportunities API", () => {
       status: opportunity.status,
     }
 
-    await createOpportunity(input, "jwt")
+    await postOpportunity(input, "jwt")
     await updateOpportunity("opp-1", { title: "Updated" }, "jwt")
     await updateOpportunityStatus("opp-1", "filled", "jwt")
 
@@ -69,6 +87,6 @@ describe("opportunities API", () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(
       new Response(null, { status: 204 }),
     ))
-    await expect(deleteOpportunity("opp-1", "jwt")).resolves.toEqual({ success: true, data: undefined })
+    await expect(removeOpportunity("opp-1", "jwt")).resolves.toMatchObject({ success: true, data: undefined })
   })
 })

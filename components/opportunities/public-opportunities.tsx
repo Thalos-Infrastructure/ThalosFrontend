@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { OpportunityCard } from "./opportunity-card"
-import { getOpenOpportunities, type Opportunity } from "@/lib/api/opportunities"
+import { discoverOpenOpportunities, type Opportunity } from "@/lib/api/opportunities"
 
 export function PublicOpportunities() {
   const [items, setItems] = useState<Opportunity[]>([])
@@ -11,7 +11,7 @@ export function PublicOpportunities() {
 
   useEffect(() => {
     let active = true
-    getOpenOpportunities().then((result) => {
+    discoverOpenOpportunities().then((result) => {
       if (!active) return
       if (result.success) setItems((result.data ?? []).filter((item) => item.status === "open"))
       else setError(result.error || "Could not load opportunities.")
