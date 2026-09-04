@@ -3,7 +3,8 @@
 import { createClient } from "@/lib/supabase/server"
 import { createAgreementInDb, linkContractToAgreement } from "./agreements"
 
-export type BountyStatus = "draft" | "open" | "funded" | "in_progress" | "validating" | "completed" | "cancelled"
+export type BountyStatus =
+  "draft" | "open" | "funded" | "in_progress" | "validating" | "completed" | "cancelled"
 export type SubmissionStatus = "pending" | "approved" | "rejected"
 
 export interface Bounty {
@@ -68,7 +69,7 @@ function generateSlug(title: string): string {
     .replace(/[^a-z0-9\s-]/g, "")
     .replace(/\s+/g, "-")
     .slice(0, 30)
-  
+
   // Add random hash
   const hash = Math.random().toString(36).substring(2, 6)
   return `${base}-${hash}`
@@ -81,28 +82,31 @@ function generateSlug(title: string): string {
  */
 export async function createBounty(
   input: CreateBountyInput,
-  token?: string
+  token?: string,
 ): Promise<{ bounty: Bounty | null; error: string | null }> {
   try {
     const supabase = await createClient()
-    
+
     const slug = generateSlug(input.title)
     const requiredValidations = input.required_validations || Math.ceil(input.validators.length / 2)
 
     // Create agreement in DB first
-    const { agreement, error: agreementError } = await createAgreementInDb({
-      title: input.title,
-      description: input.description,
-      amount: input.amount,
-      asset: input.asset,
-      agreement_type: "bounty",
-      created_by: input.created_by,
-      participants: [
-        { wallet_address: input.created_by, role: "payer" },
-        ...input.validators.map((v) => ({ wallet_address: v, role: "validator" as const })),
-      ],
-      metadata: { is_bounty: true, slug },
-    }, token || "")
+    const { agreement, error: agreementError } = await createAgreementInDb(
+      {
+        title: input.title,
+        description: input.description,
+        amount: input.amount,
+        asset: input.asset,
+        agreement_type: "bounty",
+        created_by: input.created_by,
+        participants: [
+          { wallet_address: input.created_by, role: "payer" },
+          ...input.validators.map((v) => ({ wallet_address: v, role: "validator" as const })),
+        ],
+        metadata: { is_bounty: true, slug },
+      },
+      token || "",
+    )
 
     if (agreementError || !agreement) {
       return { bounty: null, error: agreementError || "Failed to create agreement" }
@@ -138,9 +142,7 @@ export async function createBounty(
       wallet_address: wallet,
     }))
 
-    const { error: validatorsError } = await supabase
-      .from("bounty_validators")
-      .insert(validators)
+    const { error: validatorsError } = await supabase.from("bounty_validators").insert(validators)
 
     if (validatorsError) {
       console.error("Error adding validators:", validatorsError)
@@ -157,11 +159,11 @@ export async function createBounty(
  * Get bounty by slug (for shareable links)
  */
 export async function getBountyBySlug(
-  slug: string
+  slug: string,
 ): Promise<{ bounty: BountyWithDetails | null; error: string | null }> {
   try {
     const supabase = await createClient()
-    
+
     const { data: bounty, error: bountyError } = await supabase
       .from("bounties")
       .select("*")
@@ -206,11 +208,11 @@ export async function getBountyBySlug(
  * Get bounty by ID
  */
 export async function getBountyById(
-  bountyId: string
+  bountyId: string,
 ): Promise<{ bounty: BountyWithDetails | null; error: string | null }> {
   try {
     const supabase = await createClient()
-    
+
     const { data: bounty, error: bountyError } = await supabase
       .from("bounties")
       .select("*")
@@ -251,11 +253,11 @@ export async function getBountyById(
  */
 export async function updateBountyStatus(
   bountyId: string,
-  status: BountyStatus
+  status: BountyStatus,
 ): Promise<{ success: boolean; error: string | null }> {
   try {
     const supabase = await createClient()
-    
+
     const { error } = await supabase
       .from("bounties")
       .update({ status, updated_at: new Date().toISOString() })
@@ -283,11 +285,11 @@ export async function linkContractToBounty(
   bountyId: string,
   contractId: string,
   actorWallet: string,
-  token?: string
+  token?: string,
 ): Promise<{ success: boolean; error: string | null }> {
   try {
     const supabase = await createClient()
-    
+
     // Get bounty's agreement_id
     const { data: bounty, error: fetchError } = await supabase
       .from("bounties")
@@ -300,7 +302,12 @@ export async function linkContractToBounty(
     }
 
     // Link contract to agreement
-    const result = await linkContractToAgreement(bounty.agreement_id, contractId, actorWallet, token || "")
+    const result = await linkContractToAgreement(
+      bounty.agreement_id,
+      contractId,
+      actorWallet,
+      token || "",
+    )
     if (result.error) {
       return { success: false, error: result.error }
     }
@@ -322,11 +329,11 @@ export async function submitToBounty(
   bountyId: string,
   submitterWallet: string,
   submissionUrl: string,
-  notes?: string
+  notes?: string,
 ): Promise<{ submission: BountySubmission | null; error: string | null }> {
   try {
     const supabase = await createClient()
-    
+
     // Check bounty status
     const { data: bounty, error: bountyError } = await supabase
       .from("bounties")
@@ -375,11 +382,11 @@ export async function submitToBounty(
 export async function validateSubmission(
   submissionId: string,
   validatorWallet: string,
-  approved: boolean
+  approved: boolean,
 ): Promise<{ success: boolean; completed: boolean; error: string | null }> {
   try {
     const supabase = await createClient()
-    
+
     // Get submission with bounty info
     const { data: submission, error: fetchError } = await supabase
       .from("bounty_submissions")
@@ -392,9 +399,14 @@ export async function validateSubmission(
     }
 
     // Check if validator already voted
-    const validations = (submission.validations as { wallet: string; approved: boolean; timestamp: string }[]) || []
+    const validations =
+      (submission.validations as { wallet: string; approved: boolean; timestamp: string }[]) || []
     if (validations.some((v) => v.wallet === validatorWallet)) {
-      return { success: false, completed: false, error: "You have already validated this submission" }
+      return {
+        success: false,
+        completed: false,
+        error: "You have already validated this submission",
+      }
     }
 
     // Add validation
@@ -408,7 +420,7 @@ export async function validateSubmission(
     const approvals = validations.filter((v) => v.approved).length
     const rejections = validations.filter((v) => !v.approved).length
     const requiredValidations = submission.bounty?.required_validations || 1
-    
+
     let newStatus: SubmissionStatus = "pending"
     let completed = false
 
@@ -450,11 +462,11 @@ export async function validateSubmission(
  * Get bounties created by a wallet
  */
 export async function getBountiesByCreator(
-  walletAddress: string
+  walletAddress: string,
 ): Promise<{ bounties: Bounty[]; error: string | null }> {
   try {
     const supabase = await createClient()
-    
+
     const { data, error } = await supabase
       .from("bounties")
       .select("*")
@@ -476,11 +488,11 @@ export async function getBountiesByCreator(
  * Get bounties where wallet is a validator
  */
 export async function getBountiesForValidator(
-  walletAddress: string
+  walletAddress: string,
 ): Promise<{ bounties: Bounty[]; error: string | null }> {
   try {
     const supabase = await createClient()
-    
+
     // Get bounty IDs where user is validator
     const { data: validatorRecords, error: valError } = await supabase
       .from("bounty_validators")
@@ -520,7 +532,7 @@ export async function getBountiesForValidator(
 export async function getOpenBounties(): Promise<{ bounties: Bounty[]; error: string | null }> {
   try {
     const supabase = await createClient()
-    
+
     const { data, error } = await supabase
       .from("bounties")
       .select("*")

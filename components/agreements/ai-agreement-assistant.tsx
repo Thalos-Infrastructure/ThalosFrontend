@@ -81,11 +81,28 @@ function resolveEscrowType(draft: EngineDraft): "single" | "multi" {
 }
 
 const USE_CASE_KEYWORDS: Record<string, string[]> = {
-  freelancer: ["freelanc", "freelance", "contractor", "web dev", "design", "develop", "writing", "consulting"],
+  freelancer: [
+    "freelanc",
+    "freelance",
+    "contractor",
+    "web dev",
+    "design",
+    "develop",
+    "writing",
+    "consulting",
+  ],
   rental: ["rent", "rental", "lease", "property", "apartment", "house", "tenant"],
   "car-sale": ["car", "vehicle", "auto", "automotive", "dealership", "vin"],
   coaching: ["coach", "course", "training", "mentor", "lesson", "class", "educational"],
-  "home-repair": ["repair", "home", "renovation", "plumber", "electrician", "contractor", "remodel"],
+  "home-repair": [
+    "repair",
+    "home",
+    "renovation",
+    "plumber",
+    "electrician",
+    "contractor",
+    "remodel",
+  ],
   "car-rental": ["car rental", "fleet", "rental vehicle", "rental car"],
   travel: ["travel", "package", "trip", "vacation", "tour", "hotel", "destination"],
   dealership: ["dealership", "vehicle purchase", "car purchase", "inventory"],
@@ -139,7 +156,9 @@ function buildDraftMessage(draft: AiDraftData): string {
   lines.push(`**${draft.title}**`)
   if (draft.description) lines.push(draft.description)
   lines.push("")
-  lines.push(`- Agreement type: ${draft.escrowType === "multi" ? "Multi Release" : "Single Release"}`)
+  lines.push(
+    `- Agreement type: ${draft.escrowType === "multi" ? "Multi Release" : "Single Release"}`,
+  )
   if (draft.useCase) lines.push(`- Category: ${draft.useCase}`)
   if (draft.totalAmount && !Number.isNaN(Number(draft.totalAmount))) {
     lines.push(`- Total amount: $${Number(draft.totalAmount).toLocaleString()} USDC`)
@@ -148,9 +167,10 @@ function buildDraftMessage(draft: AiDraftData): string {
     lines.push("")
     lines.push("### Milestones")
     draft.milestones.forEach((m, i) => {
-      const amount = m.amount && !Number.isNaN(Number(m.amount))
-        ? ` — $${Number(m.amount).toLocaleString()} USDC`
-        : ""
+      const amount =
+        m.amount && !Number.isNaN(Number(m.amount))
+          ? ` — $${Number(m.amount).toLocaleString()} USDC`
+          : ""
       lines.push(`${i + 1}. ${m.description}${amount}`)
     })
   }
@@ -187,9 +207,10 @@ export function AiAgreementAssistant({ profile, onDraftComplete, onClose }: Prop
 
   useEffect(() => {
     if (!initialGreetingDone) {
-      const greeting = profile === "business"
-        ? "Hello! I'm your AI Agreement Assistant for Enterprise. I'll help you create a secure escrow agreement on Thalos.\n\nTell me about the deal you'd like to set up — what's the agreement for? Please include details like the amount, parties involved, and deliverables."
-        : "Hello! I'm your AI Agreement Assistant. I'll help you create a secure escrow agreement on Thalos.\n\nTell me about the deal you'd like to set up — what's the agreement for? Please include details like the amount, parties involved, and deliverables."
+      const greeting =
+        profile === "business"
+          ? "Hello! I'm your AI Agreement Assistant for Enterprise. I'll help you create a secure escrow agreement on Thalos.\n\nTell me about the deal you'd like to set up — what's the agreement for? Please include details like the amount, parties involved, and deliverables."
+          : "Hello! I'm your AI Agreement Assistant. I'll help you create a secure escrow agreement on Thalos.\n\nTell me about the deal you'd like to set up — what's the agreement for? Please include details like the amount, parties involved, and deliverables."
       setMessages([{ role: "assistant", content: greeting }])
       setInitialGreetingDone(true)
     }
@@ -239,7 +260,10 @@ export function AiAgreementAssistant({ profile, onDraftComplete, onClose }: Prop
         if (engineDraft && validationErrors && validationErrors.length > 0) {
           const mapped = mapEngineDraft(engineDraft, detectedUseCase, validationErrors)
           setDraftData(mapped)
-          setMessages([...updatedMessages, { role: "assistant", content: buildDraftMessage(mapped) }])
+          setMessages([
+            ...updatedMessages,
+            { role: "assistant", content: buildDraftMessage(mapped) },
+          ])
         } else {
           const errorMsg =
             data.error || "I ran into an issue. Please try again or use the manual form below."
@@ -337,38 +361,40 @@ export function AiAgreementAssistant({ profile, onDraftComplete, onClose }: Prop
             }
             if (part.startsWith("---")) return null
             if (part.includes("**") || part.includes("*")) {
-              const rendered = part
-                .split(/(\*\*[^*]+\*\*)/g)
-                .map((seg, j) => {
-                  if (seg.startsWith("**") && seg.endsWith("**")) {
-                    return (
-                      <strong key={j} className="text-white font-semibold">
-                        {seg.slice(2, -2)}
-                      </strong>
-                    )
-                  }
-                  if (seg.startsWith("_") && seg.endsWith("_") && seg.length > 2) {
-                    return (
-                      <em key={j} className="text-white/70">
-                        {seg.slice(1, -1)}
-                      </em>
-                    )
-                  }
-                  const withLineBreaks = seg.split("\n").map((line, k) => (
-                    <React.Fragment key={k}>
-                      {k > 0 && <br />}
-                      {line}
-                    </React.Fragment>
-                  ))
-                  return withLineBreaks
-                })
+              const rendered = part.split(/(\*\*[^*]+\*\*)/g).map((seg, j) => {
+                if (seg.startsWith("**") && seg.endsWith("**")) {
+                  return (
+                    <strong key={j} className="text-white font-semibold">
+                      {seg.slice(2, -2)}
+                    </strong>
+                  )
+                }
+                if (seg.startsWith("_") && seg.endsWith("_") && seg.length > 2) {
+                  return (
+                    <em key={j} className="text-white/70">
+                      {seg.slice(1, -1)}
+                    </em>
+                  )
+                }
+                const withLineBreaks = seg.split("\n").map((line, k) => (
+                  <React.Fragment key={k}>
+                    {k > 0 && <br />}
+                    {line}
+                  </React.Fragment>
+                ))
+                return withLineBreaks
+              })
               return (
                 <p key={i} className="text-sm text-white/80 whitespace-pre-wrap">
                   {rendered}
                 </p>
               )
             }
-            if (part.trim().startsWith("1.") || part.trim().startsWith("2.") || part.trim().startsWith("-")) {
+            if (
+              part.trim().startsWith("1.") ||
+              part.trim().startsWith("2.") ||
+              part.trim().startsWith("-")
+            ) {
               return (
                 <p key={i} className="text-sm text-white/80 ml-2">
                   {part}
@@ -390,12 +416,8 @@ export function AiAgreementAssistant({ profile, onDraftComplete, onClose }: Prop
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h2 className="text-lg font-semibold text-white">
-            AI Agreement Assistant
-          </h2>
-          <p className="text-xs text-white/40">
-            Describe your deal in natural language
-          </p>
+          <h2 className="text-lg font-semibold text-white">AI Agreement Assistant</h2>
+          <p className="text-xs text-white/40">Describe your deal in natural language</p>
         </div>
         <div className="flex items-center gap-2">
           {draftData && (
@@ -410,7 +432,14 @@ export function AiAgreementAssistant({ profile, onDraftComplete, onClose }: Prop
             onClick={onClose}
             className="p-1.5 rounded-lg text-white/40 hover:bg-white/10 hover:text-white transition-colors"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
               <path d="M18 6L6 18M6 6l12 12" />
             </svg>
           </button>
@@ -429,9 +458,18 @@ export function AiAgreementAssistant({ profile, onDraftComplete, onClose }: Prop
           <div className="flex justify-start">
             <div className="rounded-2xl bg-white/[0.04] px-4 py-3 border border-white/[0.06]">
               <div className="flex items-center gap-1.5">
-                <div className="h-2 w-2 rounded-full bg-[#f0b400] animate-bounce" style={{ animationDelay: "0ms" }} />
-                <div className="h-2 w-2 rounded-full bg-[#f0b400] animate-bounce" style={{ animationDelay: "150ms" }} />
-                <div className="h-2 w-2 rounded-full bg-[#f0b400] animate-bounce" style={{ animationDelay: "300ms" }} />
+                <div
+                  className="h-2 w-2 rounded-full bg-[#f0b400] animate-bounce"
+                  style={{ animationDelay: "0ms" }}
+                />
+                <div
+                  className="h-2 w-2 rounded-full bg-[#f0b400] animate-bounce"
+                  style={{ animationDelay: "150ms" }}
+                />
+                <div
+                  className="h-2 w-2 rounded-full bg-[#f0b400] animate-bounce"
+                  style={{ animationDelay: "300ms" }}
+                />
               </div>
             </div>
           </div>
@@ -444,12 +482,14 @@ export function AiAgreementAssistant({ profile, onDraftComplete, onClose }: Prop
           <div className="rounded-xl border border-[#f0b400]/20 bg-[#f0b400]/5 p-4 space-y-2">
             <div className="flex items-center justify-between">
               <p className="text-sm font-semibold text-white">{draftData.title}</p>
-              <span className={cn(
-                "text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full",
-                draftData.escrowType === "multi"
-                  ? "bg-sky-500/10 text-sky-400"
-                  : "bg-[#f0b400]/10 text-[#f0b400]"
-              )}>
+              <span
+                className={cn(
+                  "text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full",
+                  draftData.escrowType === "multi"
+                    ? "bg-sky-500/10 text-sky-400"
+                    : "bg-[#f0b400]/10 text-[#f0b400]",
+                )}
+              >
                 {draftData.escrowType === "multi" ? "Multi Release" : "Single Release"}
               </span>
             </div>
@@ -459,18 +499,26 @@ export function AiAgreementAssistant({ profile, onDraftComplete, onClose }: Prop
             )}
 
             <div className="space-y-1">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-white/40">Milestones</p>
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-white/40">
+                Milestones
+              </p>
               {draftData.milestones.map((m, i) => (
                 <div key={i} className="flex items-center justify-between text-xs">
                   <span className="text-white/70">{m.description}</span>
-                  {m.amount && <span className="text-white font-medium">${parseFloat(m.amount).toLocaleString()} USDC</span>}
+                  {m.amount && (
+                    <span className="text-white font-medium">
+                      ${parseFloat(m.amount).toLocaleString()} USDC
+                    </span>
+                  )}
                 </div>
               ))}
             </div>
 
             {draftData.riskFlags.length > 0 && (
               <div className="space-y-1">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-amber-400/60">Risk Flags</p>
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-amber-400/60">
+                  Risk Flags
+                </p>
                 {draftData.riskFlags.map((flag, i) => (
                   <p key={i} className="text-xs text-amber-400/70 flex items-start gap-1.5">
                     <span>⚠️</span>
@@ -497,7 +545,8 @@ export function AiAgreementAssistant({ profile, onDraftComplete, onClose }: Prop
             </Button>
           </div>
           <p className="text-[10px] text-white/30 text-center">
-            The form will open pre-filled and fully editable. No agreement is created until you submit.
+            The form will open pre-filled and fully editable. No agreement is created until you
+            submit.
           </p>
         </div>
       ) : (
@@ -517,7 +566,14 @@ export function AiAgreementAssistant({ profile, onDraftComplete, onClose }: Prop
             disabled={!input.trim() || loading}
             className="rounded-xl bg-[#f0b400] text-background font-semibold hover:bg-[#d4a000] disabled:opacity-30 px-4"
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
               <line x1="22" y1="2" x2="11" y2="13" />
               <polygon points="22 2 15 22 11 13 2 9 22 2" />
             </svg>

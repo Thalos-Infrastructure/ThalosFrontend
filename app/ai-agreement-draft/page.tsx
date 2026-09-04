@@ -11,7 +11,7 @@ import { toast } from "sonner"
 // Convert AI draft to backend DTO
 function draftToBackendDto(draft: AgreementDraft): BackendCreateEscrowDto {
   const isMulti = draft.serviceType === "multi-release"
-  
+
   return {
     title: draft.title,
     description: draft.description,
@@ -51,7 +51,7 @@ export default function AIAgreementDraftPage() {
       try {
         const dto = draftToBackendDto(draft)
         const response = await buildCreateEscrow(dto, token)
-        
+
         if (response.success && response.data?.unsignedTransaction) {
           toast.success("Escrow created! Ready to sign.")
           router.push("/dashboard")
@@ -71,9 +71,7 @@ export default function AIAgreementDraftPage() {
       <div className="mx-auto max-w-4xl px-6 py-12">
         {/* Header */}
         <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold text-white mb-4">
-            AI Agreement Draft Engine
-          </h1>
+          <h1 className="text-3xl font-bold text-white mb-4">AI Agreement Draft Engine</h1>
           <p className="text-white/60 max-w-2xl mx-auto">
             Describe your agreement in natural language and let our AI generate a structured draft.
             The draft can then be used to create an escrow contract on Thalos.
@@ -82,7 +80,7 @@ export default function AIAgreementDraftPage() {
 
         {/* AI Engine */}
         <div className="rounded-2xl border border-white/10 bg-[#0c1220] p-6 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)]">
-          <AIAgreementEngine 
+          <AIAgreementEngine
             onDraftGenerated={handleDraftGenerated}
             initialPrompt="I want to pay a developer $5000 for a React application. Payment will be split into 3 milestones: design ($1000), development ($3000), and deployment ($1000)."
           />

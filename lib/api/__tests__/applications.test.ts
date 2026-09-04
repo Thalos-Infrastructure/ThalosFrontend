@@ -11,9 +11,9 @@ import {
 } from "../applications"
 
 function mockFetch(body: unknown, status = 200) {
-  return vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
-    new Response(JSON.stringify(body), { status }),
-  )
+  return vi
+    .spyOn(globalThis, "fetch")
+    .mockResolvedValueOnce(new Response(JSON.stringify(body), { status }))
 }
 
 const APPLICATION: Application = {
@@ -55,10 +55,7 @@ describe("applications contract", () => {
     })
 
     it("surfaces the duplicate-application error message (409)", async () => {
-      mockFetch(
-        { message: "You have already applied to this opportunity", statusCode: 409 },
-        409,
-      )
+      mockFetch({ message: "You have already applied to this opportunity", statusCode: 409 }, 409)
       const res = await applyToOpportunity("opp-1", "", "tok")
       expect(res.success).toBe(false)
       expect(res.error).toMatch(/already applied/i)

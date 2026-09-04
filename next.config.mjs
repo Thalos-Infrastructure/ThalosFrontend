@@ -15,9 +15,7 @@ const pkg = JSON.parse(readFileSync(path.resolve(__dirname, "package.json"), "ut
 function resolveCommit() {
   // CI checkouts often have no usable git metadata, but do export the SHA.
   const fromEnv =
-    process.env.THALOS_BUILD_COMMIT ||
-    process.env.VERCEL_GIT_COMMIT_SHA ||
-    process.env.GITHUB_SHA
+    process.env.THALOS_BUILD_COMMIT || process.env.VERCEL_GIT_COMMIT_SHA || process.env.GITHUB_SHA
   if (fromEnv) return fromEnv.trim().slice(0, 7)
 
   try {
@@ -84,7 +82,7 @@ const nextConfig = {
       pino: path.resolve(__dirname, "lib", "mocks", "pino.js"),
     },
   },
-  webpack: (config, { isServer } ) => {
+  webpack: (config, { isServer }) => {
     config.resolve.alias = {
       ...config.resolve.alias,
       pino: path.resolve(__dirname, "lib", "mocks", "pino.js"),

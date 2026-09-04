@@ -11,9 +11,9 @@ import {
 } from "../escrow"
 
 function mockFetch(body: unknown, status = 200) {
-  return vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
-    new Response(JSON.stringify(body), { status }),
-  )
+  return vi
+    .spyOn(globalThis, "fetch")
+    .mockResolvedValueOnce(new Response(JSON.stringify(body), { status }))
 }
 
 const ESCROW: Escrow = {
@@ -49,7 +49,12 @@ describe("escrow contract", () => {
           platformFee: "5",
           signer: "G1...",
           serviceType: "single-release",
-          roles: { approver: "G3...", serviceProvider: "G2...", releaseSigner: "G4...", receiver: "G2..." },
+          roles: {
+            approver: "G3...",
+            serviceProvider: "G2...",
+            releaseSigner: "G4...",
+            receiver: "G2...",
+          },
           milestones: [{ description: "M1" }],
         },
         "tok",

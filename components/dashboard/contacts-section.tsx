@@ -11,7 +11,7 @@ import {
   addContact,
   updateContact,
   deleteContact,
-  type Contact
+  type Contact,
 } from "@/lib/actions/contacts"
 import { WalletAddress } from "@/components/ui/wallet-address"
 import { Button } from "@/components/ui/button"
@@ -41,7 +41,7 @@ interface ContactsSectionProps {
 export function ContactsSection({
   onCreateAgreementWith,
   onChatWith,
-  className
+  className,
 }: ContactsSectionProps) {
   const { t } = useLanguage()
   const currentAddress = useCurrentAddress()
@@ -99,7 +99,7 @@ export function ContactsSection({
       }
 
       if (newContact) {
-        setContacts(prev => [newContact, ...prev])
+        setContacts((prev) => [newContact, ...prev])
         setShowAddModal(false)
         resetForm()
         toast.success("Contact added successfully")
@@ -125,7 +125,7 @@ export function ContactsSection({
       }
 
       if (updated) {
-        setContacts(prev => prev.map(c => c.id === updated.id ? updated : c))
+        setContacts((prev) => prev.map((c) => (c.id === updated.id ? updated : c)))
         setEditingContact(null)
         resetForm()
         toast.success("Contact updated successfully")
@@ -145,7 +145,7 @@ export function ContactsSection({
         toast.error(error)
         return
       }
-      setContacts(prev => prev.filter(c => c.id !== contact.id))
+      setContacts((prev) => prev.filter((c) => c.id !== contact.id))
       setSelectedContact(null)
       toast.success("Contact deleted")
     } catch (err) {
@@ -172,7 +172,7 @@ export function ContactsSection({
     setEditingContact(contact)
   }
 
-  const filteredContacts = contacts.filter(contact => {
+  const filteredContacts = contacts.filter((contact) => {
     const query = searchQuery.toLowerCase()
     return (
       contact.contact_name.toLowerCase().includes(query) ||
@@ -184,7 +184,7 @@ export function ContactsSection({
   const getInitials = (name: string) => {
     return name
       .split(" ")
-      .map(n => n[0])
+      .map((n) => n[0])
       .join("")
       .toUpperCase()
       .slice(0, 2)
@@ -196,15 +196,12 @@ export function ContactsSection({
     }
   }, [currentAddress])
 
-
   return (
     <div className={cn("space-y-6", className)}>
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-white">
-            {t("contacts.title") || "Contacts"}
-          </h1>
+          <h1 className="text-2xl font-semibold text-white">{t("contacts.title") || "Contacts"}</h1>
           <p className="text-sm text-white/50 mt-1">
             {t("contacts.description") || "Manage your contacts for quick agreement creation"}
           </p>
@@ -265,7 +262,7 @@ export function ContactsSection({
               key={contact.id}
               className={cn(
                 "group rounded-2xl border border-white/6 bg-[#0c1220]/60 p-4 transition-all duration-200",
-                "hover:border-white/15 hover:bg-[#0c1220]/80"
+                "hover:border-white/15 hover:bg-[#0c1220]/80",
               )}
             >
               <div className="flex items-start gap-3">
@@ -372,7 +369,7 @@ export function ContactsSection({
                   <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30" />
                   <Input
                     value={formData.name}
-                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
                     placeholder="John Doe"
                     className="h-11 pl-10 rounded-xl border-white/10 bg-white/5 text-white"
                   />
@@ -387,7 +384,9 @@ export function ContactsSection({
                   <Wallet className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30" />
                   <Input
                     value={formData.wallet_address}
-                    onChange={(e) => setFormData(prev => ({ ...prev, wallet_address: e.target.value }))}
+                    onChange={(e) =>
+                      setFormData((prev) => ({ ...prev, wallet_address: e.target.value }))
+                    }
                     placeholder="GXXX..."
                     disabled={!!editingContact}
                     className="h-11 pl-10 rounded-xl border-white/10 bg-white/5 text-white font-mono text-sm disabled:opacity-50"
@@ -404,7 +403,7 @@ export function ContactsSection({
                   <Input
                     type="email"
                     value={formData.email}
-                    onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))}
                     placeholder="john@example.com"
                     className="h-11 pl-10 rounded-xl border-white/10 bg-white/5 text-white"
                   />
@@ -419,7 +418,7 @@ export function ContactsSection({
                   <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30" />
                   <Input
                     value={formData.phone}
-                    onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, phone: e.target.value }))}
                     placeholder="+1 234..."
                     className="h-11 pl-10 rounded-xl border-white/10 bg-white/5 text-white"
                   />

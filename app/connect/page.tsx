@@ -88,7 +88,9 @@ export default function ConnectPage() {
   // Live current tab, usable from debounced callbacks that intentionally omit
   // activeTab from their deps so typing in one tab does not refetch the other.
   const activeTabRef = useRef(activeTab)
-  useEffect(() => { activeTabRef.current = activeTab }, [activeTab])
+  useEffect(() => {
+    activeTabRef.current = activeTab
+  }, [activeTab])
 
   // Builders state
   const [builders, setBuilders] = useState<BuilderProfile[]>([])
@@ -149,7 +151,7 @@ export default function ConnectPage() {
       setIsLoading(false)
       setIsSearching(false)
     },
-    [builderSearch, builderSkills, builderTechStack, builderAvailability, token]
+    [builderSearch, builderSkills, builderTechStack, builderAvailability, token],
   )
 
   // ── Fetch opportunities ──
@@ -186,7 +188,7 @@ export default function ConnectPage() {
       setIsLoading(false)
       setIsSearching(false)
     },
-    [oppSearch, oppSkills, oppEngagementType, oppBudgetMin, oppBudgetMax, token]
+    [oppSearch, oppSkills, oppEngagementType, oppBudgetMin, oppBudgetMax, token],
   )
 
   // ── Initial load ──
@@ -242,7 +244,7 @@ export default function ConnectPage() {
     value: string,
     tags: string[],
     setTags: (v: string[]) => void,
-    setInput: (v: string) => void
+    setInput: (v: string) => void,
   ) {
     const trimmed = value.trim().toLowerCase()
     if (trimmed && !tags.includes(trimmed)) {
@@ -260,7 +262,7 @@ export default function ConnectPage() {
     value: string,
     tags: string[],
     setTags: (v: string[]) => void,
-    setInput: (v: string) => void
+    setInput: (v: string) => void,
   ) {
     if (e.key === "Enter") {
       e.preventDefault()
@@ -317,9 +319,7 @@ export default function ConnectPage() {
             <Users className="h-6 w-6" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold tracking-tight text-foreground">
-              Thalos Connect
-            </h1>
+            <h1 className="text-3xl font-bold tracking-tight text-foreground">Thalos Connect</h1>
             <p className="mt-1 text-muted-foreground">
               Discover builders and opportunities in the Thalos ecosystem
             </p>
@@ -335,7 +335,10 @@ export default function ConnectPage() {
               <Users className="h-4 w-4" />
               Builders
               {activeTab === "builders" && buildersTotal > 0 && (
-                <Badge variant="secondary" className="ml-1 bg-[#f0b400]/20 text-[#f0b400] text-[10px] px-1.5 py-0">
+                <Badge
+                  variant="secondary"
+                  className="ml-1 bg-[#f0b400]/20 text-[#f0b400] text-[10px] px-1.5 py-0"
+                >
                   {buildersTotal}
                 </Badge>
               )}
@@ -347,7 +350,10 @@ export default function ConnectPage() {
               <Briefcase className="h-4 w-4" />
               Opportunities
               {activeTab === "opportunities" && opportunitiesTotal > 0 && (
-                <Badge variant="secondary" className="ml-1 bg-[#f0b400]/20 text-[#f0b400] text-[10px] px-1.5 py-0">
+                <Badge
+                  variant="secondary"
+                  className="ml-1 bg-[#f0b400]/20 text-[#f0b400] text-[10px] px-1.5 py-0"
+                >
                   {opportunitiesTotal}
                 </Badge>
               )}
@@ -400,7 +406,13 @@ export default function ConnectPage() {
                     value={builderSkillInput}
                     onChange={(e) => setBuilderSkillInput(e.target.value)}
                     onKeyDown={(e) =>
-                      handleTagKeyDown(e, builderSkillInput, builderSkills, setBuilderSkills, setBuilderSkillInput)
+                      handleTagKeyDown(
+                        e,
+                        builderSkillInput,
+                        builderSkills,
+                        setBuilderSkills,
+                        setBuilderSkillInput,
+                      )
                     }
                     placeholder="Add skill..."
                     className="h-8 w-32 text-xs bg-card/50 border-border/40"
@@ -413,7 +425,13 @@ export default function ConnectPage() {
                     value={builderTechInput}
                     onChange={(e) => setBuilderTechInput(e.target.value)}
                     onKeyDown={(e) =>
-                      handleTagKeyDown(e, builderTechInput, builderTechStack, setBuilderTechStack, setBuilderTechInput)
+                      handleTagKeyDown(
+                        e,
+                        builderTechInput,
+                        builderTechStack,
+                        setBuilderTechStack,
+                        setBuilderTechInput,
+                      )
                     }
                     placeholder="Add tech..."
                     className="h-8 w-32 text-xs bg-card/50 border-border/40"
@@ -421,7 +439,9 @@ export default function ConnectPage() {
                 </div>
 
                 {/* Clear filters */}
-                {(builderSkills.length > 0 || builderTechStack.length > 0 || builderAvailability) && (
+                {(builderSkills.length > 0 ||
+                  builderTechStack.length > 0 ||
+                  builderAvailability) && (
                   <Button
                     variant="ghost"
                     size="sm"
@@ -717,7 +737,10 @@ function BuilderCard({ builder }: { builder: BuilderProfile }) {
             </Badge>
           ))}
           {builder.skills.length > 4 && (
-            <Badge variant="secondary" className="bg-muted/50 text-muted-foreground text-[10px] px-1.5 py-0">
+            <Badge
+              variant="secondary"
+              className="bg-muted/50 text-muted-foreground text-[10px] px-1.5 py-0"
+            >
               +{builder.skills.length - 4}
             </Badge>
           )}
@@ -737,7 +760,10 @@ function BuilderCard({ builder }: { builder: BuilderProfile }) {
             </Badge>
           ))}
           {builder.tech_stack.length > 3 && (
-            <Badge variant="outline" className="border-blue-500/20 text-blue-400/80 text-[10px] px-1.5 py-0">
+            <Badge
+              variant="outline"
+              className="border-blue-500/20 text-blue-400/80 text-[10px] px-1.5 py-0"
+            >
               +{builder.tech_stack.length - 3}
             </Badge>
           )}
@@ -821,7 +847,10 @@ function OpportunityCard({ opportunity }: { opportunity: Opportunity }) {
             </Badge>
           ))}
           {opportunity.skills_required.length > 4 && (
-            <Badge variant="secondary" className="bg-muted/50 text-muted-foreground text-[10px] px-1.5 py-0">
+            <Badge
+              variant="secondary"
+              className="bg-muted/50 text-muted-foreground text-[10px] px-1.5 py-0"
+            >
               +{opportunity.skills_required.length - 4}
             </Badge>
           )}
@@ -912,7 +941,7 @@ function Pagination({
             >
               {page}
             </Button>
-          )
+          ),
         )}
         <Button
           variant="ghost"

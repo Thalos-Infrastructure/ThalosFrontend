@@ -4,11 +4,7 @@ import * as React from "react"
 import { Github, CheckCircle2, Loader2, ShieldCheck } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import {
-  getGithubLinkStatus,
-  getGithubOAuthUrl,
-  type GithubLinkStatus,
-} from "@/lib/api/github"
+import { getGithubLinkStatus, getGithubOAuthUrl, type GithubLinkStatus } from "@/lib/api/github"
 
 /**
  * Verified GitHub link status + a "Verify GitHub" action (C6 / issue #128).
@@ -79,7 +75,7 @@ export function GithubLinkStatusCard({
       <div
         className={cn(
           "flex items-center gap-2 rounded-lg border border-emerald-500/20 bg-emerald-500/[0.06] px-3 py-2",
-          className
+          className,
         )}
       >
         <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-400" aria-hidden="true" />
@@ -87,7 +83,8 @@ export function GithubLinkStatusCard({
           GitHub verified
           {status.github_username ? (
             <>
-              {" "}as{" "}
+              {" "}
+              as{" "}
               <a
                 href={`https://github.com/${status.github_username}`}
                 target="_blank"
@@ -107,7 +104,9 @@ export function GithubLinkStatusCard({
     <div className={cn("flex flex-col gap-2", className)}>
       <div className="flex items-start gap-2 text-sm text-white/60">
         <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-cyan-400" aria-hidden="true" />
-        <span>Verify GitHub ownership to attach merged PRs as evidence. Your token stays on the server.</span>
+        <span>
+          Verify GitHub ownership to attach merged PRs as evidence. Your token stays on the server.
+        </span>
       </div>
       <Button
         size="sm"

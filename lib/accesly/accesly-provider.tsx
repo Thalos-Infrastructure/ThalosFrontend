@@ -46,7 +46,12 @@ export function ThalosAcceslyProvider({ children }: { children: React.ReactNode 
     [],
   )
   return (
-    <AcceslyProvider appId={ACCESLY_APP_ID} env={ACCESLY_ENV} cognitoConfig={cognitoOverride} overrides={overrides}>
+    <AcceslyProvider
+      appId={ACCESLY_APP_ID}
+      env={ACCESLY_ENV}
+      cognitoConfig={cognitoOverride}
+      overrides={overrides}
+    >
       <AcceslySignerBridge />
       {children}
     </AcceslyProvider>

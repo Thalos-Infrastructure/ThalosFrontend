@@ -47,10 +47,13 @@ export interface GithubPullRequest {
 
 /** Read the current builder's verified GitHub link from their profile. */
 export async function getGithubLinkStatus(
-  walletAddress?: string
+  walletAddress?: string,
 ): Promise<ApiResponse<GithubLinkStatus>> {
   if (!walletAddress) {
-    return { success: true, data: { linked: false, github_username: null, github_verified_at: null } }
+    return {
+      success: true,
+      data: { linked: false, github_username: null, github_verified_at: null },
+    }
   }
   try {
     const { profile, error } = await getProfileByWallet(walletAddress)
@@ -77,9 +80,7 @@ export async function getGithubLinkStatus(
  * redirects back to `/settings?github_linked=true&github_username=…`
  * (`app/settings/page.tsx`).
  */
-export async function getGithubOAuthUrl(
-  token?: string
-): Promise<ApiResponse<{ url: string }>> {
+export async function getGithubOAuthUrl(token?: string): Promise<ApiResponse<{ url: string }>> {
   const response = await apiRequest<unknown>("/github-evidence/oauth/url", { method: "GET" }, token)
   if (!response.success) return { success: false, error: response.error }
 
@@ -92,9 +93,7 @@ export async function getGithubOAuthUrl(
 }
 
 /** Remove the verified GitHub link from the current builder's profile. */
-export async function unlinkGithub(
-  token?: string
-): Promise<ApiResponse<{ success: boolean }>> {
+export async function unlinkGithub(token?: string): Promise<ApiResponse<{ success: boolean }>> {
   const response = await apiRequest<unknown>("/github-evidence/link", { method: "DELETE" }, token)
   if (!response.success) return { success: false, error: response.error }
 
@@ -110,12 +109,12 @@ export async function unlinkGithub(
  */
 export async function listMergedPrs(
   repo: string,
-  token?: string
+  token?: string,
 ): Promise<ApiResponse<GithubPullRequest[]>> {
   const response = await apiRequest<unknown>(
     `/github-evidence/merged-prs?repo=${encodeURIComponent(repo)}`,
     { method: "GET" },
-    token
+    token,
   )
   if (!response.success) return { success: false, error: response.error }
 
@@ -128,12 +127,12 @@ export async function listMergedPrs(
 export async function getAttachedPrs(
   agreementId: string,
   milestoneIndex: number,
-  token?: string
+  token?: string,
 ): Promise<ApiResponse<GithubPullRequest[]>> {
   const response = await apiRequest<unknown>(
     `/github-evidence/agreements/${agreementId}/milestones/${milestoneIndex}/prs`,
     { method: "GET" },
-    token
+    token,
   )
   if (!response.success) return { success: false, error: response.error }
 
@@ -151,7 +150,7 @@ export async function attachPr(
   milestoneIndex: number,
   pr: GithubPullRequest,
   actorWallet: string,
-  token?: string
+  token?: string,
 ): Promise<ApiResponse<{ success: boolean }>> {
   const response = await apiRequest<unknown>(
     `/github-evidence/agreements/${agreementId}/milestones/${milestoneIndex}/prs`,
@@ -166,7 +165,7 @@ export async function attachPr(
         actor_wallet: actorWallet,
       }),
     },
-    token
+    token,
   )
   if (!response.success) return { success: false, error: response.error }
 
@@ -180,12 +179,12 @@ export async function detachPr(
   agreementId: string,
   milestoneIndex: number,
   prId: string,
-  token?: string
+  token?: string,
 ): Promise<ApiResponse<{ success: boolean }>> {
   const response = await apiRequest<unknown>(
     `/github-evidence/agreements/${agreementId}/milestones/${milestoneIndex}/prs/${prId}`,
     { method: "DELETE" },
-    token
+    token,
   )
   if (!response.success) return { success: false, error: response.error }
 

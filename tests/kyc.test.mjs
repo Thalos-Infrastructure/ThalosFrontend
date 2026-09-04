@@ -17,7 +17,7 @@ test("canStartKycSession requires full_name and country", () => {
 test("buildCreateKycSessionDto trims and submits the valid DTO shape", () => {
   assert.deepEqual(
     buildCreateKycSessionDto("GABC123", "usr_123", { full_name: " Jane Doe ", country: " US " }),
-    { wallet_address: "GABC123", user_id: "usr_123", full_name: "Jane Doe", country: "US" }
+    { wallet_address: "GABC123", user_id: "usr_123", full_name: "Jane Doe", country: "US" },
   )
 })
 

@@ -1,6 +1,6 @@
-"use client";
+"use client"
 
-import { ApproverAgreementDetail } from "./ApproverAgreementDetail";
+import { ApproverAgreementDetail } from "./ApproverAgreementDetail"
 import React, { useState, useEffect, useCallback, useId, useRef, useMemo } from "react"
 import Image from "next/image"
 import Link from "next/link"
@@ -18,89 +18,227 @@ import { AlertTriangle } from "lucide-react"
 import { Footer } from "@/components/footer"
 import { RampsSection } from "@/components/ramps/ramps-section"
 import { InlineOnramp } from "@/components/ramps/inline-onramp"
-import {
-  DashboardHeader,
-  MobileNav,
-  YieldSection,
-  ContactsSection,
-} from "@/components/dashboard"
+import { DashboardHeader, MobileNav, YieldSection, ContactsSection } from "@/components/dashboard"
 import { getProfileByWallet, updateProfile, type Profile } from "@/lib/actions/profile"
 import { AgreementsView } from "@/components/agreements/agreements-view"
 import { ContactSelector } from "@/components/agreements/contact-selector"
 import { AgreementChat } from "@/components/agreements/agreement-chat"
 import { AiAgreementAssistant } from "@/components/agreements/ai-agreement-assistant"
-import {
-  Dialog, DialogContent, DialogTitle, DialogDescription,
-} from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { ProfileEditor } from "@/components/profile/profile-editor"
 import { WalletSelector } from "@/components/dashboard/wallet-selector"
 import { WalletAgreementsPanel } from "@/components/dashboard/wallet-agreements-panel"
-import { getWalletsWithAgreements, getWalletBalance, type WalletWithAgreements, type WalletAgreement } from "@/lib/api/wallets"
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area,
+  getWalletsWithAgreements,
+  getWalletBalance,
+  type WalletWithAgreements,
+  type WalletAgreement,
+} from "@/lib/api/wallets"
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  AreaChart,
+  Area,
 } from "recharts"
-import { createAgreement, sendTransaction, AgreementPayload, approveMilestone } from "@/services/escrowMigration"
-import { STELLAR_EXPLORER_BASE_URL, STELLAR_EXPLORER_ACCOUNT_BASE_URL, TRUSTLINE_USDC, SHOW_MOCKED_AGREEMENTS } from "@/lib/config";
-import { getKycStatus, startKycSession } from "@/lib/api/kyc";
-import { MilestonePrPicker } from "@/components/github/milestone-pr-picker";
-import { AttachedPullRequests } from "@/components/github/attached-prs";
-import { getAttachedPrs, type GithubPullRequest } from "@/lib/api/github";
-import type { MilestoneStatus } from "@/lib/types/status";
-import { isKycVerified, canStartKycSession, buildCreateKycSessionDto, nextKycStatusAfterSessionStart, type KycVerificationStatus } from "@/lib/kyc";
+import {
+  createAgreement,
+  sendTransaction,
+  AgreementPayload,
+  approveMilestone,
+} from "@/services/escrowMigration"
+import {
+  STELLAR_EXPLORER_BASE_URL,
+  STELLAR_EXPLORER_ACCOUNT_BASE_URL,
+  TRUSTLINE_USDC,
+  SHOW_MOCKED_AGREEMENTS,
+} from "@/lib/config"
+import { getKycStatus, startKycSession } from "@/lib/api/kyc"
+import { MilestonePrPicker } from "@/components/github/milestone-pr-picker"
+import { AttachedPullRequests } from "@/components/github/attached-prs"
+import { getAttachedPrs, type GithubPullRequest } from "@/lib/api/github"
+import type { MilestoneStatus } from "@/lib/types/status"
+import {
+  isKycVerified,
+  canStartKycSession,
+  buildCreateKycSessionDto,
+  nextKycStatusAfterSessionStart,
+  type KycVerificationStatus,
+} from "@/lib/kyc"
 
 /* ── Use-Case Presets ── */
 const useCases = [
-  { id: "freelancer", labelKey: "useCase.freelancer", icon: "user", suggestedTitle: "Freelancer Service Agreement", suggestedDesc: "Describe the scope of work, deliverables, and timeline for this freelancer engagement." },
-  { id: "rental", labelKey: "useCase.rental", icon: "home", suggestedTitle: "Rental Agreement", suggestedDesc: "Describe the property, rental period, deposit conditions, and any special terms." },
-  { id: "car-sale", labelKey: "useCase.carSale", icon: "car", suggestedTitle: "Vehicle Sale Agreement", suggestedDesc: "Describe the vehicle details, agreed price, inspection conditions, and transfer terms." },
-  { id: "coaching", labelKey: "useCase.coaching", icon: "book", suggestedTitle: "Coaching / Course Agreement", suggestedDesc: "Describe the course content, schedule, completion criteria, and refund policy." },
-  { id: "home-repair", labelKey: "useCase.homeRepair", icon: "tool", suggestedTitle: "Home Repair Service Agreement", suggestedDesc: "Describe the repair work, materials, timeline, and warranty terms." },
+  {
+    id: "freelancer",
+    labelKey: "useCase.freelancer",
+    icon: "user",
+    suggestedTitle: "Freelancer Service Agreement",
+    suggestedDesc:
+      "Describe the scope of work, deliverables, and timeline for this freelancer engagement.",
+  },
+  {
+    id: "rental",
+    labelKey: "useCase.rental",
+    icon: "home",
+    suggestedTitle: "Rental Agreement",
+    suggestedDesc:
+      "Describe the property, rental period, deposit conditions, and any special terms.",
+  },
+  {
+    id: "car-sale",
+    labelKey: "useCase.carSale",
+    icon: "car",
+    suggestedTitle: "Vehicle Sale Agreement",
+    suggestedDesc:
+      "Describe the vehicle details, agreed price, inspection conditions, and transfer terms.",
+  },
+  {
+    id: "coaching",
+    labelKey: "useCase.coaching",
+    icon: "book",
+    suggestedTitle: "Coaching / Course Agreement",
+    suggestedDesc: "Describe the course content, schedule, completion criteria, and refund policy.",
+  },
+  {
+    id: "home-repair",
+    labelKey: "useCase.homeRepair",
+    icon: "tool",
+    suggestedTitle: "Home Repair Service Agreement",
+    suggestedDesc: "Describe the repair work, materials, timeline, and warranty terms.",
+  },
   { id: "other", labelKey: "useCase.other", icon: "plus", suggestedTitle: "", suggestedDesc: "" },
 ]
 
 /* ── Form Components ── */
-function FormInput({ label, value, onChange, placeholder, type = "text", disabled = false, info, required = false }: {
-  label: string; value: string; onChange: (v: string) => void; placeholder?: string; type?: string; disabled?: boolean; info?: string; required?: boolean
+function FormInput({
+  label,
+  value,
+  onChange,
+  placeholder,
+  type = "text",
+  disabled = false,
+  info,
+  required = false,
+}: {
+  label: string
+  value: string
+  onChange: (v: string) => void
+  placeholder?: string
+  type?: string
+  disabled?: boolean
+  info?: string
+  required?: boolean
 }) {
   const id = useId()
   return (
     <div>
-      <label htmlFor={id} className="mb-1.5 flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-        {label}{required && <span className="text-[#f0b400]">*</span>}
-        {info && <span className="normal-case tracking-normal font-normal text-muted-foreground/50">({info})</span>}
+      <label
+        htmlFor={id}
+        className="mb-1.5 flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground"
+      >
+        {label}
+        {required && <span className="text-[#f0b400]">*</span>}
+        {info && (
+          <span className="normal-case tracking-normal font-normal text-muted-foreground/50">
+            ({info})
+          </span>
+        )}
       </label>
-      <input id={id} type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} disabled={disabled}
-        className={cn("h-12 w-full rounded-xl border border-border/40 bg-card/30 px-4 text-sm text-foreground placeholder:text-muted-foreground/40 focus:border-[#f0b400]/50 focus:outline-none focus:ring-2 focus:ring-[#f0b400]/15 transition-all duration-200", disabled && "opacity-50 cursor-not-allowed")} />
+      <input
+        id={id}
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        disabled={disabled}
+        className={cn(
+          "h-12 w-full rounded-xl border border-border/40 bg-card/30 px-4 text-sm text-foreground placeholder:text-muted-foreground/40 focus:border-[#f0b400]/50 focus:outline-none focus:ring-2 focus:ring-[#f0b400]/15 transition-all duration-200",
+          disabled && "opacity-50 cursor-not-allowed",
+        )}
+      />
     </div>
   )
 }
 
-function FormTextarea({ label, value, onChange, placeholder, rows = 3 }: {
-  label: string; value: string; onChange: (v: string) => void; placeholder?: string; rows?: number
+function FormTextarea({
+  label,
+  value,
+  onChange,
+  placeholder,
+  rows = 3,
+}: {
+  label: string
+  value: string
+  onChange: (v: string) => void
+  placeholder?: string
+  rows?: number
 }) {
   const id = useId()
   return (
     <div>
-      <label htmlFor={id} className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">{label}</label>
-      <textarea id={id} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} rows={rows}
-        className="w-full rounded-xl border border-border/40 bg-card/30 px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/40 focus:border-[#f0b400]/50 focus:outline-none focus:ring-2 focus:ring-[#f0b400]/15 transition-all duration-200 resize-none" />
+      <label
+        htmlFor={id}
+        className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground"
+      >
+        {label}
+      </label>
+      <textarea
+        id={id}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        rows={rows}
+        className="w-full rounded-xl border border-border/40 bg-card/30 px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/40 focus:border-[#f0b400]/50 focus:outline-none focus:ring-2 focus:ring-[#f0b400]/15 transition-all duration-200 resize-none"
+      />
     </div>
   )
 }
 
-function FormSelect({ label, value, onChange, options, info, required = false }: {
-  label: string; value: string; onChange: (v: string) => void; options: { value: string; label: string }[]; info?: string; required?: boolean
+function FormSelect({
+  label,
+  value,
+  onChange,
+  options,
+  info,
+  required = false,
+}: {
+  label: string
+  value: string
+  onChange: (v: string) => void
+  options: { value: string; label: string }[]
+  info?: string
+  required?: boolean
 }) {
   const id = useId()
   return (
     <div>
-      <label htmlFor={id} className="mb-1.5 flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-        {label}{required && <span className="text-[#f0b400]">*</span>}
-        {info && <span className="normal-case tracking-normal font-normal text-muted-foreground/50">({info})</span>}
+      <label
+        htmlFor={id}
+        className="mb-1.5 flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground"
+      >
+        {label}
+        {required && <span className="text-[#f0b400]">*</span>}
+        {info && (
+          <span className="normal-case tracking-normal font-normal text-muted-foreground/50">
+            ({info})
+          </span>
+        )}
       </label>
-      <select id={id} value={value} onChange={(e) => onChange(e.target.value)}
-        className="h-12 w-full appearance-none rounded-xl border border-border/40 bg-card/30 px-4 text-sm text-foreground focus:border-[#f0b400]/50 focus:outline-none focus:ring-2 focus:ring-[#f0b400]/15 transition-all duration-200">
-        {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+      <select
+        id={id}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="h-12 w-full appearance-none rounded-xl border border-border/40 bg-card/30 px-4 text-sm text-foreground focus:border-[#f0b400]/50 focus:outline-none focus:ring-2 focus:ring-[#f0b400]/15 transition-all duration-200"
+      >
+        {options.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
       </select>
     </div>
   )
@@ -115,9 +253,20 @@ const formatUsdc = (raw: string | null) =>
     ? "—"
     : Number(raw).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
-const wizardStepKeys = ["wizard.escrowType", "wizard.useCase", "wizard.agreementInfo", "wizard.paymentWallets", "wizard.reviewSend"]
+const wizardStepKeys = [
+  "wizard.escrowType",
+  "wizard.useCase",
+  "wizard.agreementInfo",
+  "wizard.paymentWallets",
+  "wizard.reviewSend",
+]
 
-interface Milestone { description: string; amount: string; status: MilestoneStatus; evidence?: string }
+interface Milestone {
+  description: string
+  amount: string
+  status: MilestoneStatus
+  evidence?: string
+}
 interface Agreement {
   id: string
   /** Nest `agreements.id` (UUID). Required by ThalosBackend#157 GitHub evidence routes. */
@@ -135,13 +284,16 @@ interface Agreement {
   role?: "buyer" | "seller"
 }
 
-const initialAgreements: Agreement[] = [];
+const initialAgreements: Agreement[] = []
 
 // Agreements listing is sourced from Nest (source of truth); TW escrow reads are
 // still used only for the approver tab, which needs live on-chain milestone state
 // to drive the approve/release actions.
-import { getAgreementsByWallet } from "@/lib/actions/agreements";
-import type { AgreementWithParticipants, AgreementStatus as NestAgreementStatus } from "@/lib/actions/agreements";
+import { getAgreementsByWallet } from "@/lib/actions/agreements"
+import type {
+  AgreementWithParticipants,
+  AgreementStatus as NestAgreementStatus,
+} from "@/lib/actions/agreements"
 
 const NEST_STATUS_TO_UI: Record<NestAgreementStatus, string> = {
   pending: "pending",
@@ -151,11 +303,16 @@ const NEST_STATUS_TO_UI: Record<NestAgreementStatus, string> = {
   disputed: "awaiting",
   resolved: "released",
   cancelled: "cancelled",
-};
+}
 
-function mapNestAgreementToUi(agreement: AgreementWithParticipants, currentWallet: string | null): Agreement {
+function mapNestAgreementToUi(
+  agreement: AgreementWithParticipants,
+  currentWallet: string | null,
+): Agreement {
   const isMulti = agreement.agreement_type === "multi"
-  const counterparty = agreement.participants?.find(p => p.wallet_address !== currentWallet)?.wallet_address
+  const counterparty = agreement.participants?.find(
+    (p) => p.wallet_address !== currentWallet,
+  )?.wallet_address
 
   return {
     id: agreement.contract_id || agreement.id,
@@ -163,11 +320,13 @@ function mapNestAgreementToUi(agreement: AgreementWithParticipants, currentWalle
     title: agreement.title,
     status: NEST_STATUS_TO_UI[agreement.status] ?? agreement.status,
     type: isMulti ? "Multi Release" : "Single Release",
-    counterparty: counterparty ? `${counterparty.slice(0, 8)}...` : `${agreement.created_by.slice(0, 8)}...`,
+    counterparty: counterparty
+      ? `${counterparty.slice(0, 8)}...`
+      : `${agreement.created_by.slice(0, 8)}...`,
     amount: agreement.amount,
     currency: agreement.asset || "USDC",
     date: agreement.created_at.split("T")[0],
-    milestones: agreement.milestones.map(m => ({
+    milestones: agreement.milestones.map((m) => ({
       description: m.description,
       amount: m.amount,
       status: m.status,
@@ -208,23 +367,27 @@ interface TrustlessEscrow {
 // Raw Trustless Work payload: camelCase and carrying on-chain flags, so it is
 // not the snake_case `Escrow` from lib/api/escrow.
 function mapEscrowToApproverAgreement(escrow: TrustlessEscrow) {
-  const isMulti = escrow.type === "multi-release";
+  const isMulti = escrow.type === "multi-release"
   const amount = isMulti
-    ? (escrow.milestones || []).reduce((sum, m) => sum + (typeof m.amount === "number" ? m.amount : 0), 0).toString()
-    : escrow.amount ? escrow.amount.toString() : "";
+    ? (escrow.milestones || [])
+        .reduce((sum, m) => sum + (typeof m.amount === "number" ? m.amount : 0), 0)
+        .toString()
+    : escrow.amount
+      ? escrow.amount.toString()
+      : ""
 
-  const milestones = (escrow.milestones || []);
-  const anyUnapproved = milestones.some(m => m.approved === false);
-  const allUnapproved = milestones.length > 0 && milestones.every(m => m.approved === false);
-  const balanceNum = Number(escrow.balance);
-  const amountNum = Number(amount);
-  let status = "funded";
+  const milestones = escrow.milestones || []
+  const anyUnapproved = milestones.some((m) => m.approved === false)
+  const allUnapproved = milestones.length > 0 && milestones.every((m) => m.approved === false)
+  const balanceNum = Number(escrow.balance)
+  const amountNum = Number(amount)
+  let status = "funded"
   if (escrow.flags?.released) {
-    status = "released";
+    status = "released"
   } else if (anyUnapproved && balanceNum < amountNum) {
-    status = "pending";
+    status = "pending"
   } else if (allUnapproved && balanceNum >= amountNum) {
-    status = "funded";
+    status = "funded"
   }
 
   return {
@@ -232,17 +395,28 @@ function mapEscrowToApproverAgreement(escrow: TrustlessEscrow) {
     title: escrow.title ?? "-",
     status,
     type: (isMulti ? "Multi Release" : "Single Release") as Agreement["type"],
-    counterparty: escrow.roles?.serviceProvider ? `${escrow.roles.serviceProvider.slice(0, 8)}...` : "-",
+    counterparty: escrow.roles?.serviceProvider
+      ? `${escrow.roles.serviceProvider.slice(0, 8)}...`
+      : "-",
     amount,
     currency: "USDC",
-    date: escrow.createdAt?._seconds ? new Date(escrow.createdAt._seconds * 1000).toISOString().split("T")[0] : new Date().toISOString().split("T")[0],
-    milestones: milestones.map(m => ({
+    date: escrow.createdAt?._seconds
+      ? new Date(escrow.createdAt._seconds * 1000).toISOString().split("T")[0]
+      : new Date().toISOString().split("T")[0],
+    milestones: milestones.map((m) => ({
       approved: m.approved,
       description: m.description ?? "",
-      amount: (typeof m.amount === "number" && m.amount !== undefined)
-        ? m.amount.toString()
-        : (!isMulti && escrow.amount ? escrow.amount.toString() : ""),
-      status: m.flags?.released ? "released" : m.flags?.approved ? "approved" : m.status || "pending",
+      amount:
+        typeof m.amount === "number" && m.amount !== undefined
+          ? m.amount.toString()
+          : !isMulti && escrow.amount
+            ? escrow.amount.toString()
+            : "",
+      status: m.flags?.released
+        ? "released"
+        : m.flags?.approved
+          ? "approved"
+          : m.status || "pending",
       evidence: m.evidence,
     })),
     receiver: escrow.roles?.receiver || escrow.roles?.serviceProvider || "-",
@@ -253,10 +427,10 @@ function mapEscrowToApproverAgreement(escrow: TrustlessEscrow) {
     disputeResolver: escrow.roles?.disputeResolver,
     released: escrow.flags?.released ?? false,
     role: "buyer" as const,
-  };
+  }
 }
 
-import { statusConfig } from "./statusConfig";
+import { statusConfig } from "./statusConfig"
 
 /* ── Chart Data ── */
 const monthlyData = [
@@ -272,33 +446,251 @@ const monthlyData = [
 /* ── Icon helper ── */
 function UseCaseIcon({ icon, className }: { icon: string; className?: string }) {
   const c = className || ""
-  if (icon === "user") return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className={c}><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-  if (icon === "home") return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className={c}><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
-  if (icon === "car") return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className={c}><rect x="1" y="3" width="15" height="13" rx="2"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-  if (icon === "book") return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className={c}><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
-  if (icon === "tool") return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className={c}><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
-  if (icon === "star") return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className={c}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-  return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className={c}><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+  if (icon === "user")
+    return (
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        className={c}
+      >
+        <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
+        <circle cx="12" cy="7" r="4" />
+      </svg>
+    )
+  if (icon === "home")
+    return (
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        className={c}
+      >
+        <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+      </svg>
+    )
+  if (icon === "car")
+    return (
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        className={c}
+      >
+        <rect x="1" y="3" width="15" height="13" rx="2" />
+        <polygon points="16 8 20 8 23 11 23 16 16 16 16 8" />
+        <circle cx="5.5" cy="18.5" r="2.5" />
+        <circle cx="18.5" cy="18.5" r="2.5" />
+      </svg>
+    )
+  if (icon === "book")
+    return (
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        className={c}
+      >
+        <path d="M4 19.5A2.5 2.5 0 016.5 17H20" />
+        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" />
+      </svg>
+    )
+  if (icon === "tool")
+    return (
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        className={c}
+      >
+        <path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z" />
+      </svg>
+    )
+  if (icon === "star")
+    return (
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        className={c}
+      >
+        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+      </svg>
+    )
+  return (
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      className={c}
+    >
+      <line x1="12" y1="5" x2="12" y2="19" />
+      <line x1="5" y1="12" x2="19" y2="12" />
+    </svg>
+  )
 }
 
 /* ── Sidebar nav items (simplified per requirements) ── */
 const sidebarItems = [
-  { id: "create", label: "Create Agreement", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg> },
-  { id: "agreements", label: "Agreements", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> },
-  { id: "wallets", label: "My Wallet", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg> },
-  { id: "analytics", label: "Analytics", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg> },
-  { id: "verification", label: "Identity Verification", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg> },
+  {
+    id: "create",
+    label: "Create Agreement",
+    icon: (
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+      >
+        <circle cx="12" cy="12" r="10" />
+        <line x1="12" y1="8" x2="12" y2="16" />
+        <line x1="8" y1="12" x2="16" y2="12" />
+      </svg>
+    ),
+  },
+  {
+    id: "agreements",
+    label: "Agreements",
+    icon: (
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+      >
+        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+        <polyline points="14 2 14 8 20 8" />
+      </svg>
+    ),
+  },
+  {
+    id: "wallets",
+    label: "My Wallet",
+    icon: (
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+      >
+        <rect x="1" y="4" width="22" height="16" rx="2" />
+        <path d="M1 10h22" />
+      </svg>
+    ),
+  },
+  {
+    id: "analytics",
+    label: "Analytics",
+    icon: (
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+      >
+        <path d="M18 20V10" />
+        <path d="M12 20V4" />
+        <path d="M6 20v-6" />
+      </svg>
+    ),
+  },
+  {
+    id: "verification",
+    label: "Identity Verification",
+    icon: (
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+      >
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+        <path d="M9 12l2 2 4-4" />
+      </svg>
+    ),
+  },
 ]
 
 /* ── "More" section items ── */
 const moreSidebarItems = [
-  { id: "investments", label: "Investments", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg> },
-  { id: "services", label: "Services", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg> },
+  {
+    id: "investments",
+    label: "Investments",
+    icon: (
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+      >
+        <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
+        <polyline points="17 6 23 6 23 12" />
+      </svg>
+    ),
+  },
+  {
+    id: "services",
+    label: "Services",
+    icon: (
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+      >
+        <line x1="12" y1="1" x2="12" y2="23" />
+        <path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
+      </svg>
+    ),
+  },
 ]
 
 /* ── Seller Evidence Submission Component ── */
-function SellerMilestoneList({ agr, agreements, setAgreements, t }: {
-  agr: Agreement; agreements: Agreement[]; setAgreements: React.Dispatch<React.SetStateAction<Agreement[]>>; t: (k: string) => string
+function SellerMilestoneList({
+  agr,
+  agreements,
+  setAgreements,
+  t,
+}: {
+  agr: Agreement
+  agreements: Agreement[]
+  setAgreements: React.Dispatch<React.SetStateAction<Agreement[]>>
+  t: (k: string) => string
 }) {
   const [evidenceInputs, setEvidenceInputs] = React.useState<Record<number, string>>({})
   const [submittedEvidence, setSubmittedEvidence] = React.useState<Record<number, string>>({})
@@ -306,9 +698,10 @@ function SellerMilestoneList({ agr, agreements, setAgreements, t }: {
   const [expandedMs, setExpandedMs] = React.useState<number | null>(null)
   const [attachedPrs, setAttachedPrs] = React.useState<Record<number, GithubPullRequest[]>>({})
 
-  const { address: walletAddress, openWalletModal } = require("@/lib/stellar-wallet").useStellarWallet();
-  const { changeMilestoneStatusAgreement } = require("@/lib/agreementActions");
-  const { token } = useAuthStore();
+  const { address: walletAddress, openWalletModal } =
+    require("@/lib/stellar-wallet").useStellarWallet()
+  const { changeMilestoneStatusAgreement } = require("@/lib/agreementActions")
+  const { token } = useAuthStore()
   const githubAgreementId = agr.nestId
 
   // Best-effort load of any GitHub PRs already attached to each milestone, so
@@ -327,12 +720,14 @@ function SellerMilestoneList({ agr, agreements, setAgreements, t }: {
         if (Object.keys(map).length) setAttachedPrs(map)
       })
       .catch(() => {})
-    return () => { active = false }
+    return () => {
+      active = false
+    }
   }, [agr.milestones.length, githubAgreementId, token])
   const handleSubmitEvidence = async (idx: number) => {
-    const evidence = evidenceInputs[idx]?.trim();
-    if (!evidence) return;
-    setSubmitting(idx);
+    const evidence = evidenceInputs[idx]?.trim()
+    if (!evidence) return
+    setSubmitting(idx)
     await changeMilestoneStatusAgreement({
       contractId: agr.id,
       milestoneIndex: String(idx),
@@ -346,15 +741,23 @@ function SellerMilestoneList({ agr, agreements, setAgreements, t }: {
       setSubmitting: (v: boolean) => v === false && setSubmitting(null),
       setError: (msg: string | null) => msg && alert(msg),
       onSuccess: () => {
-        setSubmittedEvidence(prev => ({ ...prev, [idx]: evidence }));
-        setEvidenceInputs(prev => ({ ...prev, [idx]: "" }));
-        setAgreements(prev => prev.map(a => a.id === agr.id ? {
-          ...a,
-          milestones: a.milestones.map((m, i) => i === idx && m.status === "pending" ? { ...m, status: "approved" as const } : m)
-        } : a));
-        setExpandedMs(null);
+        setSubmittedEvidence((prev) => ({ ...prev, [idx]: evidence }))
+        setEvidenceInputs((prev) => ({ ...prev, [idx]: "" }))
+        setAgreements((prev) =>
+          prev.map((a) =>
+            a.id === agr.id
+              ? {
+                  ...a,
+                  milestones: a.milestones.map((m, i) =>
+                    i === idx && m.status === "pending" ? { ...m, status: "approved" as const } : m,
+                  ),
+                }
+              : a,
+          ),
+        )
+        setExpandedMs(null)
       },
-    });
+    })
   }
 
   return (
@@ -362,28 +765,62 @@ function SellerMilestoneList({ agr, agreements, setAgreements, t }: {
       {agr.milestones.map((ms, idx) => {
         const hasEvidence = !!submittedEvidence[idx]
         return (
-          <div key={`${agr.id}-ms-${idx}`} className={cn("rounded-2xl border p-5 backdrop-blur-md transition-all",
-            ms.status === "released" ? "border-emerald-500/20 bg-emerald-500/5" : ms.status === "approved" || hasEvidence ? "border-cyan-500/20 bg-cyan-500/5" : "border-white/[0.06] bg-[#0a0a0c]/70"
-          )}>
+          <div
+            key={`${agr.id}-ms-${idx}`}
+            className={cn(
+              "rounded-2xl border p-5 backdrop-blur-md transition-all",
+              ms.status === "released"
+                ? "border-emerald-500/20 bg-emerald-500/5"
+                : ms.status === "approved" || hasEvidence
+                  ? "border-cyan-500/20 bg-cyan-500/5"
+                  : "border-white/[0.06] bg-[#0a0a0c]/70",
+            )}
+          >
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-3">
-                <span className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold",
-                  ms.status === "released" ? "bg-emerald-500/20 text-emerald-400" : ms.status === "approved" || hasEvidence ? "bg-cyan-500/20 text-cyan-400" : "bg-white/10 text-white/40"
-                )}>{idx + 1}</span>
+                <span
+                  className={cn(
+                    "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold",
+                    ms.status === "released"
+                      ? "bg-emerald-500/20 text-emerald-400"
+                      : ms.status === "approved" || hasEvidence
+                        ? "bg-cyan-500/20 text-cyan-400"
+                        : "bg-white/10 text-white/40",
+                  )}
+                >
+                  {idx + 1}
+                </span>
                 <div>
                   <p className="text-sm font-semibold text-white">{ms.description}</p>
-                  <p className={cn("text-xs font-medium mt-0.5",
-                    ms.status === "released" ? "text-emerald-400" : ms.status === "approved" || hasEvidence ? "text-cyan-400" : "text-white/30"
-                  )}>
-                    {ms.status === "released" ? t("flow.released") : (ms.status === "approved" || hasEvidence) ? t("flow.evidenceSubmitted") : t("flow.awaitingEvidence")}
+                  <p
+                    className={cn(
+                      "text-xs font-medium mt-0.5",
+                      ms.status === "released"
+                        ? "text-emerald-400"
+                        : ms.status === "approved" || hasEvidence
+                          ? "text-cyan-400"
+                          : "text-white/30",
+                    )}
+                  >
+                    {ms.status === "released"
+                      ? t("flow.released")
+                      : ms.status === "approved" || hasEvidence
+                        ? t("flow.evidenceSubmitted")
+                        : t("flow.awaitingEvidence")}
                   </p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <p className="text-lg font-bold text-white">{"$"}{ms.amount} <span className="text-xs font-normal text-white/35">USDC</span></p>
+                <p className="text-lg font-bold text-white">
+                  {"$"}
+                  {ms.amount} <span className="text-xs font-normal text-white/35">USDC</span>
+                </p>
                 {ms.status === "pending" && !hasEvidence && (
-                  <Button size="sm" onClick={() => setExpandedMs(expandedMs === idx ? null : idx)}
-                    className="rounded-full bg-cyan-500/15 text-xs font-semibold text-cyan-400 hover:bg-cyan-500/25 border border-cyan-500/20">
+                  <Button
+                    size="sm"
+                    onClick={() => setExpandedMs(expandedMs === idx ? null : idx)}
+                    className="rounded-full bg-cyan-500/15 text-xs font-semibold text-cyan-400 hover:bg-cyan-500/25 border border-cyan-500/20"
+                  >
                     {t("flow.submitEvidence")}
                   </Button>
                 )}
@@ -397,12 +834,16 @@ function SellerMilestoneList({ agr, agreements, setAgreements, t }: {
             {/* Evidence input form (expanded) */}
             {expandedMs === idx && ms.status === "pending" && !hasEvidence && (
               <div className="mt-4 rounded-xl border border-white/[0.06] bg-[#0a0a0c]/50 p-4">
-                <label className="mb-2 block text-xs font-medium uppercase tracking-wider text-white/40">{t("flow.evidenceLink")}</label>
+                <label className="mb-2 block text-xs font-medium uppercase tracking-wider text-white/40">
+                  {t("flow.evidenceLink")}
+                </label>
                 <div className="flex gap-2">
                   <input
                     type="text"
                     value={evidenceInputs[idx] || ""}
-                    onChange={e => setEvidenceInputs(prev => ({ ...prev, [idx]: e.target.value }))}
+                    onChange={(e) =>
+                      setEvidenceInputs((prev) => ({ ...prev, [idx]: e.target.value }))
+                    }
                     placeholder={t("flow.evidencePlaceholder")}
                     className="h-10 flex-1 rounded-lg border border-white/15 bg-[#0a0a0c]/50 px-3 text-sm text-white placeholder:text-white/25 focus:border-cyan-500/50 focus:outline-none focus:ring-1 focus:ring-cyan-500/20 transition-all"
                   />
@@ -417,16 +858,16 @@ function SellerMilestoneList({ agr, agreements, setAgreements, t }: {
                 </div>
                 {/* GitHub-backed evidence: verified merged PRs scoped to the project repo (#128) */}
                 {githubAgreementId ? (
-                <div className="mt-3 border-t border-white/[0.06] pt-3">
-                  <MilestonePrPicker
-                    agreementId={githubAgreementId}
-                    milestoneIndex={idx}
-                    walletAddress={walletAddress ?? undefined}
-                    token={token ?? undefined}
-                    attached={attachedPrs[idx] ?? []}
-                    onAttached={(prs) => setAttachedPrs(prev => ({ ...prev, [idx]: prs }))}
-                  />
-                </div>
+                  <div className="mt-3 border-t border-white/[0.06] pt-3">
+                    <MilestonePrPicker
+                      agreementId={githubAgreementId}
+                      milestoneIndex={idx}
+                      walletAddress={walletAddress ?? undefined}
+                      token={token ?? undefined}
+                      attached={attachedPrs[idx] ?? []}
+                      onAttached={(prs) => setAttachedPrs((prev) => ({ ...prev, [idx]: prs }))}
+                    />
+                  </div>
                 ) : null}
               </div>
             )}
@@ -434,7 +875,9 @@ function SellerMilestoneList({ agr, agreements, setAgreements, t }: {
             {(hasEvidence || (ms.status === "released" && ms.evidence)) && (
               <div className="mt-3 rounded-lg border border-cyan-500/10 bg-cyan-500/5 px-3 py-2">
                 <p className="text-xs text-cyan-400/60 font-medium">{t("flow.viewEvidence")}:</p>
-                <p className="text-xs text-white/60 mt-0.5 break-all">{hasEvidence ? submittedEvidence[idx] : ms.evidence}</p>
+                <p className="text-xs text-white/60 mt-0.5 break-all">
+                  {hasEvidence ? submittedEvidence[idx] : ms.evidence}
+                </p>
               </div>
             )}
             {/* Attached GitHub PRs (verified evidence), always rendered when present */}
@@ -456,169 +899,189 @@ function SellerMilestoneList({ agr, agreements, setAgreements, t }: {
    ════════════════════════════════════════════════ */
 export default function PersonalDashboardPage() {
   // Prevent duplicate fetches in Strict Mode or double mount
-  const fetchedEscrowsRef = React.useRef<string | null>(null);
-  const { t } = useLanguage();
-  const { openWalletModal } = useStellarWallet();
-  const walletAddress = useCurrentAddress();
-  const signOut = useSignOut();
-  const { user: socialUser, token } = useAuthStore();
+  const fetchedEscrowsRef = React.useRef<string | null>(null)
+  const { t } = useLanguage()
+  const { openWalletModal } = useStellarWallet()
+  const walletAddress = useCurrentAddress()
+  const signOut = useSignOut()
+  const { user: socialUser, token } = useAuthStore()
   // A signing-capable wallet: external Kit wallet, or a custodial wallet whose
   // provider signs through the unified signer (Accesly #109; social with #108).
-  const isExternalWallet = useHasSigningWallet();
-  const [loading, setLoading] = useState(false);
+  const isExternalWallet = useHasSigningWallet()
+  const [loading, setLoading] = useState(false)
 
-  const [activeSection, setActiveSection] = useState("home");
+  const [activeSection, setActiveSection] = useState("home")
 
   // Session wallet (the one Pollar provisioned, or a Kit wallet with no session)
   // with its on-chain USDC balance. Replaces the hardcoded demo wallets.
-  const [usdcBalance, setUsdcBalance] = useState<string | null>(null);
-  const [copiedAddress, setCopiedAddress] = useState<string | null>(null);
+  const [usdcBalance, setUsdcBalance] = useState<string | null>(null)
+  const [copiedAddress, setCopiedAddress] = useState<string | null>(null)
 
   useEffect(() => {
-    setUsdcBalance(null);
-    if (!walletAddress || !token) return;
-    let cancelled = false;
+    setUsdcBalance(null)
+    if (!walletAddress || !token) return
+    let cancelled = false
     getWalletBalance(walletAddress, token).then((res) => {
-      if (cancelled) return;
-      if (res.success && res.data) setUsdcBalance(res.data.usdc);
-      else console.warn("[wallets] could not load USDC balance:", res.error);
-    });
-    return () => { cancelled = true };
+      if (cancelled) return
+      if (res.success && res.data) setUsdcBalance(res.data.usdc)
+      else console.warn("[wallets] could not load USDC balance:", res.error)
+    })
+    return () => {
+      cancelled = true
+    }
     // `activeSection` is a deliberate dependency: coming back to a section that
     // shows the balance (e.g. after a deposit in Ramps) re-reads it from chain.
-  }, [walletAddress, token, activeSection]);
+  }, [walletAddress, token, activeSection])
 
-  const usdcDisplay = formatUsdc(usdcBalance);
+  const usdcDisplay = formatUsdc(usdcBalance)
 
   const connectedWallets = useMemo(
-    () => walletAddress
-      ? [{ value: walletAddress, labelKey: "wallet.main", short: shortAddress(walletAddress), balance: usdcDisplay }]
-      : [],
+    () =>
+      walletAddress
+        ? [
+            {
+              value: walletAddress,
+              labelKey: "wallet.main",
+              short: shortAddress(walletAddress),
+              balance: usdcDisplay,
+            },
+          ]
+        : [],
     [walletAddress, usdcDisplay],
-  );
+  )
 
   const copyWalletAddress = async (address: string) => {
     try {
-      await navigator.clipboard.writeText(address);
-      setCopiedAddress(address);
-      setTimeout(() => setCopiedAddress((current) => (current === address ? null : current)), 2000);
+      await navigator.clipboard.writeText(address)
+      setCopiedAddress(address)
+      setTimeout(() => setCopiedAddress((current) => (current === address ? null : current)), 2000)
     } catch (e) {
-      console.warn("[wallets] clipboard write failed:", e);
+      console.warn("[wallets] clipboard write failed:", e)
     }
-  };
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
-  const [agreements, setAgreements] = useState<Agreement[]>(initialAgreements);
-  const [agreementsLoading, setAgreementsLoading] = useState(false);
-  const [agreementsError, setAgreementsError] = useState<string | null>(null);
-  const [approverEscrows, setApproverEscrows] = useState<Agreement[]>([]);
-  const [approverLoading, setApproverLoading] = useState(false);
-  const [walletsData, setWalletsData] = useState<WalletWithAgreements[]>([]);
-  const [userProfile, setUserProfile] = useState<Profile | null>(null);
-  const [showEditProfile, setShowEditProfile] = useState(false);
-  const [showAiAssistant, setShowAiAssistant] = useState(false);
+  }
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false)
+  const [agreements, setAgreements] = useState<Agreement[]>(initialAgreements)
+  const [agreementsLoading, setAgreementsLoading] = useState(false)
+  const [agreementsError, setAgreementsError] = useState<string | null>(null)
+  const [approverEscrows, setApproverEscrows] = useState<Agreement[]>([])
+  const [approverLoading, setApproverLoading] = useState(false)
+  const [walletsData, setWalletsData] = useState<WalletWithAgreements[]>([])
+  const [userProfile, setUserProfile] = useState<Profile | null>(null)
+  const [showEditProfile, setShowEditProfile] = useState(false)
+  const [showAiAssistant, setShowAiAssistant] = useState(false)
 
   // Fetch wallets with agreements
   useEffect(() => {
-    if (!token) return;
-    let isMounted = true;
+    if (!token) return
+    let isMounted = true
     async function fetchWalletsData() {
       try {
-        const res = await getWalletsWithAgreements(token!);
+        const res = await getWalletsWithAgreements(token!)
         if (isMounted && res.success && res.data) {
-          setWalletsData(res.data);
+          setWalletsData(res.data)
         }
       } catch (err) {
-        console.error("Failed to fetch wallets with agreements:", err);
+        console.error("Failed to fetch wallets with agreements:", err)
       }
     }
-    fetchWalletsData();
+    fetchWalletsData()
     return () => {
-      isMounted = false;
-    };
-  }, [token]);
+      isMounted = false
+    }
+  }, [token])
 
   // Person KYC State
-  const [kycFullName, setKycFullName] = useState("");
-  const [kycCountry, setKycCountry] = useState("");
-  const [kycSubmitting, setKycSubmitting] = useState(false);
-  const [kycError, setKycError] = useState<string | null>(null);
-  const [activeKycStatus, setActiveKycStatus] = useState<KycVerificationStatus | null>(null);
+  const [kycFullName, setKycFullName] = useState("")
+  const [kycCountry, setKycCountry] = useState("")
+  const [kycSubmitting, setKycSubmitting] = useState(false)
+  const [kycError, setKycError] = useState<string | null>(null)
+  const [activeKycStatus, setActiveKycStatus] = useState<KycVerificationStatus | null>(null)
 
   // Fetch user profile
   useEffect(() => {
     async function fetchProfile() {
       if (walletAddress) {
-        const result = await getProfileByWallet(walletAddress);
-        if (result.profile) setUserProfile(result.profile);
+        const result = await getProfileByWallet(walletAddress)
+        if (result.profile) setUserProfile(result.profile)
       }
     }
-    fetchProfile();
-  }, [walletAddress]);
+    fetchProfile()
+  }, [walletAddress])
 
   useEffect(() => {
-    setKycFullName(userProfile?.display_name ?? "");
-    setKycCountry(userProfile?.country ?? "");
-  }, [userProfile]);
+    setKycFullName(userProfile?.display_name ?? "")
+    setKycCountry(userProfile?.country ?? "")
+  }, [userProfile])
 
-  const profileKycStatus = (userProfile as any)?.kyc_status as KycVerificationStatus ?? "not_started";
-  const kycStatus = activeKycStatus ?? profileKycStatus;
-  const kycVerified = isKycVerified(kycStatus);
-  const userId = userProfile?.id ?? walletAddress;
+  const profileKycStatus =
+    ((userProfile as any)?.kyc_status as KycVerificationStatus) ?? "not_started"
+  const kycStatus = activeKycStatus ?? profileKycStatus
+  const kycVerified = isKycVerified(kycStatus)
+  const userId = userProfile?.id ?? walletAddress
 
-  const refreshKycStatus = useCallback(async (uid: string) => {
-    if (!walletAddress || !uid) return;
-    const statusResult = await getKycStatus(uid, token);
-    if (!statusResult.success || !statusResult.data) return;
-    const rawStatus = statusResult.data.status;
-    const nextStatus: KycVerificationStatus = rawStatus === "pending" ? "in_review" : rawStatus;
-    setActiveKycStatus(nextStatus);
-  }, [walletAddress, token]);
+  const refreshKycStatus = useCallback(
+    async (uid: string) => {
+      if (!walletAddress || !uid) return
+      const statusResult = await getKycStatus(uid, token)
+      if (!statusResult.success || !statusResult.data) return
+      const rawStatus = statusResult.data.status
+      const nextStatus: KycVerificationStatus = rawStatus === "pending" ? "in_review" : rawStatus
+      setActiveKycStatus(nextStatus)
+    },
+    [walletAddress, token],
+  )
 
   useEffect(() => {
-    if (!userId) return;
+    if (!userId) return
     // Initial fetch of Kyc status from backend API response
-    void refreshKycStatus(userId);
-  }, [userId, refreshKycStatus]);
+    void refreshKycStatus(userId)
+  }, [userId, refreshKycStatus])
 
   useEffect(() => {
-    if (!userId || kycStatus === "verified") return;
+    if (!userId || kycStatus === "verified") return
     const interval = window.setInterval(() => {
-      void refreshKycStatus(userId);
-    }, 15000);
-    return () => window.clearInterval(interval);
-  }, [userId, kycStatus, refreshKycStatus]);
+      void refreshKycStatus(userId)
+    }, 15000)
+    return () => window.clearInterval(interval)
+  }, [userId, kycStatus, refreshKycStatus])
 
   const handleStartKycSession = async () => {
-    if (!walletAddress) return;
-    setKycSubmitting(true);
-    setKycError(null);
+    if (!walletAddress) return
+    setKycSubmitting(true)
+    setKycError(null)
     try {
       const saved = await updateProfile(walletAddress, {
         display_name: kycFullName.trim(),
         country: kycCountry.trim(),
-      });
-      if (saved.error) throw new Error(saved.error);
+      })
+      if (saved.error) throw new Error(saved.error)
 
-      const kycFields = { full_name: kycFullName, country: kycCountry, kyc_status: kycStatus };
-      const dto = buildCreateKycSessionDto(walletAddress, userId, kycFields);
-      const session = await startKycSession(dto, token);
-      if (!session.success || !session.data) throw new Error(session.error ?? "Failed to start KYC session");
+      const kycFields = { full_name: kycFullName, country: kycCountry, kyc_status: kycStatus }
+      const dto = buildCreateKycSessionDto(walletAddress, userId, kycFields)
+      const session = await startKycSession(dto, token)
+      if (!session.success || !session.data)
+        throw new Error(session.error ?? "Failed to start KYC session")
 
-      const nextStatus = session.data.status === "pending" ? "in_review" : session.data.status || nextKycStatusAfterSessionStart();
-      setActiveKycStatus(nextStatus);
-      setUserProfile(saved.profile);
+      const nextStatus =
+        session.data.status === "pending"
+          ? "in_review"
+          : session.data.status || nextKycStatusAfterSessionStart()
+      setActiveKycStatus(nextStatus)
+      setUserProfile(saved.profile)
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to start KYC session";
-      setKycError(message);
+      const message = err instanceof Error ? err.message : "Failed to start KYC session"
+      setKycError(message)
     } finally {
-      setKycSubmitting(false);
+      setKycSubmitting(false)
     }
-  };
+  }
 
   /* ── Agreements filter/sort state ── */
   const [searchQuery, setSearchQuery] = useState("")
-  const [statusFilter, setStatusFilter] = useState<"all" | "funded" | "in_progress" | "released">("all")
+  const [statusFilter, setStatusFilter] = useState<"all" | "funded" | "in_progress" | "released">(
+    "all",
+  )
   const [sortBy, setSortBy] = useState<"date" | "amount" | "title">("date")
   const [currentPage, setCurrentPage] = useState(1)
   const [walletFilter, setWalletFilter] = useState<string | null>(null)
@@ -627,20 +1090,25 @@ export default function PersonalDashboardPage() {
   const filteredAgreements = useMemo(() => {
     // Step A: Resolve the wallet set (flatten all or filter by selectedWalletPubKey)
     let list: Array<{
-      id: string;
-      title: string;
-      status: string;
-      amount: string;
-      currency: string;
-      type: "Single Release" | "Multi Release";
-      counterparty: string;
-      date: string;
-      updatedAt?: string;
-      role?: "buyer" | "seller";
-      receiver?: string;
-      serviceProvider?: string;
-      milestones: Array<{ status: string; description?: string; amount?: string; approved?: boolean }>;
-    }> = [];
+      id: string
+      title: string
+      status: string
+      amount: string
+      currency: string
+      type: "Single Release" | "Multi Release"
+      counterparty: string
+      date: string
+      updatedAt?: string
+      role?: "buyer" | "seller"
+      receiver?: string
+      serviceProvider?: string
+      milestones: Array<{
+        status: string
+        description?: string
+        amount?: string
+        approved?: boolean
+      }>
+    }> = []
 
     if (walletsData && walletsData.length > 0) {
       if (!walletFilter || walletFilter === "all" || walletFilter === "All") {
@@ -654,17 +1122,19 @@ export default function PersonalDashboardPage() {
             currency: "USDC",
             type: "Single Release" as const,
             counterparty: "-",
-            date: a.created_at ? a.created_at.split("T")[0] : new Date().toISOString().split("T")[0],
+            date: a.created_at
+              ? a.created_at.split("T")[0]
+              : new Date().toISOString().split("T")[0],
             updatedAt: a.created_at,
             role: (a.role === "seller" ? "seller" : "buyer") as "buyer" | "seller",
             receiver: "-",
             serviceProvider: "-",
             milestones: [{ status: a.status }],
-          }))
-        );
+          })),
+        )
       } else {
         // Specific wallet selected
-        const targetWallet = walletsData.find((w) => w.wallet_address === walletFilter);
+        const targetWallet = walletsData.find((w) => w.wallet_address === walletFilter)
         list = targetWallet
           ? targetWallet.agreements.map((a) => ({
               id: a.id,
@@ -674,66 +1144,71 @@ export default function PersonalDashboardPage() {
               currency: "USDC",
               type: "Single Release" as const,
               counterparty: "-",
-              date: a.created_at ? a.created_at.split("T")[0] : new Date().toISOString().split("T")[0],
+              date: a.created_at
+                ? a.created_at.split("T")[0]
+                : new Date().toISOString().split("T")[0],
               updatedAt: a.created_at,
               role: (a.role === "seller" ? "seller" : "buyer") as "buyer" | "seller",
               receiver: "-",
               serviceProvider: "-",
               milestones: [{ status: a.status }],
             }))
-          : [];
+          : []
       }
     } else {
       // Fallback when walletsData is not yet loaded / available
-      let filtered = [...agreements];
+      let filtered = [...agreements]
       if (walletFilter && walletFilter !== "all" && walletFilter !== "All") {
         filtered = filtered.filter(
           (a) =>
             a.receiver === walletFilter ||
             a.id.includes(walletFilter.slice(0, 8)) ||
-            (a as unknown as { serviceProvider?: string }).serviceProvider === walletFilter
-        );
+            (a as unknown as { serviceProvider?: string }).serviceProvider === walletFilter,
+        )
       }
       list = filtered.map((a) => ({
         ...a,
         updatedAt: a.date,
         currency: a.currency || "USDC",
-      }));
+      }))
     }
 
     // Step B: Apply searchQuery filtering
     if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
+      const q = searchQuery.toLowerCase()
       list = list.filter(
         (agr) =>
           (agr.title && agr.title.toLowerCase().includes(q)) ||
           (agr.counterparty && agr.counterparty.toLowerCase().includes(q)) ||
-          (agr.id && agr.id.toLowerCase().includes(q))
-      );
+          (agr.id && agr.id.toLowerCase().includes(q)),
+      )
     }
 
     // Step C: Apply statusFilter filtering
     if (statusFilter !== "all") {
       list = list.filter((a) => {
-        const allReleased = a.milestones && a.milestones.length > 0 && a.milestones.every((m) => m.status === "released");
-        const actualStatus = allReleased ? "released" : a.status;
-        return actualStatus === statusFilter;
-      });
+        const allReleased =
+          a.milestones &&
+          a.milestones.length > 0 &&
+          a.milestones.every((m) => m.status === "released")
+        const actualStatus = allReleased ? "released" : a.status
+        return actualStatus === statusFilter
+      })
     }
 
     // Step D: Apply sortBy ordering
     list.sort((a, b) => {
-      if (sortBy === "date") return (b.date || "").localeCompare(a.date || "");
+      if (sortBy === "date") return (b.date || "").localeCompare(a.date || "")
       if (sortBy === "amount") {
-        const amountA = parseFloat(String(a.amount || "0").replace(/,/g, "")) || 0;
-        const amountB = parseFloat(String(b.amount || "0").replace(/,/g, "")) || 0;
-        return amountB - amountA;
+        const amountA = parseFloat(String(a.amount || "0").replace(/,/g, "")) || 0
+        const amountB = parseFloat(String(b.amount || "0").replace(/,/g, "")) || 0
+        return amountB - amountA
       }
-      return (a.title || "").localeCompare(b.title || "");
-    });
+      return (a.title || "").localeCompare(b.title || "")
+    })
 
-    return list;
-  }, [walletsData, walletFilter, agreements, searchQuery, statusFilter, sortBy]);
+    return list
+  }, [walletsData, walletFilter, agreements, searchQuery, statusFilter, sortBy])
 
   // Pagination
   const totalPages = Math.ceil(filteredAgreements.length / ITEMS_PER_PAGE)
@@ -749,8 +1224,8 @@ export default function PersonalDashboardPage() {
 
   const statusCounts = useMemo(() => {
     const counts = { all: agreements.length, funded: 0, in_progress: 0, released: 0 }
-    agreements.forEach(agr => {
-      const allReleased = agr.milestones.every(m => m.status === "released")
+    agreements.forEach((agr) => {
+      const allReleased = agr.milestones.every((m) => m.status === "released")
       const s = allReleased ? "released" : agr.status
       if (s in counts) counts[s as keyof typeof counts]++
     })
@@ -758,68 +1233,119 @@ export default function PersonalDashboardPage() {
   }, [agreements])
 
   useEffect(() => {
-    if (!walletAddress) return;
-    const activeAddress: string = walletAddress;
+    if (!walletAddress) return
+    const activeAddress: string = walletAddress
     // Only fetch if we haven't already for this address + token combination.
     // Including the token means we re-fetch once auth loads, so we route through
     // the backend instead of falling back to the direct Trustless Work service.
-    const fetchKey = `${activeAddress}::${token ?? ""}`;
-    if (fetchedEscrowsRef.current === fetchKey) return;
-    fetchedEscrowsRef.current = fetchKey;
+    const fetchKey = `${activeAddress}::${token ?? ""}`
+    if (fetchedEscrowsRef.current === fetchKey) return
+    fetchedEscrowsRef.current = fetchKey
 
     async function fetchAgreements() {
-      setAgreementsLoading(true);
-      setAgreementsError(null);
-      const { agreements: nestAgreements, error } = await getAgreementsByWallet(activeAddress, token ?? undefined);
+      setAgreementsLoading(true)
+      setAgreementsError(null)
+      const { agreements: nestAgreements, error } = await getAgreementsByWallet(
+        activeAddress,
+        token ?? undefined,
+      )
       if (error) {
-        setAgreementsError(error);
-        setAgreementsLoading(false);
-        return;
+        setAgreementsError(error)
+        setAgreementsLoading(false)
+        return
       }
-      const mapped = nestAgreements.map(a => mapNestAgreementToUi(a, activeAddress));
-      setAgreements(mapped);
-      setAgreementsLoading(false);
+      const mapped = nestAgreements.map((a) => mapNestAgreementToUi(a, activeAddress))
+      setAgreements(mapped)
+      setAgreementsLoading(false)
     }
 
-    fetchAgreements();
+    fetchAgreements()
 
     // Fetch escrows where user is approver (for approver tab)
     async function fetchApproverEscrows() {
-      setApproverLoading(true);
+      setApproverLoading(true)
       // MIGRATION: Using escrowMigration wrapper
-      const { getEscrowsByRole } = await import("@/services/escrowMigration");
-      const res = await getEscrowsByRole({ role: "approver", address: activeAddress }, token ?? undefined);
+      const { getEscrowsByRole } = await import("@/services/escrowMigration")
+      const res = await getEscrowsByRole(
+        { role: "approver", address: activeAddress },
+        token ?? undefined,
+      )
       if (res.success && Array.isArray(res.data)) {
-        setApproverEscrows((res.data as TrustlessEscrow[]).map(mapEscrowToApproverAgreement));
+        setApproverEscrows((res.data as TrustlessEscrow[]).map(mapEscrowToApproverAgreement))
       } else {
-        setApproverEscrows([]);
+        setApproverEscrows([])
       }
-      setApproverLoading(false);
+      setApproverLoading(false)
     }
-    fetchApproverEscrows();
-  }, [walletAddress, token]);
+    fetchApproverEscrows()
+  }, [walletAddress, token])
   const [viewingAgreement, setViewingAgreement] = useState<string | null>(null)
   const [showAgreementChat, setShowAgreementChat] = useState<string | null>(null)
   const [showProfileEditor, setShowProfileEditor] = useState(false)
 
   const approveMilestone = (agrId: string, msIdx: number) => {
-    setAgreements(prev => prev.map(a => a.id === agrId ? { ...a, milestones: a.milestones.map((m, i) => i === msIdx && m.status === "pending" ? { ...m, status: "approved" as const } : m) } : a))
+    setAgreements((prev) =>
+      prev.map((a) =>
+        a.id === agrId
+          ? {
+              ...a,
+              milestones: a.milestones.map((m, i) =>
+                i === msIdx && m.status === "pending" ? { ...m, status: "approved" as const } : m,
+              ),
+            }
+          : a,
+      ),
+    )
   }
   const releaseMilestone = (agrId: string, msIdx: number) => {
-    setAgreements(prev => prev.map(a => a.id === agrId ? { ...a, milestones: a.milestones.map((m, i) => i === msIdx && m.status === "approved" ? { ...m, status: "released" as const } : m) } : a))
+    setAgreements((prev) =>
+      prev.map((a) =>
+        a.id === agrId
+          ? {
+              ...a,
+              milestones: a.milestones.map((m, i) =>
+                i === msIdx && m.status === "approved" ? { ...m, status: "released" as const } : m,
+              ),
+            }
+          : a,
+      ),
+    )
   }
   const releaseAllApproved = (agrId: string) => {
-    setAgreements(prev => prev.map(a => a.id === agrId ? { ...a, milestones: a.milestones.map(m => m.status === "approved" ? { ...m, status: "released" as const } : m) } : a))
+    setAgreements((prev) =>
+      prev.map((a) =>
+        a.id === agrId
+          ? {
+              ...a,
+              milestones: a.milestones.map((m) =>
+                m.status === "approved" ? { ...m, status: "released" as const } : m,
+              ),
+            }
+          : a,
+      ),
+    )
   }
   const approveAndReleaseAll = (agrId: string) => {
-    setAgreements(prev => prev.map(a => a.id === agrId ? { ...a, status: "released", milestones: a.milestones.map(m => ({ ...m, status: "released" as const })) } : a))
+    setAgreements((prev) =>
+      prev.map((a) =>
+        a.id === agrId
+          ? {
+              ...a,
+              status: "released",
+              milestones: a.milestones.map((m) => ({ ...m, status: "released" as const })),
+            }
+          : a,
+      ),
+    )
   }
 
   /* ── Wizard State ── */
   const [step, setStep] = useState(0)
   const [submitted, setSubmitted] = useState(false)
   const [creating, setCreating] = useState(false)
-  const [createTxStatus, setCreateTxStatus] = useState<import("@/lib/signing").TxStatus | null>(null)
+  const [createTxStatus, setCreateTxStatus] = useState<import("@/lib/signing").TxStatus | null>(
+    null,
+  )
   const [error, setError] = useState<string | null>(null)
   const [escrowType, setEscrowType] = useState<"single" | "multi">("single")
   const [useCase, setUseCase] = useState<string | null>(null)
@@ -828,7 +1354,9 @@ export default function PersonalDashboardPage() {
   const [description, setDescription] = useState("")
   const [guidePrefilled, setGuidePrefilled] = useState(false)
   const [selectedWallet, setSelectedWallet] = useState(walletAddress ?? "")
-  useEffect(() => { if (walletAddress) setSelectedWallet(walletAddress) }, [walletAddress])
+  useEffect(() => {
+    if (walletAddress) setSelectedWallet(walletAddress)
+  }, [walletAddress])
   const [signerWallet, setSignerWallet] = useState("")
   const [milestones, setMilestones] = useState([{ description: "Full delivery", amount: "" }])
   const [showCustomize, setShowCustomize] = useState(false)
@@ -841,29 +1369,55 @@ export default function PersonalDashboardPage() {
   useEffect(() => {
     if (useCase && !guidePrefilled) {
       if (useCase === "other") {
-        if (customUseCase.trim()) { setTitle(customUseCase.trim()); setDescription(customUseCase.trim()); setGuidePrefilled(true) }
+        if (customUseCase.trim()) {
+          setTitle(customUseCase.trim())
+          setDescription(customUseCase.trim())
+          setGuidePrefilled(true)
+        }
       } else {
         const uc = useCases.find((u) => u.id === useCase)
-        if (uc) { setTitle(uc.suggestedTitle); setDescription(uc.suggestedDesc); setGuidePrefilled(true) }
+        if (uc) {
+          setTitle(uc.suggestedTitle)
+          setDescription(uc.suggestedDesc)
+          setGuidePrefilled(true)
+        }
       }
     }
   }, [useCase, guidePrefilled, customUseCase])
 
-  const totalAmount = escrowType === "single" ? (parseFloat(milestones[0]?.amount) || 0) : milestones.reduce((s, m) => s + (parseFloat(m.amount) || 0), 0)
+  const totalAmount =
+    escrowType === "single"
+      ? parseFloat(milestones[0]?.amount) || 0
+      : milestones.reduce((s, m) => s + (parseFloat(m.amount) || 0), 0)
   const platformFee = 0.7
 
   const addMilestone = () => setMilestones((p) => [...p, { description: "", amount: "" }])
-  const removeMilestone = (i: number) => milestones.length > 1 && setMilestones((p) => p.filter((_, idx) => idx !== i))
+  const removeMilestone = (i: number) =>
+    milestones.length > 1 && setMilestones((p) => p.filter((_, idx) => idx !== i))
   const updateMilestone = useCallback((i: number, field: "description" | "amount", val: string) => {
-    setMilestones((p) => { const n = [...p]; n[i] = { ...n[i], [field]: val }; return n })
+    setMilestones((p) => {
+      const n = [...p]
+      n[i] = { ...n[i], [field]: val }
+      return n
+    })
   }, [])
 
-  const handleDragStart = (i: number) => { dragItem.current = i }
-  const handleDragEnter = (i: number) => { dragOverItem.current = i }
+  const handleDragStart = (i: number) => {
+    dragItem.current = i
+  }
+  const handleDragEnter = (i: number) => {
+    dragOverItem.current = i
+  }
   const handleDragEnd = () => {
     if (dragItem.current === null || dragOverItem.current === null) return
-    setMilestones((prev) => { const c = [...prev]; const d = c.splice(dragItem.current!, 1)[0]; c.splice(dragOverItem.current!, 0, d); return c })
-    dragItem.current = null; dragOverItem.current = null
+    setMilestones((prev) => {
+      const c = [...prev]
+      const d = c.splice(dragItem.current!, 1)[0]
+      c.splice(dragOverItem.current!, 0, d)
+      return c
+    })
+    dragItem.current = null
+    dragOverItem.current = null
   }
 
   const generateAgreementPayload = (): AgreementPayload => ({
@@ -879,14 +1433,29 @@ export default function PersonalDashboardPage() {
       releaseSigner: signerWallet,
       receiver: walletAddress || "",
     },
-    milestones: escrowType === "single"
-      ? [{ description: milestones[0]?.description || "Full delivery", amount: totalAmount.toString(), status: "pending" }]
-      : milestones.map((m) => ({ description: m.description || "Milestone", amount: m.amount || "0", status: "pending" })),
+    milestones:
+      escrowType === "single"
+        ? [
+            {
+              description: milestones[0]?.description || "Full delivery",
+              amount: totalAmount.toString(),
+              status: "pending",
+            },
+          ]
+        : milestones.map((m) => ({
+            description: m.description || "Milestone",
+            amount: m.amount || "0",
+            status: "pending",
+          })),
     notifications: { notifyEmail, signerEmail },
   })
 
   const [copiedJson, setCopiedJson] = useState(false)
-  const copyJson = () => { navigator.clipboard.writeText(JSON.stringify(generateAgreementPayload(), null, 2)); setCopiedJson(true); setTimeout(() => setCopiedJson(false), 2000) }
+  const copyJson = () => {
+    navigator.clipboard.writeText(JSON.stringify(generateAgreementPayload(), null, 2))
+    setCopiedJson(true)
+    setTimeout(() => setCopiedJson(false), 2000)
+  }
 
   const canProceed = () => {
     if (step === 0) return true
@@ -900,13 +1469,29 @@ export default function PersonalDashboardPage() {
   }
 
   const resetWizard = () => {
-    setStep(0); setSubmitted(false); setEscrowType("single"); setUseCase(null); setCustomUseCase("")
-    setTitle(""); setDescription(""); setSignerWallet(""); setGuidePrefilled(false)
-    setMilestones([{ description: "Full delivery", amount: "" }]); setShowCustomize(false)
-    setNotifyEmail(""); setSignerEmail(""); setSelectedWallet(walletAddress ?? "")
+    setStep(0)
+    setSubmitted(false)
+    setEscrowType("single")
+    setUseCase(null)
+    setCustomUseCase("")
+    setTitle("")
+    setDescription("")
+    setSignerWallet("")
+    setGuidePrefilled(false)
+    setMilestones([{ description: "Full delivery", amount: "" }])
+    setShowCustomize(false)
+    setNotifyEmail("")
+    setSignerEmail("")
+    setSelectedWallet(walletAddress ?? "")
   }
 
-  const handleAiDraft = (draft: { title: string; description: string; escrowType: "single" | "multi"; useCase: string | null; milestones: { description: string; amount: string }[] }) => {
+  const handleAiDraft = (draft: {
+    title: string
+    description: string
+    escrowType: "single" | "multi"
+    useCase: string | null
+    milestones: { description: string; amount: string }[]
+  }) => {
     setActiveSection("create")
     setStep(2)
     setEscrowType(draft.escrowType)
@@ -915,80 +1500,194 @@ export default function PersonalDashboardPage() {
     if (draft.useCase) setUseCase(draft.useCase)
     setGuidePrefilled(true)
     if (draft.milestones.length > 0) {
-      setMilestones(draft.milestones.map(m => ({ description: m.description, amount: m.amount || "" })))
+      setMilestones(
+        draft.milestones.map((m) => ({ description: m.description, amount: m.amount || "" })),
+      )
     }
     setShowAiAssistant(false)
   }
 
-  const agreementUrl = typeof window !== "undefined" ? `${window.location.origin}/dashboard/personal` : "https://thalos.app/dashboard/personal"
+  const agreementUrl =
+    typeof window !== "undefined"
+      ? `${window.location.origin}/dashboard/personal`
+      : "https://thalos.app/dashboard/personal"
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(agreementUrl)}&bgcolor=0a0a0a&color=f0b400&qzone=3&format=png`
 
   if (loading) return <ThalosLoader />
 
   return (
     <div className="relative min-h-screen text-foreground">
-{/* Professional gradient background with subtle pattern */}
-  <div className="fixed inset-0 z-0 bg-[#060810]">
-    {/* Subtle gradient orbs */}
-    <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-[#f0b400]/5 rounded-full blur-[150px]" />
-    <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-[#0ea5e9]/5 rounded-full blur-[150px]" />
+      {/* Professional gradient background with subtle pattern */}
+      <div className="fixed inset-0 z-0 bg-[#060810]">
+        {/* Subtle gradient orbs */}
+        <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-[#f0b400]/5 rounded-full blur-[150px]" />
+        <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-[#0ea5e9]/5 rounded-full blur-[150px]" />
 
-    {/* Subtle grid pattern */}
-    <div className="absolute inset-0 opacity-[0.015]" style={{
-      backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
-      backgroundSize: '60px 60px'
-    }} />
+        {/* Subtle grid pattern */}
+        <div
+          className="absolute inset-0 opacity-[0.015]"
+          style={{
+            backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
+            backgroundSize: "60px 60px",
+          }}
+        />
 
-    {/* Noise overlay for texture */}
-    <div className="absolute inset-0 opacity-[0.02]" style={{
-      backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`
-    }} />
-  </div>
+        {/* Noise overlay for texture */}
+        <div
+          className="absolute inset-0 opacity-[0.02]"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
+          }}
+        />
+      </div>
 
       {/* Header */}
       <header className="sticky top-0 z-40 bg-[#0c1220]/90 backdrop-blur-xl shadow-[0_4px_24px_rgba(0,0,0,0.3)]">
         <nav className="mx-auto flex h-20 max-w-[1400px] items-center justify-between px-4 lg:px-8">
           <div className="flex items-center gap-4">
             {/* Mobile sidebar toggle */}
-            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="lg:hidden flex h-10 w-10 items-center justify-center rounded-lg text-white/60 hover:bg-white/10 hover:text-white transition-colors" aria-label="Toggle sidebar">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="lg:hidden flex h-10 w-10 items-center justify-center rounded-lg text-white/60 hover:bg-white/10 hover:text-white transition-colors"
+              aria-label="Toggle sidebar"
+            >
+              <svg
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+              >
+                <line x1="3" y1="6" x2="21" y2="6" />
+                <line x1="3" y1="12" x2="21" y2="12" />
+                <line x1="3" y1="18" x2="21" y2="18" />
+              </svg>
             </button>
             <Link href="/" className="flex items-center">
-              <Image src="/thalos-icon.png" alt="Thalos" width={72} height={72} className="h-16 w-16 object-contain" priority />
+              <Image
+                src="/thalos-icon.png"
+                alt="Thalos"
+                width={72}
+                height={72}
+                className="h-16 w-16 object-contain"
+                priority
+              />
             </Link>
           </div>
 
           <div className="flex items-center gap-3">
             {/* Profile dropdown */}
             <div className="relative">
-              <button onClick={() => setProfileMenuOpen(!profileMenuOpen)} className="flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-sm font-medium text-white/70 hover:bg-white/10 hover:text-white transition-all">
+              <button
+                onClick={() => setProfileMenuOpen(!profileMenuOpen)}
+                className="flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-sm font-medium text-white/70 hover:bg-white/10 hover:text-white transition-all"
+              >
                 {walletAddress ? (
-                  <span className="font-mono text-[11px] text-[#f0b400]">{walletAddress.slice(0, 6)}…{walletAddress.slice(-4)}</span>
+                  <span className="font-mono text-[11px] text-[#f0b400]">
+                    {walletAddress.slice(0, 6)}…{walletAddress.slice(-4)}
+                  </span>
                 ) : (
                   <div className="h-6 w-6 rounded-full bg-[#f0b400]/10 flex items-center justify-center text-[#f0b400]">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    <svg
+                      width="12"
+                      height="12"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
+                      <circle cx="12" cy="7" r="4" />
+                    </svg>
                   </div>
                 )}
                 <span className="hidden sm:inline">{t("dashPage.personal")}</span>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
               </button>
               {profileMenuOpen && (
-                <div className="absolute right-0 mt-2 w-56 rounded-xl border border-white/10 bg-[#0c1220] p-2 shadow-[0_16px_48px_rgba(0,0,0,0.6)]" onClick={() => setProfileMenuOpen(false)}>
-                  <button onClick={() => setActiveSection("dashboard")} className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-white/70 hover:bg-white/8 hover:text-white transition-colors">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                <div
+                  className="absolute right-0 mt-2 w-56 rounded-xl border border-white/10 bg-[#0c1220] p-2 shadow-[0_16px_48px_rgba(0,0,0,0.6)]"
+                  onClick={() => setProfileMenuOpen(false)}
+                >
+                  <button
+                    onClick={() => setActiveSection("dashboard")}
+                    className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-white/70 hover:bg-white/8 hover:text-white transition-colors"
+                  >
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                    >
+                      <rect x="3" y="3" width="7" height="7" rx="1" />
+                      <rect x="14" y="3" width="7" height="7" rx="1" />
+                      <rect x="3" y="14" width="7" height="7" rx="1" />
+                      <rect x="14" y="14" width="7" height="7" rx="1" />
+                    </svg>
                     {t("dashPage.dashboard")}
                   </button>
-                  <button onClick={() => setActiveSection("wallets")} className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-white/70 hover:bg-white/8 hover:text-white transition-colors">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg>
+                  <button
+                    onClick={() => setActiveSection("wallets")}
+                    className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-white/70 hover:bg-white/8 hover:text-white transition-colors"
+                  >
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                    >
+                      <rect x="1" y="4" width="22" height="16" rx="2" />
+                      <path d="M1 10h22" />
+                    </svg>
                     {t("dashPage.wallets")}
                   </button>
-                  <button onClick={() => setActiveSection("ramps")} className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-white/70 hover:bg-white/8 hover:text-white transition-colors">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 2v20M17 7l-5-5-5 5M7 17l5 5 5-5"/></svg>
+                  <button
+                    onClick={() => setActiveSection("ramps")}
+                    className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-white/70 hover:bg-white/8 hover:text-white transition-colors"
+                  >
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                    >
+                      <path d="M12 2v20M17 7l-5-5-5 5M7 17l5 5 5-5" />
+                    </svg>
                     {t("dashPage.ramps")}
                   </button>
                   <div className="my-1 h-px bg-white/6" />
-                  <button onClick={signOut} className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-white/70 hover:bg-white/8 hover:text-white transition-colors">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                  <button
+                    onClick={signOut}
+                    className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-white/70 hover:bg-white/8 hover:text-white transition-colors"
+                  >
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                    >
+                      <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
+                      <polyline points="16 17 21 12 16 7" />
+                      <line x1="21" y1="12" x2="9" y2="12" />
+                    </svg>
                     {t("dashPage.signOut")}
                   </button>
                 </div>
@@ -1002,10 +1701,12 @@ export default function PersonalDashboardPage() {
 
       <div className="relative z-10 flex min-h-[calc(100vh-80px)]">
         {/* Modern Sidebar */}
-        <aside className={cn(
-          "fixed inset-y-20 left-0 z-30 w-64 transition-transform duration-300 lg:sticky lg:top-20 lg:translate-x-0 lg:h-[calc(100vh-80px)]",
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        )}>
+        <aside
+          className={cn(
+            "fixed inset-y-20 left-0 z-30 w-64 transition-transform duration-300 lg:sticky lg:top-20 lg:translate-x-0 lg:h-[calc(100vh-80px)]",
+            sidebarOpen ? "translate-x-0" : "-translate-x-full",
+          )}
+        >
           <div className="h-full flex flex-col bg-[#0a0d14]/95 backdrop-blur-xl border-r border-white/[0.06]">
             {/* User Profile Section - Clickable to edit */}
             <div className="p-4 border-b border-white/[0.06]">
@@ -1015,19 +1716,38 @@ export default function PersonalDashboardPage() {
               >
                 <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[#f0b400] to-[#f0b400]/60 flex items-center justify-center text-[#0c1220] font-bold text-sm overflow-hidden">
                   {userProfile?.avatar_url ? (
-                    <img src={userProfile.avatar_url} alt="" className="h-full w-full object-cover" />
+                    <img
+                      src={userProfile.avatar_url}
+                      alt=""
+                      className="h-full w-full object-cover"
+                    />
                   ) : (
-                    userProfile?.display_name?.slice(0, 2).toUpperCase() || walletAddress?.slice(0, 2).toUpperCase() || "TH"
+                    userProfile?.display_name?.slice(0, 2).toUpperCase() ||
+                    walletAddress?.slice(0, 2).toUpperCase() ||
+                    "TH"
                   )}
                 </div>
                 <div className="flex-1 min-w-0 text-left">
-                  <p className="text-sm font-semibold text-white truncate">{userProfile?.display_name || "Personal Account"}</p>
+                  <p className="text-sm font-semibold text-white truncate">
+                    {userProfile?.display_name || "Personal Account"}
+                  </p>
                   <p className="text-[11px] font-mono text-[#f0b400]/80 truncate">
-                    {walletAddress ? `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}` : "Connect Wallet"}
+                    {walletAddress
+                      ? `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`
+                      : "Connect Wallet"}
                   </p>
                 </div>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-white/30 group-hover:text-white/60 transition-colors">
-                  <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  className="text-white/30 group-hover:text-white/60 transition-colors"
+                >
+                  <path d="M12 20h9" />
+                  <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
                 </svg>
               </button>
             </div>
@@ -1039,18 +1759,27 @@ export default function PersonalDashboardPage() {
                 return (
                   <button
                     key={item.id}
-                    onClick={() => { setActiveSection(item.id); setSidebarOpen(false); if (item.id === "create") resetWizard() }}
+                    onClick={() => {
+                      setActiveSection(item.id)
+                      setSidebarOpen(false)
+                      if (item.id === "create") resetWizard()
+                    }}
                     className={cn(
                       "group flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-all duration-200 relative overflow-hidden",
                       isActive
                         ? "bg-[#f0b400] text-[#0c1220] shadow-[0_4px_20px_rgba(240,180,0,0.25)]"
-                        : "text-white/60 hover:bg-white/[0.04] hover:text-white"
+                        : "text-white/60 hover:bg-white/[0.04] hover:text-white",
                     )}
                   >
                     {isActive && (
                       <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent" />
                     )}
-                    <span className={cn("relative z-10 transition-transform duration-200", isActive && "scale-110")}>
+                    <span
+                      className={cn(
+                        "relative z-10 transition-transform duration-200",
+                        isActive && "scale-110",
+                      )}
+                    >
                       {item.icon}
                     </span>
                     <span className="relative z-10">{item.label}</span>
@@ -1069,19 +1798,24 @@ export default function PersonalDashboardPage() {
               </div>
 
               {/* More Section */}
-              <p className="px-3 mb-2 text-[10px] font-bold uppercase tracking-widest text-white/30">More</p>
+              <p className="px-3 mb-2 text-[10px] font-bold uppercase tracking-widest text-white/30">
+                More
+              </p>
 
               {moreSidebarItems.map((item) => {
                 const isActive = activeSection === item.id
                 return (
                   <button
                     key={item.id}
-                    onClick={() => { setActiveSection(item.id); setSidebarOpen(false); }}
+                    onClick={() => {
+                      setActiveSection(item.id)
+                      setSidebarOpen(false)
+                    }}
                     className={cn(
                       "group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
                       isActive
                         ? "bg-white/10 text-white"
-                        : "text-white/40 hover:bg-white/[0.04] hover:text-white/70"
+                        : "text-white/40 hover:bg-white/[0.04] hover:text-white/70",
                     )}
                   >
                     {item.icon}
@@ -1115,16 +1849,31 @@ export default function PersonalDashboardPage() {
                 }}
                 className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium bg-gradient-to-r from-[#f0b400]/20 to-[#f0b400]/10 border border-[#f0b400]/20 text-[#f0b400] hover:from-[#f0b400]/30 hover:to-[#f0b400]/20 transition-all"
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                >
+                  <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" />
+                  <polyline points="16 6 12 2 8 6" />
+                  <line x1="12" y1="2" x2="12" y2="15" />
+                </svg>
                 Invite Friends
               </button>
 
               {/* Quick Stats */}
               <div className="p-3 rounded-xl bg-gradient-to-br from-white/[0.04] to-transparent border border-white/[0.06]">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">Balance</span>
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">
+                    Balance
+                  </span>
                 </div>
-                <p className="text-lg font-bold text-white">{usdcDisplay} <span className="text-sm font-normal text-white/40">USDC</span></p>
+                <p className="text-lg font-bold text-white">
+                  {usdcDisplay} <span className="text-sm font-normal text-white/40">USDC</span>
+                </p>
               </div>
 
               {/* Help Button */}
@@ -1132,7 +1881,18 @@ export default function PersonalDashboardPage() {
                 onClick={() => window.open("https://thalos.app/support", "_blank")}
                 className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-white/50 hover:bg-white/[0.04] hover:text-white transition-colors"
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><circle cx="12" cy="17" r=".5"/></svg>
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3" />
+                  <circle cx="12" cy="17" r=".5" />
+                </svg>
                 Help & Support
               </button>
             </div>
@@ -1140,7 +1900,12 @@ export default function PersonalDashboardPage() {
         </aside>
 
         {/* Overlay for mobile sidebar */}
-        {sidebarOpen && <div className="fixed inset-0 z-20 bg-black/50 lg:hidden" onClick={() => setSidebarOpen(false)} />}
+        {sidebarOpen && (
+          <div
+            className="fixed inset-0 z-20 bg-black/50 lg:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
 
         {/* Main content */}
         <main className="flex-1 overflow-y-auto p-4 lg:p-8">
@@ -1150,10 +1915,14 @@ export default function PersonalDashboardPage() {
               walletAddress={walletAddress}
               displayName={userProfile?.display_name || socialUser?.name}
               avatarUrl={userProfile?.avatar_url}
-              onNotificationsClick={() => {/* TODO: Open notifications */}}
+              onNotificationsClick={() => {
+                /* TODO: Open notifications */
+              }}
               onSupportClick={() => window.open("https://thalos.app/support", "_blank")}
               onEditProfile={() => setShowEditProfile(true)}
-              notificationCount={agreements.filter(a => a.status === "pending" || a.status === "funded").length}
+              notificationCount={
+                agreements.filter((a) => a.status === "pending" || a.status === "funded").length
+              }
             />
           )}
 
@@ -1164,20 +1933,36 @@ export default function PersonalDashboardPage() {
               <div className="flex items-center justify-between rounded-xl border border-white/10 bg-[#0c1220] p-4">
                 <div className="flex items-center gap-6">
                   <div>
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">Balance</p>
-                    <p className="text-xl font-bold text-white">{usdcDisplay} <span className="text-sm text-white/40">USDC</span></p>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">
+                      Balance
+                    </p>
+                    <p className="text-xl font-bold text-white">
+                      {usdcDisplay} <span className="text-sm text-white/40">USDC</span>
+                    </p>
                   </div>
                   <div className="h-8 w-px bg-white/10" />
                   <div>
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">In Escrow</p>
-                    <p className="text-lg font-semibold text-[#f0b400]">{agreements.reduce((sum, a) => sum + parseFloat(a.amount.replace(/,/g, "") || "0"), 0).toLocaleString()}</p>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">
+                      In Escrow
+                    </p>
+                    <p className="text-lg font-semibold text-[#f0b400]">
+                      {agreements
+                        .reduce((sum, a) => sum + parseFloat(a.amount.replace(/,/g, "") || "0"), 0)
+                        .toLocaleString()}
+                    </p>
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <button onClick={() => setActiveSection("wallets")} className="rounded-lg bg-[#f0b400] px-4 py-2 text-sm font-semibold text-[#0c1220] hover:bg-[#e5ab00] transition-colors">
+                  <button
+                    onClick={() => setActiveSection("wallets")}
+                    className="rounded-lg bg-[#f0b400] px-4 py-2 text-sm font-semibold text-[#0c1220] hover:bg-[#e5ab00] transition-colors"
+                  >
                     Deposit
                   </button>
-                  <button onClick={() => setActiveSection("wallets")} className="rounded-lg border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10 transition-colors">
+                  <button
+                    onClick={() => setActiveSection("wallets")}
+                    className="rounded-lg border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10 transition-colors"
+                  >
                     Withdraw
                   </button>
                 </div>
@@ -1186,11 +1971,26 @@ export default function PersonalDashboardPage() {
               {/* Quick Actions - Simplified (4 main actions) */}
               <div className="grid grid-cols-4 gap-3">
                 <button
-                  onClick={() => { setActiveSection("create"); resetWizard(); }}
+                  onClick={() => {
+                    setActiveSection("create")
+                    resetWizard()
+                  }}
                   className="flex flex-col items-center gap-2 rounded-xl border border-white/6 bg-[#0c1220] p-4 hover:border-white/15 hover:bg-[#0c1220]/80 transition-all"
                 >
                   <div className="rounded-lg p-2.5 bg-[#f0b400]/10">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-[#f0b400]"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      className="text-[#f0b400]"
+                    >
+                      <circle cx="12" cy="12" r="10" />
+                      <line x1="12" y1="8" x2="12" y2="16" />
+                      <line x1="8" y1="12" x2="16" y2="12" />
+                    </svg>
                   </div>
                   <span className="text-xs font-medium text-white/60">New Agreement</span>
                 </button>
@@ -1199,7 +1999,20 @@ export default function PersonalDashboardPage() {
                   className="flex flex-col items-center gap-2 rounded-xl border border-white/6 bg-[#0c1220] p-4 hover:border-white/15 hover:bg-[#0c1220]/80 transition-all"
                 >
                   <div className="rounded-lg p-2.5 bg-purple-500/10">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-purple-400"><path d="M12 2a4 4 0 014 4c0 2-2 3-2 3s2 1 2 3a4 4 0 01-8 0c0-2 2-3 2-3s-2-1-2-3a4 4 0 014-4z"/><path d="M8 16c0-2 2-3 2-3s-2-1-2-3"/><path d="M16 16c0-2-2-3-2-3s2-1 2-3"/><path d="M12 22v-4"/></svg>
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      className="text-purple-400"
+                    >
+                      <path d="M12 2a4 4 0 014 4c0 2-2 3-2 3s2 1 2 3a4 4 0 01-8 0c0-2 2-3 2-3s-2-1-2-3a4 4 0 014-4z" />
+                      <path d="M8 16c0-2 2-3 2-3s-2-1-2-3" />
+                      <path d="M16 16c0-2-2-3-2-3s2-1 2-3" />
+                      <path d="M12 22v-4" />
+                    </svg>
                   </div>
                   <span className="text-xs font-medium text-white/60">Create with AI</span>
                 </button>
@@ -1208,7 +2021,18 @@ export default function PersonalDashboardPage() {
                   className="flex flex-col items-center gap-2 rounded-xl border border-white/6 bg-[#0c1220] p-4 hover:border-white/15 hover:bg-[#0c1220]/80 transition-all"
                 >
                   <div className="rounded-lg p-2.5 bg-sky-400/10">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-sky-400"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      className="text-sky-400"
+                    >
+                      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+                      <polyline points="14 2 14 8 20 8" />
+                    </svg>
                   </div>
                   <span className="text-xs font-medium text-white/60">Agreements</span>
                 </button>
@@ -1217,7 +2041,18 @@ export default function PersonalDashboardPage() {
                   className="flex flex-col items-center gap-2 rounded-xl border border-white/6 bg-[#0c1220] p-4 hover:border-white/15 hover:bg-[#0c1220]/80 transition-all"
                 >
                   <div className="rounded-lg p-2.5 bg-emerald-400/10">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-emerald-400"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      className="text-emerald-400"
+                    >
+                      <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
+                      <polyline points="17 6 23 6 23 12" />
+                    </svg>
                   </div>
                   <span className="text-xs font-medium text-white/60">Investments</span>
                 </button>
@@ -1226,7 +2061,18 @@ export default function PersonalDashboardPage() {
                   className="flex flex-col items-center gap-2 rounded-xl border border-white/6 bg-[#0c1220] p-4 hover:border-white/15 hover:bg-[#0c1220]/80 transition-all"
                 >
                   <div className="rounded-lg p-2.5 bg-amber-400/10">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-amber-400"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg>
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      className="text-amber-400"
+                    >
+                      <rect x="1" y="4" width="22" height="16" rx="2" />
+                      <path d="M1 10h22" />
+                    </svg>
                   </div>
                   <span className="text-xs font-medium text-white/60">My Wallet</span>
                 </button>
@@ -1236,31 +2082,49 @@ export default function PersonalDashboardPage() {
               <div className="rounded-xl border border-white/10 bg-[#0c1220] p-5">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-sm font-bold text-white">Pending Actions</h3>
-                  <button onClick={() => setActiveSection("agreements")} className="text-xs text-[#f0b400] hover:underline">View all</button>
+                  <button
+                    onClick={() => setActiveSection("agreements")}
+                    className="text-xs text-[#f0b400] hover:underline"
+                  >
+                    View all
+                  </button>
                 </div>
-                {agreements.filter(a => a.status === "pending" || a.status === "funded").length === 0 ? (
+                {agreements.filter((a) => a.status === "pending" || a.status === "funded")
+                  .length === 0 ? (
                   <p className="text-sm text-white/50 text-center py-6">No pending actions</p>
                 ) : (
                   <div className="space-y-2">
                     {agreements
-                      .filter(a => a.status === "pending" || a.status === "funded")
+                      .filter((a) => a.status === "pending" || a.status === "funded")
                       .slice(0, 4)
-                      .map(a => (
+                      .map((a) => (
                         <button
                           key={a.id}
-                          onClick={() => { setViewingAgreement(a.id); setActiveSection("agreements"); }}
+                          onClick={() => {
+                            setViewingAgreement(a.id)
+                            setActiveSection("agreements")
+                          }}
                           className="flex w-full items-center justify-between rounded-lg border border-white/6 bg-white/5 p-3 hover:bg-white/8 transition-colors"
                         >
                           <div className="flex items-center gap-3">
-                            <div className={cn("h-2 w-2 rounded-full", a.status === "funded" ? "bg-[#f0b400]" : "bg-sky-400")} />
+                            <div
+                              className={cn(
+                                "h-2 w-2 rounded-full",
+                                a.status === "funded" ? "bg-[#f0b400]" : "bg-sky-400",
+                              )}
+                            />
                             <div className="text-left">
                               <p className="text-sm font-medium text-white">{a.title}</p>
                               <p className="text-xs text-white/50">{a.counterparty}</p>
                             </div>
                           </div>
                           <div className="text-right">
-                            <p className="text-sm font-semibold text-white">{a.amount} {a.currency}</p>
-                            <p className="text-[10px] uppercase tracking-wider text-white/40">{a.status === "funded" ? "Awaiting Approval" : "Awaiting Funding"}</p>
+                            <p className="text-sm font-semibold text-white">
+                              {a.amount} {a.currency}
+                            </p>
+                            <p className="text-[10px] uppercase tracking-wider text-white/40">
+                              {a.status === "funded" ? "Awaiting Approval" : "Awaiting Funding"}
+                            </p>
                           </div>
                         </button>
                       ))}
@@ -1276,22 +2140,28 @@ export default function PersonalDashboardPage() {
               <YieldSection
                 availableBalance="12,450.00"
                 currentYield="32.50"
-                onDeposit={(vaultId, amount) => { console.log("[v0] Deposit to vault", vaultId, amount) }}
-                onWithdraw={(vaultId) => { console.log("[v0] Withdraw from vault", vaultId) }}
+                onDeposit={(vaultId, amount) => {
+                  console.log("[v0] Deposit to vault", vaultId, amount)
+                }}
+                onWithdraw={(vaultId) => {
+                  console.log("[v0] Withdraw from vault", vaultId)
+                }}
               />
             </div>
           )}
-
-
 
           {/* ══════ SERVICES ══════ */}
           {activeSection === "services" && (
             <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 mt-6">
               <div className="rounded-xl border border-white/10 bg-[#0c1220] p-6">
                 <h2 className="text-lg font-semibold text-white mb-2">Services</h2>
-                <p className="text-sm text-white/50 mb-4">Additional services will be available soon.</p>
+                <p className="text-sm text-white/50 mb-4">
+                  Additional services will be available soon.
+                </p>
                 <div className="flex items-center gap-2 text-xs text-white/30">
-                  <span className="rounded-full bg-[#f0b400]/10 px-2 py-0.5 text-[#f0b400]">Coming Soon</span>
+                  <span className="rounded-full bg-[#f0b400]/10 px-2 py-0.5 text-[#f0b400]">
+                    Coming Soon
+                  </span>
                   <span>Pay bills, utilities, and more</span>
                 </div>
               </div>
@@ -1310,21 +2180,27 @@ export default function PersonalDashboardPage() {
                 <div className="absolute inset-0 z-0 grid grid-cols-4 grid-rows-2 gap-0.5 opacity-25">
                   {[...Array(8)].map((_, i) => (
                     <div key={i} className="relative overflow-hidden">
-                      <Image src="/thalos-bounty-bg.gif" alt="" fill className="object-cover scale-110" />
+                      <Image
+                        src="/thalos-bounty-bg.gif"
+                        alt=""
+                        fill
+                        className="object-cover scale-110"
+                      />
                     </div>
                   ))}
                 </div>
                 <div className="absolute inset-0 bg-gradient-to-t from-[#0c1220] via-[#0c1220]/80 to-[#0c1220]/50" />
 
                 <div className="relative z-10 flex flex-col items-center text-center">
-                  <p className="mb-6 max-w-md text-sm text-white/80">
-                    {t("dashPage.bountyDesc")}
-                  </p>
+                  <p className="mb-6 max-w-md text-sm text-white/80">{t("dashPage.bountyDesc")}</p>
                   <div className="flex flex-wrap items-center justify-center gap-3">
                     <Button className="rounded-lg bg-[#f0b400] px-6 py-2 text-sm font-semibold text-[#0c1220] hover:bg-[#e5ab00] shadow-[0_2px_8px_rgba(240,180,0,0.25)]">
                       {t("dashPage.createBounty")}
                     </Button>
-                    <Button variant="outline" className="rounded-lg border-white/15 bg-white/5 px-6 py-2 text-sm font-semibold text-white hover:bg-white/10">
+                    <Button
+                      variant="outline"
+                      className="rounded-lg border-white/15 bg-white/5 px-6 py-2 text-sm font-semibold text-white hover:bg-white/10"
+                    >
                       {t("dashPage.viewBounties")}
                     </Button>
                   </div>
@@ -1351,25 +2227,43 @@ export default function PersonalDashboardPage() {
           {/* ══════ VERIFICATION (Person KYC) ══════ */}
           {activeSection === "verification" && (
             <div className="mx-auto max-w-4xl animate-in fade-in slide-in-from-bottom-2 duration-300">
-              <h1 className="mb-2 text-2xl font-semibold text-white">Identity Verification (Person KYC)</h1>
+              <h1 className="mb-2 text-2xl font-semibold text-white">
+                Identity Verification (Person KYC)
+              </h1>
               <p className="mb-6 text-sm text-white/50">
-                Complete individual identity verification to access unrestricted personal escrow transactions.
+                Complete individual identity verification to access unrestricted personal escrow
+                transactions.
               </p>
 
               <div className="rounded-2xl border border-white/10 bg-[#0c1220] p-6 shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
                 <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-6">
                   <div>
-                    <p className="text-xs uppercase font-bold tracking-wider text-white/40">Current Status</p>
-                    <p className="text-lg font-bold text-white capitalize mt-0.5">{kycStatus.replace("_", " ")}</p>
+                    <p className="text-xs uppercase font-bold tracking-wider text-white/40">
+                      Current Status
+                    </p>
+                    <p className="text-lg font-bold text-white capitalize mt-0.5">
+                      {kycStatus.replace("_", " ")}
+                    </p>
                   </div>
-                  <span className={cn(
-                    "rounded-full px-3 py-1 text-xs font-semibold border",
-                    kycStatus === "verified" ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" :
-                    kycStatus === "rejected" ? "bg-red-500/10 text-red-400 border-red-500/20" :
-                    kycStatus === "in_review" || kycStatus === "pending" ? "bg-[#f0b400]/10 text-[#f0b400] border-[#f0b400]/20" :
-                    "bg-white/10 text-white/60 border-white/15"
-                  )}>
-                    {kycStatus === "verified" ? "Verified" : kycStatus === "rejected" ? "Rejected" : kycStatus === "in_review" || kycStatus === "pending" ? "In Review" : "Not Started"}
+                  <span
+                    className={cn(
+                      "rounded-full px-3 py-1 text-xs font-semibold border",
+                      kycStatus === "verified"
+                        ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                        : kycStatus === "rejected"
+                          ? "bg-red-500/10 text-red-400 border-red-500/20"
+                          : kycStatus === "in_review" || kycStatus === "pending"
+                            ? "bg-[#f0b400]/10 text-[#f0b400] border-[#f0b400]/20"
+                            : "bg-white/10 text-white/60 border-white/15",
+                    )}
+                  >
+                    {kycStatus === "verified"
+                      ? "Verified"
+                      : kycStatus === "rejected"
+                        ? "Rejected"
+                        : kycStatus === "in_review" || kycStatus === "pending"
+                          ? "In Review"
+                          : "Not Started"}
                   </span>
                 </div>
 
@@ -1399,10 +2293,21 @@ export default function PersonalDashboardPage() {
                     <div className="pt-2 flex items-center gap-3">
                       <Button
                         onClick={handleStartKycSession}
-                        disabled={kycSubmitting || !canStartKycSession({ full_name: kycFullName, country: kycCountry, kyc_status: kycStatus })}
+                        disabled={
+                          kycSubmitting ||
+                          !canStartKycSession({
+                            full_name: kycFullName,
+                            country: kycCountry,
+                            kyc_status: kycStatus,
+                          })
+                        }
                         className="rounded-full bg-[#f0b400] text-background font-semibold hover:bg-[#d4a000] disabled:opacity-40"
                       >
-                        {kycSubmitting ? "Starting Session..." : kycStatus === "in_review" || kycStatus === "pending" ? "Resubmit KYC Session" : "Start KYC Session"}
+                        {kycSubmitting
+                          ? "Starting Session..."
+                          : kycStatus === "in_review" || kycStatus === "pending"
+                            ? "Resubmit KYC Session"
+                            : "Start KYC Session"}
                       </Button>
                       {userId && (
                         <Button
@@ -1417,7 +2322,16 @@ export default function PersonalDashboardPage() {
                   </div>
                 ) : (
                   <div className="flex items-center gap-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 p-4 text-emerald-400 text-sm font-medium">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg>
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
                     <span>Your personal identity (KYC) has been successfully verified.</span>
                   </div>
                 )}
@@ -1438,8 +2352,13 @@ export default function PersonalDashboardPage() {
                   { l: t("dashPage.yieldEarned"), v: "$32.50" },
                   { l: t("dashPage.completed"), v: "1" },
                 ].map((s) => (
-                  <div key={s.l} className="rounded-xl border border-white/10 bg-[#0c1220]/60 p-4 shadow-[0_4px_16px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.05)]">
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-white/30">{s.l}</p>
+                  <div
+                    key={s.l}
+                    className="rounded-xl border border-white/10 bg-[#0c1220]/60 p-4 shadow-[0_4px_16px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.05)]"
+                  >
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-white/30">
+                      {s.l}
+                    </p>
                     <p className="mt-1 text-lg font-bold text-white">{s.v}</p>
                   </div>
                 ))}
@@ -1448,15 +2367,34 @@ export default function PersonalDashboardPage() {
               {/* Charts */}
               <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
                 <div className="rounded-xl border border-white/10 bg-[#0c1220]/60 p-5 shadow-[0_4px_16px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.05)]">
-                  <h3 className="mb-1 text-sm font-semibold uppercase tracking-wider text-white/40">{t("dashPage.monthlyAgreements")}</h3>
+                  <h3 className="mb-1 text-sm font-semibold uppercase tracking-wider text-white/40">
+                    {t("dashPage.monthlyAgreements")}
+                  </h3>
                   <p className="mb-4 text-xs text-white/25">&nbsp;</p>
                   <div className="h-52">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={monthlyData}>
                         <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                        <XAxis dataKey="month" tick={{ fill: "rgba(255,255,255,0.3)", fontSize: 12 }} axisLine={false} tickLine={false} />
-                        <YAxis tick={{ fill: "rgba(255,255,255,0.3)", fontSize: 12 }} axisLine={false} tickLine={false} />
-                        <Tooltip contentStyle={{ backgroundColor: "rgba(15,15,18,0.95)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "12px", color: "#fff", fontSize: 13 }} />
+                        <XAxis
+                          dataKey="month"
+                          tick={{ fill: "rgba(255,255,255,0.3)", fontSize: 12 }}
+                          axisLine={false}
+                          tickLine={false}
+                        />
+                        <YAxis
+                          tick={{ fill: "rgba(255,255,255,0.3)", fontSize: 12 }}
+                          axisLine={false}
+                          tickLine={false}
+                        />
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: "rgba(15,15,18,0.95)",
+                            border: "1px solid rgba(255,255,255,0.1)",
+                            borderRadius: "12px",
+                            color: "#fff",
+                            fontSize: 13,
+                          }}
+                        />
                         <Bar dataKey="agreements" fill="#f0b400" radius={[6, 6, 0, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
@@ -1464,7 +2402,9 @@ export default function PersonalDashboardPage() {
                 </div>
 
                 <div className="rounded-xl border border-white/10 bg-[#0c1220]/60 p-5 shadow-[0_4px_16px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.05)]">
-                  <h3 className="mb-1 text-sm font-semibold uppercase tracking-wider text-white/40">{t("dashPage.volume")}</h3>
+                  <h3 className="mb-1 text-sm font-semibold uppercase tracking-wider text-white/40">
+                    {t("dashPage.volume")}
+                  </h3>
                   <p className="mb-4 text-xs text-white/25">&nbsp;</p>
                   <div className="h-52">
                     <ResponsiveContainer width="100%" height="100%">
@@ -1476,10 +2416,35 @@ export default function PersonalDashboardPage() {
                           </linearGradient>
                         </defs>
                         <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                        <XAxis dataKey="month" tick={{ fill: "rgba(255,255,255,0.3)", fontSize: 12 }} axisLine={false} tickLine={false} />
-                        <YAxis tick={{ fill: "rgba(255,255,255,0.3)", fontSize: 12 }} axisLine={false} tickLine={false} tickFormatter={(v: number) => `$${(v / 1000).toFixed(1)}k`} />
-                        <Tooltip contentStyle={{ backgroundColor: "rgba(15,15,18,0.95)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "12px", color: "#fff", fontSize: 13 }} formatter={(value: number) => [`$${value.toLocaleString()}`, "Volume"]} />
-                        <Area type="monotone" dataKey="volume" stroke="#f0b400" fill="url(#volGradP)" strokeWidth={2} />
+                        <XAxis
+                          dataKey="month"
+                          tick={{ fill: "rgba(255,255,255,0.3)", fontSize: 12 }}
+                          axisLine={false}
+                          tickLine={false}
+                        />
+                        <YAxis
+                          tick={{ fill: "rgba(255,255,255,0.3)", fontSize: 12 }}
+                          axisLine={false}
+                          tickLine={false}
+                          tickFormatter={(v: number) => `$${(v / 1000).toFixed(1)}k`}
+                        />
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: "rgba(15,15,18,0.95)",
+                            border: "1px solid rgba(255,255,255,0.1)",
+                            borderRadius: "12px",
+                            color: "#fff",
+                            fontSize: 13,
+                          }}
+                          formatter={(value: number) => [`$${value.toLocaleString()}`, "Volume"]}
+                        />
+                        <Area
+                          type="monotone"
+                          dataKey="volume"
+                          stroke="#f0b400"
+                          fill="url(#volGradP)"
+                          strokeWidth={2}
+                        />
                       </AreaChart>
                     </ResponsiveContainer>
                   </div>
@@ -1489,23 +2454,49 @@ export default function PersonalDashboardPage() {
               {/* Recent agreements */}
               <div className="rounded-xl border border-white/10 bg-[#0c1220]/60 p-5 shadow-[0_4px_16px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.05)]">
                 <div className="mb-4 flex items-center justify-between">
-                  <h3 className="text-sm font-semibold uppercase tracking-wider text-white/40">{t("dashPage.recentAgreements")}</h3>
-                  <button onClick={() => setActiveSection("agreements")} className="text-xs font-semibold text-[#f0b400] hover:underline">{t("dashPage.viewAll")}</button>
+                  <h3 className="text-sm font-semibold uppercase tracking-wider text-white/40">
+                    {t("dashPage.recentAgreements")}
+                  </h3>
+                  <button
+                    onClick={() => setActiveSection("agreements")}
+                    className="text-xs font-semibold text-[#f0b400] hover:underline"
+                  >
+                    {t("dashPage.viewAll")}
+                  </button>
                 </div>
                 <div className="flex flex-col gap-3">
                   {agreements.slice(0, 3).map((agr) => {
-                    const allReleased = agr.milestones.every(m => m.status === "released")
+                    const allReleased = agr.milestones.every((m) => m.status === "released")
                     const effectiveStatus = allReleased ? "released" : agr.status
                     const st = statusConfig[effectiveStatus] || statusConfig.funded
                     return (
-                      <button key={agr.id} onClick={() => { setViewingAgreement(agr.id); setActiveSection("agreements") }} className="flex items-center justify-between rounded-lg border border-white/[0.04] bg-white/[0.02] px-4 py-3 transition-all hover:border-white/10 text-left w-full">
+                      <button
+                        key={agr.id}
+                        onClick={() => {
+                          setViewingAgreement(agr.id)
+                          setActiveSection("agreements")
+                        }}
+                        className="flex items-center justify-between rounded-lg border border-white/[0.04] bg-white/[0.02] px-4 py-3 transition-all hover:border-white/10 text-left w-full"
+                      >
                         <div>
                           <p className="text-sm font-medium text-white">{agr.title}</p>
-                          <p className="text-xs text-white/30">{agr.type} -- {agr.counterparty}</p>
+                          <p className="text-xs text-white/30">
+                            {agr.type} -- {agr.counterparty}
+                          </p>
                         </div>
                         <div className="flex items-center gap-3">
-                          <span className={cn("rounded-full border px-2.5 py-0.5 text-xs font-semibold", st.color)}>{t(st.labelKey)}</span>
-                          <p className="text-sm font-bold text-white">{"$"}{agr.amount}</p>
+                          <span
+                            className={cn(
+                              "rounded-full border px-2.5 py-0.5 text-xs font-semibold",
+                              st.color,
+                            )}
+                          >
+                            {t(st.labelKey)}
+                          </span>
+                          <p className="text-sm font-bold text-white">
+                            {"$"}
+                            {agr.amount}
+                          </p>
                         </div>
                       </button>
                     )
@@ -1518,188 +2509,305 @@ export default function PersonalDashboardPage() {
           {/* ══════ AGREEMENTS ══════ */}
           {activeSection === "agreements" && !viewingAgreement && (
             <div className="mx-auto max-w-4xl animate-in fade-in slide-in-from-bottom-2 duration-300">
-{/* Header */}
-  <div className="mb-6 flex flex-wrap items-center justify-between gap-2">
-  <h1 className="text-2xl font-semibold text-white">{t("dashPage.myAgreements")}</h1>
-  <div className="flex items-center gap-2">
-  <Button onClick={() => setShowAiAssistant(true)}
-    className="rounded-full bg-purple-500/10 px-5 text-sm font-semibold text-purple-400 hover:bg-purple-500/20 border border-purple-500/20">
-    Create with AI
-  </Button>
-  <Button onClick={() => { setActiveSection("create"); resetWizard() }}
-  className="rounded-full bg-[#f0b400] px-6 text-sm font-semibold text-background hover:bg-[#d4a000] shadow-[0_4px_16px_rgba(240,180,0,0.25)]">
-  + {t("dashPage.newAgreement")}
-  </Button>
-  </div>
-  </div>
+              {/* Header */}
+              <div className="mb-6 flex flex-wrap items-center justify-between gap-2">
+                <h1 className="text-2xl font-semibold text-white">{t("dashPage.myAgreements")}</h1>
+                <div className="flex items-center gap-2">
+                  <Button
+                    onClick={() => setShowAiAssistant(true)}
+                    className="rounded-full bg-purple-500/10 px-5 text-sm font-semibold text-purple-400 hover:bg-purple-500/20 border border-purple-500/20"
+                  >
+                    Create with AI
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      setActiveSection("create")
+                      resetWizard()
+                    }}
+                    className="rounded-full bg-[#f0b400] px-6 text-sm font-semibold text-background hover:bg-[#d4a000] shadow-[0_4px_16px_rgba(240,180,0,0.25)]"
+                  >
+                    + {t("dashPage.newAgreement")}
+                  </Button>
+                </div>
+              </div>
 
-  {/* Wallet Selector - only shows if user has multiple wallets */}
-  <WalletSelector
-    selectedWallet={walletFilter}
-    onWalletChange={setWalletFilter}
-    walletsData={walletsData}
-    className="mb-6"
-  />
-
-  {agreementsError && (
-    <div className="mb-6 flex items-center gap-3 rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-3 text-sm text-red-400">
-      <AlertTriangle className="h-4 w-4 shrink-0" />
-      <span>{agreementsError}</span>
-    </div>
-  )}
-
-  {agreementsLoading ? (
-    <div className="flex items-center justify-center py-16 text-sm text-white/40">Loading agreements...</div>
-  ) : (
-  /* Agreements view — pre-filtered by selected wallet when active */
-              <AgreementsView
-                agreements={[
-                  ...filteredAgreements.map(a => ({ ...a, updatedAt: a.date, currency: "USDC" })),
-                  ...approverEscrows.map(e => ({
-                    id: e.id,
-                    title: e.title,
-                    counterparty: (e as unknown as { serviceProvider?: string }).serviceProvider?.slice(0, 8) + "..." || "Unknown",
-                    status: e.status || "pending",
-                    amount: typeof e.amount === "number" ? (e.amount as number).toLocaleString() : e.amount || "0",
-                    currency: "USDC",
-                    type: "Single Release" as const,
-                    updatedAt: e.date,
-                    milestones: e.milestones || [{ status: "pending" }],
-                    role: "buyer" as const,
-                  })),
-                ]}
-                onAgreementClick={(id) => setViewingAgreement(id)}
-                onOpenChat={(id) => setShowAgreementChat(id)}
-                currentUserWallet={walletAddress ?? undefined}
+              {/* Wallet Selector - only shows if user has multiple wallets */}
+              <WalletSelector
+                selectedWallet={walletFilter}
+                onWalletChange={setWalletFilter}
+                walletsData={walletsData}
+                className="mb-6"
               />
-  )}
+
+              {agreementsError && (
+                <div className="mb-6 flex items-center gap-3 rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-3 text-sm text-red-400">
+                  <AlertTriangle className="h-4 w-4 shrink-0" />
+                  <span>{agreementsError}</span>
+                </div>
+              )}
+
+              {agreementsLoading ? (
+                <div className="flex items-center justify-center py-16 text-sm text-white/40">
+                  Loading agreements...
+                </div>
+              ) : (
+                /* Agreements view — pre-filtered by selected wallet when active */
+                <AgreementsView
+                  agreements={[
+                    ...filteredAgreements.map((a) => ({
+                      ...a,
+                      updatedAt: a.date,
+                      currency: "USDC",
+                    })),
+                    ...approverEscrows.map((e) => ({
+                      id: e.id,
+                      title: e.title,
+                      counterparty:
+                        (e as unknown as { serviceProvider?: string }).serviceProvider?.slice(
+                          0,
+                          8,
+                        ) + "..." || "Unknown",
+                      status: e.status || "pending",
+                      amount:
+                        typeof e.amount === "number"
+                          ? (e.amount as number).toLocaleString()
+                          : e.amount || "0",
+                      currency: "USDC",
+                      type: "Single Release" as const,
+                      updatedAt: e.date,
+                      milestones: e.milestones || [{ status: "pending" }],
+                      role: "buyer" as const,
+                    })),
+                  ]}
+                  onAgreementClick={(id) => setViewingAgreement(id)}
+                  onOpenChat={(id) => setShowAgreementChat(id)}
+                  currentUserWallet={walletAddress ?? undefined}
+                />
+              )}
             </div>
           )}
 
           {/* ══════ AGREEMENT DETAIL ══════ */}
-          {activeSection === "agreements" && viewingAgreement && (() => {
-            const agr = agreements.find(a => a.id === viewingAgreement)
-            if (!agr) return null
-            const allReleased = agr.milestones.every(m => m.status === "released")
-            const allApproved = agr.milestones.every(m => m.status === "approved" || m.status === "released")
-            const hasApproved = agr.milestones.some(m => m.status === "approved")
-            const effectiveStatus = allReleased ? "released" : agr.status
-            const st = statusConfig[effectiveStatus] || statusConfig.funded
-            const completedMs = agr.milestones.filter(m => m.status === "released").length
-            const progressPct = (completedMs / agr.milestones.length) * 100
+          {activeSection === "agreements" &&
+            viewingAgreement &&
+            (() => {
+              const agr = agreements.find((a) => a.id === viewingAgreement)
+              if (!agr) return null
+              const allReleased = agr.milestones.every((m) => m.status === "released")
+              const allApproved = agr.milestones.every(
+                (m) => m.status === "approved" || m.status === "released",
+              )
+              const hasApproved = agr.milestones.some((m) => m.status === "approved")
+              const effectiveStatus = allReleased ? "released" : agr.status
+              const st = statusConfig[effectiveStatus] || statusConfig.funded
+              const completedMs = agr.milestones.filter((m) => m.status === "released").length
+              const progressPct = (completedMs / agr.milestones.length) * 100
 
-            return (
-              <div className="mx-auto max-w-4xl">
-                <div className="mb-6 flex items-center justify-between">
-                  <button onClick={() => setViewingAgreement(null)} className="flex items-center gap-2 text-sm text-white/40 hover:text-white transition-colors">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"/></svg>
-                    Back to Agreements
-                  </button>
-                  <button
-                    onClick={() => setShowAgreementChat(viewingAgreement)}
-                    className="flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors bg-[#f0b400]/10 text-[#f0b400] hover:bg-[#f0b400]/20"
-                  >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
-                    Chat
-                  </button>
-                </div>
+              return (
+                <div className="mx-auto max-w-4xl">
+                  <div className="mb-6 flex items-center justify-between">
+                    <button
+                      onClick={() => setViewingAgreement(null)}
+                      className="flex items-center gap-2 text-sm text-white/40 hover:text-white transition-colors"
+                    >
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
+                        <polyline points="15 18 9 12 15 6" />
+                      </svg>
+                      Back to Agreements
+                    </button>
+                    <button
+                      onClick={() => setShowAgreementChat(viewingAgreement)}
+                      className="flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors bg-[#f0b400]/10 text-[#f0b400] hover:bg-[#f0b400]/20"
+                    >
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                      >
+                        <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+                      </svg>
+                      Chat
+                    </button>
+                  </div>
 
-                {/* Header */}
-                <div className="mb-6 rounded-2xl border border-white/10 bg-[#0c1220] p-6 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)]">
-                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                    <div>
-                      <div className="flex items-center gap-3 mb-2">
-                        <h1 className="text-2xl font-bold text-white">{agr.title}</h1>
-                        <span className={cn("rounded-full border px-3 py-1 text-xs font-semibold", st.color)}>{t(st.labelKey)}</span>
+                  {/* Header */}
+                  <div className="mb-6 rounded-2xl border border-white/10 bg-[#0c1220] p-6 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)]">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                      <div>
+                        <div className="flex items-center gap-3 mb-2">
+                          <h1 className="text-2xl font-bold text-white">{agr.title}</h1>
+                          <span
+                            className={cn(
+                              "rounded-full border px-3 py-1 text-xs font-semibold",
+                              st.color,
+                            )}
+                          >
+                            {t(st.labelKey)}
+                          </span>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-3 text-xs text-white/35">
+                          <Link
+                            href={`${STELLAR_EXPLORER_BASE_URL}${agr.id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="font-mono text-blue-400 hover:underline"
+                          >
+                            {agr.id}
+                          </Link>
+                          <span className="text-white/15">|</span>
+                          <span>{agr.type}</span>
+                          <span className="text-white/15">|</span>
+                          <span>Counterparty: {agr.counterparty}</span>
+                          <span className="text-white/15">|</span>
+                          <span>{agr.date}</span>
+                        </div>
                       </div>
-                      <div className="flex flex-wrap items-center gap-3 text-xs text-white/35">
-                        <Link
-                          href={`${STELLAR_EXPLORER_BASE_URL}${agr.id}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="font-mono text-blue-400 hover:underline"
-                        >
-                          {agr.id}
-                        </Link>
-                        <span className="text-white/15">|</span>
-                        <span>{agr.type}</span>
-                        <span className="text-white/15">|</span>
-                        <span>Counterparty: {agr.counterparty}</span>
-                        <span className="text-white/15">|</span>
-                        <span>{agr.date}</span>
+                      <div className="text-right">
+                        <p className="text-3xl font-bold text-[#f0b400]">
+                          {"$"}
+                          {agr.amount}
+                        </p>
+                        <p className="text-xs text-white/35">USDC</p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-3xl font-bold text-[#f0b400]">{"$"}{agr.amount}</p>
-                      <p className="text-xs text-white/35">USDC</p>
+                    {/* Progress bar */}
+                    <div className="mt-5 flex items-center gap-3">
+                      <div className="h-2 flex-1 overflow-hidden rounded-full bg-white/[0.06]">
+                        <div
+                          className={cn(
+                            "h-full rounded-full transition-all duration-700",
+                            allReleased ? "bg-emerald-400" : "bg-[#f0b400]",
+                          )}
+                          style={{ width: `${progressPct}%` }}
+                        />
+                      </div>
+                      <span className="text-sm font-semibold text-white/50">
+                        {completedMs}/{agr.milestones.length} milestones
+                      </span>
                     </div>
                   </div>
-                  {/* Progress bar */}
-                  <div className="mt-5 flex items-center gap-3">
-                    <div className="h-2 flex-1 overflow-hidden rounded-full bg-white/[0.06]">
-                      <div className={cn("h-full rounded-full transition-all duration-700", allReleased ? "bg-emerald-400" : "bg-[#f0b400]")} style={{ width: `${progressPct}%` }} />
-                    </div>
-                    <span className="text-sm font-semibold text-white/50">{completedMs}/{agr.milestones.length} milestones</span>
-                  </div>
-                </div>
 
-                {/* Release strategy for multi-release */}
-                {agr.type === "Multi Release" && agr.releaseStrategy && (
-                  <div className="mb-4 rounded-xl border border-[#f0b400]/15 bg-[#f0b400]/5 px-5 py-3 flex items-center gap-3">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f0b400" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                    <p className="text-xs text-[#f0b400]/80">
-                      <span className="font-semibold">Release strategy: </span>
-                      {agr.releaseStrategy === "per-milestone" && "Release funds per milestone as each is approved."}
-                      {agr.releaseStrategy === "all-at-once" && "Release all funds at once when all milestones are approved."}
-                      {agr.releaseStrategy === "upon-completion" && "Release all funds together upon full completion."}
+                  {/* Release strategy for multi-release */}
+                  {agr.type === "Multi Release" && agr.releaseStrategy && (
+                    <div className="mb-4 rounded-xl border border-[#f0b400]/15 bg-[#f0b400]/5 px-5 py-3 flex items-center gap-3">
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="#f0b400"
+                        strokeWidth="1.5"
+                      >
+                        <circle cx="12" cy="12" r="10" />
+                        <line x1="12" y1="16" x2="12" y2="12" />
+                        <line x1="12" y1="8" x2="12.01" y2="8" />
+                      </svg>
+                      <p className="text-xs text-[#f0b400]/80">
+                        <span className="font-semibold">Release strategy: </span>
+                        {agr.releaseStrategy === "per-milestone" &&
+                          "Release funds per milestone as each is approved."}
+                        {agr.releaseStrategy === "all-at-once" &&
+                          "Release all funds at once when all milestones are approved."}
+                        {agr.releaseStrategy === "upon-completion" &&
+                          "Release all funds together upon full completion."}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Seller role badge */}
+                  <div className="mb-4 rounded-xl border border-[#f0b400]/15 bg-[#f0b400]/5 px-4 py-2.5 flex items-center gap-2">
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="#f0b400"
+                      strokeWidth="1.5"
+                    >
+                      <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
+                      <circle cx="12" cy="7" r="4" />
+                    </svg>
+                    <p className="text-xs text-[#f0b400]/80 font-semibold">
+                      {t("flow.sellerView")} {" - "} {t("flow.evidenceDesc")}
                     </p>
                   </div>
-                )}
 
-                {/* Seller role badge */}
-                <div className="mb-4 rounded-xl border border-[#f0b400]/15 bg-[#f0b400]/5 px-4 py-2.5 flex items-center gap-2">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f0b400" strokeWidth="1.5"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                  <p className="text-xs text-[#f0b400]/80 font-semibold">{t("flow.sellerView")} {" - "} {t("flow.evidenceDesc")}</p>
-                </div>
+                  {/* Milestones */}
+                  <div className="flex flex-col gap-3 mb-6">
+                    {isExternalWallet ? (
+                      <SellerMilestoneList
+                        agr={agr}
+                        agreements={agreements}
+                        setAgreements={setAgreements}
+                        t={t}
+                      />
+                    ) : (
+                      <WalletPrompt message="Connect and verify a wallet to submit evidence and manage this agreement." />
+                    )}
+                  </div>
 
-                {/* Milestones */}
-                <div className="flex flex-col gap-3 mb-6">
-                  {isExternalWallet ? (
-                    <SellerMilestoneList agr={agr} agreements={agreements} setAgreements={setAgreements} t={t} />
-                  ) : (
-                    <WalletPrompt
-                      message="Connect and verify a wallet to submit evidence and manage this agreement."
-                    />
+                  {allReleased && (
+                    <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-6 text-center">
+                      <svg
+                        width="32"
+                        height="32"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="#22c55e"
+                        strokeWidth="2"
+                        className="mx-auto mb-3"
+                      >
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                      <p className="text-lg font-bold text-emerald-400">
+                        {t("flow.allFundsReleased")}
+                      </p>
+                      <p className="mt-1 text-sm text-white/40">{t("flow.allFundsReleasedDesc")}</p>
+                    </div>
                   )}
                 </div>
-
-                {allReleased && (
-                  <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-6 text-center">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2" className="mx-auto mb-3"><polyline points="20 6 9 17 4 12"/></svg>
-                    <p className="text-lg font-bold text-emerald-400">{t("flow.allFundsReleased")}</p>
-                    <p className="mt-1 text-sm text-white/40">{t("flow.allFundsReleasedDesc")}</p>
-                  </div>
-                )}
-              </div>
-)
-  })()}
+              )
+            })()}
 
           {/* ══════ RAMPS (On-ramp / Off-ramp) ═���════ */}
           {activeSection === "ramps" && (
             <RampsSection walletAddress={walletAddress} onOpenWalletModal={openWalletModal} />
           )}
 
-  {/* ══════ WALLETS ══════ */}
+          {/* ══════ WALLETS ══════ */}
           {activeSection === "wallets" && (
             <div className="mx-auto max-w-4xl animate-in fade-in slide-in-from-bottom-2 duration-300">
               <h1 className="mb-6 text-2xl font-semibold text-white">My Wallets</h1>
               <div className="flex flex-col gap-4">
                 {connectedWallets.map((w) => (
-                  <div key={w.value} className="rounded-2xl border border-white/10 bg-[#0c1220] p-6 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)] transition-all hover:border-white/15">
+                  <div
+                    key={w.value}
+                    className="rounded-2xl border border-white/10 bg-[#0c1220] p-6 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)] transition-all hover:border-white/15"
+                  >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4">
                         <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#f0b400]/10 text-[#f0b400]">
-                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg>
+                          <svg
+                            width="24"
+                            height="24"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                          >
+                            <rect x="1" y="4" width="22" height="16" rx="2" />
+                            <path d="M1 10h22" />
+                          </svg>
                         </div>
                         <div>
                           <p className="text-base font-semibold text-white">{t(w.labelKey)}</p>
@@ -1707,7 +2815,10 @@ export default function PersonalDashboardPage() {
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="text-xl font-bold text-white">{w.balance} <span className="text-xs font-normal text-white/35">USDC</span></p>
+                        <p className="text-xl font-bold text-white">
+                          {w.balance}{" "}
+                          <span className="text-xs font-normal text-white/35">USDC</span>
+                        </p>
                         <p className="text-xs text-emerald-400">Active</p>
                       </div>
                     </div>
@@ -1726,7 +2837,11 @@ export default function PersonalDashboardPage() {
                         size="sm"
                         className="rounded-full border-white/10 bg-white/5 text-xs text-white/60 hover:bg-white/10 hover:text-white"
                       >
-                        <a href={`${STELLAR_EXPLORER_ACCOUNT_BASE_URL}${w.value}`} target="_blank" rel="noopener noreferrer">
+                        <a
+                          href={`${STELLAR_EXPLORER_ACCOUNT_BASE_URL}${w.value}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
                           {t("dashPage.viewExplorer")}
                         </a>
                       </Button>
@@ -1739,7 +2854,17 @@ export default function PersonalDashboardPage() {
                   onClick={() => openWalletModal()}
                   className="flex items-center justify-center gap-3 rounded-2xl border border-dashed border-white/10 bg-[#0c1220]/60 p-8 text-white/70 hover:border-[#f0b400]/30 hover:text-[#f0b400] hover:bg-[#0c1220]/80 transition-all"
                 >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                  >
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                  </svg>
                   <span className="text-sm font-medium">{t("dashPage.connectWallet")}</span>
                 </button>
               </div>
@@ -1747,11 +2872,27 @@ export default function PersonalDashboardPage() {
               {/* Trustline info */}
               <div className="mt-6 rounded-xl border border-[#f0b400]/10 bg-[#f0b400]/5 p-5 backdrop-blur-md">
                 <div className="flex items-center gap-2 mb-2">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f0b400" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#f0b400"
+                    strokeWidth="1.5"
+                  >
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="16" x2="12" y2="12" />
+                    <line x1="12" y1="8" x2="12.01" y2="8" />
+                  </svg>
                   <p className="text-sm font-semibold text-[#f0b400]">USDC Trustline</p>
                 </div>
-                <p className="text-xs text-white/40 leading-relaxed">All wallets require a USDC trustline on the Stellar network to participate in Thalos escrow agreements. You can add the trustline from your wallet provider.</p>
-                <p className="mt-2 text-xs text-white/25 font-mono break-all">{TRUSTLINE_USDC.address}</p>
+                <p className="text-xs text-white/40 leading-relaxed">
+                  All wallets require a USDC trustline on the Stellar network to participate in
+                  Thalos escrow agreements. You can add the trustline from your wallet provider.
+                </p>
+                <p className="mt-2 text-xs text-white/25 font-mono break-all">
+                  {TRUSTLINE_USDC.address}
+                </p>
               </div>
 
               {/* Agreements grouped by wallet — real data from API */}
@@ -1780,9 +2921,10 @@ export default function PersonalDashboardPage() {
                 }}
                 onChatWith={(contact) => {
                   // Find an agreement with this contact and open chat
-                  const agreementWithContact = agreements.find(a =>
-                    a.receiver === contact.contact_wallet ||
-                    a.counterparty === contact.contact_wallet
+                  const agreementWithContact = agreements.find(
+                    (a) =>
+                      a.receiver === contact.contact_wallet ||
+                      a.counterparty === contact.contact_wallet,
                   )
                   if (agreementWithContact) {
                     setShowAgreementChat(agreementWithContact.id)
@@ -1797,264 +2939,639 @@ export default function PersonalDashboardPage() {
             <div className="mx-auto max-w-4xl animate-in fade-in slide-in-from-bottom-2 duration-300">
               {!isExternalWallet && !submitted ? (
                 <div className="pt-8">
-                  <WalletPrompt
-                    message="Connect and verify a wallet to operate escrow agreements on Thalos."
-                  />
+                  <WalletPrompt message="Connect and verify a wallet to operate escrow agreements on Thalos." />
                 </div>
               ) : (
-              <>
-              <div className="mb-6 flex flex-wrap items-center justify-between gap-2">
-                <h1 className="text-2xl font-semibold text-white">New Agreement</h1>
-                <div className="flex items-center gap-2">
-                  <Button onClick={() => setShowAiAssistant(true)}
-                    className="rounded-full bg-purple-500/10 px-5 text-sm font-semibold text-purple-400 hover:bg-purple-500/20 border border-purple-500/20">
-                    Create with AI
-                  </Button>
-                  <Button onClick={() => { setActiveSection("agreements"); resetWizard() }}
-                    className="rounded-full bg-white/10 px-6 text-sm font-semibold text-white/70 hover:bg-white/15 hover:text-white">
-                    View Agreements
-                  </Button>
-                </div>
-              </div>
+                <>
+                  <div className="mb-6 flex flex-wrap items-center justify-between gap-2">
+                    <h1 className="text-2xl font-semibold text-white">New Agreement</h1>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        onClick={() => setShowAiAssistant(true)}
+                        className="rounded-full bg-purple-500/10 px-5 text-sm font-semibold text-purple-400 hover:bg-purple-500/20 border border-purple-500/20"
+                      >
+                        Create with AI
+                      </Button>
+                      <Button
+                        onClick={() => {
+                          setActiveSection("agreements")
+                          resetWizard()
+                        }}
+                        className="rounded-full bg-white/10 px-6 text-sm font-semibold text-white/70 hover:bg-white/15 hover:text-white"
+                      >
+                        View Agreements
+                      </Button>
+                    </div>
+                  </div>
 
-              {/* Progress bar */}
-              {!submitted && (
-                <div className="mb-8">
-                  <div className="mb-3 flex items-center justify-between">
-                    {wizardStepKeys.map((key, i) => (
-                      <button key={key} onClick={() => i <= step && setStep(i)}
-                        className={cn("flex items-center gap-1.5 text-xs font-semibold transition-all sm:text-sm",
-                          i === step ? "text-[#f0b400]" : i < step ? "text-[#f0b400]/60 cursor-pointer" : "text-muted-foreground/40")}>
-                        <span className={cn("flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold transition-all sm:h-7 sm:w-7 sm:text-xs",
-                          i === step ? "bg-[#f0b400] text-background" : i < step ? "bg-[#f0b400]/15 text-[#f0b400]" : "bg-secondary/40 text-muted-foreground/40")}>
-                          {i < step ? <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg> : i + 1}
-                        </span>
-                        <span className="hidden md:inline">{t(key)}</span>
-                      </button>
-                    ))}
-                  </div>
-                  <div className="h-1 w-full overflow-hidden rounded-full bg-secondary/30">
-                    <div className="h-full bg-[#f0b400] transition-all duration-500 ease-out" style={{ width: `${(step / (wizardStepKeys.length - 1)) * 100}%` }} />
-                  </div>
-                </div>
-              )}
-
-              {submitted ? (
-                <div className="flex flex-col items-center gap-6 rounded-2xl border border-white/[0.06] bg-[#0a0a0c]/70 p-10 text-center backdrop-blur-md">
-                  <div className="flex h-20 w-20 items-center justify-center rounded-full bg-emerald-500/10">
-                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg>
-                  </div>
-                  <div>
-                    <h2 className="text-2xl font-bold text-white">{t("wizard.agreementCreated")}</h2>
-                    <p className="mt-2 text-sm text-white/40">{t("wizard.agreementCreatedDesc")}</p>
-                  </div>
-                  <div className="flex flex-col items-center gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] p-6">
-                    <p className="text-xs font-medium uppercase tracking-wider text-white/40">{t("wizard.scanQR")}</p>
-                    <Image src={qrUrl} alt="QR Code" width={160} height={160} className="rounded-lg" unoptimized />
-                  </div>
-                  <div className="flex gap-3">
-                    <Button variant="outline" onClick={copyJson} className="rounded-full border-white/10 bg-white/5 text-sm text-white/60 hover:bg-white/10 hover:text-white">{copiedJson ? t("wizard.copied") : t("wizard.copyDetails")}</Button>
-                    <Button onClick={() => { resetWizard(); setActiveSection("agreements") }} className="rounded-full bg-[#f0b400] text-background font-semibold hover:bg-[#d4a000] shadow-[0_4px_16px_rgba(240,180,0,0.25)]">{t("wizard.viewAgreements")}</Button>
-                  </div>
-                </div>
-              ) : (
-                <div className="rounded-2xl border border-white/10 bg-[#0c1220] p-8 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)]">
-
-                  {/* Step 0: Escrow Type */}
-                  {step === 0 && (
-                    <div className="flex flex-col gap-6">
-                      <div><h3 className="text-lg font-semibold text-white sm:text-xl">{t("wizard.howPayment")}</h3><p className="mt-1 text-sm text-white/35">{t("wizard.chooseFunds")}</p></div>
-                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                        {([
-                          { id: "single" as const, label: t("wizard.oneTimePayment"), desc: t("wizard.oneTimeDesc"), icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><path d="M16 8l-8 8M8 8h8v8"/></svg> },
-                          { id: "multi" as const, label: t("wizard.milestoneBased"), desc: t("wizard.milestoneBasedDesc"), icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg> },
-                        ]).map((opt) => (
-                          <button key={opt.id} onClick={() => { setEscrowType(opt.id); if (opt.id === "single") setMilestones([{ description: "Full delivery", amount: "" }]) }}
-                            className={cn("flex flex-col gap-3 rounded-xl border p-6 text-left transition-all duration-300",
-                              escrowType === opt.id ? "border-[#f0b400]/40 bg-[#f0b400]/5" : "border-white/[0.06] bg-white/[0.02] hover:border-white/15")}>
-                            <div className={cn("flex h-12 w-12 items-center justify-center rounded-xl", escrowType === opt.id ? "bg-[#f0b400]/10 text-[#f0b400]" : "bg-white/5 text-white/40")}>{opt.icon}</div>
-                            <div><p className="text-sm font-semibold text-white">{opt.label}</p><p className="mt-0.5 text-xs text-white/35">{opt.desc}</p></div>
+                  {/* Progress bar */}
+                  {!submitted && (
+                    <div className="mb-8">
+                      <div className="mb-3 flex items-center justify-between">
+                        {wizardStepKeys.map((key, i) => (
+                          <button
+                            key={key}
+                            onClick={() => i <= step && setStep(i)}
+                            className={cn(
+                              "flex items-center gap-1.5 text-xs font-semibold transition-all sm:text-sm",
+                              i === step
+                                ? "text-[#f0b400]"
+                                : i < step
+                                  ? "text-[#f0b400]/60 cursor-pointer"
+                                  : "text-muted-foreground/40",
+                            )}
+                          >
+                            <span
+                              className={cn(
+                                "flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold transition-all sm:h-7 sm:w-7 sm:text-xs",
+                                i === step
+                                  ? "bg-[#f0b400] text-background"
+                                  : i < step
+                                    ? "bg-[#f0b400]/15 text-[#f0b400]"
+                                    : "bg-secondary/40 text-muted-foreground/40",
+                              )}
+                            >
+                              {i < step ? (
+                                <svg
+                                  width="10"
+                                  height="10"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="3"
+                                >
+                                  <polyline points="20 6 9 17 4 12" />
+                                </svg>
+                              ) : (
+                                i + 1
+                              )}
+                            </span>
+                            <span className="hidden md:inline">{t(key)}</span>
                           </button>
                         ))}
                       </div>
-                    </div>
-                  )}
-
-                  {/* Step 1: Use Case */}
-                  {step === 1 && (
-                    <div className="flex flex-col gap-6">
-                      <div><h3 className="text-lg font-semibold text-white sm:text-xl">{t("wizard.whatAgreement")}</h3><p className="mt-1 text-sm text-white/35">{t("wizard.selectCategory")}</p></div>
-                      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                        {useCases.map((uc) => (
-                          <button key={uc.id} onClick={() => { setUseCase(uc.id); setGuidePrefilled(false) }}
-                            className={cn("flex items-center gap-3 rounded-xl border p-4 text-left transition-all",
-                              useCase === uc.id ? "border-[#f0b400]/40 bg-[#f0b400]/5" : "border-white/[0.06] bg-white/[0.02] hover:border-white/15")}>
-                            <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-lg", useCase === uc.id ? "bg-[#f0b400]/10 text-[#f0b400]" : "bg-white/5 text-white/40")}>
-                              <UseCaseIcon icon={uc.icon} />
-                            </div>
-                            <span className="text-sm font-medium text-white">{t(uc.labelKey)}</span>
-                          </button>
-                        ))}
-                      </div>
-                      {useCase === "other" && <FormInput label={t("wizard.describeUseCase")} value={customUseCase} onChange={(v) => { setCustomUseCase(v); setGuidePrefilled(false) }} placeholder={t("wizard.useCasePlaceholder")} required />}
-                    </div>
-                  )}
-
-                  {/* Step 2: Agreement Info */}
-                  {step === 2 && (
-                    <div className="flex flex-col gap-5">
-                      <div><h3 className="text-lg font-semibold text-white sm:text-xl">{t("wizard.agreementInfo")}</h3><p className="mt-1 text-sm text-white/35">{useCase && useCase !== "other" ? t("wizard.preFilled") : t("wizard.describeAgreement")}</p></div>
-                      {useCase && useCase !== "other" && (
-                        <div className="flex items-start gap-3 rounded-xl border border-[#f0b400]/20 bg-[#f0b400]/5 p-4">
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f0b400" strokeWidth="1.5" className="mt-0.5 shrink-0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                          <p className="text-xs text-[#f0b400]/80">{t("wizard.basedOn")} <span className="font-semibold">{t(useCases.find((u) => u.id === useCase)?.labelKey || "")}</span></p>
-                        </div>
-                      )}
-                      <FormInput label={t("wizard.titleLabel")} value={title} onChange={setTitle} placeholder={t("wizard.titlePlaceholder")} required />
-                      <FormTextarea label={t("wizard.descLabel")} value={description} onChange={setDescription} placeholder={t("wizard.agreementDesc")} rows={4} />
-                    </div>
-                  )}
-
-                  {/* Step 3: Payment & Wallets */}
-                  {step === 3 && (
-                    <div className="flex flex-col gap-6">
-                      <div><h3 className="text-lg font-semibold text-white sm:text-xl">{t("wizard.paymentDetails")}</h3><p className="mt-1 text-sm text-white/35">{t("wizard.selectWalletInfo")}</p></div>
-                      <FormSelect label={t("wizard.yourWallet")} value={selectedWallet} onChange={setSelectedWallet} options={connectedWallets.map(w => ({ value: w.value, label: `${t(w.labelKey)} (${w.short})` }))} info={t("wizard.connectedWallet")} required />
-
-                      {/* Counterparty Selection with Contact Selector */}
-                      <div className="flex flex-col gap-2">
-                        <label className="text-xs font-medium uppercase tracking-wider text-white/50">{t("wizard.releaseSignerWallet")} <span className="text-rose-400">*</span></label>
-                        <ContactSelector
-                          value={signerWallet}
-                          onChange={(wallet, name) => setSignerWallet(wallet)}
-                          placeholder="Select contact or enter wallet address..."
+                      <div className="h-1 w-full overflow-hidden rounded-full bg-secondary/30">
+                        <div
+                          className="h-full bg-[#f0b400] transition-all duration-500 ease-out"
+                          style={{ width: `${(step / (wizardStepKeys.length - 1)) * 100}%` }}
                         />
-                        <p className="text-[11px] text-white/30">{t("wizard.whoReleases")}</p>
-                      </div>
-                      {escrowType === "single" ? (
-                        <FormInput label={t("wizard.amount")} value={milestones[0]?.amount || ""} onChange={(v) => updateMilestone(0, "amount", v)} placeholder="1000" type="number" info="USDC" required />
-                      ) : (
-                        <div className="flex flex-col gap-3">
-                          <div className="flex items-center justify-between">
-                            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{t("wizard.paymentStages")}</p>
-                            <button onClick={addMilestone} className="text-xs font-semibold text-[#f0b400] hover:underline">{t("wizard.addStage")}</button>
-                          </div>
-                          {milestones.map((m, i) => (
-                            <div key={i} draggable onDragStart={() => handleDragStart(i)} onDragEnter={() => handleDragEnter(i)} onDragEnd={handleDragEnd} onDragOver={(e) => e.preventDefault()}
-                              className="flex flex-col gap-2 rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 sm:flex-row sm:items-center sm:gap-3 cursor-grab active:cursor-grabbing">
-                              <div className="flex items-center gap-3 sm:gap-2">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0 text-white/20"><circle cx="9" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="19" r="1"/></svg>
-                                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#f0b400]/10 text-xs font-bold text-[#f0b400]">{i + 1}</span>
-                              </div>
-                              <input value={m.description} onChange={(e) => updateMilestone(i, "description", e.target.value)} placeholder={t("wizard.stageDesc")} className="flex-1 bg-transparent text-sm text-white placeholder:text-white/20 focus:outline-none" />
-                              <input value={m.amount} onChange={(e) => updateMilestone(i, "amount", e.target.value)} placeholder={t("wizard.amount")} type="number" className="w-28 rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-2 text-sm text-white placeholder:text-white/15 focus:border-[#f0b400]/40 focus:outline-none" />
-                              {milestones.length > 1 && <button onClick={() => removeMilestone(i)} className="text-white/20 hover:text-red-400 transition-colors"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg></button>}
-                            </div>
-                          ))}
-                          <div className="flex items-center justify-between rounded-xl bg-white/[0.03] px-4 py-3"><span className="text-xs text-white/30">{t("wizard.total")}</span><span className="text-sm font-bold text-white">{totalAmount.toFixed(2)} USDC</span></div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Step 4: Review & Send */}
-                  {step === 4 && (
-                    <div className="flex flex-col gap-5">
-                      <div><h3 className="text-lg font-semibold text-white sm:text-xl">{t("wizard.reviewAndSend")}</h3><p className="mt-1 text-sm text-white/35">{t("wizard.confirmDetails")}</p></div>
-
-                      {escrowType === "single" && (
-                        <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 flex items-center gap-3">
-                          <AlertTriangle className="h-5 w-5 text-amber-500 shrink-0" />
-                          <p className="text-sm text-amber-200/80">{t("wizard.quickWarning")}</p>
-                        </div>
-                      )}
-
-                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                        <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5">
-                          <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-white/25">{t("wizard.agreement")}</p>
-                          <p className="text-sm font-semibold text-white">{title || t("wizard.untitled")}</p>
-                          <p className="mt-1 text-xs text-white/35 line-clamp-2">{description || t("wizard.noDescription")}</p>
-                        </div>
-                        <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5">
-                          <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-white/25">{t("wizard.protectedFunds")}</p>
-                          <p className="text-3xl font-bold text-[#f0b400]">{totalAmount.toFixed(2)} <span className="text-sm font-normal text-white/35">USDC</span></p>
-                          <p className="mt-2 text-xs text-white/30">{t("wizard.platformFeeLabel")} {platformFee} USDC (1%)</p>
-                        </div>
-                      </div>
-                      {/* On-Ramp Option - Fund directly if needed */}
-                      <InlineOnramp
-                        targetAmount={totalAmount + platformFee}
-                        targetCurrency="USDC"
-                        walletAddress={walletAddress}
-                        onComplete={() => {/* Funds received, can proceed */}}
-                        className="mb-2"
-                      />
-                      <div className="rounded-xl border border-[#f0b400]/15 bg-[#f0b400]/5 p-5">
-                        <div className="mb-4 flex items-center gap-2">
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f0b400" strokeWidth="1.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-                          <p className="text-sm font-semibold text-[#f0b400]">{t("wizard.emailNotifications")}</p>
-                        </div>
-                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                          <FormInput label={t("wizard.releaseSignerEmail")} value={signerEmail} onChange={setSignerEmail} placeholder="signer@email.com" required />
-                          <FormInput label={t("wizard.yourEmailOptional")} value={notifyEmail} onChange={setNotifyEmail} placeholder="you@email.com" info={t("wizard.receiveCopy")} />
-                        </div>
                       </div>
                     </div>
                   )}
 
-                  {/* Navigation */}
-                  <div className="mt-8 flex items-center justify-between border-t border-white/[0.04] pt-6">
-                    <Button variant="ghost" onClick={() => setStep(Math.max(0, step - 1))} disabled={step === 0} className="rounded-full text-sm text-white/40 hover:text-white disabled:opacity-20">{t("wizard.back")}</Button>
-                    {step < wizardStepKeys.length - 1 ? (
-                      <Button onClick={() => setStep(step + 1)} disabled={!canProceed()} className="rounded-full bg-[#f0b400] px-8 text-sm font-semibold text-background hover:bg-[#d4a000] disabled:opacity-20 shadow-[0_4px_16px_rgba(240,180,0,0.25)]">{t("wizard.continue")}</Button>
-                    ) : (
-                     <>
-                     <Button
-                          onClick={async () => {
-                            const payload = generateAgreementPayload();
-                            const { createAndSignAgreement } = await import("@/lib/agreementActions");
-                            await createAndSignAgreement({
-                              payload,
-                              token,
-                              walletAddress,
-                              setCreating,
-                              setError,
-                              setSubmitted,
-                              onStatus: setCreateTxStatus,
-                              onSuccess: (agreementId?: string) => {
-const newAgr: Agreement = {
-  id: agreementId || `AGR-${Date.now().toString(36).toUpperCase()}`,
-  title: payload.title,
-  status: "funded",
-  type: payload.serviceType === "single-release" ? "Single Release" : "Multi Release",
-  counterparty: payload.roles.approver?.slice(0, 8) + "...",
-  amount: totalAmount.toLocaleString(),
-  currency: "USDC",
-  date: new Date().toISOString().split("T")[0],
-  milestones: payload.milestones.map(m => ({ description: m.description, amount: m.amount, status: "pending" as const })),
-  receiver: payload.roles.receiver || walletAddress || "",
-  role: "buyer",
-  }
-                                setAgreements(prev => [newAgr, ...prev])
-                              },
-                            });
-                          }}
-                          disabled={!signerEmail.trim() || creating}
-                          className="rounded-full bg-[#f0b400] px-8 text-sm font-semibold text-background hover:bg-[#d4a000] disabled:opacity-20 shadow-[0_4px_16px_rgba(240,180,0,0.25)]"
+                  {submitted ? (
+                    <div className="flex flex-col items-center gap-6 rounded-2xl border border-white/[0.06] bg-[#0a0a0c]/70 p-10 text-center backdrop-blur-md">
+                      <div className="flex h-20 w-20 items-center justify-center rounded-full bg-emerald-500/10">
+                        <svg
+                          width="40"
+                          height="40"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="#22c55e"
+                          strokeWidth="2"
                         >
-                          {creating
-                            ? createTxStatus === "signing" ? "Waiting for signature..."
-                              : createTxStatus === "submitting" ? "Submitting..."
-                              : "Creating..."
-                            : "Create & Notify Signer"}
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                      </div>
+                      <div>
+                        <h2 className="text-2xl font-bold text-white">
+                          {t("wizard.agreementCreated")}
+                        </h2>
+                        <p className="mt-2 text-sm text-white/40">
+                          {t("wizard.agreementCreatedDesc")}
+                        </p>
+                      </div>
+                      <div className="flex flex-col items-center gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] p-6">
+                        <p className="text-xs font-medium uppercase tracking-wider text-white/40">
+                          {t("wizard.scanQR")}
+                        </p>
+                        <Image
+                          src={qrUrl}
+                          alt="QR Code"
+                          width={160}
+                          height={160}
+                          className="rounded-lg"
+                          unoptimized
+                        />
+                      </div>
+                      <div className="flex gap-3">
+                        <Button
+                          variant="outline"
+                          onClick={copyJson}
+                          className="rounded-full border-white/10 bg-white/5 text-sm text-white/60 hover:bg-white/10 hover:text-white"
+                        >
+                          {copiedJson ? t("wizard.copied") : t("wizard.copyDetails")}
                         </Button>
-                        {error && <div className="mt-2 text-sm text-red-400">{error}</div>}
-                      </>
-                    )}
-                  </div>
-                </div>
-              )}
-              </>
+                        <Button
+                          onClick={() => {
+                            resetWizard()
+                            setActiveSection("agreements")
+                          }}
+                          className="rounded-full bg-[#f0b400] text-background font-semibold hover:bg-[#d4a000] shadow-[0_4px_16px_rgba(240,180,0,0.25)]"
+                        >
+                          {t("wizard.viewAgreements")}
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="rounded-2xl border border-white/10 bg-[#0c1220] p-8 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)]">
+                      {/* Step 0: Escrow Type */}
+                      {step === 0 && (
+                        <div className="flex flex-col gap-6">
+                          <div>
+                            <h3 className="text-lg font-semibold text-white sm:text-xl">
+                              {t("wizard.howPayment")}
+                            </h3>
+                            <p className="mt-1 text-sm text-white/35">{t("wizard.chooseFunds")}</p>
+                          </div>
+                          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                            {[
+                              {
+                                id: "single" as const,
+                                label: t("wizard.oneTimePayment"),
+                                desc: t("wizard.oneTimeDesc"),
+                                icon: (
+                                  <svg
+                                    width="24"
+                                    height="24"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="1.5"
+                                  >
+                                    <circle cx="12" cy="12" r="10" />
+                                    <path d="M16 8l-8 8M8 8h8v8" />
+                                  </svg>
+                                ),
+                              },
+                              {
+                                id: "multi" as const,
+                                label: t("wizard.milestoneBased"),
+                                desc: t("wizard.milestoneBasedDesc"),
+                                icon: (
+                                  <svg
+                                    width="24"
+                                    height="24"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="1.5"
+                                  >
+                                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+                                  </svg>
+                                ),
+                              },
+                            ].map((opt) => (
+                              <button
+                                key={opt.id}
+                                onClick={() => {
+                                  setEscrowType(opt.id)
+                                  if (opt.id === "single")
+                                    setMilestones([{ description: "Full delivery", amount: "" }])
+                                }}
+                                className={cn(
+                                  "flex flex-col gap-3 rounded-xl border p-6 text-left transition-all duration-300",
+                                  escrowType === opt.id
+                                    ? "border-[#f0b400]/40 bg-[#f0b400]/5"
+                                    : "border-white/[0.06] bg-white/[0.02] hover:border-white/15",
+                                )}
+                              >
+                                <div
+                                  className={cn(
+                                    "flex h-12 w-12 items-center justify-center rounded-xl",
+                                    escrowType === opt.id
+                                      ? "bg-[#f0b400]/10 text-[#f0b400]"
+                                      : "bg-white/5 text-white/40",
+                                  )}
+                                >
+                                  {opt.icon}
+                                </div>
+                                <div>
+                                  <p className="text-sm font-semibold text-white">{opt.label}</p>
+                                  <p className="mt-0.5 text-xs text-white/35">{opt.desc}</p>
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Step 1: Use Case */}
+                      {step === 1 && (
+                        <div className="flex flex-col gap-6">
+                          <div>
+                            <h3 className="text-lg font-semibold text-white sm:text-xl">
+                              {t("wizard.whatAgreement")}
+                            </h3>
+                            <p className="mt-1 text-sm text-white/35">
+                              {t("wizard.selectCategory")}
+                            </p>
+                          </div>
+                          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                            {useCases.map((uc) => (
+                              <button
+                                key={uc.id}
+                                onClick={() => {
+                                  setUseCase(uc.id)
+                                  setGuidePrefilled(false)
+                                }}
+                                className={cn(
+                                  "flex items-center gap-3 rounded-xl border p-4 text-left transition-all",
+                                  useCase === uc.id
+                                    ? "border-[#f0b400]/40 bg-[#f0b400]/5"
+                                    : "border-white/[0.06] bg-white/[0.02] hover:border-white/15",
+                                )}
+                              >
+                                <div
+                                  className={cn(
+                                    "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg",
+                                    useCase === uc.id
+                                      ? "bg-[#f0b400]/10 text-[#f0b400]"
+                                      : "bg-white/5 text-white/40",
+                                  )}
+                                >
+                                  <UseCaseIcon icon={uc.icon} />
+                                </div>
+                                <span className="text-sm font-medium text-white">
+                                  {t(uc.labelKey)}
+                                </span>
+                              </button>
+                            ))}
+                          </div>
+                          {useCase === "other" && (
+                            <FormInput
+                              label={t("wizard.describeUseCase")}
+                              value={customUseCase}
+                              onChange={(v) => {
+                                setCustomUseCase(v)
+                                setGuidePrefilled(false)
+                              }}
+                              placeholder={t("wizard.useCasePlaceholder")}
+                              required
+                            />
+                          )}
+                        </div>
+                      )}
+
+                      {/* Step 2: Agreement Info */}
+                      {step === 2 && (
+                        <div className="flex flex-col gap-5">
+                          <div>
+                            <h3 className="text-lg font-semibold text-white sm:text-xl">
+                              {t("wizard.agreementInfo")}
+                            </h3>
+                            <p className="mt-1 text-sm text-white/35">
+                              {useCase && useCase !== "other"
+                                ? t("wizard.preFilled")
+                                : t("wizard.describeAgreement")}
+                            </p>
+                          </div>
+                          {useCase && useCase !== "other" && (
+                            <div className="flex items-start gap-3 rounded-xl border border-[#f0b400]/20 bg-[#f0b400]/5 p-4">
+                              <svg
+                                width="16"
+                                height="16"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="#f0b400"
+                                strokeWidth="1.5"
+                                className="mt-0.5 shrink-0"
+                              >
+                                <circle cx="12" cy="12" r="10" />
+                                <line x1="12" y1="16" x2="12" y2="12" />
+                                <line x1="12" y1="8" x2="12.01" y2="8" />
+                              </svg>
+                              <p className="text-xs text-[#f0b400]/80">
+                                {t("wizard.basedOn")}{" "}
+                                <span className="font-semibold">
+                                  {t(useCases.find((u) => u.id === useCase)?.labelKey || "")}
+                                </span>
+                              </p>
+                            </div>
+                          )}
+                          <FormInput
+                            label={t("wizard.titleLabel")}
+                            value={title}
+                            onChange={setTitle}
+                            placeholder={t("wizard.titlePlaceholder")}
+                            required
+                          />
+                          <FormTextarea
+                            label={t("wizard.descLabel")}
+                            value={description}
+                            onChange={setDescription}
+                            placeholder={t("wizard.agreementDesc")}
+                            rows={4}
+                          />
+                        </div>
+                      )}
+
+                      {/* Step 3: Payment & Wallets */}
+                      {step === 3 && (
+                        <div className="flex flex-col gap-6">
+                          <div>
+                            <h3 className="text-lg font-semibold text-white sm:text-xl">
+                              {t("wizard.paymentDetails")}
+                            </h3>
+                            <p className="mt-1 text-sm text-white/35">
+                              {t("wizard.selectWalletInfo")}
+                            </p>
+                          </div>
+                          <FormSelect
+                            label={t("wizard.yourWallet")}
+                            value={selectedWallet}
+                            onChange={setSelectedWallet}
+                            options={connectedWallets.map((w) => ({
+                              value: w.value,
+                              label: `${t(w.labelKey)} (${w.short})`,
+                            }))}
+                            info={t("wizard.connectedWallet")}
+                            required
+                          />
+
+                          {/* Counterparty Selection with Contact Selector */}
+                          <div className="flex flex-col gap-2">
+                            <label className="text-xs font-medium uppercase tracking-wider text-white/50">
+                              {t("wizard.releaseSignerWallet")}{" "}
+                              <span className="text-rose-400">*</span>
+                            </label>
+                            <ContactSelector
+                              value={signerWallet}
+                              onChange={(wallet, name) => setSignerWallet(wallet)}
+                              placeholder="Select contact or enter wallet address..."
+                            />
+                            <p className="text-[11px] text-white/30">{t("wizard.whoReleases")}</p>
+                          </div>
+                          {escrowType === "single" ? (
+                            <FormInput
+                              label={t("wizard.amount")}
+                              value={milestones[0]?.amount || ""}
+                              onChange={(v) => updateMilestone(0, "amount", v)}
+                              placeholder="1000"
+                              type="number"
+                              info="USDC"
+                              required
+                            />
+                          ) : (
+                            <div className="flex flex-col gap-3">
+                              <div className="flex items-center justify-between">
+                                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                                  {t("wizard.paymentStages")}
+                                </p>
+                                <button
+                                  onClick={addMilestone}
+                                  className="text-xs font-semibold text-[#f0b400] hover:underline"
+                                >
+                                  {t("wizard.addStage")}
+                                </button>
+                              </div>
+                              {milestones.map((m, i) => (
+                                <div
+                                  key={i}
+                                  draggable
+                                  onDragStart={() => handleDragStart(i)}
+                                  onDragEnter={() => handleDragEnter(i)}
+                                  onDragEnd={handleDragEnd}
+                                  onDragOver={(e) => e.preventDefault()}
+                                  className="flex flex-col gap-2 rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 sm:flex-row sm:items-center sm:gap-3 cursor-grab active:cursor-grabbing"
+                                >
+                                  <div className="flex items-center gap-3 sm:gap-2">
+                                    <svg
+                                      width="14"
+                                      height="14"
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      strokeWidth="2"
+                                      className="shrink-0 text-white/20"
+                                    >
+                                      <circle cx="9" cy="5" r="1" />
+                                      <circle cx="9" cy="12" r="1" />
+                                      <circle cx="9" cy="19" r="1" />
+                                      <circle cx="15" cy="5" r="1" />
+                                      <circle cx="15" cy="12" r="1" />
+                                      <circle cx="15" cy="19" r="1" />
+                                    </svg>
+                                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#f0b400]/10 text-xs font-bold text-[#f0b400]">
+                                      {i + 1}
+                                    </span>
+                                  </div>
+                                  <input
+                                    value={m.description}
+                                    onChange={(e) =>
+                                      updateMilestone(i, "description", e.target.value)
+                                    }
+                                    placeholder={t("wizard.stageDesc")}
+                                    className="flex-1 bg-transparent text-sm text-white placeholder:text-white/20 focus:outline-none"
+                                  />
+                                  <input
+                                    value={m.amount}
+                                    onChange={(e) => updateMilestone(i, "amount", e.target.value)}
+                                    placeholder={t("wizard.amount")}
+                                    type="number"
+                                    className="w-28 rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-2 text-sm text-white placeholder:text-white/15 focus:border-[#f0b400]/40 focus:outline-none"
+                                  />
+                                  {milestones.length > 1 && (
+                                    <button
+                                      onClick={() => removeMilestone(i)}
+                                      className="text-white/20 hover:text-red-400 transition-colors"
+                                    >
+                                      <svg
+                                        width="14"
+                                        height="14"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                      >
+                                        <path d="M18 6L6 18M6 6l12 12" />
+                                      </svg>
+                                    </button>
+                                  )}
+                                </div>
+                              ))}
+                              <div className="flex items-center justify-between rounded-xl bg-white/[0.03] px-4 py-3">
+                                <span className="text-xs text-white/30">{t("wizard.total")}</span>
+                                <span className="text-sm font-bold text-white">
+                                  {totalAmount.toFixed(2)} USDC
+                                </span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Step 4: Review & Send */}
+                      {step === 4 && (
+                        <div className="flex flex-col gap-5">
+                          <div>
+                            <h3 className="text-lg font-semibold text-white sm:text-xl">
+                              {t("wizard.reviewAndSend")}
+                            </h3>
+                            <p className="mt-1 text-sm text-white/35">
+                              {t("wizard.confirmDetails")}
+                            </p>
+                          </div>
+
+                          {escrowType === "single" && (
+                            <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 flex items-center gap-3">
+                              <AlertTriangle className="h-5 w-5 text-amber-500 shrink-0" />
+                              <p className="text-sm text-amber-200/80">
+                                {t("wizard.quickWarning")}
+                              </p>
+                            </div>
+                          )}
+
+                          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                            <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5">
+                              <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-white/25">
+                                {t("wizard.agreement")}
+                              </p>
+                              <p className="text-sm font-semibold text-white">
+                                {title || t("wizard.untitled")}
+                              </p>
+                              <p className="mt-1 text-xs text-white/35 line-clamp-2">
+                                {description || t("wizard.noDescription")}
+                              </p>
+                            </div>
+                            <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5">
+                              <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-white/25">
+                                {t("wizard.protectedFunds")}
+                              </p>
+                              <p className="text-3xl font-bold text-[#f0b400]">
+                                {totalAmount.toFixed(2)}{" "}
+                                <span className="text-sm font-normal text-white/35">USDC</span>
+                              </p>
+                              <p className="mt-2 text-xs text-white/30">
+                                {t("wizard.platformFeeLabel")} {platformFee} USDC (1%)
+                              </p>
+                            </div>
+                          </div>
+                          {/* On-Ramp Option - Fund directly if needed */}
+                          <InlineOnramp
+                            targetAmount={totalAmount + platformFee}
+                            targetCurrency="USDC"
+                            walletAddress={walletAddress}
+                            onComplete={() => {
+                              /* Funds received, can proceed */
+                            }}
+                            className="mb-2"
+                          />
+                          <div className="rounded-xl border border-[#f0b400]/15 bg-[#f0b400]/5 p-5">
+                            <div className="mb-4 flex items-center gap-2">
+                              <svg
+                                width="16"
+                                height="16"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="#f0b400"
+                                strokeWidth="1.5"
+                              >
+                                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                                <polyline points="22,6 12,13 2,6" />
+                              </svg>
+                              <p className="text-sm font-semibold text-[#f0b400]">
+                                {t("wizard.emailNotifications")}
+                              </p>
+                            </div>
+                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                              <FormInput
+                                label={t("wizard.releaseSignerEmail")}
+                                value={signerEmail}
+                                onChange={setSignerEmail}
+                                placeholder="signer@email.com"
+                                required
+                              />
+                              <FormInput
+                                label={t("wizard.yourEmailOptional")}
+                                value={notifyEmail}
+                                onChange={setNotifyEmail}
+                                placeholder="you@email.com"
+                                info={t("wizard.receiveCopy")}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Navigation */}
+                      <div className="mt-8 flex items-center justify-between border-t border-white/[0.04] pt-6">
+                        <Button
+                          variant="ghost"
+                          onClick={() => setStep(Math.max(0, step - 1))}
+                          disabled={step === 0}
+                          className="rounded-full text-sm text-white/40 hover:text-white disabled:opacity-20"
+                        >
+                          {t("wizard.back")}
+                        </Button>
+                        {step < wizardStepKeys.length - 1 ? (
+                          <Button
+                            onClick={() => setStep(step + 1)}
+                            disabled={!canProceed()}
+                            className="rounded-full bg-[#f0b400] px-8 text-sm font-semibold text-background hover:bg-[#d4a000] disabled:opacity-20 shadow-[0_4px_16px_rgba(240,180,0,0.25)]"
+                          >
+                            {t("wizard.continue")}
+                          </Button>
+                        ) : (
+                          <>
+                            <Button
+                              onClick={async () => {
+                                const payload = generateAgreementPayload()
+                                const { createAndSignAgreement } =
+                                  await import("@/lib/agreementActions")
+                                await createAndSignAgreement({
+                                  payload,
+                                  token,
+                                  walletAddress,
+                                  setCreating,
+                                  setError,
+                                  setSubmitted,
+                                  onStatus: setCreateTxStatus,
+                                  onSuccess: (agreementId?: string) => {
+                                    const newAgr: Agreement = {
+                                      id:
+                                        agreementId ||
+                                        `AGR-${Date.now().toString(36).toUpperCase()}`,
+                                      title: payload.title,
+                                      status: "funded",
+                                      type:
+                                        payload.serviceType === "single-release"
+                                          ? "Single Release"
+                                          : "Multi Release",
+                                      counterparty: payload.roles.approver?.slice(0, 8) + "...",
+                                      amount: totalAmount.toLocaleString(),
+                                      currency: "USDC",
+                                      date: new Date().toISOString().split("T")[0],
+                                      milestones: payload.milestones.map((m) => ({
+                                        description: m.description,
+                                        amount: m.amount,
+                                        status: "pending" as const,
+                                      })),
+                                      receiver: payload.roles.receiver || walletAddress || "",
+                                      role: "buyer",
+                                    }
+                                    setAgreements((prev) => [newAgr, ...prev])
+                                  },
+                                })
+                              }}
+                              disabled={!signerEmail.trim() || creating}
+                              className="rounded-full bg-[#f0b400] px-8 text-sm font-semibold text-background hover:bg-[#d4a000] disabled:opacity-20 shadow-[0_4px_16px_rgba(240,180,0,0.25)]"
+                            >
+                              {creating
+                                ? createTxStatus === "signing"
+                                  ? "Waiting for signature..."
+                                  : createTxStatus === "submitting"
+                                    ? "Submitting..."
+                                    : "Creating..."
+                                : "Create & Notify Signer"}
+                            </Button>
+                            {error && <div className="mt-2 text-sm text-red-400">{error}</div>}
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           )}
@@ -2068,7 +3585,10 @@ const newAgr: Agreement = {
       <MobileNav
         activeSection={activeSection}
         onSectionChange={setActiveSection}
-        onCreateClick={() => { setActiveSection("create"); resetWizard() }}
+        onCreateClick={() => {
+          setActiveSection("create")
+          resetWizard()
+        }}
       />
 
       {/* Bottom padding for mobile nav */}
@@ -2090,7 +3610,16 @@ const newAgr: Agreement = {
                   className="p-1.5 rounded-lg text-white/40 hover:bg-white/10 hover:text-white transition-colors"
                   title="Close chat"
                 >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <path d="M18 6L6 18M6 6l12 12" />
+                  </svg>
                 </button>
               </div>
             </div>
@@ -2099,7 +3628,9 @@ const newAgr: Agreement = {
               <AgreementChat
                 agreementId={showAgreementChat}
                 currentUserWallet={walletAddress || ""}
-                counterpartyWallet={agreements.find(a => a.id === showAgreementChat)?.receiver || ""}
+                counterpartyWallet={
+                  agreements.find((a) => a.id === showAgreementChat)?.receiver || ""
+                }
                 token={token}
                 defaultOpen={true}
                 embedded={true}
@@ -2113,7 +3644,9 @@ const newAgr: Agreement = {
       <Dialog open={showAiAssistant} onOpenChange={setShowAiAssistant}>
         <DialogContent className="sm:max-w-xl max-h-[80vh] flex flex-col" showCloseButton={false}>
           <DialogTitle className="sr-only">AI Agreement Assistant</DialogTitle>
-          <DialogDescription className="sr-only">Describe your deal to generate an agreement draft</DialogDescription>
+          <DialogDescription className="sr-only">
+            Describe your deal to generate an agreement draft
+          </DialogDescription>
           <AiAgreementAssistant
             profile="personal"
             onDraftComplete={handleAiDraft}
@@ -2150,5 +3683,5 @@ const newAgr: Agreement = {
         type="personal"
       />
     </div>
-  );
+  )
 }

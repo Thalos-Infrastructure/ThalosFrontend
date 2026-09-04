@@ -111,13 +111,13 @@ function portfolioEntries(
   const raw: Array<{ label?: string; url?: string }> = Array.isArray(links)
     ? links.filter((l) => l && typeof l === "object")
     : Object.entries(links).map(([label, url]) => ({ label, url }))
-  return raw.map((l) => ({ label: l.label ?? "", url: l.url ?? "" })).filter((l) => isSafeUrl(l.url))
+  return raw
+    .map((l) => ({ label: l.label ?? "", url: l.url ?? "" }))
+    .filter((l) => isSafeUrl(l.url))
 }
 
 /** Returns an ordered array of { label, url } for a social/org links map (http/https only). */
-function linkEntries(
-  links: Record<string, string> | null,
-): Array<{ label: string; url: string }> {
+function linkEntries(links: Record<string, string> | null): Array<{ label: string; url: string }> {
   if (!links) return []
   return Object.entries(links)
     .map(([label, url]) => ({ label, url }))
@@ -334,7 +334,11 @@ export default async function ConnectProfilePage({
                 <SectionLabel icon={<Link2 className="h-4 w-4" />}>Links</SectionLabel>
                 <div className="mt-3 space-y-2">
                   {portfolio.map((l) => (
-                    <ExternalLinkItem key={l.label || l.url} label={l.label || "Portfolio"} url={l.url} />
+                    <ExternalLinkItem
+                      key={l.label || l.url}
+                      label={l.label || "Portfolio"}
+                      url={l.url}
+                    />
                   ))}
                   {socials.map((l) => (
                     <ExternalLinkItem key={l.label || l.url} label={l.label} url={l.url} />
@@ -523,7 +527,9 @@ function ReputationCard({
           <Github className="h-5 w-5 text-[#f0b400]" />
           <div>
             <p className="text-xs uppercase tracking-wider text-muted-foreground">Value released</p>
-            <p className="font-semibold text-foreground">{totalReleasedUsdc.toLocaleString()} USDC</p>
+            <p className="font-semibold text-foreground">
+              {totalReleasedUsdc.toLocaleString()} USDC
+            </p>
           </div>
         </div>
       )}

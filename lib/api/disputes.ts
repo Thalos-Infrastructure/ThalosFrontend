@@ -44,7 +44,7 @@ export interface DisputeResolution {
  */
 export async function openDispute(
   data: { agreement_id: string; reason: string; opened_by: string },
-  token: string
+  token: string,
 ): Promise<ApiResponse<Dispute>> {
   try {
     const response = await apiRequest<unknown>(
@@ -53,7 +53,7 @@ export async function openDispute(
         method: "POST",
         body: JSON.stringify(data),
       },
-      token
+      token,
     )
 
     if (!response.success) {
@@ -81,15 +81,9 @@ export async function openDispute(
  * Get all open disputes
  * Backend returns: { disputes, error }
  */
-export async function getOpenDisputes(
-  token: string
-): Promise<ApiResponse<DisputeWithAgreement[]>> {
+export async function getOpenDisputes(token: string): Promise<ApiResponse<DisputeWithAgreement[]>> {
   try {
-    const response = await apiRequest<unknown>(
-      "/disputes/open",
-      { method: "GET" },
-      token
-    )
+    const response = await apiRequest<unknown>("/disputes/open", { method: "GET" }, token)
 
     if (!response.success) {
       return { success: false, error: response.error }
@@ -118,13 +112,13 @@ export async function getOpenDisputes(
  */
 export async function getDisputesByResolver(
   walletAddress: string,
-  token: string
+  token: string,
 ): Promise<ApiResponse<DisputeWithAgreement[]>> {
   try {
     const response = await apiRequest<unknown>(
       `/disputes/by-resolver?wallet=${walletAddress}`,
       { method: "GET" },
-      token
+      token,
     )
 
     if (!response.success) {
@@ -154,13 +148,13 @@ export async function getDisputesByResolver(
  */
 export async function getDisputesByAgreement(
   agreementId: string,
-  token: string
+  token: string,
 ): Promise<ApiResponse<DisputeWithAgreement[]>> {
   try {
     const response = await apiRequest<unknown>(
       `/disputes/by-agreement/${agreementId}`,
       { method: "GET" },
-      token
+      token,
     )
 
     if (!response.success) {
@@ -190,14 +184,10 @@ export async function getDisputesByAgreement(
  */
 export async function getDispute(
   disputeId: string,
-  token: string
+  token: string,
 ): Promise<ApiResponse<DisputeWithAgreement>> {
   try {
-    const response = await apiRequest<unknown>(
-      `/disputes/${disputeId}`,
-      { method: "GET" },
-      token
-    )
+    const response = await apiRequest<unknown>(`/disputes/${disputeId}`, { method: "GET" }, token)
 
     if (!response.success) {
       return { success: false, error: response.error }
@@ -227,7 +217,7 @@ export async function getDispute(
 export async function assignResolver(
   disputeId: string,
   resolverWallet: string,
-  token: string
+  token: string,
 ): Promise<ApiResponse<{ success: boolean }>> {
   try {
     const response = await apiRequest<unknown>(
@@ -236,7 +226,7 @@ export async function assignResolver(
         method: "PATCH",
         body: JSON.stringify({ resolver_wallet: resolverWallet }),
       },
-      token
+      token,
     )
 
     if (!response.success) {
@@ -272,7 +262,7 @@ export async function resolveDispute(
     payee_percentage: number
     resolution_notes?: string
   },
-  token: string
+  token: string,
 ): Promise<ApiResponse<DisputeResolution>> {
   try {
     const response = await apiRequest<unknown>(
@@ -281,7 +271,7 @@ export async function resolveDispute(
         method: "PATCH",
         body: JSON.stringify(data),
       },
-      token
+      token,
     )
 
     if (!response.success) {
@@ -312,7 +302,7 @@ export async function resolveDispute(
 export async function cancelDispute(
   disputeId: string,
   cancelledBy: string,
-  token: string
+  token: string,
 ): Promise<ApiResponse<{ success: boolean }>> {
   try {
     const response = await apiRequest<unknown>(
@@ -321,7 +311,7 @@ export async function cancelDispute(
         method: "PATCH",
         body: JSON.stringify({ cancelled_by: cancelledBy }),
       },
-      token
+      token,
     )
 
     if (!response.success) {

@@ -1,7 +1,15 @@
 "use client"
 
 import { useState } from "react"
-import { Eye, EyeOff, TrendingUp, ArrowDownToLine, ArrowUpFromLine, Loader2, AlertTriangle } from "lucide-react"
+import {
+  Eye,
+  EyeOff,
+  TrendingUp,
+  ArrowDownToLine,
+  ArrowUpFromLine,
+  Loader2,
+  AlertTriangle,
+} from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useLanguage } from "@/lib/i18n"
 
@@ -50,18 +58,16 @@ export function BalanceCard({
   // How many stats columns are visible
   const visibleStats = [true, !hideEscrow, !hideYield].filter(Boolean).length
   const statsGridClass =
-    visibleStats === 3
-      ? "grid-cols-3"
-      : visibleStats === 2
-        ? "grid-cols-2"
-        : "grid-cols-1"
+    visibleStats === 3 ? "grid-cols-3" : visibleStats === 2 ? "grid-cols-2" : "grid-cols-1"
 
   return (
-    <div className={cn(
-      "relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-[#0c1220] to-[#0a0f1a] p-6",
-      "shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)]",
-      className
-    )}>
+    <div
+      className={cn(
+        "relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-[#0c1220] to-[#0a0f1a] p-6",
+        "shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)]",
+        className,
+      )}
+    >
       {/* Background pattern */}
       <div className="absolute inset-0 opacity-30">
         <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-[#f0b400]/10 blur-3xl" />
@@ -103,10 +109,12 @@ export function BalanceCard({
           <>
             {/* Main balance */}
             <div className="mb-6">
-              <p className={cn(
-                "text-3xl font-bold text-white",
-                isLoading && "animate-pulse text-white/40"
-              )}>
+              <p
+                className={cn(
+                  "text-3xl font-bold text-white",
+                  isLoading && "animate-pulse text-white/40",
+                )}
+              >
                 {formatBalance(totalBalance)}{" "}
                 <span className="text-lg font-normal text-white/40">{currency}</span>
               </p>
@@ -118,10 +126,12 @@ export function BalanceCard({
                 <p className="text-[10px] font-medium uppercase tracking-wider text-white/30 mb-1">
                   {t("dashboard.available") || "Available"}
                 </p>
-                <p className={cn(
-                  "text-sm font-semibold text-white",
-                  isLoading && "animate-pulse text-white/40"
-                )}>
+                <p
+                  className={cn(
+                    "text-sm font-semibold text-white",
+                    isLoading && "animate-pulse text-white/40",
+                  )}
+                >
                   {formatBalance(availableBalance)}
                 </p>
               </div>
@@ -130,10 +140,12 @@ export function BalanceCard({
                   <p className="text-[10px] font-medium uppercase tracking-wider text-white/30 mb-1">
                     {t("dashboard.inEscrow") || "In Escrow"}
                   </p>
-                  <p className={cn(
-                    "text-sm font-semibold text-[#f0b400]",
-                    isLoading && "animate-pulse text-[#f0b400]/40"
-                  )}>
+                  <p
+                    className={cn(
+                      "text-sm font-semibold text-[#f0b400]",
+                      isLoading && "animate-pulse text-[#f0b400]/40",
+                    )}
+                  >
                     {formatBalance(lockedInEscrow)}
                   </p>
                 </div>
@@ -143,12 +155,13 @@ export function BalanceCard({
                   <p className="text-[10px] font-medium uppercase tracking-wider text-white/30 mb-1">
                     {t("dashboard.yieldEarned") || "Yield"}
                   </p>
-                  <p className={cn(
-                    "text-sm font-semibold text-emerald-400 flex items-center gap-1",
-                    isLoading && "animate-pulse text-emerald-400/40"
-                  )}>
-                    <TrendingUp className="h-3 w-3" />
-                    +{formatBalance(yieldEarned)}
+                  <p
+                    className={cn(
+                      "text-sm font-semibold text-emerald-400 flex items-center gap-1",
+                      isLoading && "animate-pulse text-emerald-400/40",
+                    )}
+                  >
+                    <TrendingUp className="h-3 w-3" />+{formatBalance(yieldEarned)}
                   </p>
                 </div>
               )}

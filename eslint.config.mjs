@@ -1,4 +1,4 @@
-import next from 'eslint-config-next/core-web-vitals';
+import next from "eslint-config-next/core-web-vitals"
 
 /**
  * Mirrors the gate the backend has (`lint:check` in CI), adapted to Next.
@@ -9,7 +9,7 @@ import next from 'eslint-config-next/core-web-vitals';
  */
 export default [
   {
-    ignores: ['node_modules/**', '.next/**', 'dist/**', 'coverage/**', 'next-env.d.ts'],
+    ignores: ["node_modules/**", ".next/**", "dist/**", "coverage/**", "next-env.d.ts"],
   },
 
   ...next,
@@ -22,20 +22,20 @@ export default [
       // a refactor of every effect that seeds state, with no UI tests to catch
       // the regressions. They stay visible as warnings until that pass happens
       // — deliberately, not because they are noise.
-      'react-hooks/set-state-in-effect': 'warn',
-      'react-hooks/exhaustive-deps': 'warn',
+      "react-hooks/set-state-in-effect": "warn",
+      "react-hooks/exhaustive-deps": "warn",
 
       // <img> is fine in the marketing pages, which use fixed-size assets.
-      '@next/next/no-img-element': 'warn',
+      "@next/next/no-img-element": "warn",
     },
   },
 
   {
     // Node test/utility scripts: not Next code, and they legitimately use
     // CommonJS-flavoured identifiers.
-    files: ['tests/**', 'scripts/**'],
+    files: ["tests/**", "scripts/**"],
     rules: {
-      '@next/next/no-assign-module-variable': 'off',
+      "@next/next/no-assign-module-variable": "off",
     },
   },
-];
+]

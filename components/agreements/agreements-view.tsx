@@ -2,7 +2,19 @@
 
 import { useState, useMemo } from "react"
 import { cn } from "@/lib/utils"
-import { Search, FileText, Clock, CheckCircle, AlertTriangle, ShoppingCart, Store, MessageCircle, ChevronLeft, ChevronRight, Play } from "lucide-react"
+import {
+  Search,
+  FileText,
+  Clock,
+  CheckCircle,
+  AlertTriangle,
+  ShoppingCart,
+  Store,
+  MessageCircle,
+  ChevronLeft,
+  ChevronRight,
+  Play,
+} from "lucide-react"
 import { Input } from "@/components/ui/input"
 
 interface Agreement {
@@ -34,16 +46,26 @@ type PendingGroup = "approval" | "funding" | "review" | "dispute"
 
 const ITEMS_PER_PAGE = 10
 
-export function AgreementsView({ agreements, onAgreementClick, onOpenChat, currentUserWallet, className }: AgreementsViewProps) {
+export function AgreementsView({
+  agreements,
+  onAgreementClick,
+  onOpenChat,
+  currentUserWallet,
+  className,
+}: AgreementsViewProps) {
   const [viewMode, setViewMode] = useState<ViewMode>("buyer")
   const [activeTab, setActiveTab] = useState<TabType>("pending")
   const [searchQuery, setSearchQuery] = useState("")
-  const [expandedGroups, setExpandedGroups] = useState<PendingGroup[]>(["approval", "funding", "review"])
+  const [expandedGroups, setExpandedGroups] = useState<PendingGroup[]>([
+    "approval",
+    "funding",
+    "review",
+  ])
   const [currentPage, setCurrentPage] = useState(1)
 
   // Filter by view mode (buyer/seller)
   const filteredByRole = useMemo(() => {
-    return agreements.filter(a => {
+    return agreements.filter((a) => {
       // If role is specified, use it directly
       if (a.role) return a.role === viewMode
       // Otherwise, infer from type or default to showing all
@@ -59,14 +81,21 @@ export function AgreementsView({ agreements, onAgreementClick, onOpenChat, curre
 
     filteredByRole.forEach((agreement) => {
       const status = agreement.status.toLowerCase()
-      
+
       // Check milestone statuses for more accurate categorization
-      const allMilestonesReleased = agreement.milestones?.every(m => m.status === "released")
-      const hasPendingMilestones = agreement.milestones?.some(m => m.status === "pending" || m.status === "approved")
-      
+      const allMilestonesReleased = agreement.milestones?.every((m) => m.status === "released")
+      const hasPendingMilestones = agreement.milestones?.some(
+        (m) => m.status === "pending" || m.status === "approved",
+      )
+
       if (status === "completed" || status === "released" || allMilestonesReleased) {
         completed.push(agreement)
-      } else if (status === "pending" || status === "funded" || status === "dispute" || hasPendingMilestones) {
+      } else if (
+        status === "pending" ||
+        status === "funded" ||
+        status === "dispute" ||
+        hasPendingMilestones
+      ) {
         // Pending = needs action from someone
         pending.push(agreement)
       } else if (status === "in_progress") {
@@ -85,16 +114,16 @@ export function AgreementsView({ agreements, onAgreementClick, onOpenChat, curre
   const pendingGroups = useMemo(() => {
     const groups = {
       approval: [] as Agreement[], // Waiting for your approval to release funds
-      funding: [] as Agreement[],  // Waiting for funds to be deposited
-      review: [] as Agreement[],   // Work submitted, waiting for your review
-      dispute: [] as Agreement[],  // In dispute
+      funding: [] as Agreement[], // Waiting for funds to be deposited
+      review: [] as Agreement[], // Work submitted, waiting for your review
+      dispute: [] as Agreement[], // In dispute
     }
 
     categorized.pending.forEach((agreement) => {
       const status = agreement.status.toLowerCase()
-      const hasApprovedMilestones = agreement.milestones?.some(m => m.status === "approved")
-      const hasPendingMilestones = agreement.milestones?.some(m => m.status === "pending")
-      
+      const hasApprovedMilestones = agreement.milestones?.some((m) => m.status === "approved")
+      const hasPendingMilestones = agreement.milestones?.some((m) => m.status === "pending")
+
       if (status === "dispute") {
         groups.dispute.push(agreement)
       } else if (status === "funded" || hasApprovedMilestones) {
@@ -118,34 +147,79 @@ export function AgreementsView({ agreements, onAgreementClick, onOpenChat, curre
   // Filter by search
   const filteredAgreements = useMemo(() => {
     if (!searchQuery) return categorized[activeTab]
-    
+
     const query = searchQuery.toLowerCase()
-    return categorized[activeTab].filter(a => 
-      a.title.toLowerCase().includes(query) ||
-      a.counterparty.toLowerCase().includes(query) ||
-      a.type.toLowerCase().includes(query)
+    return categorized[activeTab].filter(
+      (a) =>
+        a.title.toLowerCase().includes(query) ||
+        a.counterparty.toLowerCase().includes(query) ||
+        a.type.toLowerCase().includes(query),
     )
   }, [categorized, activeTab, searchQuery])
 
   function toggleGroup(group: PendingGroup) {
-    setExpandedGroups(prev => 
-      prev.includes(group) 
-        ? prev.filter(g => g !== group)
-        : [...prev, group]
+    setExpandedGroups((prev) =>
+      prev.includes(group) ? prev.filter((g) => g !== group) : [...prev, group],
     )
   }
 
   const tabs = [
-    { id: "pending" as TabType, label: "Needs Action", description: "Waiting for you", count: categorized.pending.length, icon: Clock },
-    { id: "active" as TabType, label: "In Progress", description: "Work being done", count: categorized.active.length, icon: Play },
-    { id: "completed" as TabType, label: "Completed", description: "Finished", count: categorized.completed.length, icon: CheckCircle },
+    {
+      id: "pending" as TabType,
+      label: "Needs Action",
+      description: "Waiting for you",
+      count: categorized.pending.length,
+      icon: Clock,
+    },
+    {
+      id: "active" as TabType,
+      label: "In Progress",
+      description: "Work being done",
+      count: categorized.active.length,
+      icon: Play,
+    },
+    {
+      id: "completed" as TabType,
+      label: "Completed",
+      description: "Finished",
+      count: categorized.completed.length,
+      icon: CheckCircle,
+    },
   ]
 
   const pendingGroupConfig = [
-    { id: "approval" as PendingGroup, label: "Ready for Release", description: "Approve to release funds", icon: CheckCircle, color: "text-amber-400", bg: "bg-amber-400/10" },
-    { id: "funding" as PendingGroup, label: "Awaiting Funding", description: "Deposit funds to start", icon: AlertTriangle, color: "text-sky-400", bg: "bg-sky-400/10" },
-    { id: "review" as PendingGroup, label: "Work Submitted", description: "Review completed work", icon: FileText, color: "text-violet-400", bg: "bg-violet-400/10" },
-    { id: "dispute" as PendingGroup, label: "In Dispute", description: "Requires resolution", icon: AlertTriangle, color: "text-rose-400", bg: "bg-rose-400/10" },
+    {
+      id: "approval" as PendingGroup,
+      label: "Ready for Release",
+      description: "Approve to release funds",
+      icon: CheckCircle,
+      color: "text-amber-400",
+      bg: "bg-amber-400/10",
+    },
+    {
+      id: "funding" as PendingGroup,
+      label: "Awaiting Funding",
+      description: "Deposit funds to start",
+      icon: AlertTriangle,
+      color: "text-sky-400",
+      bg: "bg-sky-400/10",
+    },
+    {
+      id: "review" as PendingGroup,
+      label: "Work Submitted",
+      description: "Review completed work",
+      icon: FileText,
+      color: "text-violet-400",
+      bg: "bg-violet-400/10",
+    },
+    {
+      id: "dispute" as PendingGroup,
+      label: "In Dispute",
+      description: "Requires resolution",
+      icon: AlertTriangle,
+      color: "text-rose-400",
+      bg: "bg-rose-400/10",
+    },
   ]
 
   // Pagination
@@ -172,7 +246,7 @@ export function AgreementsView({ agreements, onAgreementClick, onOpenChat, curre
               "flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors",
               viewMode === "buyer"
                 ? "bg-[#f0b400] text-[#0c1220]"
-                : "text-white/60 hover:text-white hover:bg-white/5"
+                : "text-white/60 hover:text-white hover:bg-white/5",
             )}
           >
             <ShoppingCart className="h-4 w-4" />
@@ -184,14 +258,14 @@ export function AgreementsView({ agreements, onAgreementClick, onOpenChat, curre
               "flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors",
               viewMode === "seller"
                 ? "bg-[#f0b400] text-[#0c1220]"
-                : "text-white/60 hover:text-white hover:bg-white/5"
+                : "text-white/60 hover:text-white hover:bg-white/5",
             )}
           >
             <Store className="h-4 w-4" />
             As Seller
           </button>
         </div>
-        
+
         {/* Search */}
         <div className="relative w-64">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
@@ -214,17 +288,19 @@ export function AgreementsView({ agreements, onAgreementClick, onOpenChat, curre
               "flex-1 flex flex-col items-center justify-center gap-0.5 rounded-md px-3 py-2 transition-colors",
               activeTab === tab.id
                 ? "bg-[#f0b400]/10 text-[#f0b400]"
-                : "text-white/60 hover:text-white hover:bg-white/5"
+                : "text-white/60 hover:text-white hover:bg-white/5",
             )}
           >
             <div className="flex items-center gap-2">
               <tab.icon className="h-4 w-4" />
               <span className="text-sm font-medium">{tab.label}</span>
               {tab.count > 0 && (
-                <span className={cn(
-                  "rounded-full px-1.5 py-0.5 text-[10px] font-bold",
-                  activeTab === tab.id ? "bg-[#f0b400]/20" : "bg-white/10"
-                )}>
+                <span
+                  className={cn(
+                    "rounded-full px-1.5 py-0.5 text-[10px] font-bold",
+                    activeTab === tab.id ? "bg-[#f0b400]/20" : "bg-white/10",
+                  )}
+                >
                   {tab.count}
                 </span>
               )}
@@ -241,13 +317,16 @@ export function AgreementsView({ agreements, onAgreementClick, onOpenChat, curre
           {pendingGroupConfig.map((group) => {
             const groupAgreements = pendingGroups[group.id]
             if (groupAgreements.length === 0) return null
-            
+
             const isExpanded = expandedGroups.includes(group.id)
             const displayedAgreements = isExpanded ? groupAgreements.slice(0, 5) : []
             const hasMore = groupAgreements.length > 5
-            
+
             return (
-              <div key={group.id} className="rounded-xl border border-white/10 bg-gradient-to-br from-[#0c1220] to-[#0a0e18] overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+              <div
+                key={group.id}
+                className="rounded-xl border border-white/10 bg-gradient-to-br from-[#0c1220] to-[#0a0e18] overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.3)]"
+              >
                 {/* Group Header - Compact */}
                 <button
                   onClick={() => toggleGroup(group.id)}
@@ -261,7 +340,13 @@ export function AgreementsView({ agreements, onAgreementClick, onOpenChat, curre
                       <span className="text-sm font-medium text-white">{group.label}</span>
                       <p className="text-[10px] text-white/40">{group.description}</p>
                     </div>
-                    <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-bold", group.bg, group.color)}>
+                    <span
+                      className={cn(
+                        "rounded-full px-2 py-0.5 text-[10px] font-bold",
+                        group.bg,
+                        group.color,
+                      )}
+                    >
                       {groupAgreements.length}
                     </span>
                   </div>
@@ -293,8 +378,10 @@ export function AgreementsView({ agreements, onAgreementClick, onOpenChat, curre
                     </div>
                     {/* Show more button */}
                     {hasMore && (
-                      <button 
-                        onClick={() => {/* TODO: Navigate to filtered view */}}
+                      <button
+                        onClick={() => {
+                          /* TODO: Navigate to filtered view */
+                        }}
                         className="w-full py-2.5 text-xs font-medium text-[#f0b400] hover:bg-[#f0b400]/5 transition-colors border-t border-white/6"
                       >
                         View all {groupAgreements.length} agreements
@@ -307,7 +394,10 @@ export function AgreementsView({ agreements, onAgreementClick, onOpenChat, curre
           })}
 
           {categorized.pending.length === 0 && (
-            <EmptyState message="No pending actions" description="All caught up! Check your active agreements." />
+            <EmptyState
+              message="No pending actions"
+              description="All caught up! Check your active agreements."
+            />
           )}
         </div>
       ) : (
@@ -315,9 +405,15 @@ export function AgreementsView({ agreements, onAgreementClick, onOpenChat, curre
         <div className="space-y-3">
           <div className="rounded-xl border border-white/10 bg-gradient-to-br from-[#0c1220] to-[#0a0e18] divide-y divide-white/6 shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
             {paginatedAgreements.length === 0 ? (
-              <EmptyState 
-                message={activeTab === "active" ? "No active agreements" : "No completed agreements"} 
-                description={activeTab === "active" ? "Agreements with work in progress will appear here" : "Completed agreements will appear here"}
+              <EmptyState
+                message={
+                  activeTab === "active" ? "No active agreements" : "No completed agreements"
+                }
+                description={
+                  activeTab === "active"
+                    ? "Agreements with work in progress will appear here"
+                    : "Completed agreements will appear here"
+                }
               />
             ) : (
               paginatedAgreements.map((agreement) => (
@@ -335,11 +431,13 @@ export function AgreementsView({ agreements, onAgreementClick, onOpenChat, curre
           {totalPages > 1 && (
             <div className="flex items-center justify-between px-4 py-3 rounded-xl border border-white/10 bg-gradient-to-br from-[#0c1220] to-[#0a0e18] shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
               <p className="text-xs text-white/40">
-                Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1}-{Math.min(currentPage * ITEMS_PER_PAGE, filteredAgreements.length)} of {filteredAgreements.length}
+                Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1}-
+                {Math.min(currentPage * ITEMS_PER_PAGE, filteredAgreements.length)} of{" "}
+                {filteredAgreements.length}
               </p>
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
                   className="p-1.5 rounded-lg text-white/40 hover:bg-white/10 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                 >
@@ -349,7 +447,7 @@ export function AgreementsView({ agreements, onAgreementClick, onOpenChat, curre
                   {currentPage} / {totalPages}
                 </span>
                 <button
-                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                   disabled={currentPage === totalPages}
                   className="p-1.5 rounded-lg text-white/40 hover:bg-white/10 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                 >
@@ -364,7 +462,15 @@ export function AgreementsView({ agreements, onAgreementClick, onOpenChat, curre
   )
 }
 
-function AgreementCard({ agreement, onClick, onChat }: { agreement: Agreement; onClick: () => void; onChat?: () => void }) {
+function AgreementCard({
+  agreement,
+  onClick,
+  onChat,
+}: {
+  agreement: Agreement
+  onClick: () => void
+  onChat?: () => void
+}) {
   const statusColors: Record<string, { bg: string; text: string }> = {
     pending: { bg: "bg-amber-400/10", text: "text-amber-400" },
     funded: { bg: "bg-sky-400/10", text: "text-sky-400" },
@@ -378,10 +484,7 @@ function AgreementCard({ agreement, onClick, onChat }: { agreement: Agreement; o
 
   return (
     <div className="flex w-full items-center justify-between px-4 py-3 hover:bg-white/5 transition-colors group">
-      <button
-        onClick={onClick}
-        className="flex items-center gap-3 min-w-0 flex-1 text-left"
-      >
+      <button onClick={onClick} className="flex items-center gap-3 min-w-0 flex-1 text-left">
         <div className="h-10 w-10 rounded-lg bg-white/5 flex items-center justify-center shrink-0">
           <FileText className="h-5 w-5 text-white/40" />
         </div>
@@ -394,14 +497,23 @@ function AgreementCard({ agreement, onClick, onChat }: { agreement: Agreement; o
         {/* Chat button */}
         {onChat && (
           <button
-            onClick={(e) => { e.stopPropagation(); onChat(); }}
+            onClick={(e) => {
+              e.stopPropagation()
+              onChat()
+            }}
             className="h-8 w-8 rounded-lg bg-white/5 flex items-center justify-center text-white/40 hover:bg-[#f0b400]/10 hover:text-[#f0b400] transition-colors opacity-0 group-hover:opacity-100"
             title="Open chat"
           >
             <MessageCircle className="h-4 w-4" />
           </button>
         )}
-        <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider", colors.bg, colors.text)}>
+        <span
+          className={cn(
+            "rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider",
+            colors.bg,
+            colors.text,
+          )}
+        >
           {agreement.status.replace("_", " ")}
         </span>
         <div className="text-right min-w-[80px]">

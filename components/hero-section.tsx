@@ -18,21 +18,22 @@ const TYPEWRITER_PHRASES = {
     { text: "transactions", article: "your" },
     { text: "agreements", article: "your" },
     { text: "business", article: "your" },
-    { text: "future", article: "your" }
+    { text: "future", article: "your" },
   ],
   es: [
     { text: "transacciones", article: "tus" },
     { text: "acuerdos", article: "tus" },
     { text: "negocios", article: "tus" },
-    { text: "futuro", article: "tu" } // "tu futuro" not "tus futuro"
-  ]
+    { text: "futuro", article: "tu" }, // "tu futuro" not "tus futuro"
+  ],
 }
 
 // Content translations - ALL content translated
 const CONTENT = {
   en: {
     headlinePrefix: "Protect",
-    description: "We are the bridge between trust and payments. Create digital agreements where funds are protected until conditions are met, with clear milestones, instant release upon approval, and built-in dispute resolution.",
+    description:
+      "We are the bridge between trust and payments. Create digital agreements where funds are protected until conditions are met, with clear milestones, instant release upon approval, and built-in dispute resolution.",
     cta: "Get Started",
     ctaSecondary: "See how it works",
     page2: "Get started in seconds",
@@ -40,11 +41,12 @@ const CONTENT = {
     page4: "Watch it in action",
     finalHeadline: "Trust at every step",
     finalSubheadline: "Every transaction protected. Every agreement honored.",
-    finalCta: "Start now"
+    finalCta: "Start now",
   },
   es: {
     headlinePrefix: "Protege",
-    description: "Somos el puente entre la confianza y los pagos. Crea acuerdos digitales donde los fondos están protegidos hasta cumplir las condiciones, con hitos claros, liberación instantánea al aprobar, y resolución de disputas incluida.",
+    description:
+      "Somos el puente entre la confianza y los pagos. Crea acuerdos digitales donde los fondos están protegidos hasta cumplir las condiciones, con hitos claros, liberación instantánea al aprobar, y resolución de disputas incluida.",
     cta: "Comenzar",
     ctaSecondary: "Ver cómo funciona",
     page2: "Empieza en segundos",
@@ -52,8 +54,8 @@ const CONTENT = {
     page4: "Míralo en acción",
     finalHeadline: "Confianza en cada paso",
     finalSubheadline: "Cada transacción protegida. Cada acuerdo cumplido.",
-    finalCta: "Comenzar ahora"
-  }
+    finalCta: "Comenzar ahora",
+  },
 }
 
 // Typewriter hook with rotating phrases
@@ -69,45 +71,48 @@ function useRotatingTypewriter(phrases: TypewriterPhrase[], isActive: boolean) {
   const [phraseIndex, setPhraseIndex] = useState(0)
 
   useEffect(() => {
-  if (!isActive) {
-  setDisplayText("")
-  return
-  }
+    if (!isActive) {
+      setDisplayText("")
+      return
+    }
 
-  const currentPhraseObj = phrases[phraseIndex]
-  const currentPhrase = currentPhraseObj.text
-  setCurrentArticle(currentPhraseObj.article)
+    const currentPhraseObj = phrases[phraseIndex]
+    const currentPhrase = currentPhraseObj.text
+    setCurrentArticle(currentPhraseObj.article)
     let currentIndex = 0
     let isDeleting = false
     setIsTyping(true)
 
-    const interval = setInterval(() => {
-      if (!isDeleting) {
-        if (currentIndex <= currentPhrase.length) {
-          setDisplayText(currentPhrase.slice(0, currentIndex))
-          currentIndex++
+    const interval = setInterval(
+      () => {
+        if (!isDeleting) {
+          if (currentIndex <= currentPhrase.length) {
+            setDisplayText(currentPhrase.slice(0, currentIndex))
+            currentIndex++
+          } else {
+            setTimeout(() => {
+              isDeleting = true
+            }, 2000)
+          }
         } else {
-          setTimeout(() => {
-            isDeleting = true
-          }, 2000)
+          if (currentIndex > 0) {
+            currentIndex--
+            setDisplayText(currentPhrase.slice(0, currentIndex))
+          } else {
+            isDeleting = false
+            setPhraseIndex((prev) => (prev + 1) % phrases.length)
+            clearInterval(interval)
+          }
         }
-      } else {
-        if (currentIndex > 0) {
-          currentIndex--
-          setDisplayText(currentPhrase.slice(0, currentIndex))
-        } else {
-          isDeleting = false
-          setPhraseIndex((prev) => (prev + 1) % phrases.length)
-          clearInterval(interval)
-        }
-      }
-    }, isDeleting ? 40 : 100)
+      },
+      isDeleting ? 40 : 100,
+    )
 
     return () => clearInterval(interval)
   }, [phrases, phraseIndex, isActive])
 
-return { displayText, isTyping, currentArticle }
-  }
+  return { displayText, isTyping, currentArticle }
+}
 
 export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
   const { language } = useLanguage()
@@ -119,11 +124,17 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
   const totalPages = 4
 
   const content = CONTENT[language as keyof typeof CONTENT] || CONTENT.en
-  const typewriterPhrases = TYPEWRITER_PHRASES[language as keyof typeof TYPEWRITER_PHRASES] || TYPEWRITER_PHRASES.en
-  const { displayText, isTyping, currentArticle } = useRotatingTypewriter(typewriterPhrases, currentPage === 0)
+  const typewriterPhrases =
+    TYPEWRITER_PHRASES[language as keyof typeof TYPEWRITER_PHRASES] || TYPEWRITER_PHRASES.en
+  const { displayText, isTyping, currentArticle } = useRotatingTypewriter(
+    typewriterPhrases,
+    currentPage === 0,
+  )
 
   useEffect(() => {
-    const t1 = setTimeout(() => { onIntroComplete?.() }, 2000)
+    const t1 = setTimeout(() => {
+      onIntroComplete?.()
+    }, 2000)
     return () => clearTimeout(t1)
   }, [onIntroComplete])
 
@@ -172,235 +183,273 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
   const heroHeightVh = totalPages * 35 + 15
 
   return (
-    <section id="hero" ref={containerRef} className="relative pt-16" style={{ height: `${heroHeightVh}vh` }}>
+    <section
+      id="hero"
+      ref={containerRef}
+      className="relative pt-16"
+      style={{ height: `${heroHeightVh}vh` }}
+    >
       {/* Subtle top gradient line */}
-      <div className="absolute top-16 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#f0b400]/20 to-transparent" aria-hidden="true" />
+      <div
+        className="absolute top-16 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#f0b400]/20 to-transparent"
+        aria-hidden="true"
+      />
 
       {/* Vertical THALOS letters - desktop only */}
       {isHeroVisible && (
-      <div
-        className="pointer-events-none fixed right-0 top-1/2 -translate-y-1/2 z-20 hidden select-none md:flex md:flex-col md:items-end lg:right-4 xl:right-8"
-        aria-hidden="true"
-      >
-        {LETTERS.map((letter, i) => (
-          <span
-            key={i}
-            className="thalos-letter block font-black leading-[0.72] text-white dark:text-white"
-            style={{
-              opacity: letterOpacities[i],
-              transition: "opacity 100ms ease-out",
-              fontSize: "clamp(8rem, 19vh, 20rem)",
-              letterSpacing: "-0.04em",
-            }}
-          >
-            {letter}
-          </span>
-        ))}
-      </div>
+        <div
+          className="pointer-events-none fixed right-0 top-1/2 -translate-y-1/2 z-20 hidden select-none md:flex md:flex-col md:items-end lg:right-4 xl:right-8"
+          aria-hidden="true"
+        >
+          {LETTERS.map((letter, i) => (
+            <span
+              key={i}
+              className="thalos-letter block font-black leading-[0.72] text-white dark:text-white"
+              style={{
+                opacity: letterOpacities[i],
+                transition: "opacity 100ms ease-out",
+                fontSize: "clamp(8rem, 19vh, 20rem)",
+                letterSpacing: "-0.04em",
+              }}
+            >
+              {letter}
+            </span>
+          ))}
+        </div>
       )}
 
       {/* Fixed viewport container for all pages - top-16 to account for header */}
       {isHeroVisible && (
-      <div className="fixed inset-x-0 top-16 bottom-0 z-10 overflow-hidden">
+        <div className="fixed inset-x-0 top-16 bottom-0 z-10 overflow-hidden">
+          {/* Page 1: Intro */}
+          <div
+            className="absolute inset-0 flex items-center transition-all duration-500 ease-out"
+            style={{
+              opacity: currentPage === 0 ? 1 : 0,
+              transform: currentPage === 0 ? "translateY(0)" : "translateY(-30px)",
+              pointerEvents: currentPage === 0 ? "auto" : "none",
+            }}
+          >
+            <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-4xl">
+              <div className="text-center md:text-left md:max-w-2xl">
+                {/* Mobile THALOS */}
+                <div className="flex md:hidden justify-center mb-8 gap-0.5">
+                  {LETTERS.map((letter, i) => (
+                    <span
+                      key={i}
+                      className="thalos-letter animate-fade-in-up text-4xl sm:text-5xl font-black text-foreground"
+                      style={{ animationDelay: `${i * 80}ms`, animationFillMode: "both" }}
+                    >
+                      {letter}
+                    </span>
+                  ))}
+                </div>
 
-        {/* Page 1: Intro */}
-        <div
-          className="absolute inset-0 flex items-center transition-all duration-500 ease-out"
-          style={{
-            opacity: currentPage === 0 ? 1 : 0,
-            transform: currentPage === 0 ? "translateY(0)" : "translateY(-30px)",
-            pointerEvents: currentPage === 0 ? "auto" : "none",
-          }}
-        >
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-4xl">
-            <div className="text-center md:text-left md:max-w-2xl">
-              {/* Mobile THALOS */}
-              <div className="flex md:hidden justify-center mb-8 gap-0.5">
-                {LETTERS.map((letter, i) => (
-                  <span
-                    key={i}
-                    className="thalos-letter animate-fade-in-up text-4xl sm:text-5xl font-black text-foreground"
-                    style={{ animationDelay: `${i * 80}ms`, animationFillMode: "both" }}
-                  >
-                    {letter}
-                  </span>
-                ))}
-              </div>
+                {/* Headlines */}
+                <h1 className="animate-fade-in-up text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-bold tracking-tight text-foreground leading-[0.95]">
+                  {content.headlinePrefix} {currentArticle}
+                </h1>
 
-              {/* Headlines */}
-              <h1 className="animate-fade-in-up text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-bold tracking-tight text-foreground leading-[0.95]">
-                {content.headlinePrefix} {currentArticle}
-              </h1>
+                {/* Typewriter effect */}
+                <div className="mt-2 sm:mt-4 min-h-[1.3em] animate-fade-in-up animation-delay-200">
+                  <p className="text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-bold tracking-tight text-[#f0b400]">
+                    [{displayText}
+                    <span className={`${isTyping ? "animate-pulse" : ""}`}>|</span>]
+                  </p>
+                </div>
 
-              {/* Typewriter effect */}
-              <div className="mt-2 sm:mt-4 min-h-[1.3em] animate-fade-in-up animation-delay-200">
-                <p className="text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-bold tracking-tight text-[#f0b400]">
-                  [{displayText}
-                  <span className={`${isTyping ? 'animate-pulse' : ''}`}>|</span>]
+                {/* Description */}
+                <p className="mt-10 sm:mt-12 text-lg sm:text-xl text-foreground/80 dark:text-foreground/70 leading-relaxed animate-fade-in-up animation-delay-300 max-w-xl mx-auto md:mx-0">
+                  {content.description}
                 </p>
+
+                {/* CTAs */}
+                <div className="mt-10 sm:mt-12 flex flex-col sm:flex-row justify-center md:justify-start gap-4 animate-fade-in-up animation-delay-500">
+                  <Button
+                    size="lg"
+                    onClick={() => onNavigate("sign-in")}
+                    className="h-14 rounded-xl bg-[#f0b400] px-10 text-base font-bold text-[#0c1220] hover:bg-[#d9a300] active:scale-[0.98] transition-all duration-200 shadow-[0_0_40px_rgba(240,180,0,0.3)]"
+                  >
+                    {content.cta}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    onClick={() => onNavigate("how-it-works")}
+                    className="h-14 rounded-xl border-border bg-background/50 backdrop-blur-sm px-10 text-base font-bold text-foreground hover:bg-accent active:scale-[0.98] transition-all duration-200"
+                  >
+                    {content.ctaSecondary}
+                  </Button>
+                </div>
+
+                {/* Scroll indicator */}
+                <button
+                  onClick={scrollToNextPage}
+                  className="mt-14 animate-bounce text-muted-foreground hover:text-foreground transition-colors mx-auto md:mx-0 block"
+                  aria-label="Scroll to next section"
+                >
+                  <ChevronDown className="h-8 w-8" />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Page 2: Login Image */}
+          <div
+            className="absolute inset-0 flex items-center justify-center px-4 transition-all duration-500 ease-out"
+            style={{
+              opacity: currentPage === 1 ? 1 : 0,
+              transform:
+                currentPage === 1
+                  ? "translateY(0) scale(1)"
+                  : currentPage < 1
+                    ? "translateY(50px) scale(0.9)"
+                    : "translateY(-50px) scale(0.9)",
+              pointerEvents: currentPage === 1 ? "auto" : "none",
+            }}
+          >
+            <div className="text-center">
+              <div
+                className="relative inline-block animate-float"
+                style={{
+                  filter:
+                    "drop-shadow(0 50px 100px rgba(0,0,0,0.5)) drop-shadow(0 20px 40px rgba(240,180,0,0.1))",
+                }}
+              >
+                <div className="relative rounded-[2.5rem] sm:rounded-[3rem] overflow-hidden border-2 border-border/20 bg-card/30 backdrop-blur-sm transform hover:scale-[1.02] transition-transform duration-500">
+                  <img
+                    src="/images/hero-login.png"
+                    alt="Thalos login screen"
+                    className="w-[260px] sm:w-[320px] md:w-[380px] lg:w-[420px] h-auto"
+                  />
+                </div>
               </div>
 
-              {/* Description */}
-              <p className="mt-10 sm:mt-12 text-lg sm:text-xl text-foreground/80 dark:text-foreground/70 leading-relaxed animate-fade-in-up animation-delay-300 max-w-xl mx-auto md:mx-0">
-                {content.description}
+              <p className="mt-10 text-2xl sm:text-3xl md:text-4xl font-semibold text-foreground">
+                {content.page2}
+              </p>
+              <div className="mt-3 h-1 w-20 mx-auto bg-gradient-to-r from-transparent via-[#f0b400] to-transparent rounded-full" />
+            </div>
+          </div>
+
+          {/* Page 3: Dashboard Image */}
+          <div
+            className="absolute inset-0 flex items-center justify-center px-4 transition-all duration-500 ease-out"
+            style={{
+              opacity: currentPage === 2 ? 1 : 0,
+              transform:
+                currentPage === 2
+                  ? "translateY(0) scale(1)"
+                  : currentPage < 2
+                    ? "translateY(50px) scale(0.9)"
+                    : "translateY(-50px) scale(0.9)",
+              pointerEvents: currentPage === 2 ? "auto" : "none",
+            }}
+          >
+            <div className="text-center">
+              <div
+                className="relative inline-block animate-float"
+                style={{
+                  filter:
+                    "drop-shadow(0 50px 100px rgba(0,0,0,0.5)) drop-shadow(0 20px 40px rgba(240,180,0,0.1))",
+                  animationDelay: "0.5s",
+                }}
+              >
+                <div className="relative rounded-[2.5rem] sm:rounded-[3rem] overflow-hidden border-2 border-border/20 bg-card/30 backdrop-blur-sm transform hover:scale-[1.02] transition-transform duration-500">
+                  <img
+                    src="/images/hero-dashboard.png"
+                    alt="Thalos agreements dashboard"
+                    className="w-[260px] sm:w-[320px] md:w-[380px] lg:w-[420px] h-auto"
+                  />
+                </div>
+              </div>
+
+              <p className="mt-10 text-2xl sm:text-3xl md:text-4xl font-semibold text-foreground">
+                {content.page3}
+              </p>
+              <div className="mt-3 h-1 w-20 mx-auto bg-gradient-to-r from-transparent via-[#f0b400] to-transparent rounded-full" />
+            </div>
+          </div>
+
+          {/* Page 4: Trust at every step */}
+          <div
+            className="absolute inset-0 flex items-center justify-center px-4 transition-all duration-500 ease-out"
+            style={{
+              opacity: currentPage === 3 ? 1 : 0,
+              transform:
+                currentPage === 3
+                  ? "translateY(0) scale(1)"
+                  : currentPage < 3
+                    ? "translateY(50px) scale(0.9)"
+                    : "translateY(-50px) scale(0.9)",
+              pointerEvents: currentPage === 3 ? "auto" : "none",
+            }}
+          >
+            <div className="max-w-3xl mx-auto text-center">
+              {/* Checkmark icon with glow */}
+              <div className="relative inline-flex items-center justify-center mb-10">
+                <div className="absolute inset-0 bg-[#f0b400]/20 blur-3xl rounded-full scale-150" />
+                <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-[#f0b400]/10 border-2 border-[#f0b400]/30 flex items-center justify-center">
+                  <svg
+                    className="w-12 h-12 sm:w-14 sm:h-14 text-[#f0b400]"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2.5}
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+              </div>
+
+              <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold text-foreground tracking-tight">
+                {content.finalHeadline}
+              </h2>
+              <p className="mt-6 text-xl sm:text-2xl text-foreground/80 dark:text-foreground/70 font-medium">
+                {content.finalSubheadline}
               </p>
 
-              {/* CTAs */}
-              <div className="mt-10 sm:mt-12 flex flex-col sm:flex-row justify-center md:justify-start gap-4 animate-fade-in-up animation-delay-500">
-                <Button
-                  size="lg"
-                  onClick={() => onNavigate("sign-in")}
-                  className="h-14 rounded-xl bg-[#f0b400] px-10 text-base font-bold text-[#0c1220] hover:bg-[#d9a300] active:scale-[0.98] transition-all duration-200 shadow-[0_0_40px_rgba(240,180,0,0.3)]"
-                >
-                  {content.cta}
-                </Button>
-                <Button
-                  variant="outline"
-                  size="lg"
-                  onClick={() => onNavigate("how-it-works")}
-                  className="h-14 rounded-xl border-border bg-background/50 backdrop-blur-sm px-10 text-base font-bold text-foreground hover:bg-accent active:scale-[0.98] transition-all duration-200"
-                >
-                  {content.ctaSecondary}
-                </Button>
-              </div>
-
-              {/* Scroll indicator */}
-              <button
-                onClick={scrollToNextPage}
-                className="mt-14 animate-bounce text-muted-foreground hover:text-foreground transition-colors mx-auto md:mx-0 block"
-                aria-label="Scroll to next section"
+              {/* CTA Button */}
+              <Button
+                size="lg"
+                onClick={() => onNavigate("sign-in")}
+                className="mt-10 h-14 rounded-xl bg-[#f0b400] px-12 text-base font-bold text-[#0c1220] hover:bg-[#d9a300] active:scale-[0.98] transition-all duration-200 shadow-[0_0_40px_rgba(240,180,0,0.3)]"
               >
-                <ChevronDown className="h-8 w-8" />
-              </button>
+                {content.finalCta}
+              </Button>
             </div>
           </div>
-        </div>
 
-        {/* Page 2: Login Image */}
-        <div
-          className="absolute inset-0 flex items-center justify-center px-4 transition-all duration-500 ease-out"
-          style={{
-            opacity: currentPage === 1 ? 1 : 0,
-            transform: currentPage === 1 ? "translateY(0) scale(1)" : currentPage < 1 ? "translateY(50px) scale(0.9)" : "translateY(-50px) scale(0.9)",
-            pointerEvents: currentPage === 1 ? "auto" : "none",
-          }}
-        >
-          <div className="text-center">
-            <div
-              className="relative inline-block animate-float"
-              style={{ filter: "drop-shadow(0 50px 100px rgba(0,0,0,0.5)) drop-shadow(0 20px 40px rgba(240,180,0,0.1))" }}
-            >
-              <div className="relative rounded-[2.5rem] sm:rounded-[3rem] overflow-hidden border-2 border-border/20 bg-card/30 backdrop-blur-sm transform hover:scale-[1.02] transition-transform duration-500">
-                <img
-                  src="/images/hero-login.png"
-                  alt="Thalos login screen"
-                  className="w-[260px] sm:w-[320px] md:w-[380px] lg:w-[420px] h-auto"
-                />
-              </div>
-            </div>
-
-            <p className="mt-10 text-2xl sm:text-3xl md:text-4xl font-semibold text-foreground">
-              {content.page2}
-            </p>
-            <div className="mt-3 h-1 w-20 mx-auto bg-gradient-to-r from-transparent via-[#f0b400] to-transparent rounded-full" />
+          {/* Page indicators */}
+          <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-30 flex gap-2">
+            {Array.from({ length: totalPages }).map((_, i) => (
+              <button
+                key={i}
+                onClick={() => {
+                  const vh = window.innerHeight
+                  const scrollPerPage = vh * 0.35
+                  window.scrollTo({ top: i * scrollPerPage, behavior: "smooth" })
+                }}
+                className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                  currentPage === i ? "bg-[#f0b400] w-6" : "bg-foreground/20 hover:bg-foreground/40"
+                }`}
+                aria-label={`Go to page ${i + 1}`}
+              />
+            ))}
           </div>
         </div>
-
-        {/* Page 3: Dashboard Image */}
-        <div
-          className="absolute inset-0 flex items-center justify-center px-4 transition-all duration-500 ease-out"
-          style={{
-            opacity: currentPage === 2 ? 1 : 0,
-            transform: currentPage === 2 ? "translateY(0) scale(1)" : currentPage < 2 ? "translateY(50px) scale(0.9)" : "translateY(-50px) scale(0.9)",
-            pointerEvents: currentPage === 2 ? "auto" : "none",
-          }}
-        >
-          <div className="text-center">
-            <div
-              className="relative inline-block animate-float"
-              style={{ filter: "drop-shadow(0 50px 100px rgba(0,0,0,0.5)) drop-shadow(0 20px 40px rgba(240,180,0,0.1))", animationDelay: "0.5s" }}
-            >
-              <div className="relative rounded-[2.5rem] sm:rounded-[3rem] overflow-hidden border-2 border-border/20 bg-card/30 backdrop-blur-sm transform hover:scale-[1.02] transition-transform duration-500">
-                <img
-                  src="/images/hero-dashboard.png"
-                  alt="Thalos agreements dashboard"
-                  className="w-[260px] sm:w-[320px] md:w-[380px] lg:w-[420px] h-auto"
-                />
-              </div>
-            </div>
-
-            <p className="mt-10 text-2xl sm:text-3xl md:text-4xl font-semibold text-foreground">
-              {content.page3}
-            </p>
-            <div className="mt-3 h-1 w-20 mx-auto bg-gradient-to-r from-transparent via-[#f0b400] to-transparent rounded-full" />
-          </div>
-        </div>
-
-        {/* Page 4: Trust at every step */}
-        <div
-          className="absolute inset-0 flex items-center justify-center px-4 transition-all duration-500 ease-out"
-          style={{
-            opacity: currentPage === 3 ? 1 : 0,
-            transform: currentPage === 3 ? "translateY(0) scale(1)" : currentPage < 3 ? "translateY(50px) scale(0.9)" : "translateY(-50px) scale(0.9)",
-            pointerEvents: currentPage === 3 ? "auto" : "none",
-          }}
-        >
-          <div className="max-w-3xl mx-auto text-center">
-            {/* Checkmark icon with glow */}
-            <div className="relative inline-flex items-center justify-center mb-10">
-              <div className="absolute inset-0 bg-[#f0b400]/20 blur-3xl rounded-full scale-150" />
-              <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-[#f0b400]/10 border-2 border-[#f0b400]/30 flex items-center justify-center">
-                <svg className="w-12 h-12 sm:w-14 sm:h-14 text-[#f0b400]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-            </div>
-
-            <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold text-foreground tracking-tight">
-              {content.finalHeadline}
-            </h2>
-            <p className="mt-6 text-xl sm:text-2xl text-foreground/80 dark:text-foreground/70 font-medium">
-              {content.finalSubheadline}
-            </p>
-
-            {/* CTA Button */}
-            <Button
-              size="lg"
-              onClick={() => onNavigate("sign-in")}
-              className="mt-10 h-14 rounded-xl bg-[#f0b400] px-12 text-base font-bold text-[#0c1220] hover:bg-[#d9a300] active:scale-[0.98] transition-all duration-200 shadow-[0_0_40px_rgba(240,180,0,0.3)]"
-            >
-              {content.finalCta}
-            </Button>
-          </div>
-        </div>
-
-        {/* Page indicators */}
-        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-30 flex gap-2">
-          {Array.from({ length: totalPages }).map((_, i) => (
-            <button
-              key={i}
-              onClick={() => {
-                const vh = window.innerHeight
-                const scrollPerPage = vh * 0.35
-                window.scrollTo({ top: i * scrollPerPage, behavior: "smooth" })
-              }}
-              className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                currentPage === i
-                  ? "bg-[#f0b400] w-6"
-                  : "bg-foreground/20 hover:bg-foreground/40"
-              }`}
-              aria-label={`Go to page ${i + 1}`}
-            />
-          ))}
-        </div>
-      </div>
       )}
 
       {/* CSS for floating animation */}
       <style jsx>{`
         @keyframes float {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-15px); }
+          0%,
+          100% {
+            transform: translateY(0px);
+          }
+          50% {
+            transform: translateY(-15px);
+          }
         }
         .animate-float {
           animation: float 4s ease-in-out infinite;

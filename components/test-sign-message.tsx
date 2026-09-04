@@ -17,7 +17,9 @@ export function TestSignMessage() {
     try {
       const res = await signMessage("Hello Thalos!")
       if (res) {
-        setResult(`Success! Signed by: ${res.signerAddress.substring(0, 6)}...\nSig: ${res.signedMessage.substring(0, 20)}...`)
+        setResult(
+          `Success! Signed by: ${res.signerAddress.substring(0, 6)}...\nSig: ${res.signedMessage.substring(0, 20)}...`,
+        )
       } else {
         setResult("User rejected or failed")
       }
@@ -35,7 +37,11 @@ export function TestSignMessage() {
       >
         Sign &quot;Hello Thalos!&quot;
       </button>
-      {result && <pre className="mt-2 p-2 bg-muted text-muted-foreground rounded overflow-auto max-w-[250px] whitespace-pre-wrap break-all">{result}</pre>}
+      {result && (
+        <pre className="mt-2 p-2 bg-muted text-muted-foreground rounded overflow-auto max-w-[250px] whitespace-pre-wrap break-all">
+          {result}
+        </pre>
+      )}
     </div>
   )
 }

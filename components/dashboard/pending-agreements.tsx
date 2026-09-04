@@ -120,7 +120,7 @@ export function PendingAgreements({
                 "w-full flex items-center gap-4 rounded-xl border p-4 transition-all duration-200",
                 "hover:bg-white/5 active:scale-[0.99]",
                 config.borderColor,
-                "bg-[#0c1220]/40"
+                "bg-[#0c1220]/40",
               )}
             >
               {/* Icon */}
@@ -139,7 +139,9 @@ export function PendingAgreements({
               </div>
 
               {/* Status badge */}
-              <div className={cn("flex items-center gap-1.5 rounded-full px-2.5 py-1", config.bgColor)}>
+              <div
+                className={cn("flex items-center gap-1.5 rounded-full px-2.5 py-1", config.bgColor)}
+              >
                 <span className={config.color}>{config.icon}</span>
                 <span className={cn("text-[10px] font-medium", config.color)}>
                   {t(config.labelKey) || config.label}

@@ -14,7 +14,15 @@ test("all API modules import the shared apiRequest helper", () => {
       /import \{ apiRequest, type ApiResponse \} from "\.\/client"/,
       `${moduleFile} must import apiRequest from ./client`,
     )
-    assert.doesNotMatch(source, /function apiRequest/, `${moduleFile} must not define apiRequest locally`)
-    assert.doesNotMatch(source, /interface ApiResponse/, `${moduleFile} must not define ApiResponse locally`)
+    assert.doesNotMatch(
+      source,
+      /function apiRequest/,
+      `${moduleFile} must not define apiRequest locally`,
+    )
+    assert.doesNotMatch(
+      source,
+      /interface ApiResponse/,
+      `${moduleFile} must not define ApiResponse locally`,
+    )
   }
 })

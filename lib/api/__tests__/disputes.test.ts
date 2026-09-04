@@ -16,9 +16,9 @@ import {
 } from "../disputes"
 
 function mockFetch(body: unknown, status = 200) {
-  return vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
-    new Response(JSON.stringify(body), { status }),
-  )
+  return vi
+    .spyOn(globalThis, "fetch")
+    .mockResolvedValueOnce(new Response(JSON.stringify(body), { status }))
 }
 
 const DISPUTE: Dispute = {
@@ -114,7 +114,12 @@ describe("disputes contract", () => {
       mockFetch({ resolution: RESOLUTION, error: null })
       const res = await resolveDispute(
         "d1",
-        { resolved_by: "G5...", payer_percentage: 60, payee_percentage: 40, resolution_notes: "Settled" },
+        {
+          resolved_by: "G5...",
+          payer_percentage: 60,
+          payee_percentage: 40,
+          resolution_notes: "Settled",
+        },
         "tok",
       )
       expect(res.success).toBe(true)

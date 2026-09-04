@@ -46,7 +46,7 @@ not just a reload.
 — it authenticates `POST /v1/tokens/verify`). Both from dashboard.pollar.xyz → Build → API Keys,
 and both are **network-scoped** (`pub_testnet_` / `pub_mainnet_`), so they must match
 `NEXT_PUBLIC_STELLAR_NETWORK`. Optional `POLLAR_SERVER_API_URL` (default
-`https://server.api.pollar.xyz/v1` — that host, *not* the `api.pollar.xyz` in Pollar's
+`https://server.api.pollar.xyz/v1` — that host, _not_ the `api.pollar.xyz` in Pollar's
 server-api docs, which serves no routes; docs at https://server.api.pollar.xyz/docs). With no
 publishable key the Pollar login button is simply hidden
 (`POLLAR_ENABLED` in `lib/config.ts`), so a deploy without these vars still works. USDC must be
@@ -86,7 +86,7 @@ via SEP-0053**, so the verify route tries several schemes (`raw`/`sep53`/`sha256
 and logs which matched. Rejecting the signature is non-fatal — the wallet stays connected in
 wallet-only mode.
 
-The signature is **skipped** when this device already holds a session for the *same* wallet.
+The signature is **skipped** when this device already holds a session for the _same_ wallet.
 A session for a different address does not count: that would let a stale login speak for the
 wallet just connected.
 

@@ -26,7 +26,12 @@ function connectedWalletFallback(address: string): WalletWithAgreements {
   }
 }
 
-export function WalletSelector({ selectedWallet, onWalletChange, walletsData: propsWalletsData, className }: WalletSelectorProps) {
+export function WalletSelector({
+  selectedWallet,
+  onWalletChange,
+  walletsData: propsWalletsData,
+  className,
+}: WalletSelectorProps) {
   const { token } = useAuthStore()
   const { address: connectedWallet } = useStellarWallet()
   const currentAddress = useCurrentAddress()
@@ -89,7 +94,7 @@ export function WalletSelector({ selectedWallet, onWalletChange, walletsData: pr
 
   const totalAgreementsCount = wallets.reduce(
     (sum, w) => sum + (w.agreements_count ?? w.agreements?.length ?? 0),
-    0
+    0,
   )
 
   return (
@@ -104,7 +109,7 @@ export function WalletSelector({ selectedWallet, onWalletChange, walletsData: pr
             "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all",
             selectedWallet === null || selectedWallet === "all" || selectedWallet === "All"
               ? "bg-[#f0b400] text-black"
-              : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
+              : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground",
           )}
         >
           <span>All Wallets</span>
@@ -113,7 +118,7 @@ export function WalletSelector({ selectedWallet, onWalletChange, walletsData: pr
               "rounded-full px-1.5 py-0.5 text-[10px] font-bold",
               selectedWallet === null || selectedWallet === "all" || selectedWallet === "All"
                 ? "bg-black/20 text-black"
-                : "bg-white/10 text-white/70"
+                : "bg-white/10 text-white/70",
             )}
           >
             {totalAgreementsCount}
@@ -135,7 +140,7 @@ export function WalletSelector({ selectedWallet, onWalletChange, walletsData: pr
               "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all",
               isSelected
                 ? "bg-[#f0b400] text-black"
-                : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
+                : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground",
             )}
           >
             {wallet.is_primary && (
@@ -149,9 +154,7 @@ export function WalletSelector({ selectedWallet, onWalletChange, walletsData: pr
             <span
               className={cn(
                 "rounded-full px-1.5 py-0.5 text-[10px] font-bold",
-                isSelected
-                  ? "bg-black/20 text-black"
-                  : "bg-white/10 text-white/70"
+                isSelected ? "bg-black/20 text-black" : "bg-white/10 text-white/70",
               )}
             >
               {count}
