@@ -67,13 +67,13 @@ function unwrapOpportunities(data: OpportunityListEnvelope): Opportunity[] {
 }
 
 function one(result: ApiResponse<OpportunityEnvelope>): ApiResponse<Opportunity> {
-  if (!result.success || !result.data) return { success: false, error: result.error }
-  return { success: true, data: unwrapOpportunity(result.data) }
+  if (!result.success || !result.data) return { success: false, error: result.error, status: result.status }
+  return { success: true, data: unwrapOpportunity(result.data), status: result.status }
 }
 
 function many(result: ApiResponse<OpportunityListEnvelope>): ApiResponse<Opportunity[]> {
-  if (!result.success || !result.data) return { success: false, error: result.error }
-  return { success: true, data: unwrapOpportunities(result.data) }
+  if (!result.success || !result.data) return { success: false, error: result.error, status: result.status }
+  return { success: true, data: unwrapOpportunities(result.data), status: result.status }
 }
 
 /** Public discovery endpoint. Nest only returns open opportunities here. */
