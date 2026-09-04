@@ -12,9 +12,6 @@ interface HeroSectionProps {
 
 const LETTERS = ["T", "h", "a", "l", "o", "s"]
 
-// Video URL from Supabase Storage
-const VIDEO_URL = "https://cpkjclwvgnxgadiaoaei.supabase.co/storage/v1/object/public/Video%20Thalos/demo%20landing.mp4"
-
 // Typewriter phrases - rotating with correct article (tu/tus in Spanish)
 const TYPEWRITER_PHRASES = {
   en: [
@@ -119,7 +116,7 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
   const [isHeroVisible, setIsHeroVisible] = useState(true)
   const containerRef = useRef<HTMLDivElement>(null)
   
-  const totalPages = 5
+  const totalPages = 4
 
   const content = CONTENT[language as keyof typeof CONTENT] || CONTENT.en
   const typewriterPhrases = TYPEWRITER_PHRASES[language as keyof typeof TYPEWRITER_PHRASES] || TYPEWRITER_PHRASES.en
@@ -339,45 +336,13 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
           </div>
         </div>
 
-        {/* Page 4: Video - Horizontal */}
+        {/* Page 4: Trust at every step */}
         <div 
-          className="absolute inset-0 flex items-center justify-center px-4 sm:px-6 transition-all duration-500 ease-out"
+          className="absolute inset-0 flex items-center justify-center px-4 transition-all duration-500 ease-out"
           style={{
             opacity: currentPage === 3 ? 1 : 0,
             transform: currentPage === 3 ? "translateY(0) scale(1)" : currentPage < 3 ? "translateY(50px) scale(0.9)" : "translateY(-50px) scale(0.9)",
             pointerEvents: currentPage === 3 ? "auto" : "none",
-          }}
-        >
-          <div className="text-center w-full max-w-3xl mx-auto">
-            <div style={{ filter: "drop-shadow(0 50px 100px rgba(0,0,0,0.5)) drop-shadow(0 20px 40px rgba(240,180,0,0.1))" }}>
-              <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden border-2 border-border/20 bg-black">
-                <video
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                  className="w-full aspect-video object-cover"
-                >
-                  <source src={VIDEO_URL} type="video/mp4" />
-                  Tu navegador no soporta el elemento de video.
-                </video>
-              </div>
-            </div>
-            
-            <p className="mt-10 text-2xl sm:text-3xl md:text-4xl font-semibold text-foreground">
-              {content.videoCaption}
-            </p>
-            <div className="mt-3 h-1 w-20 mx-auto bg-gradient-to-r from-transparent via-[#f0b400] to-transparent rounded-full" />
-          </div>
-        </div>
-
-        {/* Page 5: Trust at every step */}
-        <div 
-          className="absolute inset-0 flex items-center justify-center px-4 transition-all duration-500 ease-out"
-          style={{
-            opacity: currentPage === 4 ? 1 : 0,
-            transform: currentPage === 4 ? "translateY(0) scale(1)" : currentPage < 4 ? "translateY(50px) scale(0.9)" : "translateY(-50px) scale(0.9)",
-            pointerEvents: currentPage === 4 ? "auto" : "none",
           }}
         >
           <div className="max-w-3xl mx-auto text-center">
