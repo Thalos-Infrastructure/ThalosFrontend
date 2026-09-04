@@ -57,12 +57,12 @@ export function mapKycVerificationResponse(data: BackendKycVerificationEnvelope)
 
 export async function startKycSession(
   request: CreateKycSessionDto,
-  token?: string | null
+  token?: string | null,
 ): Promise<ApiResponse<KycSession>> {
   const result = await apiRequest<BackendKycVerificationEnvelope>(
     "/kyc/session",
     { method: "POST", body: JSON.stringify(request) },
-    token ?? undefined
+    token ?? undefined,
   )
 
   if (!result.success || !result.data) return { success: false, error: result.error }
@@ -72,12 +72,12 @@ export async function startKycSession(
 
 export async function getKycStatus(
   userId: string,
-  token?: string | null
+  token?: string | null,
 ): Promise<ApiResponse<KycStatusResponse>> {
   const result = await apiRequest<BackendKycVerificationEnvelope>(
     `/verification/user/${encodeURIComponent(userId)}`,
     { method: "GET" },
-    token ?? undefined
+    token ?? undefined,
   )
 
   if (!result.success || !result.data) return { success: false, error: result.error }

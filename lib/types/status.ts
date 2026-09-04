@@ -23,13 +23,7 @@ export const MILESTONE_STATUSES: ReadonlySet<MilestoneStatus> = new Set([
 
 /** Canonical agreement-level statuses. */
 export type AgreementStatus =
-  | "pending"
-  | "funded"
-  | "active"
-  | "completed"
-  | "disputed"
-  | "resolved"
-  | "cancelled"
+  "pending" | "funded" | "active" | "completed" | "disputed" | "resolved" | "cancelled"
 
 // ---------------------------------------------------------------------------
 // Milestone mappers

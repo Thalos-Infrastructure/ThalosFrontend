@@ -56,9 +56,21 @@ function SessionLapsedPrompt({
   const { storageDegraded } = usePollarWallet()
 
   return (
-    <div className={cn("flex flex-col items-center gap-4 rounded-xl border border-[#f0b400]/20 bg-[#f0b400]/5 p-8 text-center", className)}>
+    <div
+      className={cn(
+        "flex flex-col items-center gap-4 rounded-xl border border-[#f0b400]/20 bg-[#f0b400]/5 p-8 text-center",
+        className,
+      )}
+    >
       <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#f0b400]/10">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#f0b400" strokeWidth="1.5">
+        <svg
+          width="28"
+          height="28"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="#f0b400"
+          strokeWidth="1.5"
+        >
           <circle cx="12" cy="12" r="9" />
           <path d="M12 7v5l3 2" />
         </svg>
@@ -108,9 +120,21 @@ export function WalletPrompt({
   }
 
   return (
-    <div className={cn("flex flex-col items-center gap-4 rounded-xl border border-[#f0b400]/20 bg-[#f0b400]/5 p-8 text-center", className)}>
+    <div
+      className={cn(
+        "flex flex-col items-center gap-4 rounded-xl border border-[#f0b400]/20 bg-[#f0b400]/5 p-8 text-center",
+        className,
+      )}
+    >
       <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#f0b400]/10">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#f0b400" strokeWidth="1.5">
+        <svg
+          width="28"
+          height="28"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="#f0b400"
+          strokeWidth="1.5"
+        >
           <rect x="1" y="4" width="22" height="16" rx="2" />
           <path d="M1 10h22" />
         </svg>

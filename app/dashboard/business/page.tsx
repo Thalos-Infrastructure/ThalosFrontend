@@ -23,28 +23,55 @@ import {
   updateBusinessMemberRole,
   removeBusinessMember,
   getUserBusinessAccounts,
-  type BusinessMember
+  type BusinessMember,
 } from "@/lib/actions/business-roles"
 import { ProfileEditor } from "@/components/profile/profile-editor"
 import { AgreementsView } from "@/components/agreements/agreements-view"
 import { ContactSelector } from "@/components/agreements/contact-selector"
 import { AgreementChat } from "@/components/agreements/agreement-chat"
 import { AiAgreementAssistant } from "@/components/agreements/ai-agreement-assistant"
-import {
-  Dialog, DialogContent, DialogTitle, DialogDescription,
-} from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { WalletSelector } from "@/components/dashboard/wallet-selector"
 import { WalletAgreementsPanel } from "@/components/dashboard/wallet-agreements-panel"
-import { getWalletsWithAgreements, type WalletWithAgreements, type WalletAgreement } from "@/lib/api/wallets"
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area,
+  getWalletsWithAgreements,
+  type WalletWithAgreements,
+  type WalletAgreement,
+} from "@/lib/api/wallets"
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  AreaChart,
+  Area,
 } from "recharts"
-import { createAgreement, sendTransaction, AgreementPayload, approveMilestone } from "@/services/escrowMigration"
+import {
+  createAgreement,
+  sendTransaction,
+  AgreementPayload,
+  approveMilestone,
+} from "@/services/escrowMigration"
 import { STELLAR_EXPLORER_BASE_URL, SHOW_MOCKED_AGREEMENTS } from "@/lib/config"
 import { getKybStatus, startKybSession } from "@/lib/api/kyb"
-import { updateOpportunityStatus, getOpportunity, type Opportunity, type Application } from "@/lib/api"
+import {
+  updateOpportunityStatus,
+  getOpportunity,
+  type Opportunity,
+  type Application,
+} from "@/lib/api"
 import { OpportunitiesManager } from "@/components/connect/opportunities-manager"
-import { KYB_ENTITY_TYPES, buildCreateKybSessionDto, canStartKybSession, isKybVerified, nextKybStatusAfterSessionStart, type KybEntityType } from "@/lib/kyb"
+import {
+  KYB_ENTITY_TYPES,
+  buildCreateKybSessionDto,
+  canStartKybSession,
+  isKybVerified,
+  nextKybStatusAfterSessionStart,
+  type KybEntityType,
+} from "@/lib/kyb"
 import {
   createTemplate,
   updateTemplate,
@@ -55,57 +82,175 @@ import {
 
 /* ÔöÇÔöÇ Enterprise Use-Cases ÔöÇÔöÇ */
 const useCases = [
-  { id: "car-rental", labelKey: "useCase.carRental", icon: "car", suggestedTitle: "Vehicle Rental Agreement", suggestedDesc: "Describe the fleet vehicle, rental duration, mileage limits, insurance terms, and return conditions." },
-  { id: "travel", labelKey: "useCase.travel", icon: "plane", suggestedTitle: "Travel Package Agreement", suggestedDesc: "Describe the travel package details, destinations, dates, inclusions, cancellation policy, and payment schedule." },
-  { id: "dealership", labelKey: "useCase.dealership", icon: "tag", suggestedTitle: "Vehicle Purchase Agreement", suggestedDesc: "Describe the vehicle make/model/year, VIN, agreed price, financing terms, and delivery conditions." },
-  { id: "rental-platform", labelKey: "useCase.rentalPlatform", icon: "home", suggestedTitle: "Short-Term Rental Agreement", suggestedDesc: "Describe the property, booking dates, house rules, deposit amount, and checkout procedures." },
-{ id: "event", labelKey: "useCase.event", icon: "calendar", suggestedTitle: "Event Management Agreement", suggestedDesc: "Describe the event type, venue, date, services included, setup requirements, and payment milestones." },
+  {
+    id: "car-rental",
+    labelKey: "useCase.carRental",
+    icon: "car",
+    suggestedTitle: "Vehicle Rental Agreement",
+    suggestedDesc:
+      "Describe the fleet vehicle, rental duration, mileage limits, insurance terms, and return conditions.",
+  },
+  {
+    id: "travel",
+    labelKey: "useCase.travel",
+    icon: "plane",
+    suggestedTitle: "Travel Package Agreement",
+    suggestedDesc:
+      "Describe the travel package details, destinations, dates, inclusions, cancellation policy, and payment schedule.",
+  },
+  {
+    id: "dealership",
+    labelKey: "useCase.dealership",
+    icon: "tag",
+    suggestedTitle: "Vehicle Purchase Agreement",
+    suggestedDesc:
+      "Describe the vehicle make/model/year, VIN, agreed price, financing terms, and delivery conditions.",
+  },
+  {
+    id: "rental-platform",
+    labelKey: "useCase.rentalPlatform",
+    icon: "home",
+    suggestedTitle: "Short-Term Rental Agreement",
+    suggestedDesc:
+      "Describe the property, booking dates, house rules, deposit amount, and checkout procedures.",
+  },
+  {
+    id: "event",
+    labelKey: "useCase.event",
+    icon: "calendar",
+    suggestedTitle: "Event Management Agreement",
+    suggestedDesc:
+      "Describe the event type, venue, date, services included, setup requirements, and payment milestones.",
+  },
   { id: "other", labelKey: "useCase.other", icon: "plus", suggestedTitle: "", suggestedDesc: "" },
-  ]
+]
 
 /* ÔöÇÔöÇ Form Components ÔöÇÔöÇ */
-function FormInput({ label, value, onChange, placeholder, type = "text", disabled = false, info, required = false }: {
-  label: string; value: string; onChange: (v: string) => void; placeholder?: string; type?: string; disabled?: boolean; info?: string; required?: boolean
+function FormInput({
+  label,
+  value,
+  onChange,
+  placeholder,
+  type = "text",
+  disabled = false,
+  info,
+  required = false,
+}: {
+  label: string
+  value: string
+  onChange: (v: string) => void
+  placeholder?: string
+  type?: string
+  disabled?: boolean
+  info?: string
+  required?: boolean
 }) {
   const id = useId()
   return (
     <div>
-      <label htmlFor={id} className="mb-1.5 flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-        {label}{required && <span className="text-[#f0b400]">*</span>}
-        {info && <span className="normal-case tracking-normal font-normal text-muted-foreground/50">({info})</span>}
+      <label
+        htmlFor={id}
+        className="mb-1.5 flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground"
+      >
+        {label}
+        {required && <span className="text-[#f0b400]">*</span>}
+        {info && (
+          <span className="normal-case tracking-normal font-normal text-muted-foreground/50">
+            ({info})
+          </span>
+        )}
       </label>
-      <input id={id} type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} disabled={disabled}
-        className={cn("h-12 w-full rounded-xl border border-border/40 bg-card/30 px-4 text-sm text-foreground placeholder:text-muted-foreground/40 focus:border-[#f0b400]/50 focus:outline-none focus:ring-2 focus:ring-[#f0b400]/15 transition-all duration-200", disabled && "opacity-50 cursor-not-allowed")} />
+      <input
+        id={id}
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        disabled={disabled}
+        className={cn(
+          "h-12 w-full rounded-xl border border-border/40 bg-card/30 px-4 text-sm text-foreground placeholder:text-muted-foreground/40 focus:border-[#f0b400]/50 focus:outline-none focus:ring-2 focus:ring-[#f0b400]/15 transition-all duration-200",
+          disabled && "opacity-50 cursor-not-allowed",
+        )}
+      />
     </div>
   )
 }
 
-function FormTextarea({ label, value, onChange, placeholder, rows = 3 }: {
-  label: string; value: string; onChange: (v: string) => void; placeholder?: string; rows?: number
+function FormTextarea({
+  label,
+  value,
+  onChange,
+  placeholder,
+  rows = 3,
+}: {
+  label: string
+  value: string
+  onChange: (v: string) => void
+  placeholder?: string
+  rows?: number
 }) {
   const id = useId()
   return (
     <div>
-      <label htmlFor={id} className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">{label}</label>
-      <textarea id={id} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} rows={rows}
-        className="w-full rounded-xl border border-border/40 bg-card/30 px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/40 focus:border-[#f0b400]/50 focus:outline-none focus:ring-2 focus:ring-[#f0b400]/15 transition-all duration-200 resize-none" />
+      <label
+        htmlFor={id}
+        className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground"
+      >
+        {label}
+      </label>
+      <textarea
+        id={id}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        rows={rows}
+        className="w-full rounded-xl border border-border/40 bg-card/30 px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/40 focus:border-[#f0b400]/50 focus:outline-none focus:ring-2 focus:ring-[#f0b400]/15 transition-all duration-200 resize-none"
+      />
     </div>
   )
 }
 
-function FormSelect({ label, value, onChange, options, info, required = false }: {
-  label: string; value: string; onChange: (v: string) => void; options: { value: string; label: string }[]; info?: string; required?: boolean
+function FormSelect({
+  label,
+  value,
+  onChange,
+  options,
+  info,
+  required = false,
+}: {
+  label: string
+  value: string
+  onChange: (v: string) => void
+  options: { value: string; label: string }[]
+  info?: string
+  required?: boolean
 }) {
   const id = useId()
   return (
     <div>
-      <label htmlFor={id} className="mb-1.5 flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-        {label}{required && <span className="text-[#f0b400]">*</span>}
-        {info && <span className="normal-case tracking-normal font-normal text-muted-foreground/50">({info})</span>}
+      <label
+        htmlFor={id}
+        className="mb-1.5 flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground"
+      >
+        {label}
+        {required && <span className="text-[#f0b400]">*</span>}
+        {info && (
+          <span className="normal-case tracking-normal font-normal text-muted-foreground/50">
+            ({info})
+          </span>
+        )}
       </label>
-      <select id={id} value={value} onChange={(e) => onChange(e.target.value)}
-        className="h-12 w-full appearance-none rounded-xl border border-border/40 bg-card/30 px-4 text-sm text-foreground focus:border-[#f0b400]/50 focus:outline-none focus:ring-2 focus:ring-[#f0b400]/15 transition-all duration-200">
-        {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+      <select
+        id={id}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="h-12 w-full appearance-none rounded-xl border border-border/40 bg-card/30 px-4 text-sm text-foreground focus:border-[#f0b400]/50 focus:outline-none focus:ring-2 focus:ring-[#f0b400]/15 transition-all duration-200"
+      >
+        {options.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
       </select>
     </div>
   )
@@ -114,17 +259,47 @@ function FormSelect({ label, value, onChange, options, info, required = false }:
 /* ÔöÇÔöÇ Constants ÔöÇÔöÇ */
 const PLATFORM_ADDRESS = "GBXGQJWVLWOYHFLVTKWV5FGHA3LNYY2JQKM7OAVRWPLXS"
 const DISPUTE_RESOLVER = "GBXGQJWVLWOYHFLVTKWV5FGHA3LNYY2JQKM7OAVDISPUTE"
-const TRUSTLINE_USDC = { symbol: "USDC", address: "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5" }
+const TRUSTLINE_USDC = {
+  symbol: "USDC",
+  address: "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5",
+}
 
 const connectedWallets = [
-  { value: "GBXGQJWVLWOYHFLVTKWV5FGHA3ENTERPRISE01", labelKey: "wallet.corporate", short: "G...SE01", balance: "245,000.00" },
-  { value: "GBXGQJWVLWOYHFLVTKWV5FGHA3ENTERPRISE02", labelKey: "wallet.operations", short: "G...SE02", balance: "88,500.50" },
-  { value: "GBXGQJWVLWOYHFLVTKWV5FGHA3ENTERPRISE03", labelKey: "wallet.treasury", short: "G...SE03", balance: "512,200.00" },
+  {
+    value: "GBXGQJWVLWOYHFLVTKWV5FGHA3ENTERPRISE01",
+    labelKey: "wallet.corporate",
+    short: "G...SE01",
+    balance: "245,000.00",
+  },
+  {
+    value: "GBXGQJWVLWOYHFLVTKWV5FGHA3ENTERPRISE02",
+    labelKey: "wallet.operations",
+    short: "G...SE02",
+    balance: "88,500.50",
+  },
+  {
+    value: "GBXGQJWVLWOYHFLVTKWV5FGHA3ENTERPRISE03",
+    labelKey: "wallet.treasury",
+    short: "G...SE03",
+    balance: "512,200.00",
+  },
 ]
 
-const wizardStepKeys = ["wizard.escrowType", "wizard.useCase", "wizard.agreementInfo", "wizard.paymentWallets", "wizard.reviewSend"]
+const wizardStepKeys = [
+  "wizard.escrowType",
+  "wizard.useCase",
+  "wizard.agreementInfo",
+  "wizard.paymentWallets",
+  "wizard.reviewSend",
+]
 
-interface Milestone { description: string; amount: string; status: "pending" | "approved" | "released"; released?: boolean; approved?: boolean }
+interface Milestone {
+  description: string
+  amount: string
+  status: MilestoneStatus
+  released?: boolean
+  approved?: boolean
+}
 interface Agreement {
   id: string
   title: string
@@ -148,7 +323,11 @@ const initialAgreements: Agreement[] = []
 // still used only for the approver tab, which needs live on-chain milestone state
 // to drive the approve/release actions.
 import { getAgreementsByWallet } from "@/lib/actions/agreements"
-import type { AgreementWithParticipants, AgreementStatus as NestAgreementStatus } from "@/lib/actions/agreements"
+import type {
+  AgreementWithParticipants,
+  AgreementStatus as NestAgreementStatus,
+} from "@/lib/actions/agreements"
+import type { MilestoneStatus } from "@/lib/types/status"
 
 const NEST_STATUS_TO_UI: Record<NestAgreementStatus, string> = {
   pending: "pending",
@@ -160,20 +339,27 @@ const NEST_STATUS_TO_UI: Record<NestAgreementStatus, string> = {
   cancelled: "cancelled",
 }
 
-function mapNestAgreementToUi(agreement: AgreementWithParticipants, workspaceWallet: string | null): Agreement {
+function mapNestAgreementToUi(
+  agreement: AgreementWithParticipants,
+  workspaceWallet: string | null,
+): Agreement {
   const isMulti = agreement.agreement_type === "multi"
-  const counterparty = agreement.participants?.find(p => p.wallet_address !== workspaceWallet)?.wallet_address
+  const counterparty = agreement.participants?.find(
+    (p) => p.wallet_address !== workspaceWallet,
+  )?.wallet_address
 
   return {
     id: agreement.contract_id || agreement.id,
     title: agreement.title,
-    counterparty: counterparty ? `${counterparty.slice(0, 8)}...` : `${agreement.created_by.slice(0, 8)}...`,
+    counterparty: counterparty
+      ? `${counterparty.slice(0, 8)}...`
+      : `${agreement.created_by.slice(0, 8)}...`,
     status: NEST_STATUS_TO_UI[agreement.status] ?? agreement.status,
     amount: agreement.amount,
     currency: agreement.asset || "USDC",
     type: isMulti ? "Multi Release" : "Single Release",
     date: agreement.created_at.split("T")[0],
-    milestones: agreement.milestones.map(m => ({
+    milestones: agreement.milestones.map((m) => ({
       description: m.description,
       amount: m.amount,
       status: m.status,
@@ -185,9 +371,18 @@ function mapNestAgreementToUi(agreement: AgreementWithParticipants, workspaceWal
 
 const statusConfig: Record<string, { labelKey: string; color: string }> = {
   funded: { labelKey: "status.funded", color: "bg-blue-500/10 text-blue-400 border-blue-500/20" },
-  in_progress: { labelKey: "status.inProgress", color: "bg-[#f0b400]/10 text-[#f0b400] border-[#f0b400]/20" },
-  awaiting: { labelKey: "status.awaitingApproval", color: "bg-orange-500/10 text-orange-400 border-orange-500/20" },
-  released: { labelKey: "status.released", color: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" },
+  in_progress: {
+    labelKey: "status.inProgress",
+    color: "bg-[#f0b400]/10 text-[#f0b400] border-[#f0b400]/20",
+  },
+  awaiting: {
+    labelKey: "status.awaitingApproval",
+    color: "bg-orange-500/10 text-orange-400 border-orange-500/20",
+  },
+  released: {
+    labelKey: "status.released",
+    color: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+  },
 }
 
 const monthlyData = [
@@ -202,24 +397,235 @@ const monthlyData = [
 
 /* Icon helper */
 function UseCaseIcon({ icon }: { icon: string }) {
-  if (icon === "car") return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="1" y="3" width="15" height="13" rx="2"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-  if (icon === "plane") return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/></svg>
-  if (icon === "tag") return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
-  if (icon === "home") return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
-  if (icon === "calendar") return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-  return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+  if (icon === "car")
+    return (
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+      >
+        <rect x="1" y="3" width="15" height="13" rx="2" />
+        <polygon points="16 8 20 8 23 11 23 16 16 16 16 8" />
+        <circle cx="5.5" cy="18.5" r="2.5" />
+        <circle cx="18.5" cy="18.5" r="2.5" />
+      </svg>
+    )
+  if (icon === "plane")
+    return (
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+      >
+        <path d="M17.8 19.2L16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z" />
+      </svg>
+    )
+  if (icon === "tag")
+    return (
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+      >
+        <path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z" />
+        <line x1="7" y1="7" x2="7.01" y2="7" />
+      </svg>
+    )
+  if (icon === "home")
+    return (
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+      >
+        <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+      </svg>
+    )
+  if (icon === "calendar")
+    return (
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+      >
+        <rect x="3" y="4" width="18" height="18" rx="2" />
+        <line x1="16" y1="2" x2="16" y2="6" />
+        <line x1="8" y1="2" x2="8" y2="6" />
+        <line x1="3" y1="10" x2="21" y2="10" />
+      </svg>
+    )
+  return (
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+    >
+      <line x1="12" y1="5" x2="12" y2="19" />
+      <line x1="5" y1="12" x2="19" y2="12" />
+    </svg>
+  )
 }
 
 /* Sidebar nav items */
 const sidebarItems = [
-  { id: "create", labelKey: "dashPage.newAgreement", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg> },
-  { id: "agreements", labelKey: "dashPage.agreements", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> },
-  { id: "templates", labelKey: "dashPage.templates", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg> },
-  { id: "wallets", labelKey: "dashPage.wallets", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg> },
-  { id: "analytics", labelKey: "dashPage.analytics", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg> },
-  { id: "verification", labelKey: "dashPage.verification", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg> },
-  { id: "team", labelKey: "dashPage.team", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg> },
-  { id: "opportunities", labelKey: "dashPage.opportunities", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M20 7h-4a3 3 0 01-3-3V1M20 7l-8 5-8-5M4 7v14h16V7"/></svg> },
+  {
+    id: "create",
+    labelKey: "dashPage.newAgreement",
+    icon: (
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+      >
+        <circle cx="12" cy="12" r="10" />
+        <line x1="12" y1="8" x2="12" y2="16" />
+        <line x1="8" y1="12" x2="16" y2="12" />
+      </svg>
+    ),
+  },
+  {
+    id: "agreements",
+    labelKey: "dashPage.agreements",
+    icon: (
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+      >
+        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+        <polyline points="14 2 14 8 20 8" />
+      </svg>
+    ),
+  },
+  {
+    id: "templates",
+    labelKey: "dashPage.templates",
+    icon: (
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+      >
+        <rect x="3" y="3" width="18" height="18" rx="2" />
+        <line x1="3" y1="9" x2="21" y2="9" />
+        <line x1="9" y1="21" x2="9" y2="9" />
+      </svg>
+    ),
+  },
+  {
+    id: "wallets",
+    labelKey: "dashPage.wallets",
+    icon: (
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+      >
+        <rect x="1" y="4" width="22" height="16" rx="2" />
+        <path d="M1 10h22" />
+      </svg>
+    ),
+  },
+  {
+    id: "analytics",
+    labelKey: "dashPage.analytics",
+    icon: (
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+      >
+        <path d="M18 20V10" />
+        <path d="M12 20V4" />
+        <path d="M6 20v-6" />
+      </svg>
+    ),
+  },
+  {
+    id: "verification",
+    labelKey: "dashPage.verification",
+    icon: (
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+      >
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+        <path d="M9 12l2 2 4-4" />
+      </svg>
+    ),
+  },
+  {
+    id: "team",
+    labelKey: "dashPage.team",
+    icon: (
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+      >
+        <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+        <path d="M23 21v-2a4 4 0 00-3-3.87" />
+        <path d="M16 3.13a4 4 0 010 7.75" />
+      </svg>
+    ),
+  },
+  {
+    id: "opportunities",
+    labelKey: "dashPage.opportunities",
+    icon: (
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+      >
+        <path d="M20 7h-4a3 3 0 01-3-3V1M20 7l-8 5-8-5M4 7v14h16V7" />
+      </svg>
+    ),
+  },
 ]
 
 const permissions = {
@@ -255,29 +661,56 @@ const permissions = {
   },
 }
 
-function ChartTooltip({ active, payload, label }: {
-  active?: boolean; payload?: Array<{ name: string; value: number; color?: string; dataKey?: string }>; label?: string
+function ChartTooltip({
+  active,
+  payload,
+  label,
+}: {
+  active?: boolean
+  payload?: Array<{ name: string; value: number; color?: string; dataKey?: string }>
+  label?: string
 }) {
   if (active && payload && payload.length) {
     const item = payload[0]
-    const displayVal = item.dataKey === "volume" 
-      ? `$${item.value.toLocaleString()}` 
-      : String(item.value)
+    const displayVal =
+      item.dataKey === "volume" ? `$${item.value.toLocaleString()}` : String(item.value)
 
-    const isDark = typeof document !== "undefined" && document.documentElement.classList.contains("dark")
+    const isDark =
+      typeof document !== "undefined" && document.documentElement.classList.contains("dark")
 
     return (
-      <div style={{
-        borderRadius: "12px",
-        border: "1px solid rgba(15,23,42,0.12)",
-        backgroundColor: isDark ? "#0f172a" : "#ffffff",
-        padding: "10px 14px",
-        boxShadow: isDark ? "0 4px 24px rgba(0,0,0,0.5)" : "0 4px 24px rgba(0,0,0,0.1)",
-        textAlign: "left" as const,
-        minWidth: 90,
-      }}>
-        <p style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.1em", color: isDark ? "rgba(255,255,255,0.45)" : "#737373", margin: 0 }}>{label}</p>
-        <p style={{ marginTop: 4, fontSize: 14, fontWeight: 700, color: isDark ? "#f8fafc" : "#1a1a1a", margin: "4px 0 0" }}>
+      <div
+        style={{
+          borderRadius: "12px",
+          border: "1px solid rgba(15,23,42,0.12)",
+          backgroundColor: isDark ? "#0f172a" : "#ffffff",
+          padding: "10px 14px",
+          boxShadow: isDark ? "0 4px 24px rgba(0,0,0,0.5)" : "0 4px 24px rgba(0,0,0,0.1)",
+          textAlign: "left" as const,
+          minWidth: 90,
+        }}
+      >
+        <p
+          style={{
+            fontSize: 10,
+            fontWeight: 700,
+            textTransform: "uppercase" as const,
+            letterSpacing: "0.1em",
+            color: isDark ? "rgba(255,255,255,0.45)" : "#737373",
+            margin: 0,
+          }}
+        >
+          {label}
+        </p>
+        <p
+          style={{
+            marginTop: 4,
+            fontSize: 14,
+            fontWeight: 700,
+            color: isDark ? "#f8fafc" : "#1a1a1a",
+            margin: "4px 0 0",
+          }}
+        >
           {displayVal}
         </p>
       </div>
@@ -308,27 +741,31 @@ export default function BusinessDashboardPage() {
   const [showAiAssistant, setShowAiAssistant] = useState(false)
   const [companyProfile, setCompanyProfile] = useState<Profile | null>(null)
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
-  
+
   // Workspace and RBAC State
   const [activeBusinessWallet, setActiveBusinessWallet] = useState<string | null>(null)
   const [memberRole, setMemberRole] = useState<"Admin" | "Finance" | "Operator" | null>(null)
-  const [userBusinessAccounts, setUserBusinessAccounts] = useState<{ business_wallet: string; role: "Admin" | "Finance" | "Operator" }[]>([])
+  const [userBusinessAccounts, setUserBusinessAccounts] = useState<
+    { business_wallet: string; role: "Admin" | "Finance" | "Operator" }[]
+  >([])
   const [isCheckingRole, setIsCheckingRole] = useState(true)
   const [teamMembers, setTeamMembers] = useState<BusinessMember[]>([])
   const [loadingTeam, setLoadingTeam] = useState(false)
 
   // Derive permissions helper
   const activePermissions = useMemo(() => {
-    return memberRole ? permissions[memberRole] : {
-      create: false,
-      templates: false,
-      wallets: false,
-      analytics: false,
-      approve: false,
-      release: false,
-      team: false,
-      opportunities: false,
-    }
+    return memberRole
+      ? permissions[memberRole]
+      : {
+          create: false,
+          templates: false,
+          wallets: false,
+          analytics: false,
+          approve: false,
+          release: false,
+          team: false,
+          opportunities: false,
+        }
   }, [memberRole])
 
   // Fetch company profile & verify business roles
@@ -354,12 +791,12 @@ export default function BusinessDashboardPage() {
           setIsCheckingRole(false)
         } else {
           const res = await getUserBusinessAccounts(walletAddress)
-          
+
           if (res.accounts && res.accounts.length > 0) {
             const firstBiz = res.accounts[0]
             setActiveBusinessWallet(firstBiz.business_wallet)
             setMemberRole(firstBiz.role)
-            
+
             const bizProfileRes = await getProfileByWallet(firstBiz.business_wallet)
             if (bizProfileRes.profile) {
               setCompanyProfile(bizProfileRes.profile)
@@ -379,7 +816,7 @@ export default function BusinessDashboardPage() {
                 entity_type: null,
                 kyb_status: "not_started",
                 kyb_session_id: null,
-                updated_at: ""
+                updated_at: "",
               })
             }
           } else {
@@ -397,7 +834,7 @@ export default function BusinessDashboardPage() {
     resolveRoleAndProfile()
   }, [walletAddress])
 
-  const currentWorkspaceWallet = activeBusinessWallet || walletAddress;
+  const currentWorkspaceWallet = activeBusinessWallet || walletAddress
 
   const [businessName, setBusinessName] = useState("")
   const [registrationNumber, setRegistrationNumber] = useState("")
@@ -421,21 +858,35 @@ export default function BusinessDashboardPage() {
     kyb_status: companyProfile?.kyb_status ?? "not_started",
     kyb_session_id: companyProfile?.kyb_session_id ?? null,
   }
-  const canContinueKyb = Boolean(currentWorkspaceWallet && canStartKybSession(kybFields) && !isKybVerified(companyProfile?.kyb_status))
+  const canContinueKyb = Boolean(
+    currentWorkspaceWallet &&
+    canStartKybSession(kybFields) &&
+    !isKybVerified(companyProfile?.kyb_status),
+  )
   const kybVerified = isKybVerified(companyProfile?.kyb_status)
   const kybStatus = companyProfile?.kyb_status ?? "not_started"
   const profileOrganizationId = companyProfile?.id ?? null
   const hasKybOrganizationUuid = Boolean(profileOrganizationId)
   const [kybOrganizationId, setKybOrganizationId] = useState<string | null>(null)
   const kybLoading = kybSubmitting
-  const refreshKybStatus = useCallback(async (organizationId: string) => {
-    const status = await getKybStatus(organizationId, token)
-    if (!status.success || !status.data || !currentWorkspaceWallet) return
-    const nextStatus = status.data.status === "pending" ? "in_review" : status.data.status
-    const updated = await updateProfile(currentWorkspaceWallet, { kyb_status: nextStatus })
-    if (!updated.error && updated.profile) setCompanyProfile(updated.profile)
-  }, [currentWorkspaceWallet, token])
-  const gatedSectionIds = new Set(["create", "templates", "wallets", "analytics", "team", "opportunities"])
+  const refreshKybStatus = useCallback(
+    async (organizationId: string) => {
+      const status = await getKybStatus(organizationId, token)
+      if (!status.success || !status.data || !currentWorkspaceWallet) return
+      const nextStatus = status.data.status === "pending" ? "in_review" : status.data.status
+      const updated = await updateProfile(currentWorkspaceWallet, { kyb_status: nextStatus })
+      if (!updated.error && updated.profile) setCompanyProfile(updated.profile)
+    },
+    [currentWorkspaceWallet, token],
+  )
+  const gatedSectionIds = new Set([
+    "create",
+    "templates",
+    "wallets",
+    "analytics",
+    "team",
+    "opportunities",
+  ])
   const isActiveSectionKybGated = gatedSectionIds.has(activeSection) && !kybVerified
 
   const handleStartKybSession = async () => {
@@ -453,7 +904,8 @@ export default function BusinessDashboardPage() {
 
       const kybSessionDto = buildCreateKybSessionDto(currentWorkspaceWallet, kybFields)
       const session = await startKybSession(kybSessionDto, token)
-      if (!session.success || !session.data) throw new Error(session.error ?? "Failed to start KYB session")
+      if (!session.success || !session.data)
+        throw new Error(session.error ?? "Failed to start KYB session")
       const sessionId = session.data.id ?? null
       const nextStatus = nextKybStatusAfterSessionStart()
       const statusUpdate = await updateProfile(currentWorkspaceWallet, {
@@ -479,124 +931,150 @@ export default function BusinessDashboardPage() {
   const [viewingAgreement, setViewingAgreement] = useState<string | null>(null)
   const [showAgreementChat, setShowAgreementChat] = useState<string | null>(null)
   const [disputedMs, setDisputedMs] = useState<Set<string>>(new Set())
-  const [showDisputeConfirm, setShowDisputeConfirm] = useState<{ agrId: string; msIdx: number } | null>(null)
+  const [showDisputeConfirm, setShowDisputeConfirm] = useState<{
+    agrId: string
+    msIdx: number
+  } | null>(null)
   const [approverEscrows, setApproverEscrows] = useState<Agreement[]>([])
   const [approverLoading, setApproverLoading] = useState(false)
 
   // Fetch wallets with agreements
   useEffect(() => {
-    if (!token) return;
-    let isMounted = true;
+    if (!token) return
+    let isMounted = true
     async function fetchWalletsData() {
       try {
-        const res = await getWalletsWithAgreements(token!);
+        const res = await getWalletsWithAgreements(token!)
         if (isMounted && res.success && res.data) {
-          setWalletsData(res.data);
+          setWalletsData(res.data)
         }
       } catch (err) {
-        console.error("Failed to fetch wallets with agreements:", err);
+        console.error("Failed to fetch wallets with agreements:", err)
       }
     }
-    fetchWalletsData();
+    fetchWalletsData()
     return () => {
-      isMounted = false;
-    };
-  }, [token]);
+      isMounted = false
+    }
+  }, [token])
 
   // Helper to map a TW escrow (approver tab only) to agreement format
   const mapEscrowToApproverAgreement = (e: any): Agreement => {
-    const milestones = e.milestones as Array<{ description?: string; amount?: number; approved?: boolean; released?: boolean; status?: string }> || [];
-    const isMulti = (e.type as string) === "multi-release" || milestones.length > 1;
-    const amount = isMulti 
+    const milestones =
+      (e.milestones as Array<{
+        description?: string
+        amount?: number
+        approved?: boolean
+        released?: boolean
+        status?: string
+      }>) || []
+    const isMulti = (e.type as string) === "multi-release" || milestones.length > 1
+    const amount = isMulti
       ? milestones.reduce((sum, m) => sum + (m.amount || 0), 0).toString()
-      : String(e.amount || "0");
-    
+      : String(e.amount || "0")
+
     return {
-      id: e.contractId as string || `escrow-${Date.now()}`,
-      title: e.title as string || "Escrow Agreement",
-      counterparty: ((e.serviceProvider as string) || (e.receiver as string))
-        ? ((e.serviceProvider as string) || (e.receiver as string)).slice(0, 8) + "..."
-        : "-",
-      status: e.status as string || "pending",
+      id: (e.contractId as string) || `escrow-${Date.now()}`,
+      title: (e.title as string) || "Escrow Agreement",
+      counterparty:
+        (e.serviceProvider as string) || (e.receiver as string)
+          ? ((e.serviceProvider as string) || (e.receiver as string)).slice(0, 8) + "..."
+          : "-",
+      status: (e.status as string) || "pending",
       amount,
       currency: "USDC",
       type: isMulti ? "Multi Release" : "Single Release",
-      date: e.createdAt as string || new Date().toISOString(),
-      milestones: milestones.map(m => ({
+      date: (e.createdAt as string) || new Date().toISOString(),
+      milestones: milestones.map((m) => ({
         description: m.description || "Milestone",
         amount: String(m.amount || 0),
-        status: m.released ? "released" : m.approved ? "approved" : "pending" as "pending" | "approved" | "released",
+        status: m.released
+          ? "released"
+          : m.approved
+            ? "approved"
+            : ("pending" as "pending" | "approved" | "released"),
       })),
       receiver: (e.receiver as string) || "-",
       serviceProvider: (e.serviceProvider as string) || "-",
       role: currentWorkspaceWallet === e.serviceProvider ? "seller" : "buyer",
-    };
-  };
+    }
+  }
 
   // Fetch agreements from Nest (source of truth) for the current workspace wallet
-  const fetchedEscrowsRef = useRef<string | null>(null);
+  const fetchedEscrowsRef = useRef<string | null>(null)
   useEffect(() => {
-    if (!currentWorkspaceWallet) return;
-    const workspaceWallet: string = currentWorkspaceWallet;
+    if (!currentWorkspaceWallet) return
+    const workspaceWallet: string = currentWorkspaceWallet
     // Include the token so we re-fetch once auth loads and route through the
     // backend instead of falling back to the direct Trustless Work service.
-    const fetchKey = `${workspaceWallet}::${token ?? ""}`;
-    if (fetchedEscrowsRef.current === fetchKey) return;
-    fetchedEscrowsRef.current = fetchKey;
+    const fetchKey = `${workspaceWallet}::${token ?? ""}`
+    if (fetchedEscrowsRef.current === fetchKey) return
+    fetchedEscrowsRef.current = fetchKey
 
     async function fetchAgreements() {
-      setAgreementsLoading(true);
-      setAgreementsError(null);
-      const { agreements: nestAgreements, error } = await getAgreementsByWallet(workspaceWallet, token ?? undefined);
+      setAgreementsLoading(true)
+      setAgreementsError(null)
+      const { agreements: nestAgreements, error } = await getAgreementsByWallet(
+        workspaceWallet,
+        token ?? undefined,
+      )
       if (error) {
-        setAgreementsError(error);
-        setAgreementsLoading(false);
-        return;
+        setAgreementsError(error)
+        setAgreementsLoading(false)
+        return
       }
-      const mapped = nestAgreements.map(a => mapNestAgreementToUi(a, workspaceWallet));
-      setAgreements(mapped);
-      setAgreementsLoading(false);
+      const mapped = nestAgreements.map((a) => mapNestAgreementToUi(a, workspaceWallet))
+      setAgreements(mapped)
+      setAgreementsLoading(false)
     }
 
-    fetchAgreements();
-  }, [currentWorkspaceWallet, token]);
+    fetchAgreements()
+  }, [currentWorkspaceWallet, token])
 
   // Fetch approver escrows (for approver tab)
   useEffect(() => {
-    if (!currentWorkspaceWallet) return;
-    const workspaceWallet: string = currentWorkspaceWallet;
+    if (!currentWorkspaceWallet) return
+    const workspaceWallet: string = currentWorkspaceWallet
     async function fetchApproverEscrows() {
-      setApproverLoading(true);
+      setApproverLoading(true)
       try {
-        const { getEscrowsByRole } = await import("@/services/escrowMigration");
-        const res = await getEscrowsByRole({ role: "approver", address: workspaceWallet }, token ?? undefined);
+        const { getEscrowsByRole } = await import("@/services/escrowMigration")
+        const res = await getEscrowsByRole(
+          { role: "approver", address: workspaceWallet },
+          token ?? undefined,
+        )
         if (res.success && Array.isArray(res.data)) {
-          setApproverEscrows(res.data.map((e: any) => mapEscrowToApproverAgreement(e)));
+          setApproverEscrows(res.data.map((e: any) => mapEscrowToApproverAgreement(e)))
         }
       } catch (err) {
-        console.error("Error fetching approver escrows:", err);
-        setApproverEscrows([]);
+        console.error("Error fetching approver escrows:", err)
+        setApproverEscrows([])
       }
-      setApproverLoading(false);
+      setApproverLoading(false)
     }
-    fetchApproverEscrows();
-  }, [currentWorkspaceWallet, token]);
+    fetchApproverEscrows()
+  }, [currentWorkspaceWallet, token])
 
   // Fetch team members when activeSection is 'team'
   useEffect(() => {
     async function fetchTeam() {
-      if (activeSection === "team" && !isActiveSectionKybGated && activeBusinessWallet && activePermissions.team) {
-        setLoadingTeam(true);
-        const { getBusinessMembers } = await import("@/lib/actions/business-roles");
-        const res = await getBusinessMembers(activeBusinessWallet);
+      if (
+        activeSection === "team" &&
+        !isActiveSectionKybGated &&
+        activeBusinessWallet &&
+        activePermissions.team
+      ) {
+        setLoadingTeam(true)
+        const { getBusinessMembers } = await import("@/lib/actions/business-roles")
+        const res = await getBusinessMembers(activeBusinessWallet)
         if (res.members) {
-          setTeamMembers(res.members);
+          setTeamMembers(res.members)
         }
-        setLoadingTeam(false);
+        setLoadingTeam(false)
       }
     }
-    fetchTeam();
-  }, [activeSection, activeBusinessWallet, activePermissions.team]);
+    fetchTeam()
+  }, [activeSection, activeBusinessWallet, activePermissions.team])
 
   useEffect(() => {
     if (!hasKybOrganizationUuid || !profileOrganizationId) return
@@ -613,16 +1091,59 @@ export default function BusinessDashboardPage() {
   }, [kybOrganizationId, kybStatus, refreshKybStatus])
 
   const approveMilestone = (agrId: string, msIdx: number) => {
-    setAgreements(prev => prev.map(a => a.id === agrId ? { ...a, milestones: a.milestones.map((m, i) => i === msIdx && m.status === "pending" ? { ...m, status: "approved" as const } : m) } : a))
+    setAgreements((prev) =>
+      prev.map((a) =>
+        a.id === agrId
+          ? {
+              ...a,
+              milestones: a.milestones.map((m, i) =>
+                i === msIdx && m.status === "pending" ? { ...m, status: "approved" as const } : m,
+              ),
+            }
+          : a,
+      ),
+    )
   }
   const releaseMilestone = (agrId: string, msIdx: number) => {
-    setAgreements(prev => prev.map(a => a.id === agrId ? { ...a, milestones: a.milestones.map((m, i) => i === msIdx && m.status === "approved" ? { ...m, status: "released" as const } : m) } : a))
+    setAgreements((prev) =>
+      prev.map((a) =>
+        a.id === agrId
+          ? {
+              ...a,
+              milestones: a.milestones.map((m, i) =>
+                i === msIdx && m.status === "approved" ? { ...m, status: "released" as const } : m,
+              ),
+            }
+          : a,
+      ),
+    )
   }
   const releaseAllApproved = (agrId: string) => {
-    setAgreements(prev => prev.map(a => a.id === agrId ? { ...a, milestones: a.milestones.map(m => m.status === "approved" ? { ...m, status: "released" as const } : m) } : a))
+    setAgreements((prev) =>
+      prev.map((a) =>
+        a.id === agrId
+          ? {
+              ...a,
+              milestones: a.milestones.map((m) =>
+                m.status === "approved" ? { ...m, status: "released" as const } : m,
+              ),
+            }
+          : a,
+      ),
+    )
   }
   const approveAndReleaseAll = (agrId: string) => {
-    setAgreements(prev => prev.map(a => a.id === agrId ? { ...a, status: "released", milestones: a.milestones.map(m => ({ ...m, status: "released" as const })) } : a))
+    setAgreements((prev) =>
+      prev.map((a) =>
+        a.id === agrId
+          ? {
+              ...a,
+              status: "released",
+              milestones: a.milestones.map((m) => ({ ...m, status: "released" as const })),
+            }
+          : a,
+      ),
+    )
   }
 
   /* ÔöÇÔöÇ Wizard State ÔöÇÔöÇ */
@@ -647,42 +1168,100 @@ export default function BusinessDashboardPage() {
   useEffect(() => {
     if (useCase && !guidePrefilled) {
       if (useCase === "other") {
-        if (customUseCase.trim()) { setTitle(customUseCase.trim()); setDescription(customUseCase.trim()); setGuidePrefilled(true) }
+        if (customUseCase.trim()) {
+          setTitle(customUseCase.trim())
+          setDescription(customUseCase.trim())
+          setGuidePrefilled(true)
+        }
       } else {
         const uc = useCases.find((u) => u.id === useCase)
-        if (uc) { setTitle(uc.suggestedTitle); setDescription(uc.suggestedDesc); setGuidePrefilled(true) }
+        if (uc) {
+          setTitle(uc.suggestedTitle)
+          setDescription(uc.suggestedDesc)
+          setGuidePrefilled(true)
+        }
       }
     }
   }, [useCase, guidePrefilled, customUseCase])
 
-  const totalAmount = escrowType === "single" ? (parseFloat(milestones[0]?.amount) || 0) : milestones.reduce((s, m) => s + (parseFloat(m.amount) || 0), 0)
+  const totalAmount =
+    escrowType === "single"
+      ? parseFloat(milestones[0]?.amount) || 0
+      : milestones.reduce((s, m) => s + (parseFloat(m.amount) || 0), 0)
   const platformFee = (totalAmount * 0.01).toFixed(2)
 
   const addMilestone = () => setMilestones((p) => [...p, { description: "", amount: "" }])
-  const removeMilestone = (i: number) => milestones.length > 1 && setMilestones((p) => p.filter((_, idx) => idx !== i))
+  const removeMilestone = (i: number) =>
+    milestones.length > 1 && setMilestones((p) => p.filter((_, idx) => idx !== i))
   const updateMilestone = useCallback((i: number, field: "description" | "amount", val: string) => {
-    setMilestones((p) => { const n = [...p]; n[i] = { ...n[i], [field]: val }; return n })
+    setMilestones((p) => {
+      const n = [...p]
+      n[i] = { ...n[i], [field]: val }
+      return n
+    })
   }, [])
 
-  const handleDragStart = (i: number) => { dragItem.current = i }
-  const handleDragEnter = (i: number) => { dragOverItem.current = i }
+  const handleDragStart = (i: number) => {
+    dragItem.current = i
+  }
+  const handleDragEnter = (i: number) => {
+    dragOverItem.current = i
+  }
   const handleDragEnd = () => {
     if (dragItem.current === null || dragOverItem.current === null) return
-    setMilestones((prev) => { const c = [...prev]; const d = c.splice(dragItem.current!, 1)[0]; c.splice(dragOverItem.current!, 0, d); return c })
-    dragItem.current = null; dragOverItem.current = null
+    setMilestones((prev) => {
+      const c = [...prev]
+      const d = c.splice(dragItem.current!, 1)[0]
+      c.splice(dragOverItem.current!, 0, d)
+      return c
+    })
+    dragItem.current = null
+    dragOverItem.current = null
   }
 
+  // Only ever invoked from `copyJson` below, never during render, so the
+  // timestamp cannot make a render impure.
   const generateJSON = () => ({
+    // eslint-disable-next-line react-hooks/purity
     engagementId: `THALOS-E-${Date.now().toString(36).toUpperCase()}`,
-    title, description, amount: totalAmount.toString(), platformFee: "1", signer: selectedWallet,
+    title,
+    description,
+    amount: totalAmount.toString(),
+    platformFee: "1",
+    signer: selectedWallet,
     serviceType: escrowType === "single" ? "single-release" : "multi-release",
-    roles: { approver: selectedWallet, serviceProvider: selectedWallet, releaseSigner: signerWallet, platformAddress: PLATFORM_ADDRESS, disputeResolver: DISPUTE_RESOLVER, receiver: selectedWallet },
-    milestones: escrowType === "single" ? [{ description: milestones[0]?.description || "Full delivery", amount: totalAmount.toString(), status: "pending" }] : milestones.map((m) => ({ description: m.description || "Milestone", amount: m.amount || "0", status: "pending" })),
-    trustline: TRUSTLINE_USDC, notifications: { notifyEmail, signerEmail },
+    roles: {
+      approver: selectedWallet,
+      serviceProvider: selectedWallet,
+      releaseSigner: signerWallet,
+      platformAddress: PLATFORM_ADDRESS,
+      disputeResolver: DISPUTE_RESOLVER,
+      receiver: selectedWallet,
+    },
+    milestones:
+      escrowType === "single"
+        ? [
+            {
+              description: milestones[0]?.description || "Full delivery",
+              amount: totalAmount.toString(),
+              status: "pending",
+            },
+          ]
+        : milestones.map((m) => ({
+            description: m.description || "Milestone",
+            amount: m.amount || "0",
+            status: "pending",
+          })),
+    trustline: TRUSTLINE_USDC,
+    notifications: { notifyEmail, signerEmail },
   })
 
   const [copiedJson, setCopiedJson] = useState(false)
-  const copyJson = () => { navigator.clipboard.writeText(JSON.stringify(generateJSON(), null, 2)); setCopiedJson(true); setTimeout(() => setCopiedJson(false), 2000) }
+  const copyJson = () => {
+    navigator.clipboard.writeText(JSON.stringify(generateJSON(), null, 2))
+    setCopiedJson(true)
+    setTimeout(() => setCopiedJson(false), 2000)
+  }
 
   const canProceed = () => {
     if (step === 0) return true
@@ -697,13 +1276,29 @@ export default function BusinessDashboardPage() {
   }
 
   const resetWizard = () => {
-    setStep(0); setSubmitted(false); setEscrowType("single"); setUseCase(null); setCustomUseCase("")
-    setTitle(""); setDescription(""); setSignerWallet(""); setGuidePrefilled(false)
-    setMilestones([{ description: "Full delivery", amount: "" }]); setShowCustomize(false)
-    setNotifyEmail(""); setSignerEmail(""); setSelectedWallet(connectedWallets[0].value)
+    setStep(0)
+    setSubmitted(false)
+    setEscrowType("single")
+    setUseCase(null)
+    setCustomUseCase("")
+    setTitle("")
+    setDescription("")
+    setSignerWallet("")
+    setGuidePrefilled(false)
+    setMilestones([{ description: "Full delivery", amount: "" }])
+    setShowCustomize(false)
+    setNotifyEmail("")
+    setSignerEmail("")
+    setSelectedWallet(connectedWallets[0].value)
   }
 
-  const handleAiDraft = (draft: { title: string; description: string; escrowType: "single" | "multi"; useCase: string | null; milestones: { description: string; amount: string }[] }) => {
+  const handleAiDraft = (draft: {
+    title: string
+    description: string
+    escrowType: "single" | "multi"
+    useCase: string | null
+    milestones: { description: string; amount: string }[]
+  }) => {
     setActiveSection("create")
     setStep(2)
     setEscrowType(draft.escrowType)
@@ -712,7 +1307,9 @@ export default function BusinessDashboardPage() {
     if (draft.useCase) setUseCase(draft.useCase)
     setGuidePrefilled(true)
     if (draft.milestones.length > 0) {
-      setMilestones(draft.milestones.map(m => ({ description: m.description, amount: m.amount || "" })))
+      setMilestones(
+        draft.milestones.map((m) => ({ description: m.description, amount: m.amount || "" })),
+      )
     }
     setShowAiAssistant(false)
   }
@@ -720,13 +1317,22 @@ export default function BusinessDashboardPage() {
   /* ── Connect: prefill wizard from an accepted application (C5) ── */
   const [pendingOpportunityId, setPendingOpportunityId] = useState<string | null>(null)
 
-  const startAgreementFromOpportunity = (opportunity: Opportunity, application: Application, builderWallet: string) => {
+  const startAgreementFromOpportunity = (
+    opportunity: Opportunity,
+    application: Application,
+    builderWallet: string,
+  ) => {
     resetWizard()
     setPendingOpportunityId(opportunity.id)
     setTitle(opportunity.title)
     setDescription(opportunity.description)
     setEscrowType(opportunity.engagement_type === "milestone" ? "multi" : "single")
-    setMilestones([{ description: opportunity.title || "Full delivery", amount: String(opportunity.budget_amount ?? "") }])
+    setMilestones([
+      {
+        description: opportunity.title || "Full delivery",
+        amount: String(opportunity.budget_amount ?? ""),
+      },
+    ])
     setSignerWallet(builderWallet)
     setGuidePrefilled(true)
     // Land on "Agreement Info" (step 2) so the pre-filled title/description are
@@ -735,32 +1341,42 @@ export default function BusinessDashboardPage() {
     setActiveSection("create")
   }
 
-  const agreementUrl = typeof window !== "undefined" ? `${window.location.origin}/dashboard/business` : "https://thalos.app/dashboard/business"
+  const agreementUrl =
+    typeof window !== "undefined"
+      ? `${window.location.origin}/dashboard/business`
+      : "https://thalos.app/dashboard/business"
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(agreementUrl)}&bgcolor=0a0a0a&color=f0b400&qzone=3&format=png`
 
   /* ÔöÇÔöÇ Agreements filter/sort state ÔöÇÔöÇ */
   const [walletFilter, setWalletFilter] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
-  const [statusFilter, setStatusFilter] = useState<"all" | "funded" | "in_progress" | "released">("all")
+  const [statusFilter, setStatusFilter] = useState<"all" | "funded" | "in_progress" | "released">(
+    "all",
+  )
   const [sortBy, setSortBy] = useState<"date" | "amount" | "title">("date")
 
   const filteredAgreements = useMemo(() => {
     // Step A: Resolve the wallet set (flatten all or filter by selectedWalletPubKey)
     let list: Array<{
-      id: string;
-      title: string;
-      status: string;
-      amount: string;
-      currency: string;
-      type: "Single Release" | "Multi Release";
-      counterparty: string;
-      date: string;
-      updatedAt?: string;
-      role?: "buyer" | "seller";
-      receiver?: string;
-      serviceProvider?: string;
-      milestones: Array<{ status: string; description?: string; amount?: string; approved?: boolean }>;
-    }> = [];
+      id: string
+      title: string
+      status: string
+      amount: string
+      currency: string
+      type: "Single Release" | "Multi Release"
+      counterparty: string
+      date: string
+      updatedAt?: string
+      role?: "buyer" | "seller"
+      receiver?: string
+      serviceProvider?: string
+      milestones: Array<{
+        status: string
+        description?: string
+        amount?: string
+        approved?: boolean
+      }>
+    }> = []
 
     if (walletsData && walletsData.length > 0) {
       if (!walletFilter || walletFilter === "all" || walletFilter === "All") {
@@ -774,17 +1390,19 @@ export default function BusinessDashboardPage() {
             currency: "USDC",
             type: "Single Release" as const,
             counterparty: "-",
-            date: a.created_at ? a.created_at.split("T")[0] : new Date().toISOString().split("T")[0],
+            date: a.created_at
+              ? a.created_at.split("T")[0]
+              : new Date().toISOString().split("T")[0],
             updatedAt: a.created_at,
             role: (a.role === "seller" ? "seller" : "buyer") as "buyer" | "seller",
             receiver: "-",
             serviceProvider: "-",
             milestones: [{ status: a.status }],
-          }))
-        );
+          })),
+        )
       } else {
         // Specific wallet selected
-        const targetWallet = walletsData.find((w) => w.wallet_address === walletFilter);
+        const targetWallet = walletsData.find((w) => w.wallet_address === walletFilter)
         list = targetWallet
           ? targetWallet.agreements.map((a) => ({
               id: a.id,
@@ -794,70 +1412,75 @@ export default function BusinessDashboardPage() {
               currency: "USDC",
               type: "Single Release" as const,
               counterparty: "-",
-              date: a.created_at ? a.created_at.split("T")[0] : new Date().toISOString().split("T")[0],
+              date: a.created_at
+                ? a.created_at.split("T")[0]
+                : new Date().toISOString().split("T")[0],
               updatedAt: a.created_at,
               role: (a.role === "seller" ? "seller" : "buyer") as "buyer" | "seller",
               receiver: "-",
               serviceProvider: "-",
               milestones: [{ status: a.status }],
             }))
-          : [];
+          : []
       }
     } else {
       // Fallback when walletsData is not yet loaded / available
-      let filtered = [...agreements];
+      let filtered = [...agreements]
       if (walletFilter && walletFilter !== "all" && walletFilter !== "All") {
         filtered = filtered.filter(
           (a) =>
             (a as unknown as { receiver?: string }).receiver === walletFilter ||
-            (a as unknown as { serviceProvider?: string }).serviceProvider === walletFilter
-        );
+            (a as unknown as { serviceProvider?: string }).serviceProvider === walletFilter,
+        )
       }
       list = filtered.map((a) => ({
         ...a,
         updatedAt: a.date,
         currency: a.currency || "USDC",
-      }));
+      }))
     }
 
     // Step B: Apply searchQuery filtering
     if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
+      const q = searchQuery.toLowerCase()
       list = list.filter(
         (agr) =>
           (agr.title && agr.title.toLowerCase().includes(q)) ||
           (agr.counterparty && agr.counterparty.toLowerCase().includes(q)) ||
-          (agr.id && agr.id.toLowerCase().includes(q))
-      );
+          (agr.id && agr.id.toLowerCase().includes(q)),
+      )
     }
 
     // Step C: Apply statusFilter filtering
     if (statusFilter !== "all") {
       list = list.filter((a) => {
-        const allReleased = a.milestones && a.milestones.length > 0 && a.milestones.every((m) => m.status === "released");
-        const actualStatus = allReleased ? "released" : a.status;
-        return actualStatus === statusFilter;
-      });
+        const allReleased =
+          a.milestones &&
+          a.milestones.length > 0 &&
+          a.milestones.every((m) => m.status === "released")
+        const actualStatus = allReleased ? "released" : a.status
+        return actualStatus === statusFilter
+      })
     }
 
     // Step D: Apply sortBy ordering
     list.sort((a, b) => {
-      if (sortBy === "date") return (b.date || "").localeCompare(a.date || "");
+      if (sortBy === "date") return (b.date || "").localeCompare(a.date || "")
       if (sortBy === "amount") {
-        const amountA = parseFloat(String(a.amount || "0").replace(/,/g, "")) || 0;
-        const amountB = parseFloat(String(b.amount || "0").replace(/,/g, "")) || 0;
-        return amountB - amountA;
+        const amountA = parseFloat(String(a.amount || "0").replace(/,/g, "")) || 0
+        const amountB = parseFloat(String(b.amount || "0").replace(/,/g, "")) || 0
+        return amountB - amountA
       }
-      return (a.title || "").localeCompare(b.title || "");
-    });
+      return (a.title || "").localeCompare(b.title || "")
+    })
 
-    return list;
-  }, [walletsData, walletFilter, agreements, searchQuery, statusFilter, sortBy]);
+    return list
+  }, [walletsData, walletFilter, agreements, searchQuery, statusFilter, sortBy])
 
   const statusCounts = useMemo(() => {
     const counts = { all: agreements.length, funded: 0, in_progress: 0, released: 0 }
-    agreements.forEach(agr => {
-      const allReleased = agr.milestones.every(m => m.status === "released")
+    agreements.forEach((agr) => {
+      const allReleased = agr.milestones.every((m) => m.status === "released")
       const s = allReleased ? "released" : agr.status
       if (s in counts) counts[s as keyof typeof counts]++
     })
@@ -884,7 +1507,7 @@ export default function BusinessDashboardPage() {
             ...t,
             escrowType: (t.agreement_type as "single" | "multi") ?? "single",
             useCase: (t.metadata as Record<string, string>)?.useCase ?? "",
-          }))
+          })),
         )
       })
       .finally(() => setTemplatesLoading(false))
@@ -893,7 +1516,11 @@ export default function BusinessDashboardPage() {
   const saveAsTemplate = async () => {
     if (!walletAddress) return
     const activeWallet = walletAddress
-    const milestoneData = milestones.map(m => ({ description: m.description, amount: m.amount, status: "pending" as const }))
+    const milestoneData = milestones.map((m) => ({
+      description: m.description,
+      amount: m.amount,
+      status: "pending" as const,
+    }))
     const meta = { useCase: useCase || "" }
 
     if (editingTemplate) {
@@ -909,11 +1536,10 @@ export default function BusinessDashboardPage() {
         toast.error(t("dashPage.templateSaveError"))
         return
       }
-      setTemplates(prev =>
-        prev.map(t => t.id === editingTemplate
-          ? { ...template, escrowType, useCase: useCase || "" }
-          : t
-        )
+      setTemplates((prev) =>
+        prev.map((t) =>
+          t.id === editingTemplate ? { ...template, escrowType, useCase: useCase || "" } : t,
+        ),
       )
     } else {
       const { template, error } = await createTemplate({
@@ -929,20 +1555,27 @@ export default function BusinessDashboardPage() {
         toast.error(t("dashPage.templateSaveError"))
         return
       }
-      setTemplates(prev => [{ ...template, escrowType, useCase: useCase || "" }, ...prev])
+      setTemplates((prev) => [{ ...template, escrowType, useCase: useCase || "" }, ...prev])
     }
     toast.success(t("dashPage.templateSaved"))
-    setShowSaveTemplate(false); setTemplateName(""); setEditingTemplate(null)
+    setShowSaveTemplate(false)
+    setTemplateName("")
+    setEditingTemplate(null)
   }
 
-  const useTemplate = (tpl: Template) => {
+  const applyTemplate = (tpl: Template) => {
     resetWizard()
     setEscrowType(tpl.escrowType)
     setUseCase(tpl.useCase || null)
     setTitle(tpl.title)
     setDescription(tpl.description ?? "")
-    const tplMilestones = tpl.milestones.map(m => ({ description: m.description, amount: m.amount }))
-    setMilestones(tplMilestones.length > 0 ? tplMilestones : [{ description: "Full delivery", amount: "" }])
+    const tplMilestones = tpl.milestones.map((m) => ({
+      description: m.description,
+      amount: m.amount,
+    }))
+    setMilestones(
+      tplMilestones.length > 0 ? tplMilestones : [{ description: "Full delivery", amount: "" }],
+    )
     setGuidePrefilled(true)
     setStep(2)
     setActiveSection("create")
@@ -954,7 +1587,7 @@ export default function BusinessDashboardPage() {
     setDeletingTemplateId(id)
     const { success } = await deleteTemplateAction(id, activeWallet)
     if (success) {
-      setTemplates(prev => prev.filter(t => t.id !== id))
+      setTemplates((prev) => prev.filter((t) => t.id !== id))
       toast.success(t("dashPage.templateDeleted"))
     } else {
       toast.error(t("dashPage.templateDeleteError"))
@@ -963,76 +1596,179 @@ export default function BusinessDashboardPage() {
   }
 
   const startEditTemplate = (tpl: Template) => {
-    setTemplateName(tpl.name); setEditingTemplate(tpl.id); setShowSaveTemplate(true)
-    setEscrowType(tpl.escrowType); setUseCase(tpl.useCase || null)
-    setTitle(tpl.title); setDescription(tpl.description ?? "")
-    const tplMilestones = tpl.milestones.map(m => ({ description: m.description, amount: m.amount }))
-    setMilestones(tplMilestones.length > 0 ? tplMilestones : [{ description: "Full delivery", amount: "" }])
+    setTemplateName(tpl.name)
+    setEditingTemplate(tpl.id)
+    setShowSaveTemplate(true)
+    setEscrowType(tpl.escrowType)
+    setUseCase(tpl.useCase || null)
+    setTitle(tpl.title)
+    setDescription(tpl.description ?? "")
+    const tplMilestones = tpl.milestones.map((m) => ({
+      description: m.description,
+      amount: m.amount,
+    }))
+    setMilestones(
+      tplMilestones.length > 0 ? tplMilestones : [{ description: "Full delivery", amount: "" }],
+    )
   }
 
   if (loading || isCheckingRole) return <ThalosLoader />
 
   return (
     <div className="relative min-h-screen text-foreground">
-{/* Professional gradient background - neutral dark */}
-  <div className="fixed inset-0 z-0 bg-[#0a0c10]">
-    {/* Subtle gradient orbs - toned down, less blue */}
-    <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-[#1e293b]/20 rounded-full blur-[180px]" />
-    <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-[#3b82f6]/3 rounded-full blur-[180px]" />
-    <div className="absolute top-1/2 right-1/3 w-[400px] h-[400px] bg-[#f0b400]/2 rounded-full blur-[150px]" />
-    
-    {/* Subtle grid pattern */}
-    <div className="absolute inset-0 opacity-[0.015]" style={{
-      backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
-      backgroundSize: '60px 60px'
-    }} />
-    
-    {/* Noise overlay for texture */}
-    <div className="absolute inset-0 opacity-[0.02]" style={{
-      backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`
-    }} />
-  </div>
+      {/* Professional gradient background - neutral dark */}
+      <div className="fixed inset-0 z-0 bg-[#0a0c10]">
+        {/* Subtle gradient orbs - toned down, less blue */}
+        <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-[#1e293b]/20 rounded-full blur-[180px]" />
+        <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-[#3b82f6]/3 rounded-full blur-[180px]" />
+        <div className="absolute top-1/2 right-1/3 w-[400px] h-[400px] bg-[#f0b400]/2 rounded-full blur-[150px]" />
+
+        {/* Subtle grid pattern */}
+        <div
+          className="absolute inset-0 opacity-[0.015]"
+          style={{
+            backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
+            backgroundSize: "60px 60px",
+          }}
+        />
+
+        {/* Noise overlay for texture */}
+        <div
+          className="absolute inset-0 opacity-[0.02]"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
+          }}
+        />
+      </div>
 
       {/* Header */}
       <header className="sticky top-0 z-40 bg-[#0c1220]/90 backdrop-blur-xl shadow-[0_4px_24px_rgba(0,0,0,0.3)]">
         <nav className="mx-auto flex h-20 max-w-[1400px] items-center justify-between px-4 lg:px-8">
           <div className="flex items-center gap-4">
-            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="lg:hidden flex h-10 w-10 items-center justify-center rounded-lg text-white/60 hover:bg-white/10 hover:text-white transition-colors" aria-label="Toggle sidebar">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="lg:hidden flex h-10 w-10 items-center justify-center rounded-lg text-white/60 hover:bg-white/10 hover:text-white transition-colors"
+              aria-label="Toggle sidebar"
+            >
+              <svg
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+              >
+                <line x1="3" y1="6" x2="21" y2="6" />
+                <line x1="3" y1="12" x2="21" y2="12" />
+                <line x1="3" y1="18" x2="21" y2="18" />
+              </svg>
             </button>
             <Link href="/" className="flex items-center">
-              <Image src="/thalos-icon.png" alt="Thalos" width={72} height={72} className="h-16 w-16 object-contain" priority />
+              <Image
+                src="/thalos-icon.png"
+                alt="Thalos"
+                width={72}
+                height={72}
+                className="h-16 w-16 object-contain"
+                priority
+              />
             </Link>
           </div>
 
           <div className="flex items-center gap-3">
             <div className="relative">
-              <button onClick={() => setProfileMenuOpen(!profileMenuOpen)}
+              <button
+                onClick={() => setProfileMenuOpen(!profileMenuOpen)}
                 className="flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-medium transition-all"
                 style={{
                   background: isLight ? "rgba(15,23,42,0.06)" : "rgba(255,255,255,0.05)",
                   borderColor: isLight ? "rgba(15,23,42,0.15)" : "rgba(255,255,255,0.15)",
                   color: isLight ? "#1a1a2e" : "rgba(255,255,255,0.7)",
-                }}>
+                }}
+              >
                 <div className="h-6 w-6 rounded-full bg-[#3b82f6]/10 flex items-center justify-center text-[#3b82f6]">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <rect x="2" y="7" width="20" height="14" rx="2" />
+                    <path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16" />
+                  </svg>
                 </div>
                 <span className="hidden sm:inline">{t("dashPage.enterprise")}</span>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
               </button>
               {profileMenuOpen && (
-                <div className="absolute right-0 mt-2 w-56 rounded-xl border border-white/10 bg-[#0c1220] p-2 shadow-[0_16px_48px_rgba(0,0,0,0.6)]" onClick={() => setProfileMenuOpen(false)}>
-                  <button onClick={() => setActiveSection("dashboard")} className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-white/70 hover:bg-white/8 hover:text-white transition-colors">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                <div
+                  className="absolute right-0 mt-2 w-56 rounded-xl border border-white/10 bg-[#0c1220] p-2 shadow-[0_16px_48px_rgba(0,0,0,0.6)]"
+                  onClick={() => setProfileMenuOpen(false)}
+                >
+                  <button
+                    onClick={() => setActiveSection("dashboard")}
+                    className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-white/70 hover:bg-white/8 hover:text-white transition-colors"
+                  >
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                    >
+                      <rect x="3" y="3" width="7" height="7" rx="1" />
+                      <rect x="14" y="3" width="7" height="7" rx="1" />
+                      <rect x="3" y="14" width="7" height="7" rx="1" />
+                      <rect x="14" y="14" width="7" height="7" rx="1" />
+                    </svg>
                     {t("dashPage.dashboard")}
                   </button>
-                  <button onClick={() => setActiveSection("wallets")} className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-white/70 hover:bg-white/8 hover:text-white transition-colors">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg>
+                  <button
+                    onClick={() => setActiveSection("wallets")}
+                    className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-white/70 hover:bg-white/8 hover:text-white transition-colors"
+                  >
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                    >
+                      <rect x="1" y="4" width="22" height="16" rx="2" />
+                      <path d="M1 10h22" />
+                    </svg>
                     {t("dashPage.wallets")}
                   </button>
                   <div className="my-1 h-px bg-white/[0.06]" />
-                  <button onClick={signOut} className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-white/70 hover:bg-white/8 hover:text-white transition-colors">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                  <button
+                    onClick={signOut}
+                    className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-white/70 hover:bg-white/8 hover:text-white transition-colors"
+                  >
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                    >
+                      <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
+                      <polyline points="16 17 21 12 16 7" />
+                      <line x1="21" y1="12" x2="9" y2="12" />
+                    </svg>
                     {t("dashPage.signOut")}
                   </button>
                 </div>
@@ -1048,13 +1784,24 @@ export default function BusinessDashboardPage() {
         {activeBusinessWallet === null ? (
           <div className="flex-1 flex flex-col items-center justify-center p-8 text-center max-w-md mx-auto my-20 border border-white/10 bg-[#0c1220] rounded-2xl shadow-xl z-20 backdrop-blur-md h-fit">
             <div className="h-16 w-16 bg-red-500/10 text-red-400 rounded-full flex items-center justify-center mb-6">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" /><path d="M12 8V12" /><path d="M12 16H12.01" /></svg>
+              <svg
+                width="32"
+                height="32"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+              >
+                <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" />
+                <path d="M12 8V12" />
+                <path d="M12 16H12.01" />
+              </svg>
             </div>
             <h2 className="text-xl font-bold text-white mb-2">
               {!walletAddress ? "Wallet Not Connected" : "Access Denied"}
             </h2>
             <p className="text-sm text-white/50 mb-6 font-medium">
-              {!walletAddress 
+              {!walletAddress
                 ? "Please connect your Stellar wallet to access the Enterprise Dashboard."
                 : "You must be a business workspace owner or a registered team member to access the Enterprise Dashboard."}
             </p>
@@ -1069,37 +1816,62 @@ export default function BusinessDashboardPage() {
         ) : (
           <>
             {/* Modern Sidebar */}
-            <aside className={cn(
-              "fixed inset-y-20 left-0 z-30 w-64 transition-transform duration-300 lg:sticky lg:top-20 lg:translate-x-0 lg:h-[calc(100vh-80px)]",
-              sidebarOpen ? "translate-x-0" : "-translate-x-full"
-            )}>
+            <aside
+              className={cn(
+                "fixed inset-y-20 left-0 z-30 w-64 transition-transform duration-300 lg:sticky lg:top-20 lg:translate-x-0 lg:h-[calc(100vh-80px)]",
+                sidebarOpen ? "translate-x-0" : "-translate-x-full",
+              )}
+            >
               <div className="h-full flex flex-col bg-[#0a0d14]/95 backdrop-blur-xl border-r border-white/[0.06]">
                 {/* Enterprise Profile Section - Clickable to edit only if Admin */}
                 <div className="p-4 border-b border-white/[0.06]">
                   <button
-                    onClick={() => { if (memberRole === 'Admin') setShowProfileEditor(true) }}
-                    disabled={memberRole !== 'Admin'}
+                    onClick={() => {
+                      if (memberRole === "Admin") setShowProfileEditor(true)
+                    }}
+                    disabled={memberRole !== "Admin"}
                     className={cn(
                       "w-full flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-[#3b82f6]/10 to-transparent border border-[#3b82f6]/10 transition-all group",
-                      memberRole === 'Admin' ? "hover:from-[#3b82f6]/20 hover:to-[#3b82f6]/5 cursor-pointer" : "cursor-default"
+                      memberRole === "Admin"
+                        ? "hover:from-[#3b82f6]/20 hover:to-[#3b82f6]/5 cursor-pointer"
+                        : "cursor-default",
                     )}
                   >
                     <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[#3b82f6] to-[#3b82f6]/60 flex items-center justify-center text-white font-bold text-sm overflow-hidden">
                       {companyProfile?.avatar_url ? (
-                        <img src={companyProfile.avatar_url} alt="" className="h-full w-full object-cover" />
+                        <img
+                          src={companyProfile.avatar_url}
+                          alt=""
+                          className="h-full w-full object-cover"
+                        />
                       ) : (
-                        companyProfile?.display_name?.slice(0, 2).toUpperCase() || walletAddress?.slice(0, 2).toUpperCase() || "EN"
+                        companyProfile?.display_name?.slice(0, 2).toUpperCase() ||
+                        walletAddress?.slice(0, 2).toUpperCase() ||
+                        "EN"
                       )}
                     </div>
                     <div className="flex-1 min-w-0 text-left">
-                      <p className="text-sm font-semibold text-white truncate">{companyProfile?.display_name || t("dashPage.enterpriseAccount")}</p>
+                      <p className="text-sm font-semibold text-white truncate">
+                        {companyProfile?.display_name || t("dashPage.enterpriseAccount")}
+                      </p>
                       <p className="text-[11px] font-mono text-[#3b82f6]/80 truncate">
-                        {activeBusinessWallet ? `${activeBusinessWallet.slice(0, 6)}...${activeBusinessWallet.slice(-4)}` : "Connect Wallet"}
+                        {activeBusinessWallet
+                          ? `${activeBusinessWallet.slice(0, 6)}...${activeBusinessWallet.slice(-4)}`
+                          : "Connect Wallet"}
                       </p>
                     </div>
-                    {memberRole === 'Admin' && (
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-white/30 group-hover:text-white/60 transition-colors">
-                        <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+                    {memberRole === "Admin" && (
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        className="text-white/30 group-hover:text-white/60 transition-colors"
+                      >
+                        <path d="M12 20h9" />
+                        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
                       </svg>
                     )}
                   </button>
@@ -1109,1033 +1881,1977 @@ export default function BusinessDashboardPage() {
                 <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
                   {sidebarItems
                     .filter((item) => {
-                      if (item.id === "create") return activePermissions.create;
-                      if (item.id === "templates") return activePermissions.templates;
-                      if (item.id === "wallets") return activePermissions.wallets;
-                      if (item.id === "analytics") return activePermissions.analytics;
-                      if (item.id === "team") return activePermissions.team;
-                      if (item.id === "opportunities") return activePermissions.opportunities;
-                      if (item.id === "verification") return memberRole === "Admin";
-                      return true;
+                      if (item.id === "create") return activePermissions.create
+                      if (item.id === "templates") return activePermissions.templates
+                      if (item.id === "wallets") return activePermissions.wallets
+                      if (item.id === "analytics") return activePermissions.analytics
+                      if (item.id === "team") return activePermissions.team
+                      if (item.id === "opportunities") return activePermissions.opportunities
+                      if (item.id === "verification") return memberRole === "Admin"
+                      return true
                     })
                     .map((item) => {
                       const isActive = activeSection === item.id
                       return (
-                        <button 
-                          key={item.id} 
-                    onClick={() => { setActiveSection(item.id); setSidebarOpen(false); if (item.id === "create") resetWizard() }}
-                    className={cn(
-                      "group flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-all duration-200 relative overflow-hidden",
-                      isActive 
-                        ? "bg-[#3b82f6] text-white shadow-[0_4px_20px_rgba(59,130,246,0.25)]" 
-                        : "text-white/60 hover:bg-white/[0.04] hover:text-white"
-                    )}
-                  >
-                    {isActive && (
-                      <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent" />
-                    )}
-                    <span className={cn("relative z-10 transition-transform duration-200", isActive && "scale-110")}>
-                      {item.icon}
-                    </span>
-                    <span className="relative z-10">
-                      {item.id === "verification" ? "Verification" : t(`dashPage.${item.id === "create" ? "newAgreement" : item.id === "templates" ? "templates" : item.id}`)}
-                    </span>
-                    {isActive && (
-                      <div className="ml-auto relative z-10">
-                        <div className="h-2 w-2 rounded-full bg-white/40" />
-                      </div>
-                    )}
-                  </button>
-                )
-              })}
-            </nav>
-
-            {/* Bottom Section */}
-            <div className="p-3 border-t border-white/[0.06] space-y-2">
-              {/* Referral Button */}
-              <button 
-                onClick={async () => {
-                  const referralLink = `https://thalos.app/invite?ref=enterprise-${Date.now().toString(36)}`
-                  if (navigator.share) {
-                    try {
-                      await navigator.share({
-                        title: "Join Thalos for Business",
-                        text: "We use Thalos for secure enterprise agreements. Join us!",
-                        url: referralLink,
-                      })
-                    } catch {
-                      await navigator.clipboard.writeText(referralLink)
-                      alert("Referral link copied!")
-                    }
-                  } else {
-                    await navigator.clipboard.writeText(referralLink)
-                    alert("Referral link copied to clipboard!")
-                  }
-                }}
-                className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium bg-gradient-to-r from-[#3b82f6]/20 to-[#3b82f6]/10 border border-[#3b82f6]/20 text-[#3b82f6] hover:from-[#3b82f6]/30 hover:to-[#3b82f6]/20 transition-all"
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
-                Invite Partners
-              </button>
-
-              {/* Quick Stats */}
-              <div className="p-3 rounded-xl bg-gradient-to-br from-white/[0.04] to-transparent border border-white/[0.06]">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">{t("dashPage.totalBalance")}</span>
-                  <span className="text-xs text-emerald-400">+5.2%</span>
-                </div>
-                <p className="text-lg font-bold text-[#3b82f6]">$845,700<span className="text-sm font-normal text-white/40">.50</span></p>
-              </div>
-              
-              {/* Help Button */}
-              <button 
-                onClick={() => window.open("https://thalos.app/support", "_blank")}
-                className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-white/50 hover:bg-white/[0.04] hover:text-white transition-colors"
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><circle cx="12" cy="17" r=".5"/></svg>
-                Help & Support
-              </button>
-            </div>
-          </div>
-        </aside>
-
-        {sidebarOpen && <div className="fixed inset-0 z-20 bg-black/50 lg:hidden" onClick={() => setSidebarOpen(false)} />}
-
-        {/* Main content */}
-        <main className="flex-1 overflow-y-auto p-4 lg:p-8">
-          
-
-          {/* ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ ANALYTICS ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ */}
-          {activeSection === "analytics" && !isActiveSectionKybGated && activePermissions.analytics && (
-            <div className="mx-auto max-w-5xl animate-in fade-in slide-in-from-bottom-2 duration-300">
-              <h1 className="mb-6 text-2xl font-semibold text-white">{t("dashPage.enterprise")} {t("dashPage.analytics")}</h1>
-
-              <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
-                {[
-                  { l: t("dashPage.active"), v: "12" },
-                  { l: t("dashPage.totalVolume"), v: "$2.4M" },
-                  { l: t("dashPage.yieldEarned"), v: "$24K" },
-                  { l: t("dashPage.completed"), v: "48" },
-                ].map((s) => (
-                  <div key={s.l} className="rounded-xl border border-white/10 bg-[#0c1220] p-4 shadow-[0_4px_16px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.05)]">
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-white/30">{s.l}</p>
-                    <p className="mt-1 text-lg font-bold text-white">{s.v}</p>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
-                <div className="rounded-xl border border-white/10 bg-[#0c1220] p-5 shadow-[0_4px_16px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.05)]">
-                  <h3 className="mb-1 text-sm font-semibold uppercase tracking-wider text-white/40">{t("dashPage.monthlyAgreements")}</h3>
-                  <p className="mb-4 text-xs text-white/25">&nbsp;</p>
-                  <div className="h-52">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={monthlyData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                        <XAxis dataKey="month" tick={{ fill: "rgba(255,255,255,0.3)", fontSize: 12 }} axisLine={false} tickLine={false} />
-                        <YAxis tick={{ fill: "rgba(255,255,255,0.3)", fontSize: 12 }} axisLine={false} tickLine={false} />
-                        <Tooltip content={<ChartTooltip />} />
-                        <Bar dataKey="agreements" fill="#3b82f6" radius={[6, 6, 0, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
-
-                <div className="rounded-xl border border-white/10 bg-[#0c1220] p-5 shadow-[0_4px_16px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.05)]">
-                  <h3 className="mb-1 text-sm font-semibold uppercase tracking-wider text-white/40">{t("dashPage.volume")}</h3>
-                  <p className="mb-4 text-xs text-white/25">&nbsp;</p>
-                  <div className="h-52">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={monthlyData}>
-                        <defs>
-                          <linearGradient id="volGradE" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                            <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                        <XAxis dataKey="month" tick={{ fill: "rgba(255,255,255,0.3)", fontSize: 12 }} axisLine={false} tickLine={false} />
-                        <YAxis tick={{ fill: "rgba(255,255,255,0.3)", fontSize: 12 }} axisLine={false} tickLine={false} tickFormatter={(v: number) => `$${(v / 1000).toFixed(0)}k`} />
-                        <Tooltip content={<ChartTooltip />} />
-                        <Area type="monotone" dataKey="volume" stroke="#3b82f6" fill="url(#volGradE)" strokeWidth={2} />
-                      </AreaChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
-              </div>
-
-              <div className="rounded-xl border border-white/10 bg-[#0c1220] p-5 shadow-[0_4px_16px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.05)]">
-                <div className="mb-4 flex items-center justify-between">
-                  <h3 className="text-sm font-semibold uppercase tracking-wider text-white/40">{t("dashPage.recentAgreements")}</h3>
-                  <button onClick={() => setActiveSection("agreements")} className="text-xs font-semibold text-[#3b82f6] hover:underline">{t("dashPage.viewAll")}</button>
-                </div>
-                <div className="flex flex-col gap-3">
-                  {agreements.slice(0, 4).map((agr) => {
-                    const allReleased = agr.milestones.every(m => m.status === "released")
-                    const effectiveStatus = allReleased ? "released" : agr.status
-                    const st = statusConfig[effectiveStatus] || statusConfig.funded
-                    return (
-                      <button key={agr.id} onClick={() => { setViewingAgreement(agr.id); setActiveSection("agreements") }} className="flex items-center justify-between rounded-lg border border-white/[0.04] bg-white/[0.02] px-4 py-3 hover:border-white/10 transition-all text-left w-full">
-                        <div>
-                          <p className="text-sm font-medium text-white">{agr.title}</p>
-                          <p className="text-xs text-white/30">{agr.type} -- {agr.counterparty}</p>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <span className={cn("rounded-full border px-2.5 py-0.5 text-xs font-semibold", st.color)}>{t(st.labelKey)}</span>
-                          <p className="text-sm font-bold text-white">{"$"}{agr.amount}</p>
-                        </div>
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ AGREEMENTS ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ */}
-          {activeSection === "agreements" && !isActiveSectionKybGated && !viewingAgreement && (
-            <div className="mx-auto max-w-4xl animate-in fade-in slide-in-from-bottom-2 duration-300">
-              {/* Header */}
-              <div className="mb-6 flex flex-wrap items-center justify-between gap-2">
-                <h1 className="text-2xl font-semibold text-white">{t("dashPage.enterpriseAgreements")}</h1>
-                <div className="flex items-center gap-2">
-                  <Button onClick={() => setShowAiAssistant(true)}
-                    className="rounded-full bg-purple-500/10 px-5 text-sm font-semibold text-purple-400 hover:bg-purple-500/20 border border-purple-500/20">
-                    Create with AI
-                  </Button>
-                  <Button onClick={() => { setActiveSection("create"); resetWizard() }} className="rounded-full bg-[#3b82f6] px-6 text-sm font-semibold text-white hover:bg-[#2563eb] shadow-[0_4px_16px_rgba(59,130,246,0.25)]">+ {t("dashPage.newAgreement")}</Button>
-                </div>
-              </div>
-
-              {/* Wallet filter ÔÇö only renders when user has multiple linked wallets */}
-              <WalletSelector
-                selectedWallet={walletFilter}
-                onWalletChange={setWalletFilter}
-                walletsData={walletsData}
-                className="mb-6"
-              />
-
-              {agreementsError && (
-                <div className="mb-6 flex items-center gap-3 rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-3 text-sm text-red-400">
-                  <AlertTriangle className="h-4 w-4 shrink-0" />
-                  <span>{agreementsError}</span>
-                </div>
-              )}
-
-              {agreementsLoading ? (
-                <div className="flex items-center justify-center py-16 text-sm text-white/40">Loading agreements...</div>
-              ) : (
-              /* Agreements view, pre-filtered by selected wallet */
-              <AgreementsView
-                agreements={filteredAgreements}
-                onAgreementClick={(id) => setViewingAgreement(id)}
-                onOpenChat={(id) => setShowAgreementChat(id)}
-                currentUserWallet={walletAddress || undefined}
-              />
-              )}
-            </div>
-          )}
-
-          {/* ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ AGREEMENT DETAIL ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ */}
-          {activeSection === "agreements" && !isActiveSectionKybGated && viewingAgreement && (() => {
-            const agr = agreements.find(a => a.id === viewingAgreement)
-            if (!agr) return null
-            const allReleased = agr.milestones.every(m => m.status === "released")
-            const allApproved = agr.milestones.every(m => m.status === "approved" || m.status === "released")
-            const hasApproved = agr.milestones.some(m => m.status === "approved")
-            const effectiveStatus = allReleased ? "released" : agr.status
-            const st = statusConfig[effectiveStatus] || statusConfig.funded
-            const completedMs = agr.milestones.filter(m => m.status === "released").length
-            const progressPct = (completedMs / agr.milestones.length) * 100
-
-            return (
-              <div className="mx-auto max-w-4xl">
-                <button onClick={() => setViewingAgreement(null)} className="mb-6 flex items-center gap-2 text-sm text-white/40 hover:text-white transition-colors">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"/></svg>
-                  Back to Agreements
-                </button>
-
-                <div className="mb-6 rounded-2xl border border-white/10 bg-[#0c1220] p-6 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)]">
-                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                    <div>
-                      <div className="flex items-center gap-3 mb-2">
-                        <h1 className="text-2xl font-bold text-white">{agr.title}</h1>
-                        <span className={cn("rounded-full border px-3 py-1 text-xs font-semibold", st.color)}>{t(st.labelKey)}</span>
-                      </div>
-                      <div className="flex flex-wrap items-center gap-3 text-xs text-white/35">
-                        <span className="font-mono">{agr.id}</span>
-                        <span className="text-white/15">|</span>
-                        <span>{agr.type}</span>
-                        <span className="text-white/15">|</span>
-                        <span>Counterparty: {agr.counterparty}</span>
-                        <span className="text-white/15">|</span>
-                        <span>{agr.date}</span>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-3xl font-bold text-[#3b82f6]">{"$"}{agr.amount}</p>
-                      <p className="text-xs text-white/35">USDC</p>
-                    </div>
-                  </div>
-                  <div className="mt-5 flex items-center gap-3">
-                    <div className="h-2 flex-1 overflow-hidden rounded-full bg-white/[0.06]">
-                      <div className={cn("h-full rounded-full transition-all duration-700", allReleased ? "bg-emerald-400" : "bg-[#3b82f6]")} style={{ width: `${progressPct}%` }} />
-                    </div>
-                    <span className="text-sm font-semibold text-white/50">{completedMs}/{agr.milestones.length} milestones</span>
-                  </div>
-                </div>
-
-                {agr.type === "Multi Release" && agr.releaseStrategy && (
-                  <div className="mb-4 rounded-xl border border-[#3b82f6]/15 bg-[#3b82f6]/5 px-5 py-3 flex items-center gap-3">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                    <p className="text-xs text-[#3b82f6]/80">
-                      <span className="font-semibold">Release strategy: </span>
-                      {agr.releaseStrategy === "per-milestone" && "Release funds per milestone as each is approved."}
-                      {agr.releaseStrategy === "all-at-once" && "Release all funds at once when all milestones are approved."}
-                      {agr.releaseStrategy === "upon-completion" && "Release all funds together upon full completion."}
-                    </p>
-                  </div>
-                )}
-
-                <div className="flex flex-col gap-3 mb-6">
-                  {agr.milestones.map((ms, idx) => (
-                    <div key={`${agr.id}-ms-${idx}`} className={cn("rounded-2xl border p-5 backdrop-blur-md transition-all",
-                      ms.status === "released" ? "border-emerald-500/20 bg-emerald-500/5" : ms.status === "approved" ? "border-[#3b82f6]/20 bg-[#3b82f6]/5" : "border-white/[0.06] bg-[#0a0a0c]/70"
-                    )}>
-                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                        <div className="flex items-center gap-3">
-                          <span className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold",
-                            ms.status === "released" ? "bg-emerald-500/20 text-emerald-400" : ms.status === "approved" ? "bg-[#3b82f6]/20 text-[#3b82f6]" : "bg-white/10 text-white/40"
-                          )}>{idx + 1}</span>
-                          <div>
-                            <p className="text-sm font-semibold text-white">{ms.description}</p>
-                            <p className={cn("text-xs font-medium mt-0.5",
-                              ms.status === "released" ? "text-emerald-400" : ms.status === "approved" ? "text-[#3b82f6]" : "text-white/30"
-                            )}>
-                              {ms.status === "released" ? t("status.released") : ms.status === "approved" ? t("status.approvedReady") : t("status.pendingApproval")}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <p className="text-lg font-bold text-white">{"$"}{ms.amount} <span className="text-xs font-normal text-white/35">USDC</span></p>
-                          {ms.status === "pending" && !allReleased && activePermissions.approve && kybVerified && (
-                            <Button size="sm" onClick={() => {
-                              if (!isExternalWallet) return
-                              approveMilestone(agr.id, idx)
-                            }}
-                              className="rounded-full bg-white/10 px-4 text-xs font-semibold text-white hover:bg-white/20">
-                              Approve
-                            </Button>
+                        <button
+                          key={item.id}
+                          onClick={() => {
+                            setActiveSection(item.id)
+                            setSidebarOpen(false)
+                            if (item.id === "create") resetWizard()
+                          }}
+                          className={cn(
+                            "group flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-all duration-200 relative overflow-hidden",
+                            isActive
+                              ? "bg-[#3b82f6] text-white shadow-[0_4px_20px_rgba(59,130,246,0.25)]"
+                              : "text-white/60 hover:bg-white/[0.04] hover:text-white",
                           )}
-                          {ms.status === "approved" && agr.releaseStrategy === "per-milestone" && activePermissions.release && kybVerified && (
-                            <Button size="sm" onClick={() => {
-                              if (!isExternalWallet) return
-                              releaseMilestone(agr.id, idx)
-                            }}
-                              className="rounded-full bg-[#3b82f6] px-4 text-xs font-semibold text-white hover:bg-[#2563eb] shadow-[0_2px_8px_rgba(59,130,246,0.2)]">
-                              Release Funds
-                            </Button>
+                        >
+                          {isActive && (
+                            <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent" />
                           )}
-                          {ms.status !== "released" && !disputedMs.has(`${agr.id}-${idx}`) && (
-                            <Button 
-                              size="sm" 
-                              onClick={() => {
-                                if (!isExternalWallet) return
-                                setShowDisputeConfirm({ agrId: agr.id, msIdx: idx })
-                              }}
-                              className="rounded-full bg-red-500/10 px-3 text-xs font-semibold text-red-400 hover:bg-red-500/20 border border-red-500/20"
-                            >
-                              <AlertTriangle className="h-3 w-3 mr-1" />
-                              {t("dispute.raiseDispute")}
-                            </Button>
+                          <span
+                            className={cn(
+                              "relative z-10 transition-transform duration-200",
+                              isActive && "scale-110",
+                            )}
+                          >
+                            {item.icon}
+                          </span>
+                          <span className="relative z-10">
+                            {item.id === "verification"
+                              ? "Verification"
+                              : t(
+                                  `dashPage.${item.id === "create" ? "newAgreement" : item.id === "templates" ? "templates" : item.id}`,
+                                )}
+                          </span>
+                          {isActive && (
+                            <div className="ml-auto relative z-10">
+                              <div className="h-2 w-2 rounded-full bg-white/40" />
+                            </div>
                           )}
-                          {disputedMs.has(`${agr.id}-${idx}`) && (
-                            <span className="text-xs text-red-400 font-medium">{t("dispute.disputed")}</span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                        </button>
+                      )
+                    })}
+                </nav>
 
-                {!allReleased && (activePermissions.approve || activePermissions.release) && isExternalWallet && (
-                  <div className="rounded-2xl border border-white/10 bg-[#0c1220] p-6 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)]">
-                    <h3 className="mb-4 text-sm font-bold uppercase tracking-wider text-white/40">Release Actions</h3>
-                    <div className="flex flex-wrap gap-3">
-                      {agr.type === "Single Release" && agr.milestones[0]?.status === "pending" && activePermissions.approve && kybVerified && (
-                        <Button onClick={() => {
-                          if (!isExternalWallet) return
-                          approveMilestone(agr.id, 0)
-                        }}
-                          className="rounded-full bg-white/10 px-6 text-sm font-semibold text-white hover:bg-white/20">
-                          Approve Agreement
-                        </Button>
-                      )}
-                      {agr.type === "Single Release" && agr.milestones[0]?.status === "approved" && activePermissions.release && kybVerified && (
-                        <Button onClick={() => {
-                          if (!isExternalWallet) return
-                          releaseMilestone(agr.id, 0)
-                        }}
-                          className="rounded-full bg-[#3b82f6] px-6 text-sm font-semibold text-white hover:bg-[#2563eb] shadow-[0_4px_16px_rgba(59,130,246,0.25)]">
-                          Release All Funds
-                        </Button>
-                      )}
-                      {agr.type === "Multi Release" && hasApproved && activePermissions.release && kybVerified && (
-                        <Button onClick={() => {
-                          if (!isExternalWallet) return
-                          releaseAllApproved(agr.id)
-                        }}
-                          className="rounded-full bg-[#3b82f6] px-6 text-sm font-semibold text-white hover:bg-[#2563eb] shadow-[0_4px_16px_rgba(59,130,246,0.25)]">
-                          Release All Approved
-                        </Button>
-                      )}
-                      {agr.type === "Multi Release" && !allApproved && activePermissions.approve && activePermissions.release && kybVerified && (
-                        <Button onClick={() => {
-                          if (!isExternalWallet) return
-                          approveAndReleaseAll(agr.id)
-                        }}
-                          className="rounded-full bg-emerald-600 px-6 text-sm font-semibold text-white hover:bg-emerald-700 shadow-[0_4px_16px_rgba(16,185,129,0.2)]">
-                          Approve & Release All
-                        </Button>
-                      )}
-                    </div>
-                    <p className="mt-3 text-xs text-white/25">Receiver wallet: <span className="font-mono">{agr.receiver.substring(0, 8)}...{agr.receiver.substring(agr.receiver.length - 6)}</span></p>
-                  </div>
-                )}
-                {!allReleased && (activePermissions.approve || activePermissions.release) && !isExternalWallet && (
-                  <WalletPrompt
-                    message="Connect and verify a wallet to approve or release funds on this agreement."
-                  />
-                )}
-
-                {allReleased && (
-                  <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-6 text-center">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2" className="mx-auto mb-3"><polyline points="20 6 9 17 4 12"/></svg>
-                    <p className="text-lg font-bold text-emerald-400">All Funds Released</p>
-                    <p className="mt-1 text-sm text-white/40">This agreement has been fully completed and all funds sent to the receiver.</p>
-                  </div>
-                )}
-              </div>
-            )
-          })()}
-
-          {/* Dispute Confirmation Modal */}
-          {showDisputeConfirm && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-              <div className="mx-4 max-w-md rounded-2xl border border-white/10 bg-[#0c1220] p-6 shadow-2xl">
-                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-500/10 mx-auto">
-                  <AlertTriangle className="h-6 w-6 text-red-400" />
-                </div>
-                <h3 className="text-center text-lg font-bold text-white mb-2">{t("dispute.confirmTitle")}</h3>
-                <p className="text-center text-sm text-white/60 mb-6">{t("dispute.confirmDesc")}</p>
-                <div className="flex gap-3">
-                  <Button 
-                    variant="outline" 
-                    className="flex-1 rounded-lg border-white/10 text-white hover:bg-white/5"
-                    onClick={() => setShowDisputeConfirm(null)}
-                  >
-                    {t("dispute.cancel")}
-                  </Button>
-                  <Button 
-                    className="flex-1 rounded-lg bg-red-500 text-white hover:bg-red-600"
-                    onClick={() => {
-                      if (showDisputeConfirm) {
-                        setDisputedMs(prev => new Set(prev).add(`${showDisputeConfirm.agrId}-${showDisputeConfirm.msIdx}`))
-                        setShowDisputeConfirm(null)
+                {/* Bottom Section */}
+                <div className="p-3 border-t border-white/[0.06] space-y-2">
+                  {/* Referral Button */}
+                  <button
+                    onClick={async () => {
+                      const referralLink = `https://thalos.app/invite?ref=enterprise-${Date.now().toString(36)}`
+                      if (navigator.share) {
+                        try {
+                          await navigator.share({
+                            title: "Join Thalos for Business",
+                            text: "We use Thalos for secure enterprise agreements. Join us!",
+                            url: referralLink,
+                          })
+                        } catch {
+                          await navigator.clipboard.writeText(referralLink)
+                          alert("Referral link copied!")
+                        }
+                      } else {
+                        await navigator.clipboard.writeText(referralLink)
+                        alert("Referral link copied to clipboard!")
                       }
                     }}
+                    className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium bg-gradient-to-r from-[#3b82f6]/20 to-[#3b82f6]/10 border border-[#3b82f6]/20 text-[#3b82f6] hover:from-[#3b82f6]/30 hover:to-[#3b82f6]/20 transition-all"
                   >
-                    {t("dispute.confirm")}
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                    >
+                      <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" />
+                      <polyline points="16 6 12 2 8 6" />
+                      <line x1="12" y1="2" x2="12" y2="15" />
+                    </svg>
+                    Invite Partners
+                  </button>
 
-          {/* ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ TEMPLATES ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ */}
-          {activeSection === "templates" && !isActiveSectionKybGated && activePermissions.templates && (
-            <div className="mx-auto max-w-4xl animate-in fade-in slide-in-from-bottom-2 duration-300">
-              <div className="mb-2 flex items-center justify-between">
-                <div>
-                  <h1 className="text-2xl font-semibold text-white">{t("dashPage.templates")}</h1>
-                  <p className="mt-1 text-sm text-white/35">{t("dashPage.templatesSub")}</p>
-                </div>
-                <Button onClick={() => { resetWizard(); setShowSaveTemplate(true); setEditingTemplate(null); setTemplateName("") }}
-                  className="rounded-full bg-[#3b82f6] px-6 text-sm font-semibold text-white hover:bg-[#2563eb] shadow-[0_4px_16px_rgba(59,130,246,0.25)]">
-                  + {t("dashPage.newTemplate")}
-                </Button>
-              </div>
-
-              {/* Save / Edit template modal */}
-              {showSaveTemplate && (
-                <div className="mb-6 mt-4 rounded-2xl border border-[#3b82f6]/20 bg-[#3b82f6]/[0.04] p-6">
-                  <h3 className="text-lg font-semibold text-white mb-4">{editingTemplate ? t("dashPage.editTemplate") : t("dashPage.saveAsTemplate")}</h3>
-                  <div className="flex flex-col gap-4">
-                    <FormInput label={t("dashPage.templateName")} value={templateName} onChange={setTemplateName} placeholder={t("dashPage.templateNamePlaceholder")} required />
-                    <FormInput label={t("wizard.titleLabel")} value={title} onChange={setTitle} placeholder={t("wizard.titlePlaceholder")} required />
-                    <FormTextarea label={t("wizard.descLabel")} value={description} onChange={setDescription} placeholder={t("wizard.agreementDesc")} rows={3} />
-                    <div className="flex items-center gap-3">
-                      <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{t("wizard.escrowType")}</p>
-                      <div className="flex items-center gap-2">
-                        {(["single", "multi"] as const).map(et => (
-                          <button key={et} onClick={() => setEscrowType(et)}
-                            className={cn("rounded-lg px-3 py-1.5 text-xs font-semibold transition-all",
-                              escrowType === et ? "bg-[#3b82f6]/15 text-[#3b82f6] border border-[#3b82f6]/20" : "text-white/40 border border-transparent hover:bg-white/[0.04]"
-                            )}>
-                            {et === "single" ? t("wizard.oneTimePayment") : t("wizard.milestoneBased")}
-                          </button>
-                        ))}
-                      </div>
+                  {/* Quick Stats */}
+                  <div className="p-3 rounded-xl bg-gradient-to-br from-white/[0.04] to-transparent border border-white/[0.06]">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">
+                        {t("dashPage.totalBalance")}
+                      </span>
+                      <span className="text-xs text-emerald-400">+5.2%</span>
                     </div>
-                    {escrowType === "multi" && (
-                      <div className="flex flex-col gap-2">
-                        <div className="flex items-center justify-between">
-                          <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{t("wizard.paymentStages")}</p>
-                          <button onClick={addMilestone} className="text-xs font-semibold text-[#3b82f6] hover:underline">{t("wizard.addStage")}</button>
-                        </div>
-                        {milestones.map((m, i) => (
-                          <div key={i} className="flex items-center gap-2">
-                            <input value={m.description} onChange={(e) => updateMilestone(i, "description", e.target.value)} placeholder={`${t("wizard.stageDesc")}`}
-                              className="flex-1 h-9 rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-[#3b82f6]/40" />
-                            <input value={m.amount} onChange={(e) => updateMilestone(i, "amount", e.target.value)} placeholder={t("wizard.amount")} type="number"
-                              className="w-28 h-9 rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-[#3b82f6]/40" />
-                            {milestones.length > 1 && (
-                              <button onClick={() => removeMilestone(i)} className="text-white/20 hover:text-red-400 transition-colors">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                              </button>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    <div className="flex items-center gap-3 pt-2">
-                      <Button onClick={() => void saveAsTemplate()} disabled={!templateName.trim() && !title.trim()}
-                        className="rounded-full bg-[#3b82f6] px-6 text-sm font-semibold text-white hover:bg-[#2563eb] disabled:opacity-30">
-                        {t("dashPage.saveTemplate")}
-                      </Button>
-                      <Button variant="ghost" onClick={() => { setShowSaveTemplate(false); setEditingTemplate(null) }}
-                        className="rounded-full text-sm text-white/40 hover:text-white">
-                        {t("dashPage.cancel")}
-                      </Button>
-                    </div>
+                    <p className="text-lg font-bold text-[#3b82f6]">
+                      $845,700<span className="text-sm font-normal text-white/40">.50</span>
+                    </p>
                   </div>
-                </div>
-              )}
 
-              {/* Template cards */}
-              {templatesLoading ? (
-                <div className="mt-6 flex items-center justify-center py-16">
-                  <p className="text-sm text-white/40">Loading templatesÔÇª</p>
+                  {/* Help Button */}
+                  <button
+                    onClick={() => window.open("https://thalos.app/support", "_blank")}
+                    className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-white/50 hover:bg-white/[0.04] hover:text-white transition-colors"
+                  >
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                    >
+                      <circle cx="12" cy="12" r="10" />
+                      <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3" />
+                      <circle cx="12" cy="17" r=".5" />
+                    </svg>
+                    Help & Support
+                  </button>
                 </div>
-              ) : templates.length === 0 && !showSaveTemplate ? (
-                <div className="mt-6 flex flex-col items-center justify-center rounded-2xl border border-white/10 bg-[#0c1220] py-16 px-6 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)] text-center">
-                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" className="text-white/15 mb-4"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
-                  <p className="text-sm font-medium text-white/40">{t("dashPage.noTemplates")}</p>
-                  <p className="mt-1 text-xs text-white/20">{t("dashPage.noTemplatesDesc")}</p>
-                </div>
-              ) : (
-                <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  {templates.map((tpl) => (
-                    <div key={tpl.id} className="group rounded-2xl border border-white/10 bg-[#0c1220] p-5 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)] transition-all hover:border-white/20">
-                      <div className="flex items-start justify-between mb-3">
-                        <div>
-                          <p className="text-base font-semibold text-white">{tpl.name}</p>
-                          <p className="mt-0.5 text-xs text-white/30">{tpl.title}</p>
-                        </div>
-                        <span className={cn("rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase",
-                          tpl.escrowType === "single" ? "border-[#3b82f6]/20 bg-[#3b82f6]/10 text-[#3b82f6]" : "border-[#f0b400]/20 bg-[#f0b400]/10 text-[#f0b400]"
-                        )}>
-                          {tpl.escrowType === "single" ? t("wizard.oneTimePayment") : t("wizard.milestoneBased")}
-                        </span>
-                      </div>
-                      <p className="text-xs text-white/25 line-clamp-2 mb-4">{tpl.description}</p>
-                      {tpl.milestones.length > 0 && tpl.escrowType === "multi" && (
-                        <div className="mb-4 flex flex-wrap gap-1.5">
-                          {tpl.milestones.slice(0, 3).map((m, i) => (
-                            <span key={i} className="rounded-md bg-white/[0.04] px-2 py-0.5 text-[10px] text-white/35">{m.description || `Stage ${i + 1}`}</span>
-                          ))}
-                          {tpl.milestones.length > 3 && <span className="rounded-md bg-white/[0.04] px-2 py-0.5 text-[10px] text-white/35">+{tpl.milestones.length - 3}</span>}
-                        </div>
-                      )}
-                      <div className="flex items-center gap-2">
-                        <Button onClick={() => useTemplate(tpl)} className="flex-1 rounded-full bg-[#3b82f6]/10 text-xs font-semibold text-[#3b82f6] hover:bg-[#3b82f6]/20 border border-[#3b82f6]/15 h-8">
-                          {t("dashPage.useTemplate")}
-                        </Button>
-                        <button onClick={() => startEditTemplate(tpl)} className="rounded-full p-2 text-white/20 hover:text-white/60 hover:bg-white/[0.04] transition-all" title={t("dashPage.editTemplate")}>
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                        </button>
-                        <button
-                          onClick={() => deleteTemplate(tpl.id)}
-                          disabled={deletingTemplateId === tpl.id}
-                          className="rounded-full p-2 text-white/20 hover:text-red-400 hover:bg-red-400/[0.06] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                          title={t("dashPage.deleteTemplate")}
+              </div>
+            </aside>
+
+            {sidebarOpen && (
+              <div
+                className="fixed inset-0 z-20 bg-black/50 lg:hidden"
+                onClick={() => setSidebarOpen(false)}
+              />
+            )}
+
+            {/* Main content */}
+            <main className="flex-1 overflow-y-auto p-4 lg:p-8">
+              {/* ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ ANALYTICS ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ */}
+              {activeSection === "analytics" &&
+                !isActiveSectionKybGated &&
+                activePermissions.analytics && (
+                  <div className="mx-auto max-w-5xl animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    <h1 className="mb-6 text-2xl font-semibold text-white">
+                      {t("dashPage.enterprise")} {t("dashPage.analytics")}
+                    </h1>
+
+                    <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+                      {[
+                        { l: t("dashPage.active"), v: "12" },
+                        { l: t("dashPage.totalVolume"), v: "$2.4M" },
+                        { l: t("dashPage.yieldEarned"), v: "$24K" },
+                        { l: t("dashPage.completed"), v: "48" },
+                      ].map((s) => (
+                        <div
+                          key={s.l}
+                          className="rounded-xl border border-white/10 bg-[#0c1220] p-4 shadow-[0_4px_16px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.05)]"
                         >
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-white/30">
+                            {s.l}
+                          </p>
+                          <p className="mt-1 text-lg font-bold text-white">{s.v}</p>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
+                      <div className="rounded-xl border border-white/10 bg-[#0c1220] p-5 shadow-[0_4px_16px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.05)]">
+                        <h3 className="mb-1 text-sm font-semibold uppercase tracking-wider text-white/40">
+                          {t("dashPage.monthlyAgreements")}
+                        </h3>
+                        <p className="mb-4 text-xs text-white/25">&nbsp;</p>
+                        <div className="h-52">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={monthlyData}>
+                              <CartesianGrid
+                                strokeDasharray="3 3"
+                                stroke="rgba(255,255,255,0.05)"
+                              />
+                              <XAxis
+                                dataKey="month"
+                                tick={{ fill: "rgba(255,255,255,0.3)", fontSize: 12 }}
+                                axisLine={false}
+                                tickLine={false}
+                              />
+                              <YAxis
+                                tick={{ fill: "rgba(255,255,255,0.3)", fontSize: 12 }}
+                                axisLine={false}
+                                tickLine={false}
+                              />
+                              <Tooltip content={<ChartTooltip />} />
+                              <Bar dataKey="agreements" fill="#3b82f6" radius={[6, 6, 0, 0]} />
+                            </BarChart>
+                          </ResponsiveContainer>
+                        </div>
+                      </div>
+
+                      <div className="rounded-xl border border-white/10 bg-[#0c1220] p-5 shadow-[0_4px_16px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.05)]">
+                        <h3 className="mb-1 text-sm font-semibold uppercase tracking-wider text-white/40">
+                          {t("dashPage.volume")}
+                        </h3>
+                        <p className="mb-4 text-xs text-white/25">&nbsp;</p>
+                        <div className="h-52">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <AreaChart data={monthlyData}>
+                              <defs>
+                                <linearGradient id="volGradE" x1="0" y1="0" x2="0" y2="1">
+                                  <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
+                                  <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                                </linearGradient>
+                              </defs>
+                              <CartesianGrid
+                                strokeDasharray="3 3"
+                                stroke="rgba(255,255,255,0.05)"
+                              />
+                              <XAxis
+                                dataKey="month"
+                                tick={{ fill: "rgba(255,255,255,0.3)", fontSize: 12 }}
+                                axisLine={false}
+                                tickLine={false}
+                              />
+                              <YAxis
+                                tick={{ fill: "rgba(255,255,255,0.3)", fontSize: 12 }}
+                                axisLine={false}
+                                tickLine={false}
+                                tickFormatter={(v: number) => `$${(v / 1000).toFixed(0)}k`}
+                              />
+                              <Tooltip content={<ChartTooltip />} />
+                              <Area
+                                type="monotone"
+                                dataKey="volume"
+                                stroke="#3b82f6"
+                                fill="url(#volGradE)"
+                                strokeWidth={2}
+                              />
+                            </AreaChart>
+                          </ResponsiveContainer>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="rounded-xl border border-white/10 bg-[#0c1220] p-5 shadow-[0_4px_16px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.05)]">
+                      <div className="mb-4 flex items-center justify-between">
+                        <h3 className="text-sm font-semibold uppercase tracking-wider text-white/40">
+                          {t("dashPage.recentAgreements")}
+                        </h3>
+                        <button
+                          onClick={() => setActiveSection("agreements")}
+                          className="text-xs font-semibold text-[#3b82f6] hover:underline"
+                        >
+                          {t("dashPage.viewAll")}
                         </button>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ WALLETS ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ */}
-          {activeSection === "wallets" && !isActiveSectionKybGated && activePermissions.wallets && (
-            <div className="mx-auto max-w-4xl animate-in fade-in slide-in-from-bottom-2 duration-300">
-              <h1 className="mb-6 text-2xl font-semibold text-white">Enterprise Wallets</h1>
-              <div className="flex flex-col gap-4">
-                {connectedWallets.map((w) => (
-                  <div key={w.value} className="rounded-2xl border border-white/10 bg-[#0c1220] p-6 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)] hover:border-white/15 transition-all">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#3b82f6]/10 text-[#3b82f6]">
-                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg>
-                        </div>
-                        <div>
-                          <p className="text-base font-semibold text-white">{t(w.labelKey)}</p>
-                          <p className="text-xs text-white/35 font-mono">{w.short}</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-xl font-bold text-white">{w.balance} <span className="text-xs font-normal text-white/35">USDC</span></p>
-                        <p className="text-xs text-emerald-400">Active</p>
-                      </div>
-                    </div>
-                    <div className="mt-4 flex gap-2">
-                      <Button variant="outline" size="sm" className="rounded-full border-white/10 bg-white/5 text-xs text-white/60 hover:bg-white/10 hover:text-white">Copy Address</Button>
-                      <Button variant="outline" size="sm" className="rounded-full border-white/10 bg-white/5 text-xs text-white/60 hover:bg-white/10 hover:text-white">View on Explorer</Button>
-                    </div>
-                  </div>
-                ))}
-                <button
-                  onClick={() => openWalletModal()}
-                  className="flex items-center justify-center gap-3 rounded-2xl border border-dashed p-8 transition-all hover:border-[#3b82f6]/40"
-                  style={{
-                    background: isLight ? "rgba(15,23,42,0.04)" : "rgba(12,18,32,0.6)",
-                    borderColor: isLight ? "rgba(15,23,42,0.2)" : "rgba(255,255,255,0.1)",
-                    color: isLight ? "#374151" : "rgba(255,255,255,0.7)",
-                  }}
-                >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                  <span className="text-sm font-medium">{t("dashPage.connectWallet")}</span>
-                </button>
-              </div>
-
-              {/* Agreements grouped by wallet ÔÇö real data from API */}
-              <div className="mt-8">
-                <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-white/40">
-                  Agreements by wallet
-                </h2>
-                <WalletAgreementsPanel
-                  onAgreementClick={(id) => {
-                    setViewingAgreement(id)
-                    setActiveSection("agreements")
-                  }}
-                />
-              </div>
-            </div>
-          )}
-
-          {/* ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ CREATE AGREEMENT ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ */}
-          {activeSection === "create" && !isActiveSectionKybGated && activePermissions.create && (
-            <div className="mx-auto max-w-4xl animate-in fade-in slide-in-from-bottom-2 duration-300">
-              {!kybVerified ? (
-                <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-8 text-center">
-                  <h2 className="text-xl font-bold text-white">KYB verification required</h2>
-                  <p className="mx-auto mt-2 max-w-lg text-sm text-white/50">Enterprise agreement creation is blocked until your business verification is approved.</p>
-                  <Button onClick={handleStartKybSession} disabled={kybLoading || !canContinueKyb} className="mt-5 rounded-full bg-[#f0b400] text-background hover:bg-[#d4a000]">Continue KYB verification</Button>
-                </div>
-              ) : !isExternalWallet && !submitted ? (
-                <div className="pt-8">
-                  <WalletPrompt
-                    message="Connect and verify a wallet to operate escrow agreements on Thalos."
-                  />
-                </div>
-              ) : (
-              <>
-              <div className="mb-6 flex flex-wrap items-center justify-between gap-2">
-                <h1 className="text-2xl font-semibold text-white">New Agreement</h1>
-                <div className="flex items-center gap-2">
-                  <Button onClick={() => setShowAiAssistant(true)}
-                    className="rounded-full bg-purple-500/10 px-5 text-sm font-semibold text-purple-400 hover:bg-purple-500/20 border border-purple-500/20">
-                    Create with AI
-                  </Button>
-                  <Button onClick={() => { setActiveSection("agreements"); resetWizard() }} className="rounded-full bg-white/10 px-6 text-sm font-semibold text-white/70 hover:bg-white/15 hover:text-white">View Agreements</Button>
-                </div>
-              </div>
-
-              {!submitted && (
-                <div className="mb-8">
-                  <div className="mb-3 flex items-center justify-between">
-                    {wizardStepKeys.map((key, i) => (
-                      <button key={key} onClick={() => i <= step && setStep(i)}
-                        className={cn("flex items-center gap-1.5 text-xs font-semibold transition-all sm:text-sm",
-                          i === step ? "text-[#f0b400]" : i < step ? "text-[#f0b400]/60 cursor-pointer" : "text-muted-foreground/40")}>
-                        <span className={cn("flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold transition-all sm:h-7 sm:w-7 sm:text-xs",
-                          i === step ? "bg-[#f0b400] text-background" : i < step ? "bg-[#f0b400]/15 text-[#f0b400]" : "bg-secondary/40 text-muted-foreground/40")}>
-                          {i < step ? <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg> : i + 1}
-                        </span>
-                        <span className="hidden md:inline">{t(key)}</span>
-                      </button>
-                    ))}
-                  </div>
-                  <div className="h-1 w-full overflow-hidden rounded-full bg-secondary/30">
-                    <div className="h-full bg-[#f0b400] transition-all duration-500 ease-out" style={{ width: `${(step / (wizardStepKeys.length - 1)) * 100}%` }} />
-                  </div>
-                </div>
-              )}
-
-              {submitted ? (
-                <div className="flex flex-col items-center gap-6 rounded-2xl border border-white/10 bg-[#0c1220] p-10 text-center shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)]">
-                  <div className="flex h-20 w-20 items-center justify-center rounded-full bg-emerald-500/10">
-                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg>
-                  </div>
-                  <div>
-                    <h2 className="text-2xl font-bold text-white">{t("wizard.agreementCreated")}</h2>
-                    <p className="mt-2 text-sm text-white/40">{t("wizard.agreementCreatedDesc")}</p>
-                  </div>
-                  <div className="flex flex-col items-center gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] p-6">
-                    <p className="text-xs font-medium uppercase tracking-wider text-white/40">{t("wizard.scanQR")}</p>
-                    <Image src={qrUrl} alt="QR Code" width={160} height={160} className="rounded-lg" unoptimized />
-                  </div>
-                  <div className="flex gap-3">
-                    <Button variant="outline" onClick={copyJson} className="rounded-full border-white/10 bg-white/5 text-sm text-white/60 hover:bg-white/10 hover:text-white">{copiedJson ? t("wizard.copied") : t("wizard.copyDetails")}</Button>
-                    <Button variant="outline" onClick={() => { setTemplateName(title); setShowSaveTemplate(true); setEditingTemplate(null); setActiveSection("templates") }}
-                      className="rounded-full border-[#3b82f6]/20 bg-[#3b82f6]/5 text-sm text-[#3b82f6] hover:bg-[#3b82f6]/10">
-                      {t("dashPage.saveAsTemplate")}
-                    </Button>
-                    <Button onClick={() => { resetWizard(); setActiveSection("agreements") }} className="rounded-full bg-[#f0b400] text-background font-semibold hover:bg-[#d4a000] shadow-[0_4px_16px_rgba(240,180,0,0.25)]">{t("wizard.viewAgreements")}</Button>
-                  </div>
-                </div>
-              ) : (
-                <div className="rounded-2xl border border-white/10 bg-[#0c1220] p-8 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)]">
-
-                  {step === 0 && (
-                    <div className="flex flex-col gap-6">
-                      <div><h3 className="text-lg font-semibold text-white sm:text-xl">{t("wizard.howPayment")}</h3><p className="mt-1 text-sm text-white/35">{t("wizard.chooseFunds")}</p></div>
-                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                        {([
-                          { id: "single" as const, label: t("wizard.oneTimePayment"), desc: t("wizard.oneTimeDesc"), icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><path d="M16 8l-8 8M8 8h8v8"/></svg> },
-                          { id: "multi" as const, label: t("wizard.milestoneBased"), desc: t("wizard.milestoneBasedDesc"), icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg> },
-                        ]).map((opt) => (
-                          <button key={opt.id} onClick={() => { setEscrowType(opt.id); if (opt.id === "single") setMilestones([{ description: "Full delivery", amount: "" }]) }}
-                            className={cn("flex flex-col gap-3 rounded-xl border p-6 text-left transition-all",
-                              escrowType === opt.id ? "border-[#f0b400]/40 bg-[#f0b400]/5" : "border-white/[0.06] bg-white/[0.02] hover:border-white/15")}>
-                            <div className={cn("flex h-12 w-12 items-center justify-center rounded-xl", escrowType === opt.id ? "bg-[#f0b400]/10 text-[#f0b400]" : "bg-white/5 text-white/40")}>{opt.icon}</div>
-                            <div><p className="text-sm font-semibold text-white">{opt.label}</p><p className="mt-0.5 text-xs text-white/35">{opt.desc}</p></div>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {step === 1 && (
-                    <div className="flex flex-col gap-6">
-                      <div><h3 className="text-lg font-semibold text-white sm:text-xl">{t("wizard.whatAgreement")}</h3><p className="mt-1 text-sm text-white/35">{t("wizard.selectCategory")}</p></div>
-                      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                        {useCases.map((uc) => (
-                          <button key={uc.id} onClick={() => { setUseCase(uc.id); setGuidePrefilled(false) }}
-                            className={cn("flex items-center gap-3 rounded-xl border p-4 text-left transition-all",
-                              useCase === uc.id ? "border-[#f0b400]/40 bg-[#f0b400]/5" : "border-white/[0.06] bg-white/[0.02] hover:border-white/15")}>
-                            <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-lg", useCase === uc.id ? "bg-[#f0b400]/10 text-[#f0b400]" : "bg-white/5 text-white/40")}><UseCaseIcon icon={uc.icon} /></div>
-                            <span className="text-sm font-medium text-white">{t(uc.labelKey)}</span>
-                          </button>
-                        ))}
-                      </div>
-                      {useCase === "other" && <FormInput label={t("wizard.describeUseCase")} value={customUseCase} onChange={(v) => { setCustomUseCase(v); setGuidePrefilled(false) }} placeholder={t("wizard.useCasePlaceholder")} required />}
-                    </div>
-                  )}
-
-                  {step === 2 && (
-                    <div className="flex flex-col gap-5">
-                      <div><h3 className="text-lg font-semibold text-white sm:text-xl">{t("wizard.agreementInfo")}</h3><p className="mt-1 text-sm text-white/35">{useCase && useCase !== "other" ? t("wizard.preFilled") : t("wizard.describeAgreement")}</p></div>
-                      {useCase && useCase !== "other" && (
-                        <div className="flex items-start gap-3 rounded-xl border border-[#f0b400]/20 bg-[#f0b400]/5 p-4">
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f0b400" strokeWidth="1.5" className="mt-0.5 shrink-0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                          <p className="text-xs text-[#f0b400]/80">{t("wizard.basedOn")} <span className="font-semibold">{t(useCases.find((u) => u.id === useCase)?.labelKey || "")}</span></p>
-                        </div>
-                      )}
-                      <FormInput label={t("wizard.titleLabel")} value={title} onChange={setTitle} placeholder={t("wizard.titlePlaceholder")} required />
-                      <FormTextarea label={t("wizard.descLabel")} value={description} onChange={setDescription} placeholder={t("wizard.agreementDesc")} rows={4} />
-                    </div>
-                  )}
-
-                  {step === 3 && (
-                    <div className="flex flex-col gap-6">
-                      <div><h3 className="text-lg font-semibold text-white sm:text-xl">{t("wizard.paymentDetails")}</h3><p className="mt-1 text-sm text-white/35">{t("wizard.selectWalletInfo")}</p></div>
-                      <FormSelect label={t("wizard.yourWallet")} value={selectedWallet} onChange={setSelectedWallet} options={connectedWallets.map(w => ({ value: w.value, label: `${t(w.labelKey)} (${w.short})` }))} info={t("wizard.connectedWallet")} required />
-                      
-                      {/* Counterparty Selection with Contact Selector */}
-                      <div className="flex flex-col gap-2">
-                        <label className="text-xs font-medium uppercase tracking-wider text-white/50">{t("wizard.releaseSignerWallet")} <span className="text-rose-400">*</span></label>
-                        <ContactSelector
-                          value={signerWallet}
-                          onChange={(wallet) => setSignerWallet(wallet)}
-                          placeholder="Select contact or enter wallet address..."
-                        />
-                        <p className="text-[11px] text-white/30">{t("wizard.whoReleases")}</p>
-                      </div>
-                      {escrowType === "single" ? (
-                        <FormInput label={t("wizard.amount")} value={milestones[0]?.amount || ""} onChange={(v) => updateMilestone(0, "amount", v)} placeholder="50000" type="number" info="USDC" required />
-                      ) : (
-                        <div className="flex flex-col gap-3">
-                          <div className="flex items-center justify-between">
-                            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{t("wizard.paymentStages")}</p>
-                            <button onClick={addMilestone} className="text-xs font-semibold text-[#f0b400] hover:underline">{t("wizard.addStage")}</button>
-                          </div>
-                          {milestones.map((m, i) => (
-                            <div key={i} draggable onDragStart={() => handleDragStart(i)} onDragEnter={() => handleDragEnter(i)} onDragEnd={handleDragEnd} onDragOver={(e) => e.preventDefault()}
-                              className="flex flex-col gap-2 rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 sm:flex-row sm:items-center sm:gap-3 cursor-grab">
-                              <div className="flex items-center gap-3 sm:gap-2">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0 text-white/20"><circle cx="9" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="19" r="1"/></svg>
-                                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#f0b400]/10 text-xs font-bold text-[#f0b400]">{i + 1}</span>
+                      <div className="flex flex-col gap-3">
+                        {agreements.slice(0, 4).map((agr) => {
+                          const allReleased = agr.milestones.every((m) => m.status === "released")
+                          const effectiveStatus = allReleased ? "released" : agr.status
+                          const st = statusConfig[effectiveStatus] || statusConfig.funded
+                          return (
+                            <button
+                              key={agr.id}
+                              onClick={() => {
+                                setViewingAgreement(agr.id)
+                                setActiveSection("agreements")
+                              }}
+                              className="flex items-center justify-between rounded-lg border border-white/[0.04] bg-white/[0.02] px-4 py-3 hover:border-white/10 transition-all text-left w-full"
+                            >
+                              <div>
+                                <p className="text-sm font-medium text-white">{agr.title}</p>
+                                <p className="text-xs text-white/30">
+                                  {agr.type} -- {agr.counterparty}
+                                </p>
                               </div>
-                              <input value={m.description} onChange={(e) => updateMilestone(i, "description", e.target.value)} placeholder={t("wizard.stageDesc")} className="flex-1 bg-transparent text-sm text-white placeholder:text-white/20 focus:outline-none" />
-                              <input value={m.amount} onChange={(e) => updateMilestone(i, "amount", e.target.value)} placeholder={t("wizard.amount")} type="number" className="w-28 rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-2 text-sm text-white placeholder:text-white/15 focus:border-[#f0b400]/40 focus:outline-none" />
-                              {milestones.length > 1 && <button onClick={() => removeMilestone(i)} className="text-white/20 hover:text-red-400"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg></button>}
-                            </div>
-                          ))}
-                          <div className="flex items-center justify-between rounded-xl bg-white/[0.03] px-4 py-3"><span className="text-xs text-white/30">{t("wizard.total")}</span><span className="text-sm font-bold text-white">{totalAmount.toFixed(2)} USDC</span></div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {step === 4 && (
-                    <div className="flex flex-col gap-5">
-                      <div><h3 className="text-lg font-semibold text-white sm:text-xl">{t("wizard.reviewAndSend")}</h3><p className="mt-1 text-sm text-white/35">{t("wizard.confirmDetails")}</p></div>
-
-                      {escrowType === "single" && (
-                        <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 flex items-center gap-3">
-                          <AlertTriangle className="h-5 w-5 text-amber-500 shrink-0" />
-                          <p className="text-sm text-amber-200/80">{t("wizard.quickWarning")}</p>
-                        </div>
-                      )}
-
-                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                        <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5">
-                          <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-white/25">{t("wizard.agreement")}</p>
-                          <p className="text-sm font-semibold text-white">{title || t("wizard.untitled")}</p>
-                          <p className="mt-1 text-xs text-white/35 line-clamp-2">{description || t("wizard.noDescription")}</p>
-                        </div>
-                        <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5">
-                          <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-white/25">{t("wizard.protectedFunds")}</p>
-                          <p className="text-3xl font-bold text-[#f0b400]">{totalAmount.toFixed(2)} <span className="text-sm font-normal text-white/35">USDC</span></p>
-                          <p className="mt-2 text-xs text-white/30">{t("wizard.platformFeeLabel")} {platformFee} USDC (1%)</p>
-                        </div>
-                      </div>
-                      <div className="rounded-xl border border-[#f0b400]/15 bg-[#f0b400]/5 p-5">
-                        <div className="mb-4 flex items-center gap-2">
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f0b400" strokeWidth="1.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-                          <p className="text-sm font-semibold text-[#f0b400]">{t("wizard.emailNotifications")}</p>
-                        </div>
-                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                          <FormInput label={t("wizard.releaseSignerEmail")} value={signerEmail} onChange={setSignerEmail} placeholder="signer@email.com" required />
-                          <FormInput label={t("wizard.yourEmailOptional")} value={notifyEmail} onChange={setNotifyEmail} placeholder="you@email.com" info={t("wizard.receiveCopy")} />
-                        </div>
+                              <div className="flex items-center gap-3">
+                                <span
+                                  className={cn(
+                                    "rounded-full border px-2.5 py-0.5 text-xs font-semibold",
+                                    st.color,
+                                  )}
+                                >
+                                  {t(st.labelKey)}
+                                </span>
+                                <p className="text-sm font-bold text-white">
+                                  {"$"}
+                                  {agr.amount}
+                                </p>
+                              </div>
+                            </button>
+                          )
+                        })}
                       </div>
                     </div>
-                  )}
-
-                  <div className="mt-8 flex items-center justify-between border-t border-white/[0.04] pt-6">
-                    <Button variant="ghost" onClick={() => setStep(Math.max(0, step - 1))} disabled={step === 0} className="rounded-full text-sm text-white/40 hover:text-white disabled:opacity-20">{t("wizard.back")}</Button>
-                    {step < wizardStepKeys.length - 1 ? (
-                      <Button onClick={() => setStep(step + 1)} disabled={!canProceed()} className="rounded-full bg-[#f0b400] px-8 text-sm font-semibold text-background hover:bg-[#d4a000] disabled:opacity-20 shadow-[0_4px_16px_rgba(240,180,0,0.25)]">{t("wizard.continue")}</Button>
-                    ) : (
-                      <Button onClick={() => {
-    const newAgr: Agreement = {
-      id: `AGR-${Date.now().toString(36).toUpperCase()}`,
-      title: title || "Untitled",
-      status: "funded",
-      type: escrowType === "single" ? "Single Release" : "Multi Release",
-      counterparty: signerWallet.slice(0, 8) + "...",
-      amount: totalAmount.toLocaleString(),
-      date: new Date().toISOString().split("T")[0],
-      milestones: milestones.map(m => ({ description: m.description, amount: m.amount, status: "pending" as const })),
-      receiver: selectedWallet,
-      currency: "USDC",
-    }
-    setAgreements(prev => [newAgr, ...prev])
-    setSubmitted(true)
-    if (pendingOpportunityId) {
-      const filledOppId = pendingOpportunityId
-      updateOpportunityStatus(filledOppId, "filled", token).then(async (res) => {
-        if (res.success) {
-          toast.success(t("connect.opportunityFilled"))
-          return
-        }
-        // The backend may have already flipped the opportunity to filled when
-        // the application was accepted (BE#149) ÔÇö open ÔåÆ filled is then an
-        // invalid transition. Verify and treat "already filled" as success.
-        const current = await getOpportunity(filledOppId, token)
-        if (current.success && current.data?.status === "filled") {
-          toast.success(t("connect.opportunityFilled"))
-        } else {
-          toast.error(res.error || t("connect.backendError"))
-        }
-      })
-      setPendingOpportunityId(null)
-    }
-  }} disabled={!signerEmail.trim()} className="rounded-full bg-[#f0b400] px-8 text-sm font-semibold text-background hover:bg-[#d4a000] disabled:opacity-20 shadow-[0_4px_16px_rgba(240,180,0,0.25)]">{t("wizard.createNotify")}</Button>
-                    )}
-                  </div>
-                </div>
-              )}
-              </>
-              )}
-            </div>
-          )}
-          {/* ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ TEAM MANAGEMENT ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ */}
-          {activeSection === "team" && !isActiveSectionKybGated && activePermissions.team && (
-            <div className="mx-auto max-w-4xl animate-in fade-in slide-in-from-bottom-2 duration-300">
-              <div className="mb-6">
-                <h1 className="text-2xl font-semibold text-white">Team Management</h1>
-                <p className="mt-1 text-sm text-white/35">Manage your team members and assign their operational/financial roles.</p>
-              </div>
-
-              {/* Add Team Member form */}
-              <div className="mb-8 rounded-2xl border border-white/10 bg-[#0c1220] p-6 shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
-                <h3 className="text-base font-semibold text-white mb-4">Add Team Member</h3>
-                <form onSubmit={async (e) => {
-                  e.preventDefault();
-                  const form = e.currentTarget;
-                  const formData = new FormData(form);
-                  const wallet = formData.get("wallet") as string;
-                  const role = formData.get("role") as "Admin" | "Finance" | "Operator";
-
-                  if (!wallet || !wallet.startsWith("G") || wallet.length < 50) {
-                    alert("Please enter a valid Stellar public key starting with 'G'");
-                    return;
-                  }
-
-                  if (activeBusinessWallet) {
-                    const { addBusinessMember, getBusinessMembers } = await import("@/lib/actions/business-roles");
-                    const res = await addBusinessMember(activeBusinessWallet, wallet, role);
-                    if (res.success) {
-                      form.reset();
-                      setLoadingTeam(true);
-                      const fetchRes = await getBusinessMembers(activeBusinessWallet);
-                      if (fetchRes.members) setTeamMembers(fetchRes.members);
-                      setLoadingTeam(false);
-                    } else {
-                      alert(res.error || "Failed to add member");
-                    }
-                  }
-                }} className="flex flex-col gap-4 sm:flex-row sm:items-end">
-                  <div className="flex-1">
-                    <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-white/50">Stellar Wallet Address</label>
-                    <input name="wallet" type="text" placeholder="e.g. GBXGQJWVLWOYH..." required
-                      className="h-11 w-full rounded-xl border border-white/10 bg-white/5 px-4 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-[#3b82f6]/50" />
-                  </div>
-                  <div className="w-full sm:w-44">
-                    <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-white/50">Role</label>
-                    <select name="role" required
-                      className="h-11 w-full rounded-xl border border-white/10 bg-[#0c1220] px-4 text-sm text-white focus:outline-none focus:border-[#3b82f6]/50">
-                      <option value="Operator">Operator</option>
-                      <option value="Finance">Finance</option>
-                      <option value="Admin">Admin</option>
-                    </select>
-                  </div>
-                  <Button type="submit" className="h-11 rounded-xl bg-[#3b82f6] text-white hover:bg-[#2563eb] px-6">
-                    Add Member
-                  </Button>
-                </form>
-              </div>
-
-              {/* Members List */}
-              <div className="rounded-2xl border border-white/10 bg-[#0c1220] p-6 shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
-                <h3 className="text-base font-semibold text-white mb-4">Workspace Members</h3>
-                {loadingTeam ? (
-                  <p className="text-sm text-white/40">Loading team members...</p>
-                ) : teamMembers.length === 0 ? (
-                  <p className="text-sm text-white/35">No registered team members yet.</p>
-                ) : (
-                  <div className="flex flex-col gap-4">
-                    {teamMembers.map((member) => (
-                      <div key={member.id} className="flex items-center justify-between rounded-xl border border-white/[0.04] bg-white/[0.01] p-4 hover:border-white/10 transition-all">
-                        <div className="flex items-center gap-3">
-                          <div className="h-9 w-9 rounded-full bg-[#3b82f6]/10 flex items-center justify-center text-white font-bold text-xs">
-                            {member.avatar_url ? (
-                              <img src={member.avatar_url} alt="" className="h-full w-full rounded-full object-cover" />
-                            ) : (
-                              (member.display_name || "M").slice(0, 2).toUpperCase()
-                            )}
-                          </div>
-                          <div>
-                            <p className="text-sm font-semibold text-white">{member.display_name || "Workspace Member"}</p>
-                            <p className="text-xs text-white/30 font-mono">{member.member_wallet.slice(0, 6)}...{member.member_wallet.slice(-4)}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <select 
-                            value={member.role}
-                            onChange={async (e) => {
-                              const newRole = e.target.value as "Admin" | "Finance" | "Operator";
-                              if (activeBusinessWallet) {
-                                const { updateBusinessMemberRole } = await import("@/lib/actions/business-roles");
-                                const res = await updateBusinessMemberRole(activeBusinessWallet, member.member_wallet, newRole);
-                                if (res.success) {
-                                  setTeamMembers(prev => prev.map(m => m.id === member.id ? { ...m, role: newRole } : m));
-                                } else {
-                                  alert(res.error || "Failed to update role");
-                                }
-                              }
-                            }}
-                            className="h-9 rounded-lg border border-white/10 bg-[#0c1220] px-3 text-xs text-white focus:outline-none"
-                          >
-                            <option value="Operator">Operator</option>
-                            <option value="Finance">Finance</option>
-                            <option value="Admin">Admin</option>
-                          </select>
-                          <button
-                            onClick={async () => {
-                              if (confirm("Are you sure you want to remove this member?")) {
-                                if (activeBusinessWallet) {
-                                  const { removeBusinessMember } = await import("@/lib/actions/business-roles");
-                                  const res = await removeBusinessMember(activeBusinessWallet, member.member_wallet);
-                                  if (res.success) {
-                                    setTeamMembers(prev => prev.filter(m => m.id !== member.id));
-                                  } else {
-                                    alert(res.error || "Failed to remove member");
-                                  }
-                                }
-                              }
-                            }}
-                            className="p-2 rounded-lg text-white/30 hover:text-red-400 hover:bg-red-400/10 transition-colors"
-                            title="Remove Member"
-                          >
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
-                          </button>
-                        </div>
-                      </div>
-                    ))}
                   </div>
                 )}
-              </div>
-            </div>
-          )}
-          {/* ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ OPPORTUNITIES (Thalos Connect C5) ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ */}
-          {activeSection === "opportunities" && !isActiveSectionKybGated && activePermissions.opportunities && (
-            <div className="mx-auto max-w-4xl">
-              <OpportunitiesManager
-                token={token}
-                profileId={profileOrganizationId}
-                userId={user?.id ?? null}
-                onStartAgreement={startAgreementFromOpportunity}
-              />
-            </div>
-          )}
-        </main>
-      </>
-    )}
-  </div>
-      
+
+              {/* ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ AGREEMENTS ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ */}
+              {activeSection === "agreements" && !isActiveSectionKybGated && !viewingAgreement && (
+                <div className="mx-auto max-w-4xl animate-in fade-in slide-in-from-bottom-2 duration-300">
+                  {/* Header */}
+                  <div className="mb-6 flex flex-wrap items-center justify-between gap-2">
+                    <h1 className="text-2xl font-semibold text-white">
+                      {t("dashPage.enterpriseAgreements")}
+                    </h1>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        onClick={() => setShowAiAssistant(true)}
+                        className="rounded-full bg-purple-500/10 px-5 text-sm font-semibold text-purple-400 hover:bg-purple-500/20 border border-purple-500/20"
+                      >
+                        Create with AI
+                      </Button>
+                      <Button
+                        onClick={() => {
+                          setActiveSection("create")
+                          resetWizard()
+                        }}
+                        className="rounded-full bg-[#3b82f6] px-6 text-sm font-semibold text-white hover:bg-[#2563eb] shadow-[0_4px_16px_rgba(59,130,246,0.25)]"
+                      >
+                        + {t("dashPage.newAgreement")}
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Wallet filter ÔÇö only renders when user has multiple linked wallets */}
+                  <WalletSelector
+                    selectedWallet={walletFilter}
+                    onWalletChange={setWalletFilter}
+                    walletsData={walletsData}
+                    className="mb-6"
+                  />
+
+                  {agreementsError && (
+                    <div className="mb-6 flex items-center gap-3 rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-3 text-sm text-red-400">
+                      <AlertTriangle className="h-4 w-4 shrink-0" />
+                      <span>{agreementsError}</span>
+                    </div>
+                  )}
+
+                  {agreementsLoading ? (
+                    <div className="flex items-center justify-center py-16 text-sm text-white/40">
+                      Loading agreements...
+                    </div>
+                  ) : (
+                    /* Agreements view, pre-filtered by selected wallet */
+                    <AgreementsView
+                      agreements={filteredAgreements}
+                      onAgreementClick={(id) => setViewingAgreement(id)}
+                      onOpenChat={(id) => setShowAgreementChat(id)}
+                      currentUserWallet={walletAddress || undefined}
+                    />
+                  )}
+                </div>
+              )}
+
+              {/* ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ AGREEMENT DETAIL ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ */}
+              {activeSection === "agreements" &&
+                !isActiveSectionKybGated &&
+                viewingAgreement &&
+                (() => {
+                  const agr = agreements.find((a) => a.id === viewingAgreement)
+                  if (!agr) return null
+                  const allReleased = agr.milestones.every((m) => m.status === "released")
+                  const allApproved = agr.milestones.every(
+                    (m) => m.status === "approved" || m.status === "released",
+                  )
+                  const hasApproved = agr.milestones.some((m) => m.status === "approved")
+                  const effectiveStatus = allReleased ? "released" : agr.status
+                  const st = statusConfig[effectiveStatus] || statusConfig.funded
+                  const completedMs = agr.milestones.filter((m) => m.status === "released").length
+                  const progressPct = (completedMs / agr.milestones.length) * 100
+
+                  return (
+                    <div className="mx-auto max-w-4xl">
+                      <button
+                        onClick={() => setViewingAgreement(null)}
+                        className="mb-6 flex items-center gap-2 text-sm text-white/40 hover:text-white transition-colors"
+                      >
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                        >
+                          <polyline points="15 18 9 12 15 6" />
+                        </svg>
+                        Back to Agreements
+                      </button>
+
+                      <div className="mb-6 rounded-2xl border border-white/10 bg-[#0c1220] p-6 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)]">
+                        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                          <div>
+                            <div className="flex items-center gap-3 mb-2">
+                              <h1 className="text-2xl font-bold text-white">{agr.title}</h1>
+                              <span
+                                className={cn(
+                                  "rounded-full border px-3 py-1 text-xs font-semibold",
+                                  st.color,
+                                )}
+                              >
+                                {t(st.labelKey)}
+                              </span>
+                            </div>
+                            <div className="flex flex-wrap items-center gap-3 text-xs text-white/35">
+                              <span className="font-mono">{agr.id}</span>
+                              <span className="text-white/15">|</span>
+                              <span>{agr.type}</span>
+                              <span className="text-white/15">|</span>
+                              <span>Counterparty: {agr.counterparty}</span>
+                              <span className="text-white/15">|</span>
+                              <span>{agr.date}</span>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-3xl font-bold text-[#3b82f6]">
+                              {"$"}
+                              {agr.amount}
+                            </p>
+                            <p className="text-xs text-white/35">USDC</p>
+                          </div>
+                        </div>
+                        <div className="mt-5 flex items-center gap-3">
+                          <div className="h-2 flex-1 overflow-hidden rounded-full bg-white/[0.06]">
+                            <div
+                              className={cn(
+                                "h-full rounded-full transition-all duration-700",
+                                allReleased ? "bg-emerald-400" : "bg-[#3b82f6]",
+                              )}
+                              style={{ width: `${progressPct}%` }}
+                            />
+                          </div>
+                          <span className="text-sm font-semibold text-white/50">
+                            {completedMs}/{agr.milestones.length} milestones
+                          </span>
+                        </div>
+                      </div>
+
+                      {agr.type === "Multi Release" && agr.releaseStrategy && (
+                        <div className="mb-4 rounded-xl border border-[#3b82f6]/15 bg-[#3b82f6]/5 px-5 py-3 flex items-center gap-3">
+                          <svg
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="#3b82f6"
+                            strokeWidth="1.5"
+                          >
+                            <circle cx="12" cy="12" r="10" />
+                            <line x1="12" y1="16" x2="12" y2="12" />
+                            <line x1="12" y1="8" x2="12.01" y2="8" />
+                          </svg>
+                          <p className="text-xs text-[#3b82f6]/80">
+                            <span className="font-semibold">Release strategy: </span>
+                            {agr.releaseStrategy === "per-milestone" &&
+                              "Release funds per milestone as each is approved."}
+                            {agr.releaseStrategy === "all-at-once" &&
+                              "Release all funds at once when all milestones are approved."}
+                            {agr.releaseStrategy === "upon-completion" &&
+                              "Release all funds together upon full completion."}
+                          </p>
+                        </div>
+                      )}
+
+                      <div className="flex flex-col gap-3 mb-6">
+                        {agr.milestones.map((ms, idx) => (
+                          <div
+                            key={`${agr.id}-ms-${idx}`}
+                            className={cn(
+                              "rounded-2xl border p-5 backdrop-blur-md transition-all",
+                              ms.status === "released"
+                                ? "border-emerald-500/20 bg-emerald-500/5"
+                                : ms.status === "approved"
+                                  ? "border-[#3b82f6]/20 bg-[#3b82f6]/5"
+                                  : "border-white/[0.06] bg-[#0a0a0c]/70",
+                            )}
+                          >
+                            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                              <div className="flex items-center gap-3">
+                                <span
+                                  className={cn(
+                                    "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold",
+                                    ms.status === "released"
+                                      ? "bg-emerald-500/20 text-emerald-400"
+                                      : ms.status === "approved"
+                                        ? "bg-[#3b82f6]/20 text-[#3b82f6]"
+                                        : "bg-white/10 text-white/40",
+                                  )}
+                                >
+                                  {idx + 1}
+                                </span>
+                                <div>
+                                  <p className="text-sm font-semibold text-white">
+                                    {ms.description}
+                                  </p>
+                                  <p
+                                    className={cn(
+                                      "text-xs font-medium mt-0.5",
+                                      ms.status === "released"
+                                        ? "text-emerald-400"
+                                        : ms.status === "approved"
+                                          ? "text-[#3b82f6]"
+                                          : "text-white/30",
+                                    )}
+                                  >
+                                    {ms.status === "released"
+                                      ? t("status.released")
+                                      : ms.status === "approved"
+                                        ? t("status.approvedReady")
+                                        : t("status.pendingApproval")}
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-3">
+                                <p className="text-lg font-bold text-white">
+                                  {"$"}
+                                  {ms.amount}{" "}
+                                  <span className="text-xs font-normal text-white/35">USDC</span>
+                                </p>
+                                {ms.status === "pending" &&
+                                  !allReleased &&
+                                  activePermissions.approve &&
+                                  kybVerified && (
+                                    <Button
+                                      size="sm"
+                                      onClick={() => {
+                                        if (!isExternalWallet) return
+                                        approveMilestone(agr.id, idx)
+                                      }}
+                                      className="rounded-full bg-white/10 px-4 text-xs font-semibold text-white hover:bg-white/20"
+                                    >
+                                      Approve
+                                    </Button>
+                                  )}
+                                {ms.status === "approved" &&
+                                  agr.releaseStrategy === "per-milestone" &&
+                                  activePermissions.release &&
+                                  kybVerified && (
+                                    <Button
+                                      size="sm"
+                                      onClick={() => {
+                                        if (!isExternalWallet) return
+                                        releaseMilestone(agr.id, idx)
+                                      }}
+                                      className="rounded-full bg-[#3b82f6] px-4 text-xs font-semibold text-white hover:bg-[#2563eb] shadow-[0_2px_8px_rgba(59,130,246,0.2)]"
+                                    >
+                                      Release Funds
+                                    </Button>
+                                  )}
+                                {ms.status !== "released" &&
+                                  !disputedMs.has(`${agr.id}-${idx}`) && (
+                                    <Button
+                                      size="sm"
+                                      onClick={() => {
+                                        if (!isExternalWallet) return
+                                        setShowDisputeConfirm({ agrId: agr.id, msIdx: idx })
+                                      }}
+                                      className="rounded-full bg-red-500/10 px-3 text-xs font-semibold text-red-400 hover:bg-red-500/20 border border-red-500/20"
+                                    >
+                                      <AlertTriangle className="h-3 w-3 mr-1" />
+                                      {t("dispute.raiseDispute")}
+                                    </Button>
+                                  )}
+                                {disputedMs.has(`${agr.id}-${idx}`) && (
+                                  <span className="text-xs text-red-400 font-medium">
+                                    {t("dispute.disputed")}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {!allReleased &&
+                        (activePermissions.approve || activePermissions.release) &&
+                        isExternalWallet && (
+                          <div className="rounded-2xl border border-white/10 bg-[#0c1220] p-6 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)]">
+                            <h3 className="mb-4 text-sm font-bold uppercase tracking-wider text-white/40">
+                              Release Actions
+                            </h3>
+                            <div className="flex flex-wrap gap-3">
+                              {agr.type === "Single Release" &&
+                                agr.milestones[0]?.status === "pending" &&
+                                activePermissions.approve &&
+                                kybVerified && (
+                                  <Button
+                                    onClick={() => {
+                                      if (!isExternalWallet) return
+                                      approveMilestone(agr.id, 0)
+                                    }}
+                                    className="rounded-full bg-white/10 px-6 text-sm font-semibold text-white hover:bg-white/20"
+                                  >
+                                    Approve Agreement
+                                  </Button>
+                                )}
+                              {agr.type === "Single Release" &&
+                                agr.milestones[0]?.status === "approved" &&
+                                activePermissions.release &&
+                                kybVerified && (
+                                  <Button
+                                    onClick={() => {
+                                      if (!isExternalWallet) return
+                                      releaseMilestone(agr.id, 0)
+                                    }}
+                                    className="rounded-full bg-[#3b82f6] px-6 text-sm font-semibold text-white hover:bg-[#2563eb] shadow-[0_4px_16px_rgba(59,130,246,0.25)]"
+                                  >
+                                    Release All Funds
+                                  </Button>
+                                )}
+                              {agr.type === "Multi Release" &&
+                                hasApproved &&
+                                activePermissions.release &&
+                                kybVerified && (
+                                  <Button
+                                    onClick={() => {
+                                      if (!isExternalWallet) return
+                                      releaseAllApproved(agr.id)
+                                    }}
+                                    className="rounded-full bg-[#3b82f6] px-6 text-sm font-semibold text-white hover:bg-[#2563eb] shadow-[0_4px_16px_rgba(59,130,246,0.25)]"
+                                  >
+                                    Release All Approved
+                                  </Button>
+                                )}
+                              {agr.type === "Multi Release" &&
+                                !allApproved &&
+                                activePermissions.approve &&
+                                activePermissions.release &&
+                                kybVerified && (
+                                  <Button
+                                    onClick={() => {
+                                      if (!isExternalWallet) return
+                                      approveAndReleaseAll(agr.id)
+                                    }}
+                                    className="rounded-full bg-emerald-600 px-6 text-sm font-semibold text-white hover:bg-emerald-700 shadow-[0_4px_16px_rgba(16,185,129,0.2)]"
+                                  >
+                                    Approve & Release All
+                                  </Button>
+                                )}
+                            </div>
+                            <p className="mt-3 text-xs text-white/25">
+                              Receiver wallet:{" "}
+                              <span className="font-mono">
+                                {agr.receiver.substring(0, 8)}...
+                                {agr.receiver.substring(agr.receiver.length - 6)}
+                              </span>
+                            </p>
+                          </div>
+                        )}
+                      {!allReleased &&
+                        (activePermissions.approve || activePermissions.release) &&
+                        !isExternalWallet && (
+                          <WalletPrompt message="Connect and verify a wallet to approve or release funds on this agreement." />
+                        )}
+
+                      {allReleased && (
+                        <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-6 text-center">
+                          <svg
+                            width="32"
+                            height="32"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="#22c55e"
+                            strokeWidth="2"
+                            className="mx-auto mb-3"
+                          >
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
+                          <p className="text-lg font-bold text-emerald-400">All Funds Released</p>
+                          <p className="mt-1 text-sm text-white/40">
+                            This agreement has been fully completed and all funds sent to the
+                            receiver.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })()}
+
+              {/* Dispute Confirmation Modal */}
+              {showDisputeConfirm && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+                  <div className="mx-4 max-w-md rounded-2xl border border-white/10 bg-[#0c1220] p-6 shadow-2xl">
+                    <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-500/10 mx-auto">
+                      <AlertTriangle className="h-6 w-6 text-red-400" />
+                    </div>
+                    <h3 className="text-center text-lg font-bold text-white mb-2">
+                      {t("dispute.confirmTitle")}
+                    </h3>
+                    <p className="text-center text-sm text-white/60 mb-6">
+                      {t("dispute.confirmDesc")}
+                    </p>
+                    <div className="flex gap-3">
+                      <Button
+                        variant="outline"
+                        className="flex-1 rounded-lg border-white/10 text-white hover:bg-white/5"
+                        onClick={() => setShowDisputeConfirm(null)}
+                      >
+                        {t("dispute.cancel")}
+                      </Button>
+                      <Button
+                        className="flex-1 rounded-lg bg-red-500 text-white hover:bg-red-600"
+                        onClick={() => {
+                          if (showDisputeConfirm) {
+                            setDisputedMs((prev) =>
+                              new Set(prev).add(
+                                `${showDisputeConfirm.agrId}-${showDisputeConfirm.msIdx}`,
+                              ),
+                            )
+                            setShowDisputeConfirm(null)
+                          }
+                        }}
+                      >
+                        {t("dispute.confirm")}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ TEMPLATES ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ */}
+              {activeSection === "templates" &&
+                !isActiveSectionKybGated &&
+                activePermissions.templates && (
+                  <div className="mx-auto max-w-4xl animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    <div className="mb-2 flex items-center justify-between">
+                      <div>
+                        <h1 className="text-2xl font-semibold text-white">
+                          {t("dashPage.templates")}
+                        </h1>
+                        <p className="mt-1 text-sm text-white/35">{t("dashPage.templatesSub")}</p>
+                      </div>
+                      <Button
+                        onClick={() => {
+                          resetWizard()
+                          setShowSaveTemplate(true)
+                          setEditingTemplate(null)
+                          setTemplateName("")
+                        }}
+                        className="rounded-full bg-[#3b82f6] px-6 text-sm font-semibold text-white hover:bg-[#2563eb] shadow-[0_4px_16px_rgba(59,130,246,0.25)]"
+                      >
+                        + {t("dashPage.newTemplate")}
+                      </Button>
+                    </div>
+
+                    {/* Save / Edit template modal */}
+                    {showSaveTemplate && (
+                      <div className="mb-6 mt-4 rounded-2xl border border-[#3b82f6]/20 bg-[#3b82f6]/[0.04] p-6">
+                        <h3 className="text-lg font-semibold text-white mb-4">
+                          {editingTemplate
+                            ? t("dashPage.editTemplate")
+                            : t("dashPage.saveAsTemplate")}
+                        </h3>
+                        <div className="flex flex-col gap-4">
+                          <FormInput
+                            label={t("dashPage.templateName")}
+                            value={templateName}
+                            onChange={setTemplateName}
+                            placeholder={t("dashPage.templateNamePlaceholder")}
+                            required
+                          />
+                          <FormInput
+                            label={t("wizard.titleLabel")}
+                            value={title}
+                            onChange={setTitle}
+                            placeholder={t("wizard.titlePlaceholder")}
+                            required
+                          />
+                          <FormTextarea
+                            label={t("wizard.descLabel")}
+                            value={description}
+                            onChange={setDescription}
+                            placeholder={t("wizard.agreementDesc")}
+                            rows={3}
+                          />
+                          <div className="flex items-center gap-3">
+                            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                              {t("wizard.escrowType")}
+                            </p>
+                            <div className="flex items-center gap-2">
+                              {(["single", "multi"] as const).map((et) => (
+                                <button
+                                  key={et}
+                                  onClick={() => setEscrowType(et)}
+                                  className={cn(
+                                    "rounded-lg px-3 py-1.5 text-xs font-semibold transition-all",
+                                    escrowType === et
+                                      ? "bg-[#3b82f6]/15 text-[#3b82f6] border border-[#3b82f6]/20"
+                                      : "text-white/40 border border-transparent hover:bg-white/[0.04]",
+                                  )}
+                                >
+                                  {et === "single"
+                                    ? t("wizard.oneTimePayment")
+                                    : t("wizard.milestoneBased")}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                          {escrowType === "multi" && (
+                            <div className="flex flex-col gap-2">
+                              <div className="flex items-center justify-between">
+                                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                                  {t("wizard.paymentStages")}
+                                </p>
+                                <button
+                                  onClick={addMilestone}
+                                  className="text-xs font-semibold text-[#3b82f6] hover:underline"
+                                >
+                                  {t("wizard.addStage")}
+                                </button>
+                              </div>
+                              {milestones.map((m, i) => (
+                                <div key={i} className="flex items-center gap-2">
+                                  <input
+                                    value={m.description}
+                                    onChange={(e) =>
+                                      updateMilestone(i, "description", e.target.value)
+                                    }
+                                    placeholder={`${t("wizard.stageDesc")}`}
+                                    className="flex-1 h-9 rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-[#3b82f6]/40"
+                                  />
+                                  <input
+                                    value={m.amount}
+                                    onChange={(e) => updateMilestone(i, "amount", e.target.value)}
+                                    placeholder={t("wizard.amount")}
+                                    type="number"
+                                    className="w-28 h-9 rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-[#3b82f6]/40"
+                                  />
+                                  {milestones.length > 1 && (
+                                    <button
+                                      onClick={() => removeMilestone(i)}
+                                      className="text-white/20 hover:text-red-400 transition-colors"
+                                    >
+                                      <svg
+                                        width="14"
+                                        height="14"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                      >
+                                        <line x1="18" y1="6" x2="6" y2="18" />
+                                        <line x1="6" y1="6" x2="18" y2="18" />
+                                      </svg>
+                                    </button>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          <div className="flex items-center gap-3 pt-2">
+                            <Button
+                              onClick={() => void saveAsTemplate()}
+                              disabled={!templateName.trim() && !title.trim()}
+                              className="rounded-full bg-[#3b82f6] px-6 text-sm font-semibold text-white hover:bg-[#2563eb] disabled:opacity-30"
+                            >
+                              {t("dashPage.saveTemplate")}
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              onClick={() => {
+                                setShowSaveTemplate(false)
+                                setEditingTemplate(null)
+                              }}
+                              className="rounded-full text-sm text-white/40 hover:text-white"
+                            >
+                              {t("dashPage.cancel")}
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Template cards */}
+                    {templatesLoading ? (
+                      <div className="mt-6 flex items-center justify-center py-16">
+                        <p className="text-sm text-white/40">Loading templatesÔÇª</p>
+                      </div>
+                    ) : templates.length === 0 && !showSaveTemplate ? (
+                      <div className="mt-6 flex flex-col items-center justify-center rounded-2xl border border-white/10 bg-[#0c1220] py-16 px-6 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)] text-center">
+                        <svg
+                          width="40"
+                          height="40"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1"
+                          className="text-white/15 mb-4"
+                        >
+                          <rect x="3" y="3" width="18" height="18" rx="2" />
+                          <line x1="3" y1="9" x2="21" y2="9" />
+                          <line x1="9" y1="21" x2="9" y2="9" />
+                        </svg>
+                        <p className="text-sm font-medium text-white/40">
+                          {t("dashPage.noTemplates")}
+                        </p>
+                        <p className="mt-1 text-xs text-white/20">
+                          {t("dashPage.noTemplatesDesc")}
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        {templates.map((tpl) => (
+                          <div
+                            key={tpl.id}
+                            className="group rounded-2xl border border-white/10 bg-[#0c1220] p-5 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)] transition-all hover:border-white/20"
+                          >
+                            <div className="flex items-start justify-between mb-3">
+                              <div>
+                                <p className="text-base font-semibold text-white">{tpl.name}</p>
+                                <p className="mt-0.5 text-xs text-white/30">{tpl.title}</p>
+                              </div>
+                              <span
+                                className={cn(
+                                  "rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase",
+                                  tpl.escrowType === "single"
+                                    ? "border-[#3b82f6]/20 bg-[#3b82f6]/10 text-[#3b82f6]"
+                                    : "border-[#f0b400]/20 bg-[#f0b400]/10 text-[#f0b400]",
+                                )}
+                              >
+                                {tpl.escrowType === "single"
+                                  ? t("wizard.oneTimePayment")
+                                  : t("wizard.milestoneBased")}
+                              </span>
+                            </div>
+                            <p className="text-xs text-white/25 line-clamp-2 mb-4">
+                              {tpl.description}
+                            </p>
+                            {tpl.milestones.length > 0 && tpl.escrowType === "multi" && (
+                              <div className="mb-4 flex flex-wrap gap-1.5">
+                                {tpl.milestones.slice(0, 3).map((m, i) => (
+                                  <span
+                                    key={i}
+                                    className="rounded-md bg-white/[0.04] px-2 py-0.5 text-[10px] text-white/35"
+                                  >
+                                    {m.description || `Stage ${i + 1}`}
+                                  </span>
+                                ))}
+                                {tpl.milestones.length > 3 && (
+                                  <span className="rounded-md bg-white/[0.04] px-2 py-0.5 text-[10px] text-white/35">
+                                    +{tpl.milestones.length - 3}
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                            <div className="flex items-center gap-2">
+                              <Button
+                                onClick={() => applyTemplate(tpl)}
+                                className="flex-1 rounded-full bg-[#3b82f6]/10 text-xs font-semibold text-[#3b82f6] hover:bg-[#3b82f6]/20 border border-[#3b82f6]/15 h-8"
+                              >
+                                {t("dashPage.useTemplate")}
+                              </Button>
+                              <button
+                                onClick={() => startEditTemplate(tpl)}
+                                className="rounded-full p-2 text-white/20 hover:text-white/60 hover:bg-white/[0.04] transition-all"
+                                title={t("dashPage.editTemplate")}
+                              >
+                                <svg
+                                  width="14"
+                                  height="14"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="1.5"
+                                >
+                                  <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
+                                  <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
+                                </svg>
+                              </button>
+                              <button
+                                onClick={() => deleteTemplate(tpl.id)}
+                                disabled={deletingTemplateId === tpl.id}
+                                className="rounded-full p-2 text-white/20 hover:text-red-400 hover:bg-red-400/[0.06] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                                title={t("dashPage.deleteTemplate")}
+                              >
+                                <svg
+                                  width="14"
+                                  height="14"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="1.5"
+                                >
+                                  <polyline points="3 6 5 6 21 6" />
+                                  <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+                                </svg>
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+              {/* ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ WALLETS ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ */}
+              {activeSection === "wallets" &&
+                !isActiveSectionKybGated &&
+                activePermissions.wallets && (
+                  <div className="mx-auto max-w-4xl animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    <h1 className="mb-6 text-2xl font-semibold text-white">Enterprise Wallets</h1>
+                    <div className="flex flex-col gap-4">
+                      {connectedWallets.map((w) => (
+                        <div
+                          key={w.value}
+                          className="rounded-2xl border border-white/10 bg-[#0c1220] p-6 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)] hover:border-white/15 transition-all"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#3b82f6]/10 text-[#3b82f6]">
+                                <svg
+                                  width="24"
+                                  height="24"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="1.5"
+                                >
+                                  <rect x="1" y="4" width="22" height="16" rx="2" />
+                                  <path d="M1 10h22" />
+                                </svg>
+                              </div>
+                              <div>
+                                <p className="text-base font-semibold text-white">
+                                  {t(w.labelKey)}
+                                </p>
+                                <p className="text-xs text-white/35 font-mono">{w.short}</p>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-xl font-bold text-white">
+                                {w.balance}{" "}
+                                <span className="text-xs font-normal text-white/35">USDC</span>
+                              </p>
+                              <p className="text-xs text-emerald-400">Active</p>
+                            </div>
+                          </div>
+                          <div className="mt-4 flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="rounded-full border-white/10 bg-white/5 text-xs text-white/60 hover:bg-white/10 hover:text-white"
+                            >
+                              Copy Address
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="rounded-full border-white/10 bg-white/5 text-xs text-white/60 hover:bg-white/10 hover:text-white"
+                            >
+                              View on Explorer
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                      <button
+                        onClick={() => openWalletModal()}
+                        className="flex items-center justify-center gap-3 rounded-2xl border border-dashed p-8 transition-all hover:border-[#3b82f6]/40"
+                        style={{
+                          background: isLight ? "rgba(15,23,42,0.04)" : "rgba(12,18,32,0.6)",
+                          borderColor: isLight ? "rgba(15,23,42,0.2)" : "rgba(255,255,255,0.1)",
+                          color: isLight ? "#374151" : "rgba(255,255,255,0.7)",
+                        }}
+                      >
+                        <svg
+                          width="20"
+                          height="20"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                        >
+                          <line x1="12" y1="5" x2="12" y2="19" />
+                          <line x1="5" y1="12" x2="19" y2="12" />
+                        </svg>
+                        <span className="text-sm font-medium">{t("dashPage.connectWallet")}</span>
+                      </button>
+                    </div>
+
+                    {/* Agreements grouped by wallet ÔÇö real data from API */}
+                    <div className="mt-8">
+                      <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-white/40">
+                        Agreements by wallet
+                      </h2>
+                      <WalletAgreementsPanel
+                        onAgreementClick={(id) => {
+                          setViewingAgreement(id)
+                          setActiveSection("agreements")
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+              {/* ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ CREATE AGREEMENT ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ */}
+              {activeSection === "create" &&
+                !isActiveSectionKybGated &&
+                activePermissions.create && (
+                  <div className="mx-auto max-w-4xl animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    {!kybVerified ? (
+                      <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-8 text-center">
+                        <h2 className="text-xl font-bold text-white">KYB verification required</h2>
+                        <p className="mx-auto mt-2 max-w-lg text-sm text-white/50">
+                          Enterprise agreement creation is blocked until your business verification
+                          is approved.
+                        </p>
+                        <Button
+                          onClick={handleStartKybSession}
+                          disabled={kybLoading || !canContinueKyb}
+                          className="mt-5 rounded-full bg-[#f0b400] text-background hover:bg-[#d4a000]"
+                        >
+                          Continue KYB verification
+                        </Button>
+                      </div>
+                    ) : !isExternalWallet && !submitted ? (
+                      <div className="pt-8">
+                        <WalletPrompt message="Connect and verify a wallet to operate escrow agreements on Thalos." />
+                      </div>
+                    ) : (
+                      <>
+                        <div className="mb-6 flex flex-wrap items-center justify-between gap-2">
+                          <h1 className="text-2xl font-semibold text-white">New Agreement</h1>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              onClick={() => setShowAiAssistant(true)}
+                              className="rounded-full bg-purple-500/10 px-5 text-sm font-semibold text-purple-400 hover:bg-purple-500/20 border border-purple-500/20"
+                            >
+                              Create with AI
+                            </Button>
+                            <Button
+                              onClick={() => {
+                                setActiveSection("agreements")
+                                resetWizard()
+                              }}
+                              className="rounded-full bg-white/10 px-6 text-sm font-semibold text-white/70 hover:bg-white/15 hover:text-white"
+                            >
+                              View Agreements
+                            </Button>
+                          </div>
+                        </div>
+
+                        {!submitted && (
+                          <div className="mb-8">
+                            <div className="mb-3 flex items-center justify-between">
+                              {wizardStepKeys.map((key, i) => (
+                                <button
+                                  key={key}
+                                  onClick={() => i <= step && setStep(i)}
+                                  className={cn(
+                                    "flex items-center gap-1.5 text-xs font-semibold transition-all sm:text-sm",
+                                    i === step
+                                      ? "text-[#f0b400]"
+                                      : i < step
+                                        ? "text-[#f0b400]/60 cursor-pointer"
+                                        : "text-muted-foreground/40",
+                                  )}
+                                >
+                                  <span
+                                    className={cn(
+                                      "flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold transition-all sm:h-7 sm:w-7 sm:text-xs",
+                                      i === step
+                                        ? "bg-[#f0b400] text-background"
+                                        : i < step
+                                          ? "bg-[#f0b400]/15 text-[#f0b400]"
+                                          : "bg-secondary/40 text-muted-foreground/40",
+                                    )}
+                                  >
+                                    {i < step ? (
+                                      <svg
+                                        width="10"
+                                        height="10"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="3"
+                                      >
+                                        <polyline points="20 6 9 17 4 12" />
+                                      </svg>
+                                    ) : (
+                                      i + 1
+                                    )}
+                                  </span>
+                                  <span className="hidden md:inline">{t(key)}</span>
+                                </button>
+                              ))}
+                            </div>
+                            <div className="h-1 w-full overflow-hidden rounded-full bg-secondary/30">
+                              <div
+                                className="h-full bg-[#f0b400] transition-all duration-500 ease-out"
+                                style={{ width: `${(step / (wizardStepKeys.length - 1)) * 100}%` }}
+                              />
+                            </div>
+                          </div>
+                        )}
+
+                        {submitted ? (
+                          <div className="flex flex-col items-center gap-6 rounded-2xl border border-white/10 bg-[#0c1220] p-10 text-center shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)]">
+                            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-emerald-500/10">
+                              <svg
+                                width="40"
+                                height="40"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="#22c55e"
+                                strokeWidth="2"
+                              >
+                                <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                            </div>
+                            <div>
+                              <h2 className="text-2xl font-bold text-white">
+                                {t("wizard.agreementCreated")}
+                              </h2>
+                              <p className="mt-2 text-sm text-white/40">
+                                {t("wizard.agreementCreatedDesc")}
+                              </p>
+                            </div>
+                            <div className="flex flex-col items-center gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] p-6">
+                              <p className="text-xs font-medium uppercase tracking-wider text-white/40">
+                                {t("wizard.scanQR")}
+                              </p>
+                              <Image
+                                src={qrUrl}
+                                alt="QR Code"
+                                width={160}
+                                height={160}
+                                className="rounded-lg"
+                                unoptimized
+                              />
+                            </div>
+                            <div className="flex gap-3">
+                              <Button
+                                variant="outline"
+                                onClick={copyJson}
+                                className="rounded-full border-white/10 bg-white/5 text-sm text-white/60 hover:bg-white/10 hover:text-white"
+                              >
+                                {copiedJson ? t("wizard.copied") : t("wizard.copyDetails")}
+                              </Button>
+                              <Button
+                                variant="outline"
+                                onClick={() => {
+                                  setTemplateName(title)
+                                  setShowSaveTemplate(true)
+                                  setEditingTemplate(null)
+                                  setActiveSection("templates")
+                                }}
+                                className="rounded-full border-[#3b82f6]/20 bg-[#3b82f6]/5 text-sm text-[#3b82f6] hover:bg-[#3b82f6]/10"
+                              >
+                                {t("dashPage.saveAsTemplate")}
+                              </Button>
+                              <Button
+                                onClick={() => {
+                                  resetWizard()
+                                  setActiveSection("agreements")
+                                }}
+                                className="rounded-full bg-[#f0b400] text-background font-semibold hover:bg-[#d4a000] shadow-[0_4px_16px_rgba(240,180,0,0.25)]"
+                              >
+                                {t("wizard.viewAgreements")}
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="rounded-2xl border border-white/10 bg-[#0c1220] p-8 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)]">
+                            {step === 0 && (
+                              <div className="flex flex-col gap-6">
+                                <div>
+                                  <h3 className="text-lg font-semibold text-white sm:text-xl">
+                                    {t("wizard.howPayment")}
+                                  </h3>
+                                  <p className="mt-1 text-sm text-white/35">
+                                    {t("wizard.chooseFunds")}
+                                  </p>
+                                </div>
+                                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                  {[
+                                    {
+                                      id: "single" as const,
+                                      label: t("wizard.oneTimePayment"),
+                                      desc: t("wizard.oneTimeDesc"),
+                                      icon: (
+                                        <svg
+                                          width="24"
+                                          height="24"
+                                          viewBox="0 0 24 24"
+                                          fill="none"
+                                          stroke="currentColor"
+                                          strokeWidth="1.5"
+                                        >
+                                          <circle cx="12" cy="12" r="10" />
+                                          <path d="M16 8l-8 8M8 8h8v8" />
+                                        </svg>
+                                      ),
+                                    },
+                                    {
+                                      id: "multi" as const,
+                                      label: t("wizard.milestoneBased"),
+                                      desc: t("wizard.milestoneBasedDesc"),
+                                      icon: (
+                                        <svg
+                                          width="24"
+                                          height="24"
+                                          viewBox="0 0 24 24"
+                                          fill="none"
+                                          stroke="currentColor"
+                                          strokeWidth="1.5"
+                                        >
+                                          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+                                        </svg>
+                                      ),
+                                    },
+                                  ].map((opt) => (
+                                    <button
+                                      key={opt.id}
+                                      onClick={() => {
+                                        setEscrowType(opt.id)
+                                        if (opt.id === "single")
+                                          setMilestones([
+                                            { description: "Full delivery", amount: "" },
+                                          ])
+                                      }}
+                                      className={cn(
+                                        "flex flex-col gap-3 rounded-xl border p-6 text-left transition-all",
+                                        escrowType === opt.id
+                                          ? "border-[#f0b400]/40 bg-[#f0b400]/5"
+                                          : "border-white/[0.06] bg-white/[0.02] hover:border-white/15",
+                                      )}
+                                    >
+                                      <div
+                                        className={cn(
+                                          "flex h-12 w-12 items-center justify-center rounded-xl",
+                                          escrowType === opt.id
+                                            ? "bg-[#f0b400]/10 text-[#f0b400]"
+                                            : "bg-white/5 text-white/40",
+                                        )}
+                                      >
+                                        {opt.icon}
+                                      </div>
+                                      <div>
+                                        <p className="text-sm font-semibold text-white">
+                                          {opt.label}
+                                        </p>
+                                        <p className="mt-0.5 text-xs text-white/35">{opt.desc}</p>
+                                      </div>
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {step === 1 && (
+                              <div className="flex flex-col gap-6">
+                                <div>
+                                  <h3 className="text-lg font-semibold text-white sm:text-xl">
+                                    {t("wizard.whatAgreement")}
+                                  </h3>
+                                  <p className="mt-1 text-sm text-white/35">
+                                    {t("wizard.selectCategory")}
+                                  </p>
+                                </div>
+                                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                                  {useCases.map((uc) => (
+                                    <button
+                                      key={uc.id}
+                                      onClick={() => {
+                                        setUseCase(uc.id)
+                                        setGuidePrefilled(false)
+                                      }}
+                                      className={cn(
+                                        "flex items-center gap-3 rounded-xl border p-4 text-left transition-all",
+                                        useCase === uc.id
+                                          ? "border-[#f0b400]/40 bg-[#f0b400]/5"
+                                          : "border-white/[0.06] bg-white/[0.02] hover:border-white/15",
+                                      )}
+                                    >
+                                      <div
+                                        className={cn(
+                                          "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg",
+                                          useCase === uc.id
+                                            ? "bg-[#f0b400]/10 text-[#f0b400]"
+                                            : "bg-white/5 text-white/40",
+                                        )}
+                                      >
+                                        <UseCaseIcon icon={uc.icon} />
+                                      </div>
+                                      <span className="text-sm font-medium text-white">
+                                        {t(uc.labelKey)}
+                                      </span>
+                                    </button>
+                                  ))}
+                                </div>
+                                {useCase === "other" && (
+                                  <FormInput
+                                    label={t("wizard.describeUseCase")}
+                                    value={customUseCase}
+                                    onChange={(v) => {
+                                      setCustomUseCase(v)
+                                      setGuidePrefilled(false)
+                                    }}
+                                    placeholder={t("wizard.useCasePlaceholder")}
+                                    required
+                                  />
+                                )}
+                              </div>
+                            )}
+
+                            {step === 2 && (
+                              <div className="flex flex-col gap-5">
+                                <div>
+                                  <h3 className="text-lg font-semibold text-white sm:text-xl">
+                                    {t("wizard.agreementInfo")}
+                                  </h3>
+                                  <p className="mt-1 text-sm text-white/35">
+                                    {useCase && useCase !== "other"
+                                      ? t("wizard.preFilled")
+                                      : t("wizard.describeAgreement")}
+                                  </p>
+                                </div>
+                                {useCase && useCase !== "other" && (
+                                  <div className="flex items-start gap-3 rounded-xl border border-[#f0b400]/20 bg-[#f0b400]/5 p-4">
+                                    <svg
+                                      width="16"
+                                      height="16"
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      stroke="#f0b400"
+                                      strokeWidth="1.5"
+                                      className="mt-0.5 shrink-0"
+                                    >
+                                      <circle cx="12" cy="12" r="10" />
+                                      <line x1="12" y1="16" x2="12" y2="12" />
+                                      <line x1="12" y1="8" x2="12.01" y2="8" />
+                                    </svg>
+                                    <p className="text-xs text-[#f0b400]/80">
+                                      {t("wizard.basedOn")}{" "}
+                                      <span className="font-semibold">
+                                        {t(useCases.find((u) => u.id === useCase)?.labelKey || "")}
+                                      </span>
+                                    </p>
+                                  </div>
+                                )}
+                                <FormInput
+                                  label={t("wizard.titleLabel")}
+                                  value={title}
+                                  onChange={setTitle}
+                                  placeholder={t("wizard.titlePlaceholder")}
+                                  required
+                                />
+                                <FormTextarea
+                                  label={t("wizard.descLabel")}
+                                  value={description}
+                                  onChange={setDescription}
+                                  placeholder={t("wizard.agreementDesc")}
+                                  rows={4}
+                                />
+                              </div>
+                            )}
+
+                            {step === 3 && (
+                              <div className="flex flex-col gap-6">
+                                <div>
+                                  <h3 className="text-lg font-semibold text-white sm:text-xl">
+                                    {t("wizard.paymentDetails")}
+                                  </h3>
+                                  <p className="mt-1 text-sm text-white/35">
+                                    {t("wizard.selectWalletInfo")}
+                                  </p>
+                                </div>
+                                <FormSelect
+                                  label={t("wizard.yourWallet")}
+                                  value={selectedWallet}
+                                  onChange={setSelectedWallet}
+                                  options={connectedWallets.map((w) => ({
+                                    value: w.value,
+                                    label: `${t(w.labelKey)} (${w.short})`,
+                                  }))}
+                                  info={t("wizard.connectedWallet")}
+                                  required
+                                />
+
+                                {/* Counterparty Selection with Contact Selector */}
+                                <div className="flex flex-col gap-2">
+                                  <label className="text-xs font-medium uppercase tracking-wider text-white/50">
+                                    {t("wizard.releaseSignerWallet")}{" "}
+                                    <span className="text-rose-400">*</span>
+                                  </label>
+                                  <ContactSelector
+                                    value={signerWallet}
+                                    onChange={(wallet) => setSignerWallet(wallet)}
+                                    placeholder="Select contact or enter wallet address..."
+                                  />
+                                  <p className="text-[11px] text-white/30">
+                                    {t("wizard.whoReleases")}
+                                  </p>
+                                </div>
+                                {escrowType === "single" ? (
+                                  <FormInput
+                                    label={t("wizard.amount")}
+                                    value={milestones[0]?.amount || ""}
+                                    onChange={(v) => updateMilestone(0, "amount", v)}
+                                    placeholder="50000"
+                                    type="number"
+                                    info="USDC"
+                                    required
+                                  />
+                                ) : (
+                                  <div className="flex flex-col gap-3">
+                                    <div className="flex items-center justify-between">
+                                      <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                                        {t("wizard.paymentStages")}
+                                      </p>
+                                      <button
+                                        onClick={addMilestone}
+                                        className="text-xs font-semibold text-[#f0b400] hover:underline"
+                                      >
+                                        {t("wizard.addStage")}
+                                      </button>
+                                    </div>
+                                    {milestones.map((m, i) => (
+                                      <div
+                                        key={i}
+                                        draggable
+                                        onDragStart={() => handleDragStart(i)}
+                                        onDragEnter={() => handleDragEnter(i)}
+                                        onDragEnd={handleDragEnd}
+                                        onDragOver={(e) => e.preventDefault()}
+                                        className="flex flex-col gap-2 rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 sm:flex-row sm:items-center sm:gap-3 cursor-grab"
+                                      >
+                                        <div className="flex items-center gap-3 sm:gap-2">
+                                          <svg
+                                            width="14"
+                                            height="14"
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            strokeWidth="2"
+                                            className="shrink-0 text-white/20"
+                                          >
+                                            <circle cx="9" cy="5" r="1" />
+                                            <circle cx="9" cy="12" r="1" />
+                                            <circle cx="9" cy="19" r="1" />
+                                            <circle cx="15" cy="5" r="1" />
+                                            <circle cx="15" cy="12" r="1" />
+                                            <circle cx="15" cy="19" r="1" />
+                                          </svg>
+                                          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#f0b400]/10 text-xs font-bold text-[#f0b400]">
+                                            {i + 1}
+                                          </span>
+                                        </div>
+                                        <input
+                                          value={m.description}
+                                          onChange={(e) =>
+                                            updateMilestone(i, "description", e.target.value)
+                                          }
+                                          placeholder={t("wizard.stageDesc")}
+                                          className="flex-1 bg-transparent text-sm text-white placeholder:text-white/20 focus:outline-none"
+                                        />
+                                        <input
+                                          value={m.amount}
+                                          onChange={(e) =>
+                                            updateMilestone(i, "amount", e.target.value)
+                                          }
+                                          placeholder={t("wizard.amount")}
+                                          type="number"
+                                          className="w-28 rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-2 text-sm text-white placeholder:text-white/15 focus:border-[#f0b400]/40 focus:outline-none"
+                                        />
+                                        {milestones.length > 1 && (
+                                          <button
+                                            onClick={() => removeMilestone(i)}
+                                            className="text-white/20 hover:text-red-400"
+                                          >
+                                            <svg
+                                              width="14"
+                                              height="14"
+                                              viewBox="0 0 24 24"
+                                              fill="none"
+                                              stroke="currentColor"
+                                              strokeWidth="2"
+                                            >
+                                              <path d="M18 6L6 18M6 6l12 12" />
+                                            </svg>
+                                          </button>
+                                        )}
+                                      </div>
+                                    ))}
+                                    <div className="flex items-center justify-between rounded-xl bg-white/[0.03] px-4 py-3">
+                                      <span className="text-xs text-white/30">
+                                        {t("wizard.total")}
+                                      </span>
+                                      <span className="text-sm font-bold text-white">
+                                        {totalAmount.toFixed(2)} USDC
+                                      </span>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+
+                            {step === 4 && (
+                              <div className="flex flex-col gap-5">
+                                <div>
+                                  <h3 className="text-lg font-semibold text-white sm:text-xl">
+                                    {t("wizard.reviewAndSend")}
+                                  </h3>
+                                  <p className="mt-1 text-sm text-white/35">
+                                    {t("wizard.confirmDetails")}
+                                  </p>
+                                </div>
+
+                                {escrowType === "single" && (
+                                  <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 flex items-center gap-3">
+                                    <AlertTriangle className="h-5 w-5 text-amber-500 shrink-0" />
+                                    <p className="text-sm text-amber-200/80">
+                                      {t("wizard.quickWarning")}
+                                    </p>
+                                  </div>
+                                )}
+
+                                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                  <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5">
+                                    <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-white/25">
+                                      {t("wizard.agreement")}
+                                    </p>
+                                    <p className="text-sm font-semibold text-white">
+                                      {title || t("wizard.untitled")}
+                                    </p>
+                                    <p className="mt-1 text-xs text-white/35 line-clamp-2">
+                                      {description || t("wizard.noDescription")}
+                                    </p>
+                                  </div>
+                                  <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5">
+                                    <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-white/25">
+                                      {t("wizard.protectedFunds")}
+                                    </p>
+                                    <p className="text-3xl font-bold text-[#f0b400]">
+                                      {totalAmount.toFixed(2)}{" "}
+                                      <span className="text-sm font-normal text-white/35">
+                                        USDC
+                                      </span>
+                                    </p>
+                                    <p className="mt-2 text-xs text-white/30">
+                                      {t("wizard.platformFeeLabel")} {platformFee} USDC (1%)
+                                    </p>
+                                  </div>
+                                </div>
+                                <div className="rounded-xl border border-[#f0b400]/15 bg-[#f0b400]/5 p-5">
+                                  <div className="mb-4 flex items-center gap-2">
+                                    <svg
+                                      width="16"
+                                      height="16"
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      stroke="#f0b400"
+                                      strokeWidth="1.5"
+                                    >
+                                      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                                      <polyline points="22,6 12,13 2,6" />
+                                    </svg>
+                                    <p className="text-sm font-semibold text-[#f0b400]">
+                                      {t("wizard.emailNotifications")}
+                                    </p>
+                                  </div>
+                                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                    <FormInput
+                                      label={t("wizard.releaseSignerEmail")}
+                                      value={signerEmail}
+                                      onChange={setSignerEmail}
+                                      placeholder="signer@email.com"
+                                      required
+                                    />
+                                    <FormInput
+                                      label={t("wizard.yourEmailOptional")}
+                                      value={notifyEmail}
+                                      onChange={setNotifyEmail}
+                                      placeholder="you@email.com"
+                                      info={t("wizard.receiveCopy")}
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+
+                            <div className="mt-8 flex items-center justify-between border-t border-white/[0.04] pt-6">
+                              <Button
+                                variant="ghost"
+                                onClick={() => setStep(Math.max(0, step - 1))}
+                                disabled={step === 0}
+                                className="rounded-full text-sm text-white/40 hover:text-white disabled:opacity-20"
+                              >
+                                {t("wizard.back")}
+                              </Button>
+                              {step < wizardStepKeys.length - 1 ? (
+                                <Button
+                                  onClick={() => setStep(step + 1)}
+                                  disabled={!canProceed()}
+                                  className="rounded-full bg-[#f0b400] px-8 text-sm font-semibold text-background hover:bg-[#d4a000] disabled:opacity-20 shadow-[0_4px_16px_rgba(240,180,0,0.25)]"
+                                >
+                                  {t("wizard.continue")}
+                                </Button>
+                              ) : (
+                                <Button
+                                  onClick={() => {
+                                    const newAgr: Agreement = {
+                                      id: `AGR-${Date.now().toString(36).toUpperCase()}`,
+                                      title: title || "Untitled",
+                                      status: "funded",
+                                      type:
+                                        escrowType === "single"
+                                          ? "Single Release"
+                                          : "Multi Release",
+                                      counterparty: signerWallet.slice(0, 8) + "...",
+                                      amount: totalAmount.toLocaleString(),
+                                      date: new Date().toISOString().split("T")[0],
+                                      milestones: milestones.map((m) => ({
+                                        description: m.description,
+                                        amount: m.amount,
+                                        status: "pending" as const,
+                                      })),
+                                      receiver: selectedWallet,
+                                      currency: "USDC",
+                                    }
+                                    setAgreements((prev) => [newAgr, ...prev])
+                                    setSubmitted(true)
+                                    if (pendingOpportunityId) {
+                                      const filledOppId = pendingOpportunityId
+                                      updateOpportunityStatus(filledOppId, "filled", token).then(
+                                        async (res) => {
+                                          if (res.success) {
+                                            toast.success(t("connect.opportunityFilled"))
+                                            return
+                                          }
+                                          // The backend may have already flipped the opportunity to filled when
+                                          // the application was accepted (BE#149) ÔÇö open ÔåÆ filled is then an
+                                          // invalid transition. Verify and treat "already filled" as success.
+                                          const current = await getOpportunity(filledOppId, token)
+                                          if (
+                                            current.success &&
+                                            current.data?.status === "filled"
+                                          ) {
+                                            toast.success(t("connect.opportunityFilled"))
+                                          } else {
+                                            toast.error(res.error || t("connect.backendError"))
+                                          }
+                                        },
+                                      )
+                                      setPendingOpportunityId(null)
+                                    }
+                                  }}
+                                  disabled={!signerEmail.trim()}
+                                  className="rounded-full bg-[#f0b400] px-8 text-sm font-semibold text-background hover:bg-[#d4a000] disabled:opacity-20 shadow-[0_4px_16px_rgba(240,180,0,0.25)]"
+                                >
+                                  {t("wizard.createNotify")}
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                )}
+              {/* ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ TEAM MANAGEMENT ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ */}
+              {activeSection === "team" && !isActiveSectionKybGated && activePermissions.team && (
+                <div className="mx-auto max-w-4xl animate-in fade-in slide-in-from-bottom-2 duration-300">
+                  <div className="mb-6">
+                    <h1 className="text-2xl font-semibold text-white">Team Management</h1>
+                    <p className="mt-1 text-sm text-white/35">
+                      Manage your team members and assign their operational/financial roles.
+                    </p>
+                  </div>
+
+                  {/* Add Team Member form */}
+                  <div className="mb-8 rounded-2xl border border-white/10 bg-[#0c1220] p-6 shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
+                    <h3 className="text-base font-semibold text-white mb-4">Add Team Member</h3>
+                    <form
+                      onSubmit={async (e) => {
+                        e.preventDefault()
+                        const form = e.currentTarget
+                        const formData = new FormData(form)
+                        const wallet = formData.get("wallet") as string
+                        const role = formData.get("role") as "Admin" | "Finance" | "Operator"
+
+                        if (!wallet || !wallet.startsWith("G") || wallet.length < 50) {
+                          alert("Please enter a valid Stellar public key starting with 'G'")
+                          return
+                        }
+
+                        if (activeBusinessWallet) {
+                          const { addBusinessMember, getBusinessMembers } =
+                            await import("@/lib/actions/business-roles")
+                          const res = await addBusinessMember(activeBusinessWallet, wallet, role)
+                          if (res.success) {
+                            form.reset()
+                            setLoadingTeam(true)
+                            const fetchRes = await getBusinessMembers(activeBusinessWallet)
+                            if (fetchRes.members) setTeamMembers(fetchRes.members)
+                            setLoadingTeam(false)
+                          } else {
+                            alert(res.error || "Failed to add member")
+                          }
+                        }
+                      }}
+                      className="flex flex-col gap-4 sm:flex-row sm:items-end"
+                    >
+                      <div className="flex-1">
+                        <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-white/50">
+                          Stellar Wallet Address
+                        </label>
+                        <input
+                          name="wallet"
+                          type="text"
+                          placeholder="e.g. GBXGQJWVLWOYH..."
+                          required
+                          className="h-11 w-full rounded-xl border border-white/10 bg-white/5 px-4 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-[#3b82f6]/50"
+                        />
+                      </div>
+                      <div className="w-full sm:w-44">
+                        <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-white/50">
+                          Role
+                        </label>
+                        <select
+                          name="role"
+                          required
+                          className="h-11 w-full rounded-xl border border-white/10 bg-[#0c1220] px-4 text-sm text-white focus:outline-none focus:border-[#3b82f6]/50"
+                        >
+                          <option value="Operator">Operator</option>
+                          <option value="Finance">Finance</option>
+                          <option value="Admin">Admin</option>
+                        </select>
+                      </div>
+                      <Button
+                        type="submit"
+                        className="h-11 rounded-xl bg-[#3b82f6] text-white hover:bg-[#2563eb] px-6"
+                      >
+                        Add Member
+                      </Button>
+                    </form>
+                  </div>
+
+                  {/* Members List */}
+                  <div className="rounded-2xl border border-white/10 bg-[#0c1220] p-6 shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
+                    <h3 className="text-base font-semibold text-white mb-4">Workspace Members</h3>
+                    {loadingTeam ? (
+                      <p className="text-sm text-white/40">Loading team members...</p>
+                    ) : teamMembers.length === 0 ? (
+                      <p className="text-sm text-white/35">No registered team members yet.</p>
+                    ) : (
+                      <div className="flex flex-col gap-4">
+                        {teamMembers.map((member) => (
+                          <div
+                            key={member.id}
+                            className="flex items-center justify-between rounded-xl border border-white/[0.04] bg-white/[0.01] p-4 hover:border-white/10 transition-all"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="h-9 w-9 rounded-full bg-[#3b82f6]/10 flex items-center justify-center text-white font-bold text-xs">
+                                {member.avatar_url ? (
+                                  <img
+                                    src={member.avatar_url}
+                                    alt=""
+                                    className="h-full w-full rounded-full object-cover"
+                                  />
+                                ) : (
+                                  (member.display_name || "M").slice(0, 2).toUpperCase()
+                                )}
+                              </div>
+                              <div>
+                                <p className="text-sm font-semibold text-white">
+                                  {member.display_name || "Workspace Member"}
+                                </p>
+                                <p className="text-xs text-white/30 font-mono">
+                                  {member.member_wallet.slice(0, 6)}...
+                                  {member.member_wallet.slice(-4)}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <select
+                                value={member.role}
+                                onChange={async (e) => {
+                                  const newRole = e.target.value as "Admin" | "Finance" | "Operator"
+                                  if (activeBusinessWallet) {
+                                    const { updateBusinessMemberRole } =
+                                      await import("@/lib/actions/business-roles")
+                                    const res = await updateBusinessMemberRole(
+                                      activeBusinessWallet,
+                                      member.member_wallet,
+                                      newRole,
+                                    )
+                                    if (res.success) {
+                                      setTeamMembers((prev) =>
+                                        prev.map((m) =>
+                                          m.id === member.id ? { ...m, role: newRole } : m,
+                                        ),
+                                      )
+                                    } else {
+                                      alert(res.error || "Failed to update role")
+                                    }
+                                  }
+                                }}
+                                className="h-9 rounded-lg border border-white/10 bg-[#0c1220] px-3 text-xs text-white focus:outline-none"
+                              >
+                                <option value="Operator">Operator</option>
+                                <option value="Finance">Finance</option>
+                                <option value="Admin">Admin</option>
+                              </select>
+                              <button
+                                onClick={async () => {
+                                  if (confirm("Are you sure you want to remove this member?")) {
+                                    if (activeBusinessWallet) {
+                                      const { removeBusinessMember } =
+                                        await import("@/lib/actions/business-roles")
+                                      const res = await removeBusinessMember(
+                                        activeBusinessWallet,
+                                        member.member_wallet,
+                                      )
+                                      if (res.success) {
+                                        setTeamMembers((prev) =>
+                                          prev.filter((m) => m.id !== member.id),
+                                        )
+                                      } else {
+                                        alert(res.error || "Failed to remove member")
+                                      }
+                                    }
+                                  }
+                                }}
+                                className="p-2 rounded-lg text-white/30 hover:text-red-400 hover:bg-red-400/10 transition-colors"
+                                title="Remove Member"
+                              >
+                                <svg
+                                  width="16"
+                                  height="16"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                >
+                                  <polyline points="3 6 5 6 21 6" />
+                                  <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+                                </svg>
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+              {/* ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ OPPORTUNITIES (Thalos Connect C5) ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ */}
+              {activeSection === "opportunities" &&
+                !isActiveSectionKybGated &&
+                activePermissions.opportunities && (
+                  <div className="mx-auto max-w-4xl">
+                    <OpportunitiesManager
+                      token={token}
+                      profileId={profileOrganizationId}
+                      userId={user?.id ?? null}
+                      onStartAgreement={startAgreementFromOpportunity}
+                    />
+                  </div>
+                )}
+            </main>
+          </>
+        )}
+      </div>
+
       {/* AI Agreement Assistant Dialog */}
       <Dialog open={showAiAssistant} onOpenChange={setShowAiAssistant}>
         <DialogContent className="sm:max-w-xl max-h-[80vh] flex flex-col" showCloseButton={false}>
           <DialogTitle className="sr-only">AI Agreement Assistant</DialogTitle>
-          <DialogDescription className="sr-only">Describe your deal to generate an agreement draft</DialogDescription>
+          <DialogDescription className="sr-only">
+            Describe your deal to generate an agreement draft
+          </DialogDescription>
           <AiAgreementAssistant
             profile="business"
             onDraftComplete={handleAiDraft}
@@ -2191,7 +3907,16 @@ export default function BusinessDashboardPage() {
                   className="p-1.5 rounded-lg text-white/40 hover:bg-white/10 hover:text-white transition-colors"
                   title="Close chat"
                 >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <path d="M18 6L6 18M6 6l12 12" />
+                  </svg>
                 </button>
               </div>
             </div>
@@ -2200,7 +3925,9 @@ export default function BusinessDashboardPage() {
               <AgreementChat
                 agreementId={showAgreementChat}
                 currentUserWallet={walletAddress || ""}
-                counterpartyWallet={agreements.find(a => a.id === showAgreementChat)?.receiver || ""}
+                counterpartyWallet={
+                  agreements.find((a) => a.id === showAgreementChat)?.receiver || ""
+                }
                 token={token}
                 defaultOpen={true}
                 embedded={true}

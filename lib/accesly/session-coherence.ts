@@ -17,7 +17,7 @@ export function shouldCloseAcceslySession(params: {
   /** Current Thalos user (null when logged out). */
   user: AuthUser | null
   /** Accesly SDK auth status. */
-  acceslyStatus: "anonymous" | "authenticated" | "expired"
+  acceslyStatus: "bootstrapping" | "anonymous" | "authenticated" | "expired"
 }): boolean {
   if (!params.hydrated) return false
   if (!params.hadAcceslyUser) return false

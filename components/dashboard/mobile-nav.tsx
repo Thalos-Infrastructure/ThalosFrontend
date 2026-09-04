@@ -2,14 +2,7 @@
 
 import { cn } from "@/lib/utils"
 import { useLanguage } from "@/lib/i18n"
-import {
-  LayoutDashboard,
-  FileText,
-  Trophy,
-  Wallet,
-  Settings,
-  Plus,
-} from "lucide-react"
+import { LayoutDashboard, FileText, Trophy, Wallet, Settings, Plus } from "lucide-react"
 
 export type MobileNavSection = "home" | "agreements" | "create" | "bounty" | "wallet"
 
@@ -60,7 +53,7 @@ export function MobileNav({
     <nav
       className={cn(
         "fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around border-t border-white/6 bg-[#0c1220]/95 backdrop-blur-xl px-2 pb-safe lg:hidden",
-        className
+        className,
       )}
     >
       {navItems.map((item) => {
@@ -87,12 +80,12 @@ export function MobileNav({
             onClick={() => onSectionChange(item.id === "wallet" ? "wallets" : item.id)}
             className={cn(
               "flex flex-col items-center justify-center gap-1 py-3 px-4 transition-colors",
-              isActive ? "text-[#f0b400]" : "text-white/40"
+              isActive ? "text-[#f0b400]" : "text-white/40",
             )}
           >
             {item.icon}
             <span className="text-[10px] font-medium">
-              {t(item.labelKey) || item.labelKey.split('.')[1]}
+              {t(item.labelKey) || item.labelKey.split(".")[1]}
             </span>
           </button>
         )

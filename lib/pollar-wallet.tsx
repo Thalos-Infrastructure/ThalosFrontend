@@ -393,7 +393,9 @@ function PollarWalletBridge({ children }: { children: React.ReactNode }) {
     const client = getPollarClient()
     if (!client) return
     return client.onStorageDegrade((reason) => {
-      console.warn(`[pollar] storage unavailable (${String(reason)}) — the session will not survive a reload`)
+      console.warn(
+        `[pollar] storage unavailable (${String(reason)}) — the session will not survive a reload`,
+      )
       setStorageDegraded(true)
     })
   }, [])
@@ -437,7 +439,6 @@ function PollarWalletBridge({ children }: { children: React.ReactNode }) {
     logout,
     fundingMode,
   }
-
 
   return <PollarWalletContext.Provider value={value}>{children}</PollarWalletContext.Provider>
 }

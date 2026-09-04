@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main, master, develop]
+    branches: [main, master, develop, release]
   pull_request:
-    branches: [main, master, develop]
+    branches: [main, master, develop, release]
 
 # Cancel superseded runs for the same branch/PR to save CI minutes.
 concurrency:
@@ -12,16 +12,9 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # Build and Test run as independent parallel jobs so a failure in one does not
-  # hide the other.
-  #
-  # Two checks are deliberately NOT here yet, because adding them today would
-  # make every PR red and teach everyone to ignore CI:
-  #   - typecheck: `tsc --noEmit` reports ~192 pre-existing errors, and
-  #     `next.config.mjs` sets `ignoreBuildErrors: true`. Clean the baseline,
-  #     then add it.
-  #   - lint: the `lint` script exists but ESLint is not installed. Install it
-  #     with a Next config and fix the fallout before wiring it up.
+  # Format / Lint / Typecheck / Test / Build run as independent parallel jobs so
+  # a failure in one does not hide the others - you see every failure at once.
+  # This is the same shape as ThalosBackend's pipeline.
   checks:
     name: ${{ matrix.name }}
     runs-on: ubuntu-latest
@@ -29,10 +22,16 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: Build
-            cmd: pnpm build
+          - name: Format
+            cmd: pnpm run format:check
+          - name: Lint
+            cmd: pnpm run lint:check
+          - name: Typecheck
+            cmd: pnpm run typecheck
           - name: Test
             cmd: pnpm test
+          - name: Build
+            cmd: pnpm build
 
     steps:
       - name: Checkout
@@ -52,7 +51,7 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # Both jobs run without any .env file, exactly as a fresh clone would.
+      # Every job runs without any .env file, exactly as a fresh clone would.
       # Verified locally: the build and the suite are env-independent, and the one
       # test that needs a model credential skips itself when it is absent.
       - name: ${{ matrix.name }}
@@ -68,7 +67,7 @@ jobs:
       # License-free run via the official image (the gitleaks-action needs a
       # license for GitHub orgs). Scans the working tree (--no-git) rather than
       # history, so it blocks NEW secrets in a PR without turning the pipeline red
-      # over credentials already in this repo's history — those need rotating, and
+      # over credentials already in this repo's history - those need rotating, and
       # a permanently failing job would just get ignored.
       - name: Run gitleaks
         run: |
@@ -79,3 +78,48 @@ jobs:
             --redact \
             --verbose \
             --config=/repo/.gitleaks.toml
+
+  coverage:
+    name: Coverage (report only)
+    runs-on: ubuntu-latest
+    # Non-blocking: reports the coverage % but never fails the run / blocks a
+    # merge. Matches the backend's coverage job.
+    continue-on-error: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Only the vitest suite reports coverage; tests/*.test.mjs run under
+      # `node --test` and are covered by the Test job above.
+      - name: Run tests with coverage
+        run: pnpm exec vitest run --coverage --coverage.reporter=text-summary --coverage.reporter=lcov 2>&1 | tee coverage.log
+
+      - name: Publish coverage to job summary
+        if: always()
+        run: |
+          {
+            echo '## 🧪 Test coverage (report only — non-blocking)'
+            echo '```'
+            grep -E "Statements|Branches|Functions|Lines" coverage.log || echo "(coverage summary not found)"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-report
+          path: coverage/
+          if-no-files-found: ignore

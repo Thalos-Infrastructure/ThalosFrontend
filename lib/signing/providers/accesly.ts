@@ -7,7 +7,12 @@
  * via the runtime the `AcceslySignerBridge` component registers.
  */
 
-import type { SignedMessage, SignedTransaction, SignTransactionOptions, WalletSigner } from "../types"
+import type {
+  SignedMessage,
+  SignedTransaction,
+  SignTransactionOptions,
+  WalletSigner,
+} from "../types"
 import { SignerUnavailableError } from "../types"
 import { getStoredAuthWallet } from "../session"
 import { getAcceslyRuntime } from "../accesly-bridge"
@@ -33,7 +38,10 @@ export const acceslySigner: WalletSigner = {
     return getAcceslyRuntime()?.getGAddress() != null || acceslyAuthWallet() !== null
   },
 
-  async signTransaction(xdr: string, opts: SignTransactionOptions): Promise<SignedTransaction | null> {
+  async signTransaction(
+    xdr: string,
+    opts: SignTransactionOptions,
+  ): Promise<SignedTransaction | null> {
     const runtime = getAcceslyRuntime()
     if (!runtime) throw new SignerUnavailableError(NO_SESSION_MESSAGE)
     return runtime.signTransaction(xdr, opts.networkPassphrase)

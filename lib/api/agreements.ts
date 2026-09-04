@@ -64,14 +64,13 @@ export interface MutationResponse {
   error?: string
 }
 
-
 /**
  * Create a new agreement
  * Backend returns: { agreement, error }
  */
 export async function createAgreement(
   input: CreateAgreementInput,
-  token: string
+  token: string,
 ): Promise<ApiResponse<Agreement>> {
   try {
     const response = await apiRequest<unknown>(
@@ -80,7 +79,7 @@ export async function createAgreement(
         method: "POST",
         body: JSON.stringify(input),
       },
-      token
+      token,
     )
 
     if (!response.success) {
@@ -116,7 +115,7 @@ export interface AgreementWithParticipants extends Agreement {
 export async function getAgreementsByWallet(
   walletAddress: string,
   token?: string,
-  params?: { status?: string; type?: string }
+  params?: { status?: string; type?: string },
 ): Promise<ApiResponse<AgreementWithParticipants[]>> {
   try {
     const queryParams = new URLSearchParams({ wallet: walletAddress })
@@ -126,7 +125,7 @@ export async function getAgreementsByWallet(
     const response = await apiRequest<unknown>(
       `/agreements/by-wallet?${queryParams.toString()}`,
       { method: "GET" },
-      token
+      token,
     )
 
     if (!response.success) {
@@ -156,13 +155,13 @@ export async function getAgreementsByWallet(
  */
 export async function getAgreement(
   agreementId: string,
-  token?: string
+  token?: string,
 ): Promise<ApiResponse<Agreement>> {
   try {
     const response = await apiRequest<unknown>(
       `/agreements/${agreementId}`,
       { method: "GET" },
-      token
+      token,
     )
 
     if (!response.success) {
@@ -194,7 +193,7 @@ export async function updateAgreementStatusApi(
   agreementId: string,
   status: AgreementStatus,
   actorWallet: string,
-  token: string
+  token: string,
 ): Promise<ApiResponse<{ success: boolean; error?: string }>> {
   try {
     const response = await apiRequest<unknown>(
@@ -203,7 +202,7 @@ export async function updateAgreementStatusApi(
         method: "PATCH",
         body: JSON.stringify({ status, actor_wallet: actorWallet }),
       },
-      token
+      token,
     )
 
     if (!response.success) {
@@ -243,7 +242,7 @@ export async function updateMilestoneStatus(
   status: AgreementMilestone["status"],
   actorWallet: string,
   evidenceDescription?: string,
-  token?: string
+  token?: string,
 ): Promise<ApiResponse<{ success: boolean; error?: string }>> {
   try {
     const body: Record<string, unknown> = {
@@ -251,7 +250,7 @@ export async function updateMilestoneStatus(
       status,
       actor_wallet: actorWallet,
     }
-    
+
     if (evidenceDescription) {
       body.evidence_description = evidenceDescription
     }
@@ -262,7 +261,7 @@ export async function updateMilestoneStatus(
         method: "PATCH",
         body: JSON.stringify(body),
       },
-      token
+      token,
     )
 
     if (!response.success) {
@@ -292,13 +291,13 @@ export async function updateMilestoneStatus(
  */
 export async function getAgreementActivityApi(
   agreementId: string,
-  token?: string
+  token?: string,
 ): Promise<ApiResponse<AgreementActivity[]>> {
   try {
     const response = await apiRequest<unknown>(
       `/agreements/${agreementId}/activity`,
       { method: "GET" },
-      token
+      token,
     )
 
     if (!response.success) {
@@ -328,13 +327,13 @@ export async function getAgreementActivityApi(
  */
 export async function getAgreementByContractIdApi(
   contractId: string,
-  token?: string
+  token?: string,
 ): Promise<ApiResponse<Agreement>> {
   try {
     const response = await apiRequest<unknown>(
       `/agreements/by-contract/${contractId}`,
       { method: "GET" },
-      token
+      token,
     )
 
     if (!response.success) {
@@ -366,7 +365,7 @@ export async function linkContractToAgreementApi(
   agreementId: string,
   contractId: string,
   actorWallet: string,
-  token: string
+  token: string,
 ): Promise<ApiResponse<{ success: boolean; error?: string }>> {
   try {
     const response = await apiRequest<unknown>(
@@ -375,7 +374,7 @@ export async function linkContractToAgreementApi(
         method: "PATCH",
         body: JSON.stringify({ contract_id: contractId, actor_wallet: actorWallet }),
       },
-      token
+      token,
     )
 
     if (!response.success) {
@@ -397,18 +396,19 @@ export async function linkContractToAgreementApi(
       error: e instanceof Error ? e.message : "Failed to link contract",
     }
   }
-}/**
+} /**
  * Get agreement by ID with participants
  * Backend returns: { agreement, participants, error }
  */
 export async function getAgreementByIdWithParticipants(
   agreementId: string,
-  token?: string
+  token?: string,
 ): Promise<ApiResponse<{ agreement: Agreement; participants: AgreementParticipant[] }>> {
   try {
     const response = await apiRequest<unknown>(
       `/agreements/${agreementId}`,
-      { method: "GET" }, token
+      { method: "GET" },
+      token,
     )
 
     if (!response.success) {
@@ -450,13 +450,13 @@ export interface AgreementMessage {
  */
 export async function getAgreementMessagesApi(
   agreementId: string,
-  token?: string
+  token?: string,
 ): Promise<ApiResponse<AgreementMessage[]>> {
   try {
     const response = await apiRequest<unknown>(
       `/agreements/${agreementId}/messages`,
       { method: "GET" },
-      token
+      token,
     )
 
     if (!response.success) {
@@ -488,7 +488,7 @@ export async function sendAgreementMessageApi(
   agreementId: string,
   message: string,
   senderWallet: string,
-  token?: string
+  token?: string,
 ): Promise<ApiResponse<AgreementMessage>> {
   try {
     const response = await apiRequest<unknown>(
@@ -497,7 +497,7 @@ export async function sendAgreementMessageApi(
         method: "POST",
         body: JSON.stringify({ message: message.trim(), sender_wallet: senderWallet }),
       },
-      token
+      token,
     )
 
     if (!response.success) {

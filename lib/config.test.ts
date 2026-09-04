@@ -99,9 +99,9 @@ const ESCROW_FLAG_NAMES = [
 
 describe("escrow migration flag configuration", () => {
   it("uses Nest for reads and Trustless Work for writes when flags are unset", async () => {
-    const config = await loadConfig(Object.fromEntries(
-      ESCROW_FLAG_NAMES.map((name) => [name, undefined]),
-    ))
+    const config = await loadConfig(
+      Object.fromEntries(ESCROW_FLAG_NAMES.map((name) => [name, undefined])),
+    )
 
     expect(config.ESCROW_MIGRATION_FLAGS).toEqual({
       getEscrowsBySigner: true,

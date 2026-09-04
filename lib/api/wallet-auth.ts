@@ -1,4 +1,4 @@
-import type { AuthUser } from "@/lib/auth/types";
+import type { AuthUser } from "@/lib/auth/types"
 
 /**
  * Client helpers for the wallet -> app JWT flow. These hit the Next.js API routes
@@ -13,10 +13,10 @@ export async function requestWalletChallenge(
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ address }),
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || "No se pudo obtener el challenge de la wallet");
-  return data;
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(data.error || "No se pudo obtener el challenge de la wallet")
+  return data
 }
 
 export async function verifyWalletLogin(
@@ -29,8 +29,8 @@ export async function verifyWalletLogin(
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ address, challenge, signature, provider }),
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || "No se pudo verificar la firma de la wallet");
-  return data;
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(data.error || "No se pudo verificar la firma de la wallet")
+  return data
 }

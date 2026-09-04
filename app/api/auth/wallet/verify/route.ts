@@ -1,21 +1,21 @@
-import { NextResponse } from "next/server";
-import { createHash } from "crypto";
-import { Keypair } from "@stellar/stellar-sdk";
-import { createServiceClient } from "@/lib/supabase/service";
-import { signToken, type AuthUser } from "@/lib/auth/utils";
-import { verifyWalletChallenge } from "@/lib/auth/wallet-challenge";
+import { NextResponse } from "next/server"
+import { createHash } from "crypto"
+import { Keypair } from "@stellar/stellar-sdk"
+import { createServiceClient } from "@/lib/supabase/service"
+import { signToken, type AuthUser } from "@/lib/auth/utils"
+import { verifyWalletChallenge } from "@/lib/auth/wallet-challenge"
 
 // Uses Node crypto + jsonwebtoken — force the Node.js runtime, not edge.
-export const runtime = "nodejs";
+export const runtime = "nodejs"
 
 /** Decode a signature that may be base64 or base64url into raw bytes. */
 function decodeSignature(signature: string): Buffer {
-  const normalized = signature.replace(/-/g, "+").replace(/_/g, "/");
-  return Buffer.from(normalized, "base64");
+  const normalized = signature.replace(/-/g, "+").replace(/_/g, "/")
+  return Buffer.from(normalized, "base64")
 }
 
 // SEP-0053 prepends this prefix and signs the SHA-256 of (prefix + message).
-const SEP53_PREFIX = "Stellar Signed Message:\n";
+const SEP53_PREFIX = "Stellar Signed Message:\n"
 
 /**
  * Verifies wallet ownership over the EXACT challenge string. Wallets differ in
@@ -28,29 +28,31 @@ const SEP53_PREFIX = "Stellar Signed Message:\n";
  * A forged signature matches none; a valid one matches exactly one.
  */
 function verifyStellarSignature(challenge: string, signature: string, address: string): void {
-  let keypair: Keypair;
+  let keypair: Keypair
   try {
-    keypair = Keypair.fromPublicKey(address);
+    keypair = Keypair.fromPublicKey(address)
   } catch {
-    throw new Error("Clave pública Stellar inválida");
+    throw new Error("Clave pública Stellar inválida")
   }
-  const sigBytes = decodeSignature(signature);
-  if (sigBytes.length === 0) throw new Error("Firma vacía");
+  const sigBytes = decodeSignature(signature)
+  if (sigBytes.length === 0) throw new Error("Firma vacía")
 
-  const raw = Buffer.from(challenge, "utf-8");
-  const prefixed = Buffer.from(SEP53_PREFIX + challenge, "utf-8");
+  const raw = Buffer.from(challenge, "utf-8")
+  const prefixed = Buffer.from(SEP53_PREFIX + challenge, "utf-8")
   const candidates: Array<{ scheme: string; bytes: Buffer }> = [
     { scheme: "raw", bytes: raw },
     { scheme: "sep53", bytes: createHash("sha256").update(prefixed).digest() },
     { scheme: "sha256", bytes: createHash("sha256").update(raw).digest() },
     { scheme: "prefixed", bytes: prefixed },
-  ];
+  ]
 
   for (const { scheme, bytes } of candidates) {
     try {
       if (keypair.verify(bytes, sigBytes)) {
-        console.log(`[auth/wallet/verify] signature OK via scheme="${scheme}" (sigLen=${sigBytes.length})`);
-        return;
+        console.log(
+          `[auth/wallet/verify] signature OK via scheme="${scheme}" (sigLen=${sigBytes.length})`,
+        )
+        return
       }
     } catch {
       // try next scheme
@@ -59,79 +61,87 @@ function verifyStellarSignature(challenge: string, signature: string, address: s
 
   console.warn(
     `[auth/wallet/verify] signature rejected — no scheme matched. sigLen=${sigBytes.length}, addr=${address}`,
-  );
-  throw new Error("Firma Stellar inválida");
+  )
+  throw new Error("Firma Stellar inválida")
 }
 
 export async function POST(req: Request) {
-  const body = await req.json().catch(() => ({}));
-  const address = body.address;
-  const challenge = body.challenge;
-  const signature = body.signature;
-  const provider = typeof body.provider === "string" && body.provider ? body.provider : "stellar-wallet";
+  const body = await req.json().catch(() => ({}))
+  const address = body.address
+  const challenge = body.challenge
+  const signature = body.signature
+  const provider =
+    typeof body.provider === "string" && body.provider ? body.provider : "stellar-wallet"
 
-  if (typeof address !== "string" || typeof challenge !== "string" || typeof signature !== "string") {
-    return NextResponse.json({ error: "Faltan address, challenge o signature" }, { status: 400 });
+  if (
+    typeof address !== "string" ||
+    typeof challenge !== "string" ||
+    typeof signature !== "string"
+  ) {
+    return NextResponse.json({ error: "Faltan address, challenge o signature" }, { status: 400 })
   }
 
   // 1) Proof integrity + expiry (server-issued HMAC), then 2) wallet ownership (Ed25519).
   try {
-    verifyWalletChallenge(challenge, address);
-    verifyStellarSignature(challenge, signature, address);
+    verifyWalletChallenge(challenge, address)
+    verifyStellarSignature(challenge, signature, address)
   } catch (e) {
-    const msg = e instanceof Error ? e.message : "Verificación fallida";
-    return NextResponse.json({ error: msg }, { status: 401 });
+    const msg = e instanceof Error ? e.message : "Verificación fallida"
+    return NextResponse.json({ error: msg }, { status: 401 })
   }
 
   // 3) Resolve (or create) the auth_users row keyed by wallet, so the JWT `sub`
   //    maps to a real user the backend can authorize (incl. write endpoints that
   //    check auth_users.wallet_public_key === signer).
-  const supabase = createServiceClient();
+  const supabase = createServiceClient()
 
   const { data: existing, error: selectError } = await supabase
     .from("auth_users")
     .select("id, email, name, wallet_public_key")
     .eq("wallet_public_key", address)
-    .maybeSingle();
+    .maybeSingle()
 
   if (selectError) {
-    console.error("auth/wallet/verify select error:", selectError);
-    return NextResponse.json({ error: "Error de base de datos" }, { status: 500 });
+    console.error("auth/wallet/verify select error:", selectError)
+    return NextResponse.json({ error: "Error de base de datos" }, { status: 500 })
   }
 
-  let row = existing;
+  let row = existing
   if (!row) {
     // Synthetic, deterministic email — wallet users have no email/password. Kept
     // unique per wallet so it never collides with real email accounts.
-    const email = `${address.toLowerCase()}@wallet.thalos`;
+    const email = `${address.toLowerCase()}@wallet.thalos`
     // wallet_provider persists the login method so /me can echo it back
     // (accesly/#109, pollar/#108…). Retry without it while the migration
     // hasn't run yet.
-    let inserted = null;
+    let inserted = null
     const withProvider = await supabase
       .from("auth_users")
       .insert({ wallet_public_key: address, email, name: null, wallet_provider: provider })
       .select("id, email, name, wallet_public_key")
-      .single();
+      .single()
     if (!withProvider.error && withProvider.data) {
-      inserted = withProvider.data;
+      inserted = withProvider.data
     } else {
       const fallback = await supabase
         .from("auth_users")
         .insert({ wallet_public_key: address, email, name: null })
         .select("id, email, name, wallet_public_key")
-        .single();
+        .single()
       if (fallback.error || !fallback.data) {
-        console.error("auth/wallet/verify insert error:", fallback.error);
-        return NextResponse.json({ error: "No se pudo crear el usuario de wallet" }, { status: 500 });
+        console.error("auth/wallet/verify insert error:", fallback.error)
+        return NextResponse.json(
+          { error: "No se pudo crear el usuario de wallet" },
+          { status: 500 },
+        )
       }
-      inserted = fallback.data;
+      inserted = fallback.data
     }
-    row = inserted;
+    row = inserted
   } else if (provider !== "stellar-wallet") {
     // Keep the stored provider in sync for explicit login methods (non-fatal;
     // no-op while the wallet_provider migration hasn't run).
-    await supabase.from("auth_users").update({ wallet_provider: provider }).eq("id", row.id);
+    await supabase.from("auth_users").update({ wallet_provider: provider }).eq("id", row.id)
   }
 
   const user: AuthUser = {
@@ -140,8 +150,8 @@ export async function POST(req: Request) {
     name: row.name ?? null,
     avatarUrl: null,
     wallet: { publicKey: address, provider },
-  };
-  const token = signToken({ sub: row.id, email: row.email });
+  }
+  const token = signToken({ sub: row.id, email: row.email })
 
-  return NextResponse.json({ user, token });
+  return NextResponse.json({ user, token })
 }

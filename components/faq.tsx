@@ -7,7 +7,17 @@ import { useTypewriter } from "@/hooks/use-typewriter"
 import { useLanguage } from "@/lib/i18n"
 import { ChevronDown } from "lucide-react"
 
-function FAQItem({ q, a, isOpen, onToggle }: { q: string; a: string; isOpen: boolean; onToggle: () => void }) {
+function FAQItem({
+  q,
+  a,
+  isOpen,
+  onToggle,
+}: {
+  q: string
+  a: string
+  isOpen: boolean
+  onToggle: () => void
+}) {
   return (
     <div className="border-b border-white/15 last:border-b-0">
       <button
@@ -16,17 +26,17 @@ function FAQItem({ q, a, isOpen, onToggle }: { q: string; a: string; isOpen: boo
         className="flex w-full items-center justify-between gap-4 py-5 text-left transition-colors hover:text-[#f0b400]"
       >
         <span className="text-base font-semibold text-white">{q}</span>
-        <ChevronDown 
+        <ChevronDown
           className={cn(
             "h-5 w-5 shrink-0 text-[#f0b400] transition-transform duration-300 ease-out",
-            isOpen && "rotate-180"
-          )} 
+            isOpen && "rotate-180",
+          )}
         />
       </button>
-      <div 
+      <div
         className={cn(
           "overflow-hidden transition-all duration-300 ease-out",
-          isOpen ? "max-h-96 opacity-100 pb-5" : "max-h-0 opacity-0"
+          isOpen ? "max-h-96 opacity-100 pb-5" : "max-h-0 opacity-0",
         )}
       >
         <p className="text-sm font-medium leading-relaxed text-white/70">{a}</p>
@@ -39,7 +49,12 @@ export function FAQ() {
   const [openIndex, setOpenIndex] = useState<number | null>(0)
   const { t } = useLanguage()
   const { ref, isVisible } = useSectionReveal()
-  const { displayed: twText, isTyping: twActive } = useTypewriter(t("faq.tag"), isVisible, { typeSpeed: 120, deleteSpeed: 60, pauseBeforeDelete: 2500, pauseBeforeType: 800 })
+  const { displayed: twText, isTyping: twActive } = useTypewriter(t("faq.tag"), isVisible, {
+    typeSpeed: 120,
+    deleteSpeed: 60,
+    pauseBeforeDelete: 2500,
+    pauseBeforeType: 800,
+  })
 
   const faqs = [
     { q: t("faq.q1"), a: t("faq.a1") },
@@ -62,7 +77,12 @@ export function FAQ() {
         <div className="mb-14 text-center">
           <p className="mb-3 text-base font-bold uppercase tracking-wider text-[#f0b400] md:text-lg">
             <span>{twText}</span>
-            <span className={cn("ml-0.5 inline-block h-4 w-0.5 bg-[#f0b400] align-middle", twActive ? "animate-pulse" : "opacity-0")} />
+            <span
+              className={cn(
+                "ml-0.5 inline-block h-4 w-0.5 bg-[#f0b400] align-middle",
+                twActive ? "animate-pulse" : "opacity-0",
+              )}
+            />
           </p>
           <h2 className="mb-4 text-4xl font-bold tracking-tight text-white md:text-5xl text-balance">
             {t("faq.title")}

@@ -11,10 +11,10 @@ import { getWalletsWithBalances } from "@/lib/api/wallets"
 import { WalletAddress } from "@/components/ui/wallet-address"
 import { BalanceCard } from "./balance-card"
 import { QuickActions, type QuickActionId } from "./quick-actions"
-import { 
-  FilePlus, 
-  FileText, 
-  TrendingUp, 
+import {
+  FilePlus,
+  FileText,
+  TrendingUp,
   Wallet,
   Bell,
   HelpCircle,
@@ -45,11 +45,11 @@ interface DashboardHomeProps {
   className?: string
 }
 
-export function DashboardHome({ 
-  onNavigate, 
+export function DashboardHome({
+  onNavigate,
   onCreateAgreement,
   agreements = [],
-  className 
+  className,
 }: DashboardHomeProps) {
   const { t } = useLanguage()
   const currentAddress = useCurrentAddress()
@@ -62,24 +62,16 @@ export function DashboardHome({
   const [balanceLoading, setBalanceLoading] = useState(false)
   const [balanceError, setBalanceError] = useState(false)
 
-  useEffect(() => {
-    if (currentAddress) {
-      loadProfile()
-    }
-  }, [currentAddress])
-
-  useEffect(() => {
-    if (token) {
-      loadBalances(token)
-    }
-  }, [token])
-
   const loadProfile = async () => {
     if (!currentAddress) return
     setIsLoading(true)
     try {
-      const p = await getProfileByWallet(currentAddress)
-      setProfile(p)
+      const { profile: loaded, error } = await getProfileByWallet(currentAddress)
+      if (error) {
+        console.error("Failed to load profile:", error)
+        return
+      }
+      setProfile(loaded)
     } catch (err) {
       console.error("Failed to load profile:", err)
     } finally {
@@ -140,19 +132,32 @@ export function DashboardHome({
     return t("dashboard.goodEvening") || "Good evening"
   }
 
+  useEffect(() => {
+    if (currentAddress) {
+      loadProfile()
+    }
+  }, [currentAddress])
+
+  useEffect(() => {
+    if (token) {
+      loadBalances(token)
+    }
+  }, [token])
+
   const displayName = profile?.display_name || user?.name || "User"
 
   // Calculate pending actions from agreements
   const pendingActions: PendingAction[] = agreements
-    .filter(a => a.status === "pending" || a.status === "awaiting_funding")
+    .filter((a) => a.status === "pending" || a.status === "awaiting_funding")
     .slice(0, 5)
-    .map(a => ({
+    .map((a) => ({
       id: a.id,
       type: a.status === "awaiting_funding" ? "fund" : "review",
       title: a.title,
-      description: a.status === "awaiting_funding" 
-        ? "Waiting for funds to be deposited" 
-        : "Requires your attention",
+      description:
+        a.status === "awaiting_funding"
+          ? "Waiting for funds to be deposited"
+          : "Requires your attention",
       agreementId: a.id,
       createdAt: new Date().toISOString(),
     }))
@@ -176,10 +181,34 @@ export function DashboardHome({
 
   // Quick action cards like in the image
   const mainActions = [
-    { id: "new-agreement", label: t("quickActions.newAgreement") || "New Agreement", icon: FilePlus, color: "text-[#f0b400]", bg: "bg-[#f0b400]/10" },
-    { id: "agreements", label: t("sidebar.agreements") || "Agreements", icon: FileText, color: "text-sky-400", bg: "bg-sky-400/10" },
-    { id: "yield", label: t("quickActions.generateYield") || "Investments", icon: TrendingUp, color: "text-emerald-400", bg: "bg-emerald-400/10" },
-    { id: "wallets", label: t("sidebar.wallets") || "My Wallet", icon: Wallet, color: "text-amber-400", bg: "bg-amber-400/10" },
+    {
+      id: "new-agreement",
+      label: t("quickActions.newAgreement") || "New Agreement",
+      icon: FilePlus,
+      color: "text-[#f0b400]",
+      bg: "bg-[#f0b400]/10",
+    },
+    {
+      id: "agreements",
+      label: t("sidebar.agreements") || "Agreements",
+      icon: FileText,
+      color: "text-sky-400",
+      bg: "bg-sky-400/10",
+    },
+    {
+      id: "yield",
+      label: t("quickActions.generateYield") || "Investments",
+      icon: TrendingUp,
+      color: "text-emerald-400",
+      bg: "bg-emerald-400/10",
+    },
+    {
+      id: "wallets",
+      label: t("sidebar.wallets") || "My Wallet",
+      icon: Wallet,
+      color: "text-amber-400",
+      bg: "bg-amber-400/10",
+    },
   ]
 
   return (
@@ -191,12 +220,7 @@ export function DashboardHome({
           <div className="relative">
             <div className="h-14 w-14 rounded-full bg-gradient-to-br from-[#f0b400]/20 to-[#f0b400]/5 border border-white/10 overflow-hidden">
               {profile?.avatar_url ? (
-                <Image 
-                  src={profile.avatar_url} 
-                  alt={displayName} 
-                  fill 
-                  className="object-cover"
-                />
+                <Image src={profile.avatar_url} alt={displayName} fill className="object-cover" />
               ) : (
                 <div className="h-full w-full flex items-center justify-center text-xl font-bold text-[#f0b400]">
                   {displayName.charAt(0).toUpperCase()}
@@ -205,19 +229,13 @@ export function DashboardHome({
             </div>
             <span className="absolute -bottom-0.5 -right-0.5 h-4 w-4 rounded-full border-2 border-background bg-emerald-500" />
           </div>
-          
+
           {/* Greeting and wallet */}
           <div>
             <p className="text-lg text-white">
               {getGreeting()}, <span className="font-semibold text-[#f0b400]">{displayName}</span>
             </p>
-            {currentAddress && (
-              <WalletAddress 
-                address={currentAddress} 
-                showCopy 
-                className="text-sm text-white/40"
-              />
-            )}
+            {currentAddress && <WalletAddress address={currentAddress} />}
           </div>
         </div>
 
@@ -251,11 +269,13 @@ export function DashboardHome({
         {mainActions.map((action) => (
           <button
             key={action.id}
-            onClick={() => action.id === "new-agreement" ? onCreateAgreement() : onNavigate(action.id)}
+            onClick={() =>
+              action.id === "new-agreement" ? onCreateAgreement() : onNavigate(action.id)
+            }
             className={cn(
               "group flex flex-col items-center gap-3 rounded-2xl border border-white/6 bg-[#0c1220]/60 p-5 transition-all duration-200",
               "hover:border-white/15 hover:bg-[#0c1220]/80 hover:shadow-[0_8px_24px_rgba(0,0,0,0.3)]",
-              "active:scale-[0.98]"
+              "active:scale-[0.98]",
             )}
           >
             <div className={cn("rounded-xl p-3", action.bg)}>
@@ -275,7 +295,7 @@ export function DashboardHome({
             {t("dashboard.pendingActions") || "Pending Actions"}
           </h3>
           {pendingActions.length > 0 && (
-            <button 
+            <button
               onClick={() => onNavigate("agreements")}
               className="text-xs text-[#f0b400] hover:underline flex items-center gap-1"
             >
@@ -303,10 +323,12 @@ export function DashboardHome({
                 onClick={() => onNavigate("agreements")}
                 className="w-full flex items-center gap-3 rounded-xl border border-white/6 bg-white/[0.02] p-3 hover:bg-white/5 transition-colors text-left"
               >
-                <div className={cn(
-                  "rounded-lg p-2",
-                  action.type === "fund" ? "bg-amber-500/10" : "bg-sky-500/10"
-                )}>
+                <div
+                  className={cn(
+                    "rounded-lg p-2",
+                    action.type === "fund" ? "bg-amber-500/10" : "bg-sky-500/10",
+                  )}
+                >
                   {action.type === "fund" ? (
                     <AlertCircle className="h-4 w-4 text-amber-400" />
                   ) : (

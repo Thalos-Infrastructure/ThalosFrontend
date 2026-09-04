@@ -35,9 +35,9 @@ export interface AcceslyLoginResult {
 }
 
 export type AcceslyLoginStage =
-  | "wallet"      // bootstrap / passkey
-  | "g-address"   // G bridge + USDC trustline
-  | "session"     // Thalos JWT via wallet challenge
+  | "wallet" // bootstrap / passkey
+  | "g-address" // G bridge + USDC trustline
+  | "session" // Thalos JWT via wallet challenge
 
 /**
  * Provisions the Accesly wallet and logs the user into Thalos.
@@ -115,7 +115,10 @@ export async function completeAcceslyLogin(
 }
 
 /** Poll the wallet record until Accesly's worker confirms the contract on Soroban. */
-async function waitForSmartAccountOnChain(accesly: AcceslyHook, timeoutMs = 120_000): Promise<void> {
+async function waitForSmartAccountOnChain(
+  accesly: AcceslyHook,
+  timeoutMs = 120_000,
+): Promise<void> {
   const started = Date.now()
   while (Date.now() - started < timeoutMs) {
     const remote = await accesly.wallet.fetchRemote().catch(() => null)

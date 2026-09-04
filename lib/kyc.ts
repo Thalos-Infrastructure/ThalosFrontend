@@ -1,4 +1,5 @@
-export type KycVerificationStatus = "not_started" | "pending" | "in_review" | "verified" | "rejected" | "expired" | "unverified"
+export type KycVerificationStatus =
+  "not_started" | "pending" | "in_review" | "verified" | "rejected" | "expired" | "unverified"
 
 export type KycProfileFields = {
   full_name?: string | null
@@ -26,7 +27,7 @@ export function canStartKycSession(fields: Partial<KycProfileFields> | null | un
 export function buildCreateKycSessionDto(
   walletAddress: string,
   userId?: string | null,
-  fields?: Partial<KycProfileFields> | null
+  fields?: Partial<KycProfileFields> | null,
 ): CreateKycSessionDto {
   if (!walletAddress.trim()) throw new Error("Wallet address is required")
   const fullName = fields?.full_name?.trim()

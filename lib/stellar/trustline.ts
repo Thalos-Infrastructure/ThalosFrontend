@@ -1,19 +1,19 @@
-"use server";
+"use server"
 
 import {
   TRUSTLINE_USDC,
   STELLAR_NETWORK,
   HORIZON_URL,
   STELLAR_NETWORK_PASSPHRASE as NETWORK_PASSPHRASE,
-} from "@/lib/config";
+} from "@/lib/config"
 
 // Friendbot URL for testnet activation (free)
-const FRIENDBOT_URL = "https://friendbot.stellar.org";
+const FRIENDBOT_URL = "https://friendbot.stellar.org"
 
 interface TrustlineResult {
-  success: boolean;
-  error?: string;
-  txHash?: string;
+  success: boolean
+  error?: string
+  txHash?: string
 }
 
 /**
@@ -21,22 +21,21 @@ interface TrustlineResult {
  */
 export async function checkUsdcTrustline(publicKey: string): Promise<boolean> {
   try {
-    const response = await fetch(`${HORIZON_URL}/accounts/${publicKey}`);
+    const response = await fetch(`${HORIZON_URL}/accounts/${publicKey}`)
     if (!response.ok) {
-      return false;
+      return false
     }
-    
-    const account = await response.json();
-    const balances = account.balances || [];
-    
+
+    const account = await response.json()
+    const balances = account.balances || []
+
     return balances.some(
-      (b: { asset_code?: string; asset_issuer?: string }) => 
-        b.asset_code === TRUSTLINE_USDC.symbol && 
-        b.asset_issuer === TRUSTLINE_USDC.address
-    );
+      (b: { asset_code?: string; asset_issuer?: string }) =>
+        b.asset_code === TRUSTLINE_USDC.symbol && b.asset_issuer === TRUSTLINE_USDC.address,
+    )
   } catch (error) {
-    console.error("Error checking trustline:", error);
-    return false;
+    console.error("Error checking trustline:", error)
+    return false
   }
 }
 
@@ -45,10 +44,10 @@ export async function checkUsdcTrustline(publicKey: string): Promise<boolean> {
  */
 export async function checkWalletActivated(publicKey: string): Promise<boolean> {
   try {
-    const response = await fetch(`${HORIZON_URL}/accounts/${publicKey}`);
-    return response.ok;
+    const response = await fetch(`${HORIZON_URL}/accounts/${publicKey}`)
+    return response.ok
   } catch {
-    return false;
+    return false
   }
 }
 
@@ -57,15 +56,15 @@ export async function checkWalletActivated(publicKey: string): Promise<boolean> 
  */
 async function activateWithFriendbot(publicKey: string): Promise<boolean> {
   if (STELLAR_NETWORK === "MAINNET") {
-    return false; // Friendbot only works on testnet
+    return false // Friendbot only works on testnet
   }
-  
+
   try {
-    const response = await fetch(`${FRIENDBOT_URL}?addr=${publicKey}`);
-    return response.ok;
+    const response = await fetch(`${FRIENDBOT_URL}?addr=${publicKey}`)
+    return response.ok
   } catch (error) {
-    console.error("Friendbot error:", error);
-    return false;
+    console.error("Friendbot error:", error)
+    return false
   }
 }
 
@@ -74,64 +73,66 @@ async function activateWithFriendbot(publicKey: string): Promise<boolean> {
  * Uses Friendbot for testnet (free), requires manual funding for mainnet
  */
 export async function activateAndAddTrustline(
-  publicKey: string, 
-  secretKey: string
+  publicKey: string,
+  secretKey: string,
 ): Promise<TrustlineResult> {
   try {
-    const StellarSdk = await import("@stellar/stellar-sdk");
-    const server = new StellarSdk.Horizon.Server(HORIZON_URL);
-    
+    const StellarSdk = await import("@stellar/stellar-sdk")
+    const server = new StellarSdk.Horizon.Server(HORIZON_URL)
+
     // Check if account is already activated
-    let isActivated = await checkWalletActivated(publicKey);
-    
+    let isActivated = await checkWalletActivated(publicKey)
+
     if (!isActivated) {
       if (STELLAR_NETWORK === "TESTNET") {
         // Use Friendbot for testnet (free)
-        const friendbotSuccess = await activateWithFriendbot(publicKey);
+        const friendbotSuccess = await activateWithFriendbot(publicKey)
         if (!friendbotSuccess) {
-          return { success: false, error: "Failed to activate wallet with Friendbot" };
+          return { success: false, error: "Failed to activate wallet with Friendbot" }
         }
-        isActivated = true;
+        isActivated = true
       } else {
         // For mainnet, wallet needs to be funded externally
-        return { 
-          success: false, 
-          error: "Wallet not activated. For mainnet, the wallet needs XLM to be activated." 
-        };
+        return {
+          success: false,
+          error: "Wallet not activated. For mainnet, the wallet needs XLM to be activated.",
+        }
       }
     }
-    
+
     // Check if trustline already exists
-    const hasTrustline = await checkUsdcTrustline(publicKey);
+    const hasTrustline = await checkUsdcTrustline(publicKey)
     if (hasTrustline) {
-      return { success: true };
+      return { success: true }
     }
-    
+
     // Add USDC trustline
-    const keypair = StellarSdk.Keypair.fromSecret(secretKey);
-    const account = await server.loadAccount(publicKey);
-    
-    const usdcAsset = new StellarSdk.Asset(TRUSTLINE_USDC.symbol, TRUSTLINE_USDC.address);
-    
+    const keypair = StellarSdk.Keypair.fromSecret(secretKey)
+    const account = await server.loadAccount(publicKey)
+
+    const usdcAsset = new StellarSdk.Asset(TRUSTLINE_USDC.symbol, TRUSTLINE_USDC.address)
+
     const transaction = new StellarSdk.TransactionBuilder(account, {
       fee: StellarSdk.BASE_FEE,
       networkPassphrase: NETWORK_PASSPHRASE,
     })
-      .addOperation(StellarSdk.Operation.changeTrust({
-        asset: usdcAsset,
-        limit: "1000000000",
-      }))
+      .addOperation(
+        StellarSdk.Operation.changeTrust({
+          asset: usdcAsset,
+          limit: "1000000000",
+        }),
+      )
       .setTimeout(180)
-      .build();
-    
-    transaction.sign(keypair);
-    const result = await server.submitTransaction(transaction);
-    
-    return { success: true, txHash: result.hash };
+      .build()
+
+    transaction.sign(keypair)
+    const result = await server.submitTransaction(transaction)
+
+    return { success: true, txHash: result.hash }
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Failed to add trustline";
-    console.error("Trustline error:", error);
-    return { success: false, error: message };
+    const message = error instanceof Error ? error.message : "Failed to add trustline"
+    console.error("Trustline error:", error)
+    return { success: false, error: message }
   }
 }
 
@@ -139,34 +140,35 @@ export async function activateAndAddTrustline(
  * Validate that a wallet can receive USDC before creating an escrow
  */
 export async function validateWalletForEscrow(publicKey: string): Promise<{
-  valid: boolean;
-  activated: boolean;
-  hasTrustline: boolean;
-  error?: string;
+  valid: boolean
+  activated: boolean
+  hasTrustline: boolean
+  error?: string
 }> {
-  const activated = await checkWalletActivated(publicKey);
+  const activated = await checkWalletActivated(publicKey)
   if (!activated) {
     return {
       valid: false,
       activated: false,
       hasTrustline: false,
       error: "Wallet is not activated. It needs XLM to be activated on the Stellar network.",
-    };
+    }
   }
-  
-  const hasTrustline = await checkUsdcTrustline(publicKey);
+
+  const hasTrustline = await checkUsdcTrustline(publicKey)
   if (!hasTrustline) {
     return {
       valid: false,
       activated: true,
       hasTrustline: false,
-      error: "Wallet does not have USDC trustline. The wallet owner needs to add USDC to receive payments.",
-    };
+      error:
+        "Wallet does not have USDC trustline. The wallet owner needs to add USDC to receive payments.",
+    }
   }
-  
+
   return {
     valid: true,
     activated: true,
     hasTrustline: true,
-  };
+  }
 }

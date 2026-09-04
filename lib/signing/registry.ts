@@ -34,7 +34,5 @@ export function resolveSigner(address?: string): WalletSigner {
   const active = providers.find((p) => p.isActive())
   if (active) return active
 
-  throw new SignerUnavailableError(
-    "No wallet available to sign. Connect a wallet or log in first.",
-  )
+  throw new SignerUnavailableError("No wallet available to sign. Connect a wallet or log in first.")
 }
