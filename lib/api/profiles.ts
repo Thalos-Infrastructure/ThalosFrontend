@@ -42,12 +42,12 @@ export interface BuilderProfile {
   created_at: string
 }
 
-export interface ProfilePaginatedResponse<T> {
-  data: T[]
-  total: number
-  page: number
-  limit: number
-  totalPages: number
+export interface ProjectProfile {
+  org_name: string | null
+  org_description: string | null
+  org_website: string | null
+  looking_for: string[]
+  org_links: string[]
 }
 
 export interface ProfileDiscoveryParams {

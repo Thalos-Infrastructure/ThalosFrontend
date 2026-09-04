@@ -2151,28 +2151,7 @@ export default function BusinessDashboardPage() {
       <ProfileEditor
         isOpen={showProfileEditor}
         onClose={() => setShowProfileEditor(false)}
-        profile={{
-          displayName: companyProfile?.display_name || t("dashPage.enterpriseAccount"),
-          email: companyProfile?.email || "",
-          walletAddress: walletAddress || "",
-          avatar: companyProfile?.avatar_url || undefined,
-        }}
-        onSave={async (newProfile) => {
-          // Update profile in database
-          const { updateProfile } = await import("@/lib/actions/profile")
-          if (walletAddress) {
-            const result = await updateProfile(walletAddress, {
-              display_name: newProfile.displayName,
-              email: newProfile.email,
-              avatar_url: newProfile.avatar,
-              account_type: "enterprise",
-            })
-            if (result.profile) {
-              setCompanyProfile(result.profile)
-            }
-          }
-        }}
-        type="enterprise"
+        token={token}
       />
 
       {/* Agreement Chat - Floating Popup */}
