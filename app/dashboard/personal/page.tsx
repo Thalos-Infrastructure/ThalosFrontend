@@ -509,7 +509,6 @@ export default function PersonalDashboardPage() {
       isMounted = false;
     };
   }, [token]);
-
   // Person KYC State
   const [kycFullName, setKycFullName] = useState("");
   const [kycCountry, setKycCountry] = useState("");

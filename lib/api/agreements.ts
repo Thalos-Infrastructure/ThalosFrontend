@@ -64,6 +64,10 @@ export interface MutationResponse {
   error?: string
 }
 
+/** Agreement as returned by the by-wallet listing, with participants when the backend embeds them. */
+export interface AgreementWithParticipants extends Agreement {
+  participants?: AgreementParticipant[]
+}
 
 /**
  * Create a new agreement

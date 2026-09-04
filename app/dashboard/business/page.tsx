@@ -1103,6 +1103,14 @@ export default function BusinessDashboardPage() {
                       </svg>
                     )}
                   </button>
+                  {memberRole === 'Admin' && (
+                    <Link
+                      href="/dashboard/opportunities"
+                      className="mt-2 flex w-full items-center justify-center rounded-lg border border-[#f0b400]/20 bg-[#f0b400]/5 px-3 py-2 text-xs font-semibold text-[#f0b400] transition-colors hover:bg-[#f0b400]/10"
+                    >
+                      Manage opportunities
+                    </Link>
+                  )}
                 </div>
 
                 {/* Main Navigation */}

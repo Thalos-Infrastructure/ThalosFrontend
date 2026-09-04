@@ -133,6 +133,7 @@ export function twAgreementStatus(raw: string): AgreementStatus | null {
   if (v === "disputed" || v === "dispute") return "disputed"
   if (v === "resolved") return "resolved"
   if (v === "cancelled" || v === "canceled") return "cancelled"
+  if (v === "draft") return "pending"
   console.warn(`[status] twAgreementStatus: unknown status "${raw}"`)
   return null
 }
