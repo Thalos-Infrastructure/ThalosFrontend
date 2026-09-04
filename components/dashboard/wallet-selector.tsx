@@ -54,7 +54,7 @@ export function WalletSelector({ selectedWallet, onWalletChange, walletsData: pr
         const result = await getWalletsWithBalances(token)
 
         if (isMounted && result.success && result.data && result.data.length > 0) {
-          setInternalWallets(result.data)
+          setInternalWallets(result.data.map((w) => ({ ...w, agreements: [] })))
         } else if (isMounted && currentAddress) {
           setInternalWallets([connectedWalletFallback(currentAddress)])
         }

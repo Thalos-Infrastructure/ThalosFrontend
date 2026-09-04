@@ -124,7 +124,7 @@ const connectedWallets = [
 
 const wizardStepKeys = ["wizard.escrowType", "wizard.useCase", "wizard.agreementInfo", "wizard.paymentWallets", "wizard.reviewSend"]
 
-interface Milestone { description: string; amount: string; status: "pending" | "approved" | "released"; released?: boolean; approved?: boolean }
+interface Milestone { description: string; amount: string; status: MilestoneStatus; released?: boolean; approved?: boolean }
 interface Agreement {
   id: string
   title: string
@@ -149,6 +149,7 @@ const initialAgreements: Agreement[] = []
 // to drive the approve/release actions.
 import { getAgreementsByWallet } from "@/lib/actions/agreements"
 import type { AgreementWithParticipants, AgreementStatus as NestAgreementStatus } from "@/lib/actions/agreements"
+import type { MilestoneStatus } from "@/lib/types/status"
 
 const NEST_STATUS_TO_UI: Record<NestAgreementStatus, string> = {
   pending: "pending",
@@ -260,8 +261,8 @@ function ChartTooltip({ active, payload, label }: {
 }) {
   if (active && payload && payload.length) {
     const item = payload[0]
-    const displayVal = item.dataKey === "volume" 
-      ? `$${item.value.toLocaleString()}` 
+    const displayVal = item.dataKey === "volume"
+      ? `$${item.value.toLocaleString()}`
       : String(item.value)
 
     const isDark = typeof document !== "undefined" && document.documentElement.classList.contains("dark")
@@ -308,7 +309,7 @@ export default function BusinessDashboardPage() {
   const [showAiAssistant, setShowAiAssistant] = useState(false)
   const [companyProfile, setCompanyProfile] = useState<Profile | null>(null)
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
-  
+
   // Workspace and RBAC State
   const [activeBusinessWallet, setActiveBusinessWallet] = useState<string | null>(null)
   const [memberRole, setMemberRole] = useState<"Admin" | "Finance" | "Operator" | null>(null)
@@ -354,12 +355,12 @@ export default function BusinessDashboardPage() {
           setIsCheckingRole(false)
         } else {
           const res = await getUserBusinessAccounts(walletAddress)
-          
+
           if (res.accounts && res.accounts.length > 0) {
             const firstBiz = res.accounts[0]
             setActiveBusinessWallet(firstBiz.business_wallet)
             setMemberRole(firstBiz.role)
-            
+
             const bizProfileRes = await getProfileByWallet(firstBiz.business_wallet)
             if (bizProfileRes.profile) {
               setCompanyProfile(bizProfileRes.profile)
@@ -507,10 +508,10 @@ export default function BusinessDashboardPage() {
   const mapEscrowToApproverAgreement = (e: any): Agreement => {
     const milestones = e.milestones as Array<{ description?: string; amount?: number; approved?: boolean; released?: boolean; status?: string }> || [];
     const isMulti = (e.type as string) === "multi-release" || milestones.length > 1;
-    const amount = isMulti 
+    const amount = isMulti
       ? milestones.reduce((sum, m) => sum + (m.amount || 0), 0).toString()
       : String(e.amount || "0");
-    
+
     return {
       id: e.contractId as string || `escrow-${Date.now()}`,
       title: e.title as string || "Escrow Agreement",
@@ -672,7 +673,10 @@ export default function BusinessDashboardPage() {
     dragItem.current = null; dragOverItem.current = null
   }
 
+  // Only ever invoked from `copyJson` below, never during render, so the
+  // timestamp cannot make a render impure.
   const generateJSON = () => ({
+    // eslint-disable-next-line react-hooks/purity
     engagementId: `THALOS-E-${Date.now().toString(36).toUpperCase()}`,
     title, description, amount: totalAmount.toString(), platformFee: "1", signer: selectedWallet,
     serviceType: escrowType === "single" ? "single-release" : "multi-release",
@@ -935,7 +939,7 @@ export default function BusinessDashboardPage() {
     setShowSaveTemplate(false); setTemplateName(""); setEditingTemplate(null)
   }
 
-  const useTemplate = (tpl: Template) => {
+  const applyTemplate = (tpl: Template) => {
     resetWizard()
     setEscrowType(tpl.escrowType)
     setUseCase(tpl.useCase || null)
@@ -980,13 +984,13 @@ export default function BusinessDashboardPage() {
     <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-[#1e293b]/20 rounded-full blur-[180px]" />
     <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-[#3b82f6]/3 rounded-full blur-[180px]" />
     <div className="absolute top-1/2 right-1/3 w-[400px] h-[400px] bg-[#f0b400]/2 rounded-full blur-[150px]" />
-    
+
     {/* Subtle grid pattern */}
     <div className="absolute inset-0 opacity-[0.015]" style={{
       backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
       backgroundSize: '60px 60px'
     }} />
-    
+
     {/* Noise overlay for texture */}
     <div className="absolute inset-0 opacity-[0.02]" style={{
       backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`
@@ -1054,7 +1058,7 @@ export default function BusinessDashboardPage() {
               {!walletAddress ? "Wallet Not Connected" : "Access Denied"}
             </h2>
             <p className="text-sm text-white/50 mb-6 font-medium">
-              {!walletAddress 
+              {!walletAddress
                 ? "Please connect your Stellar wallet to access the Enterprise Dashboard."
                 : "You must be a business workspace owner or a registered team member to access the Enterprise Dashboard."}
             </p>
@@ -1121,13 +1125,13 @@ export default function BusinessDashboardPage() {
                     .map((item) => {
                       const isActive = activeSection === item.id
                       return (
-                        <button 
-                          key={item.id} 
+                        <button
+                          key={item.id}
                     onClick={() => { setActiveSection(item.id); setSidebarOpen(false); if (item.id === "create") resetWizard() }}
                     className={cn(
                       "group flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-all duration-200 relative overflow-hidden",
-                      isActive 
-                        ? "bg-[#3b82f6] text-white shadow-[0_4px_20px_rgba(59,130,246,0.25)]" 
+                      isActive
+                        ? "bg-[#3b82f6] text-white shadow-[0_4px_20px_rgba(59,130,246,0.25)]"
                         : "text-white/60 hover:bg-white/[0.04] hover:text-white"
                     )}
                   >
@@ -1153,7 +1157,7 @@ export default function BusinessDashboardPage() {
             {/* Bottom Section */}
             <div className="p-3 border-t border-white/[0.06] space-y-2">
               {/* Referral Button */}
-              <button 
+              <button
                 onClick={async () => {
                   const referralLink = `https://thalos.app/invite?ref=enterprise-${Date.now().toString(36)}`
                   if (navigator.share) {
@@ -1186,9 +1190,9 @@ export default function BusinessDashboardPage() {
                 </div>
                 <p className="text-lg font-bold text-[#3b82f6]">$845,700<span className="text-sm font-normal text-white/40">.50</span></p>
               </div>
-              
+
               {/* Help Button */}
-              <button 
+              <button
                 onClick={() => window.open("https://thalos.app/support", "_blank")}
                 className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-white/50 hover:bg-white/[0.04] hover:text-white transition-colors"
               >
@@ -1203,7 +1207,7 @@ export default function BusinessDashboardPage() {
 
         {/* Main content */}
         <main className="flex-1 overflow-y-auto p-4 lg:p-8">
-          
+
 
           {/* ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ ANALYTICS ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ */}
           {activeSection === "analytics" && !isActiveSectionKybGated && activePermissions.analytics && (
@@ -1437,8 +1441,8 @@ export default function BusinessDashboardPage() {
                             </Button>
                           )}
                           {ms.status !== "released" && !disputedMs.has(`${agr.id}-${idx}`) && (
-                            <Button 
-                              size="sm" 
+                            <Button
+                              size="sm"
                               onClick={() => {
                                 if (!isExternalWallet) return
                                 setShowDisputeConfirm({ agrId: agr.id, msIdx: idx })
@@ -1529,14 +1533,14 @@ export default function BusinessDashboardPage() {
                 <h3 className="text-center text-lg font-bold text-white mb-2">{t("dispute.confirmTitle")}</h3>
                 <p className="text-center text-sm text-white/60 mb-6">{t("dispute.confirmDesc")}</p>
                 <div className="flex gap-3">
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     className="flex-1 rounded-lg border-white/10 text-white hover:bg-white/5"
                     onClick={() => setShowDisputeConfirm(null)}
                   >
                     {t("dispute.cancel")}
                   </Button>
-                  <Button 
+                  <Button
                     className="flex-1 rounded-lg bg-red-500 text-white hover:bg-red-600"
                     onClick={() => {
                       if (showDisputeConfirm) {
@@ -1658,7 +1662,7 @@ export default function BusinessDashboardPage() {
                         </div>
                       )}
                       <div className="flex items-center gap-2">
-                        <Button onClick={() => useTemplate(tpl)} className="flex-1 rounded-full bg-[#3b82f6]/10 text-xs font-semibold text-[#3b82f6] hover:bg-[#3b82f6]/20 border border-[#3b82f6]/15 h-8">
+                        <Button onClick={() => applyTemplate(tpl)} className="flex-1 rounded-full bg-[#3b82f6]/10 text-xs font-semibold text-[#3b82f6] hover:bg-[#3b82f6]/20 border border-[#3b82f6]/15 h-8">
                           {t("dashPage.useTemplate")}
                         </Button>
                         <button onClick={() => startEditTemplate(tpl)} className="rounded-full p-2 text-white/20 hover:text-white/60 hover:bg-white/[0.04] transition-all" title={t("dashPage.editTemplate")}>
@@ -1865,7 +1869,7 @@ export default function BusinessDashboardPage() {
                     <div className="flex flex-col gap-6">
                       <div><h3 className="text-lg font-semibold text-white sm:text-xl">{t("wizard.paymentDetails")}</h3><p className="mt-1 text-sm text-white/35">{t("wizard.selectWalletInfo")}</p></div>
                       <FormSelect label={t("wizard.yourWallet")} value={selectedWallet} onChange={setSelectedWallet} options={connectedWallets.map(w => ({ value: w.value, label: `${t(w.labelKey)} (${w.short})` }))} info={t("wizard.connectedWallet")} required />
-                      
+
                       {/* Counterparty Selection with Contact Selector */}
                       <div className="flex flex-col gap-2">
                         <label className="text-xs font-medium uppercase tracking-wider text-white/50">{t("wizard.releaseSignerWallet")} <span className="text-rose-400">*</span></label>
@@ -2068,7 +2072,7 @@ export default function BusinessDashboardPage() {
                           </div>
                         </div>
                         <div className="flex items-center gap-3">
-                          <select 
+                          <select
                             value={member.role}
                             onChange={async (e) => {
                               const newRole = e.target.value as "Admin" | "Finance" | "Operator";
@@ -2130,7 +2134,7 @@ export default function BusinessDashboardPage() {
       </>
     )}
   </div>
-      
+
       {/* AI Agreement Assistant Dialog */}
       <Dialog open={showAiAssistant} onOpenChange={setShowAiAssistant}>
         <DialogContent className="sm:max-w-xl max-h-[80vh] flex flex-col" showCloseButton={false}>

@@ -29,21 +29,6 @@ export function AgreementChat({ agreementId, currentUserWallet, counterpartyWall
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const pollInterval = useRef<NodeJS.Timeout | null>(null)
 
-  useEffect(() => {
-    if (isOpen) {
-      loadMessages()
-      // Poll for new messages every 5 seconds when chat is open
-      pollInterval.current = setInterval(loadMessages, 5000)
-    }
-    return () => {
-      if (pollInterval.current) clearInterval(pollInterval.current)
-    }
-  }, [isOpen, agreementId])
-
-  useEffect(() => {
-    scrollToBottom()
-  }, [messages])
-
   async function loadMessages() {
     setLoading(true)
     setChatError(null)
@@ -60,6 +45,22 @@ export function AgreementChat({ agreementId, currentUserWallet, counterpartyWall
   function scrollToBottom() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }
+
+  useEffect(() => {
+    if (isOpen) {
+      loadMessages()
+      // Poll for new messages every 5 seconds when chat is open
+      pollInterval.current = setInterval(loadMessages, 5000)
+    }
+    return () => {
+      if (pollInterval.current) clearInterval(pollInterval.current)
+    }
+  }, [isOpen, agreementId])
+
+  useEffect(() => {
+    scrollToBottom()
+  }, [messages])
+
 
   async function handleSend() {
     if (!newMessage.trim() || sending) return

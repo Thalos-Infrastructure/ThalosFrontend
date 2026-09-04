@@ -67,13 +67,13 @@ function useRotatingTypewriter(phrases: TypewriterPhrase[], isActive: boolean) {
   const [currentArticle, setCurrentArticle] = useState(phrases[0]?.article || "")
   const [isTyping, setIsTyping] = useState(false)
   const [phraseIndex, setPhraseIndex] = useState(0)
-  
+
   useEffect(() => {
   if (!isActive) {
   setDisplayText("")
   return
   }
-  
+
   const currentPhraseObj = phrases[phraseIndex]
   const currentPhrase = currentPhraseObj.text
   setCurrentArticle(currentPhraseObj.article)
@@ -115,7 +115,7 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
   const [letterOpacities, setLetterOpacities] = useState<number[]>([1, 1, 1, 1, 1, 1])
   const [isHeroVisible, setIsHeroVisible] = useState(true)
   const containerRef = useRef<HTMLDivElement>(null)
-  
+
   const totalPages = 4
 
   const content = CONTENT[language as keyof typeof CONTENT] || CONTENT.en
@@ -130,16 +130,16 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
   // Scroll-based page transitions - fast and responsive
   const onScroll = useCallback(() => {
     if (!containerRef.current) return
-    
+
     const scrollY = window.scrollY
     const vh = window.innerHeight
     const scrollPerPage = vh * 0.35 // 35vh per page - much faster scroll
     const heroEndScroll = scrollPerPage * totalPages - vh * 0.2
-    
+
     // Calculate current page (0-4)
     const pageIndex = Math.min(Math.floor(scrollY / scrollPerPage), totalPages - 1)
     setCurrentPage(pageIndex)
-    
+
     // Hide fixed content before it collides with next section
     setIsHeroVisible(scrollY < heroEndScroll)
 
@@ -202,9 +202,9 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
       {/* Fixed viewport container for all pages - top-16 to account for header */}
       {isHeroVisible && (
       <div className="fixed inset-x-0 top-16 bottom-0 z-10 overflow-hidden">
-        
+
         {/* Page 1: Intro */}
-        <div 
+        <div
           className="absolute inset-0 flex items-center transition-all duration-500 ease-out"
           style={{
             opacity: currentPage === 0 ? 1 : 0,
@@ -231,7 +231,7 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
               <h1 className="animate-fade-in-up text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-bold tracking-tight text-foreground leading-[0.95]">
                 {content.headlinePrefix} {currentArticle}
               </h1>
-              
+
               {/* Typewriter effect */}
               <div className="mt-2 sm:mt-4 min-h-[1.3em] animate-fade-in-up animation-delay-200">
                 <p className="text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-bold tracking-tight text-[#f0b400]">
@@ -239,7 +239,7 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
                   <span className={`${isTyping ? 'animate-pulse' : ''}`}>|</span>]
                 </p>
               </div>
-              
+
               {/* Description */}
               <p className="mt-10 sm:mt-12 text-lg sm:text-xl text-foreground/80 dark:text-foreground/70 leading-relaxed animate-fade-in-up animation-delay-300 max-w-xl mx-auto md:mx-0">
                 {content.description}
@@ -265,7 +265,7 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
               </div>
 
               {/* Scroll indicator */}
-              <button 
+              <button
                 onClick={scrollToNextPage}
                 className="mt-14 animate-bounce text-muted-foreground hover:text-foreground transition-colors mx-auto md:mx-0 block"
                 aria-label="Scroll to next section"
@@ -277,7 +277,7 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
         </div>
 
         {/* Page 2: Login Image */}
-        <div 
+        <div
           className="absolute inset-0 flex items-center justify-center px-4 transition-all duration-500 ease-out"
           style={{
             opacity: currentPage === 1 ? 1 : 0,
@@ -286,28 +286,28 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
           }}
         >
           <div className="text-center">
-            <div 
+            <div
               className="relative inline-block animate-float"
               style={{ filter: "drop-shadow(0 50px 100px rgba(0,0,0,0.5)) drop-shadow(0 20px 40px rgba(240,180,0,0.1))" }}
             >
               <div className="relative rounded-[2.5rem] sm:rounded-[3rem] overflow-hidden border-2 border-border/20 bg-card/30 backdrop-blur-sm transform hover:scale-[1.02] transition-transform duration-500">
-                <img 
-                  src="/images/hero-login.png" 
+                <img
+                  src="/images/hero-login.png"
                   alt="Thalos login screen"
                   className="w-[260px] sm:w-[320px] md:w-[380px] lg:w-[420px] h-auto"
                 />
               </div>
             </div>
-            
+
             <p className="mt-10 text-2xl sm:text-3xl md:text-4xl font-semibold text-foreground">
-              {content.imageCaption1}
+              {content.page2}
             </p>
             <div className="mt-3 h-1 w-20 mx-auto bg-gradient-to-r from-transparent via-[#f0b400] to-transparent rounded-full" />
           </div>
         </div>
 
         {/* Page 3: Dashboard Image */}
-        <div 
+        <div
           className="absolute inset-0 flex items-center justify-center px-4 transition-all duration-500 ease-out"
           style={{
             opacity: currentPage === 2 ? 1 : 0,
@@ -316,28 +316,28 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
           }}
         >
           <div className="text-center">
-            <div 
+            <div
               className="relative inline-block animate-float"
               style={{ filter: "drop-shadow(0 50px 100px rgba(0,0,0,0.5)) drop-shadow(0 20px 40px rgba(240,180,0,0.1))", animationDelay: "0.5s" }}
             >
               <div className="relative rounded-[2.5rem] sm:rounded-[3rem] overflow-hidden border-2 border-border/20 bg-card/30 backdrop-blur-sm transform hover:scale-[1.02] transition-transform duration-500">
-                <img 
-                  src="/images/hero-dashboard.png" 
+                <img
+                  src="/images/hero-dashboard.png"
                   alt="Thalos agreements dashboard"
                   className="w-[260px] sm:w-[320px] md:w-[380px] lg:w-[420px] h-auto"
                 />
               </div>
             </div>
-            
+
             <p className="mt-10 text-2xl sm:text-3xl md:text-4xl font-semibold text-foreground">
-              {content.imageCaption2}
+              {content.page3}
             </p>
             <div className="mt-3 h-1 w-20 mx-auto bg-gradient-to-r from-transparent via-[#f0b400] to-transparent rounded-full" />
           </div>
         </div>
 
         {/* Page 4: Trust at every step */}
-        <div 
+        <div
           className="absolute inset-0 flex items-center justify-center px-4 transition-all duration-500 ease-out"
           style={{
             opacity: currentPage === 3 ? 1 : 0,
@@ -355,14 +355,14 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
                 </svg>
               </div>
             </div>
-            
+
             <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold text-foreground tracking-tight">
               {content.finalHeadline}
             </h2>
             <p className="mt-6 text-xl sm:text-2xl text-foreground/80 dark:text-foreground/70 font-medium">
               {content.finalSubheadline}
             </p>
-            
+
             {/* CTA Button */}
             <Button
               size="lg"
@@ -385,8 +385,8 @@ export function HeroSection({ onNavigate, onIntroComplete }: HeroSectionProps) {
                 window.scrollTo({ top: i * scrollPerPage, behavior: "smooth" })
               }}
               className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                currentPage === i 
-                  ? "bg-[#f0b400] w-6" 
+                currentPage === i
+                  ? "bg-[#f0b400] w-6"
                   : "bg-foreground/20 hover:bg-foreground/40"
               }`}
               aria-label={`Go to page ${i + 1}`}

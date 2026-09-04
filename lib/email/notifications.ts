@@ -21,41 +21,44 @@ interface Agreement {
  */
 async function getEmailByWallet(walletAddress: string): Promise<{ email: string | null; name: string | null }> {
   const supabase = createServiceClient();
-  
+
   // First check profiles
   const { data: profile } = await supabase
     .from('profiles')
     .select('email, display_name')
     .eq('wallet_address', walletAddress)
     .single();
-  
+
   if (profile?.email) {
     return { email: profile.email, name: profile.display_name };
   }
-  
+
   // Then check auth_users
   const { data: authUser } = await supabase
     .from('auth_users')
     .select('email, name')
     .eq('wallet_public_key', walletAddress)
     .single();
-  
+
   if (authUser?.email) {
     return { email: authUser.email, name: authUser.name };
   }
-  
+
   // Check linked_wallets
   const { data: linkedWallet } = await supabase
     .from('linked_wallets')
     .select('user_id, auth_users(email, name)')
     .eq('wallet_address', walletAddress)
     .single();
-  
+
   if (linkedWallet?.auth_users) {
-    const user = linkedWallet.auth_users as { email: string; name: string };
-    return { email: user.email, name: user.name };
+    const related = linkedWallet.auth_users as
+      | { email: string; name: string }
+      | { email: string; name: string }[];
+    const user = Array.isArray(related) ? related[0] : related;
+    if (user) return { email: user.email, name: user.name };
   }
-  
+
   return { email: null, name: null };
 }
 
@@ -69,23 +72,23 @@ export async function sendAgreementNotification(
   additionalData?: Partial<AgreementEmailData>
 ): Promise<{ sent: number; failed: number; errors: string[] }> {
   const results = { sent: 0, failed: 0, errors: [] as string[] };
-  
+
   for (const recipient of recipients) {
     // Get email if not provided
     let email = recipient.email;
     let name = recipient.name;
-    
+
     if (!email) {
       const userData = await getEmailByWallet(recipient.wallet_address);
       email = userData.email || undefined;
       name = name || userData.name || undefined;
     }
-    
+
     if (!email) {
       console.log(`[Notification] No email found for wallet ${recipient.wallet_address}`);
       continue;
     }
-    
+
     const emailData: AgreementEmailData = {
       recipientName: name || 'Usuario',
       agreementTitle: agreement.title,
@@ -94,14 +97,14 @@ export async function sendAgreementNotification(
       currency: agreement.currency || 'USDC',
       ...additionalData,
     };
-    
+
     const { subject, html } = generateEmailContent(eventType, emailData);
-    
+
     const result = await sendEmail({ to: email, subject, html });
-    
+
     if (result.success) {
       results.sent++;
-      
+
       // Log to database
       await logNotification({
         agreementId: agreement.id,
@@ -113,7 +116,7 @@ export async function sendAgreementNotification(
     } else {
       results.failed++;
       results.errors.push(`${email}: ${result.error}`);
-      
+
       await logNotification({
         agreementId: agreement.id,
         eventType,
@@ -124,7 +127,7 @@ export async function sendAgreementNotification(
       });
     }
   }
-  
+
   return results;
 }
 

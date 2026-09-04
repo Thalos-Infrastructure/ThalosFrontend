@@ -5,10 +5,12 @@ import Link from "next/link"
 import { useLanguage } from "@/lib/i18n"
 import { useSectionReveal } from "@/hooks/use-section-reveal"
 import { cn } from "@/lib/utils"
+import { BUILD_TIME, VERSION_LABEL, formatBuildTime } from "@/lib/version"
 
 export function Footer({ onNavigate }: { onNavigate?: (section: string) => void }) {
   const { t } = useLanguage()
   const { ref, isVisible } = useSectionReveal(0.05)
+  const buildTime = formatBuildTime(BUILD_TIME)
   
   const scrollToSection = (sectionId: string) => {
     const el = document.getElementById(sectionId)
@@ -97,6 +99,13 @@ export function Footer({ onNavigate }: { onNavigate?: (section: string) => void 
 
         {/* Copyright */}
         <p className="mt-10 text-center text-xs text-white/30">&copy; {new Date().getFullYear()} Thalos Platform. {t("footer.rights")}</p>
+        {/* Build stamp - identifies which deploy is being served */}
+        <p
+          className="mt-1.5 text-center font-mono text-[11px] tracking-wide text-white/25"
+          title={buildTime ? `${t("footer.build")} ${buildTime}` : undefined}
+        >
+          {VERSION_LABEL}
+        </p>
       </div>
     </footer>
   )

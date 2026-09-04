@@ -71,12 +71,12 @@ export default function BountiesDashboardPage() {
   const { t } = useLanguage()
   const router = useRouter()
   const { address, profile } = useStellarWallet()
-  
+
   const [isLoading, setIsLoading] = useState(true)
   const [myBounties, setMyBounties] = useState<Bounty[]>([])
   const [validatorBounties, setValidatorBounties] = useState<Bounty[]>([])
   const [openBounties, setOpenBounties] = useState<Bounty[]>([])
-  
+
   // Create bounty form
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [title, setTitle] = useState("")
@@ -86,7 +86,7 @@ export default function BountiesDashboardPage() {
   const [deadline, setDeadline] = useState("")
   const [isCreating, setIsCreating] = useState(false)
   const [createError, setCreateError] = useState<string | null>(null)
-  
+
   const [copiedSlug, setCopiedSlug] = useState<string | null>(null)
 
   useEffect(() => {
@@ -94,20 +94,21 @@ export default function BountiesDashboardPage() {
       router.push("/")
       return
     }
+    const walletAddress: string = address
 
     async function loadBounties() {
       setIsLoading(true)
-      
+
       const [creatorResult, validatorResult, openResult] = await Promise.all([
-        getBountiesByCreator(address),
-        getBountiesForValidator(address),
+        getBountiesByCreator(walletAddress),
+        getBountiesForValidator(walletAddress),
         getOpenBounties(),
       ])
-      
+
       if (!creatorResult.error) setMyBounties(creatorResult.bounties)
       if (!validatorResult.error) setValidatorBounties(validatorResult.bounties)
       if (!openResult.error) setOpenBounties(openResult.bounties)
-      
+
       setIsLoading(false)
     }
 
@@ -116,18 +117,18 @@ export default function BountiesDashboardPage() {
 
   const handleCreate = async () => {
     if (!address || !title || !description || !amount || !validators) return
-    
+
     setIsCreating(true)
     setCreateError(null)
-    
+
     const validatorList = validators.split(",").map((v) => v.trim()).filter(Boolean)
-    
+
     if (validatorList.length === 0) {
       setCreateError("Please add at least one validator")
       setIsCreating(false)
       return
     }
-    
+
     const { bounty, error } = await createBounty({
       title,
       description,
@@ -136,14 +137,14 @@ export default function BountiesDashboardPage() {
       validators: validatorList,
       deadline: deadline || undefined,
     })
-    
+
     if (error) {
       setCreateError(error)
     } else if (bounty) {
       // Refresh bounties
       const { bounties } = await getBountiesByCreator(address)
       setMyBounties(bounties)
-      
+
       // Reset form
       setShowCreateForm(false)
       setTitle("")
@@ -152,7 +153,7 @@ export default function BountiesDashboardPage() {
       setValidators("")
       setDeadline("")
     }
-    
+
     setIsCreating(false)
   }
 
@@ -207,7 +208,7 @@ export default function BountiesDashboardPage() {
               <p className="mt-1 text-muted-foreground">Create and manage bounty agreements</p>
             </div>
           </div>
-          
+
           <Button
             onClick={() => setShowCreateForm(true)}
             className="gap-2 bg-[#f0b400] text-black hover:bg-[#f0b400]/90"
@@ -231,9 +232,9 @@ export default function BountiesDashboardPage() {
               >
                 {Icons.x}
               </button>
-              
+
               <h2 className="text-xl font-bold text-foreground mb-6">Create New Bounty</h2>
-              
+
               <div className="space-y-5">
                 <FormInput
                   label="Title"
@@ -242,7 +243,7 @@ export default function BountiesDashboardPage() {
                   placeholder="Design a new logo"
                   required
                 />
-                
+
                 <div>
                   <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
                     Description <span className="text-[#f0b400]">*</span>
@@ -255,7 +256,7 @@ export default function BountiesDashboardPage() {
                     className="w-full rounded-xl border border-border/40 bg-card/30 px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/40 focus:border-[#f0b400]/50 focus:outline-none focus:ring-2 focus:ring-[#f0b400]/15 resize-none"
                   />
                 </div>
-                
+
                 <FormInput
                   label="Amount"
                   value={amount}
@@ -265,7 +266,7 @@ export default function BountiesDashboardPage() {
                   info="USDC"
                   required
                 />
-                
+
                 <FormInput
                   label="Validators"
                   value={validators}
@@ -274,7 +275,7 @@ export default function BountiesDashboardPage() {
                   info="Comma-separated wallet addresses"
                   required
                 />
-                
+
                 <FormInput
                   label="Deadline"
                   value={deadline}
@@ -282,7 +283,7 @@ export default function BountiesDashboardPage() {
                   type="date"
                   info="Optional"
                 />
-                
+
                 <div className="flex items-center gap-3 pt-4">
                   <Button
                     onClick={handleCreate}
@@ -295,7 +296,7 @@ export default function BountiesDashboardPage() {
                     Cancel
                   </Button>
                 </div>
-                
+
                 {createError && (
                   <p className="text-sm text-red-400">{createError}</p>
                 )}
@@ -309,7 +310,7 @@ export default function BountiesDashboardPage() {
           <h2 className="mb-4 text-sm font-medium uppercase tracking-wider text-muted-foreground">
             My Bounties ({myBounties.length})
           </h2>
-          
+
           {myBounties.length === 0 ? (
             <div className="rounded-xl border border-dashed border-border/40 bg-card/30 p-8 text-center">
               <p className="text-muted-foreground">You haven&apos;t created any bounties yet.</p>
@@ -355,7 +356,7 @@ export default function BountiesDashboardPage() {
             <h2 className="mb-4 text-sm font-medium uppercase tracking-wider text-muted-foreground">
               Bounties to Validate ({validatorBounties.length})
             </h2>
-            
+
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {validatorBounties.map((bounty) => (
                 <div
@@ -388,7 +389,7 @@ export default function BountiesDashboardPage() {
           <h2 className="mb-4 text-sm font-medium uppercase tracking-wider text-muted-foreground">
             Open Bounties ({openBounties.length})
           </h2>
-          
+
           {openBounties.length === 0 ? (
             <div className="rounded-xl border border-dashed border-border/40 bg-card/30 p-8 text-center">
               <p className="text-muted-foreground">No open bounties available.</p>

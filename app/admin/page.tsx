@@ -281,7 +281,7 @@ export default function AdminDashboardPage() {
         <div className="mb-6 flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium text-muted-foreground">Status:</span>
-            {(["all", "draft", "funded", "in_progress", "completed", "disputed"] as const).map((s) => (
+            {(["all", "pending", "funded", "active", "completed", "disputed"] as const).map((s) => (
               <button key={s} onClick={() => { setStatusFilter(s); setPage(0) }}
                 className={cn(
                   "rounded-full border px-3 py-1 text-xs font-medium transition-all duration-200",

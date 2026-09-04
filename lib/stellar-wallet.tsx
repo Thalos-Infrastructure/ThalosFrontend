@@ -142,7 +142,8 @@ export function StellarWalletProvider({ children }: { children: React.ReactNode 
 
         // Persist the Kit-connected wallet to user_wallets (non-fatal)
         try {
-          const { token: authToken } = useAuthStore.getState?.() ?? {}
+          const authToken =
+            typeof window !== "undefined" ? window.localStorage.getItem("auth_token") : null
           if (authToken) {
             await linkWallet(
               { wallet_address: addr, wallet_type: "other" },

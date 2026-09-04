@@ -127,6 +127,7 @@ const translations: Record<Lang, Record<string, string>> = {
     "footer.rights": "All rights reserved.",
     "footer.visionTeam": "Vision & Mission",
     "footer.documentation": "Documentation",
+    "footer.build": "Built",
 
     "common.loading": "Loading…",
 
@@ -247,6 +248,8 @@ const translations: Record<Lang, Record<string, string>> = {
     "vision.oDesc": "Structured platform where each party operates under predefined rules.",
     "vision.s": "Stellar-Powered Security",
     "vision.sDesc": "Non-custodial, cryptographic protection from start to finish.",
+    "vision.trustlessWork": "Trustless Work",
+    "vision.trustlessWorkDesc": "Powered by the Trustless Work escrow protocol for decentralized, non-custodial fund management.",
     "vision.visionExtended": "We envision a financial system where trust is not a prerequisite but a product of the system itself. Where a freelancer in Buenos Aires can work with a client in Berlin with the same certainty as a handshake between neighbors. Where every peso, dollar, and euro locked in an agreement works for everyone involved until the moment it is released.",
     "vision.missionExtended": "Thalos is more than a payment platform. It is a trust infrastructure designed for the real world, where agreements are complex, parties are global, and the cost of broken promises is high. We build on Stellar because speed, low cost, and accessibility matter. We integrate Trustless Work because non-custodial escrow should be the standard, not the exception.",
 
@@ -275,8 +278,6 @@ const translations: Record<Lang, Record<string, string>> = {
     "getInvolved.repo": "View Repository",
 
     // Partners
-    "partners.builtOn": "Built on",
-    "partners.escrowsBy": "Escrows by",
 
     // Auth Section
     "auth.getStarted": "Get Started",
@@ -353,38 +354,18 @@ const translations: Record<Lang, Record<string, string>> = {
     "linkedWallets.walletCount": "{count} wallet(s)",
 
     // Status labels
-    "status.funded": "Funded",
-    "status.inProgress": "In Progress",
-    "status.awaitingApproval": "Awaiting Approval",
-    "status.released": "Released",
-    "status.pending": "Pending",
-    "status.approved": "Approved",
 
     // Wallet labels
-    "wallet.corporate": "Corporate Wallet",
-    "wallet.operations": "Operations Wallet",
-    "wallet.treasury": "Treasury Wallet",
     "wallet.personal": "Personal Wallet",
     "wallet.savings": "Savings Wallet",
 
     // Use-case labels
-    "useCase.carRental": "Car Rental Company",
-    "useCase.travel": "Travel Agency Package",
-    "useCase.dealership": "Car Dealership Sale",
-    "useCase.rentalPlatform": "Short-Term Rental Platform",
-    "useCase.event": "Event Management Contract",
-    "useCase.other": "Other",
     "useCase.freelance": "Freelance Work",
     "useCase.marketplace": "Marketplace Purchase",
     "useCase.realEstate": "Real Estate",
     "useCase.service": "Service Agreement",
 
     // Wizard steps & labels
-    "wizard.escrowType": "Escrow Type",
-    "wizard.useCase": "Use Case",
-    "wizard.agreementInfo": "Agreement Info",
-    "wizard.paymentWallets": "Payment & Wallets",
-    "wizard.reviewSend": "Review & Send",
     "wizard.howPayment": "How should the payment work?",
     "wizard.chooseFunds": "Select 'Quick' for fast, simple deals or 'Standard' for milestone-based projects.",
     "wizard.oneTimePayment": "Quick Escrow",
@@ -407,7 +388,6 @@ const translations: Record<Lang, Record<string, string>> = {
     "wizard.connectedWallet": "Your connected wallet",
     "wizard.releaseSignerWallet": "Release Signer Wallet",
     "wizard.whoReleases": "Who releases the funds",
-    "wizard.amount": "Amount",
     "wizard.paymentStages": "Payment Stages",
     "wizard.addStage": "+ Add Stage",
     "wizard.stageDesc": "Stage description...",
@@ -423,7 +403,6 @@ const translations: Record<Lang, Record<string, string>> = {
     "wizard.releaseSignerEmail": "Release Signer Email",
     "wizard.yourEmailOptional": "Your Email (optional)",
     "wizard.receiveCopy": "Receive a copy",
-    "wizard.back": "Back",
     "wizard.continue": "Continue",
     "wizard.createNotify": "Create & Notify Signer",
     "wizard.agreementCreated": "Agreement Created",
@@ -469,7 +448,6 @@ const translations: Record<Lang, Record<string, string>> = {
     "dashPage.active": "Active",
     "dashPage.totalVolume": "Total Volume",
     "dashPage.yieldEarned": "Yield Earned",
-    "dashPage.completed": "Completed",
     "dashPage.monthlyAgreements": "Monthly Agreements",
     "dashPage.volume": "Volume (USDC)",
     "dashPage.recentAgreements": "Recent Agreements",
@@ -672,10 +650,6 @@ const translations: Record<Lang, Record<string, string>> = {
     "dashPage.noAgreementsDesc": "Create your first agreement to get started.",
 
     // Ramps (On-ramp / Off-ramp)
-    "ramps.title": "Deposit & Withdraw",
-    "ramps.subtitle": "Convert between fiat and crypto using regulated Stellar anchors",
-    "ramps.deposit": "Deposit",
-    "ramps.withdraw": "Withdraw",
     "ramps.depositTitle": "Deposit Fiat to Crypto",
     "ramps.depositDesc": "Convert your fiat currency (USD, EUR, etc.) into USDC on Stellar through regulated anchor services.",
     "ramps.withdrawTitle": "Withdraw Crypto to Fiat",
@@ -1025,6 +999,7 @@ const translations: Record<Lang, Record<string, string>> = {
     "footer.rights": "Todos los derechos reservados.",
     "footer.visionTeam": "Vision y Mision",
     "footer.documentation": "Documentacion",
+    "footer.build": "Compilado el",
 
     "common.loading": "Cargando…",
 
@@ -1175,8 +1150,6 @@ const translations: Record<Lang, Record<string, string>> = {
     "getInvolved.repo": "Ver Repositorio",
 
     // Partners
-    "partners.builtOn": "Construido en",
-    "partners.escrowsBy": "Escrows por",
 
     // Auth Section
     "auth.getStarted": "Comenzar",
@@ -1253,72 +1226,18 @@ const translations: Record<Lang, Record<string, string>> = {
     "linkedWallets.walletCount": "{count} billetera(s)",
 
     // Status labels
-    "status.funded": "Financiado",
-    "status.inProgress": "En Progreso",
-    "status.awaitingApproval": "Esperando Aprobacion",
-    "status.released": "Liberado",
-    "status.pending": "Pendiente",
-    "status.approved": "Aprobado",
 
     // Wallet labels
-    "wallet.corporate": "Billetera Corporativa",
-    "wallet.operations": "Billetera de Operaciones",
-    "wallet.treasury": "Billetera de Tesoreria",
     "wallet.personal": "Billetera Personal",
     "wallet.savings": "Billetera de Ahorros",
 
     // Use-case labels
-    "useCase.carRental": "Empresa de Alquiler de Autos",
-    "useCase.travel": "Paquete de Agencia de Viajes",
-    "useCase.dealership": "Venta de Concesionaria",
-    "useCase.rentalPlatform": "Plataforma de Alquiler Temporal",
-    "useCase.event": "Contrato de Gestion de Eventos",
-    "useCase.other": "Otro",
     "useCase.freelance": "Trabajo Freelance",
     "useCase.marketplace": "Compra en Marketplace",
     "useCase.realEstate": "Bienes Raices",
     "useCase.service": "Acuerdo de Servicio",
 
   // Evidence & flow
-    "flow.sellerView": "Vista del Vendedor",
-    "flow.buyerView": "Vista del Comprador",
-    "flow.submitEvidence": "Enviar Evidencia",
-    "flow.evidenceSubmitted": "Evidencia Enviada",
-    "flow.evidenceDesc": "Adjunta prueba del trabajo completado para este hito.",
-    "flow.evidenceLink": "Link de evidencia (URL o descripcion)",
-    "flow.evidencePlaceholder": "ej. https://drive.google.com/... o descripcion del entregable",
-    "flow.submit": "Enviar",
-    "flow.awaitingEvidence": "Esperando evidencia del vendedor",
-    "flow.evidenceReady": "Evidencia enviada - Lista para revision",
-    "flow.pendingFunding": "Pendiente de Fondeo",
-    "flow.pendingFundingDesc": "Esperando que el comprador fondee el escrow.",
-    "flow.fundEscrow": "Fondear Escrow",
-    "flow.funding": "Fondeando...",
-    "flow.funded": "Fondeado",
-    "flow.approveMs": "Aprobar",
-    "flow.approving": "Aprobando...",
-    "flow.releaseAll": "Liberar Fondos",
-    "flow.releasing": "Liberando...",
-    "flow.released": "Liberado",
-    "flow.allFundsReleased": "Todos los Fondos Liberados",
-    "flow.allFundsReleasedDesc": "Este acuerdo ha sido completado y todos los fondos han sido enviados al receptor.",
-    "flow.backToAgreements": "Volver a Acuerdos",
-    "flow.milestones": "hitos",
-    "flow.counterparty": "Contraparte",
-    "flow.receiverWallet": "Wallet del receptor",
-    "flow.releaseStrategy": "Estrategia de liberacion",
-    "flow.perMilestone": "Liberar fondos por hito a medida que cada uno sea aprobado.",
-    "flow.allAtOnce": "Liberar todos los fondos de una vez cuando todos los hitos sean aprobados.",
-    "flow.uponCompletion": "Liberar todos los fondos juntos al completar todo.",
-    "flow.releaseActions": "Acciones de Liberacion",
-    "flow.approveAgreement": "Aprobar Acuerdo",
-    "flow.releaseAllFunds": "Liberar Todos los Fondos",
-    "flow.releaseAllApproved": "Liberar Todos los Aprobados",
-    "flow.approveReleaseAll": "Aprobar y Liberar Todo",
-    "flow.stepFund": "1. Fondear",
-    "flow.stepReview": "2. Revisar",
-    "flow.stepRelease": "3. Liberar",
-    "flow.viewEvidence": "Ver Evidencia",
 
   // Dispute
     "dispute.raiseDispute": "Abrir Disputa",
@@ -1332,11 +1251,6 @@ const translations: Record<Lang, Record<string, string>> = {
     "dispute.awaitingResolution": "Esperando resolucion del mediador",
 
     // Wizard steps & labels
-  "wizard.escrowType": "Tipo de Escrow",
-    "wizard.useCase": "Caso de Uso",
-    "wizard.agreementInfo": "Info del Acuerdo",
-    "wizard.paymentWallets": "Pago y Billeteras",
-    "wizard.reviewSend": "Revisar y Enviar",
     "wizard.howPayment": "Como debe funcionar el pago?",
     "wizard.chooseFunds": "Selecciona 'Rápido' para acuerdos simples o 'Estándar' para proyectos por hitos.",
     "wizard.oneTimePayment": "Escrow Rápido",
@@ -1359,7 +1273,6 @@ const translations: Record<Lang, Record<string, string>> = {
     "wizard.connectedWallet": "Tu billetera conectada",
     "wizard.releaseSignerWallet": "Billetera del Firmante de Liberacion",
     "wizard.whoReleases": "Quien libera los fondos",
-    "wizard.amount": "Monto",
     "wizard.paymentStages": "Etapas de Pago",
     "wizard.addStage": "+ Agregar Etapa",
     "wizard.stageDesc": "Descripcion de la etapa...",
@@ -1375,7 +1288,6 @@ const translations: Record<Lang, Record<string, string>> = {
     "wizard.releaseSignerEmail": "Email del Firmante de Liberacion",
     "wizard.yourEmailOptional": "Tu Email (opcional)",
     "wizard.receiveCopy": "Recibir una copia",
-    "wizard.back": "Atras",
     "wizard.continue": "Continuar",
     "wizard.createNotify": "Crear y Notificar Firmante",
     "wizard.agreementCreated": "Acuerdo Creado",
@@ -1410,7 +1322,6 @@ const translations: Record<Lang, Record<string, string>> = {
     "dashPage.active": "Activos",
     "dashPage.totalVolume": "Volumen Total",
     "dashPage.yieldEarned": "Rendimiento Ganado",
-    "dashPage.completed": "Completados",
     "dashPage.monthlyAgreements": "Acuerdos Mensuales",
     "dashPage.volume": "Volumen (USDC)",
     "dashPage.recentAgreements": "Acuerdos Recientes",
@@ -1613,10 +1524,6 @@ const translations: Record<Lang, Record<string, string>> = {
     "dashPage.noAgreementsDesc": "Crea tu primer acuerdo para comenzar.",
 
     // Ramps (On-ramp / Off-ramp)
-    "ramps.title": "Depositar y Retirar",
-    "ramps.subtitle": "Convierte entre fiat y crypto usando anchors regulados de Stellar",
-    "ramps.deposit": "Depositar",
-    "ramps.withdraw": "Retirar",
     "ramps.depositTitle": "Depositar Fiat a Crypto",
     "ramps.depositDesc": "Convierte tu moneda fiat (USD, EUR, etc.) a USDC en Stellar a traves de servicios de anchor regulados.",
     "ramps.withdrawTitle": "Retirar Crypto a Fiat",
@@ -1928,6 +1835,9 @@ export function useLanguage() {
   const ctx = useContext(LanguageContext)
 
   if (isDev && !warnedAboutMissingProvider && (ctx as unknown as Record<PropertyKey, unknown>)[FALLBACK_CONTEXT]) {
+    // Deliberately module-scoped: the point is to warn once per app, not once
+    // per component instance, so a ref would defeat it.
+    // eslint-disable-next-line react-hooks/globals
     warnedAboutMissingProvider = true
     // We do not throw (see FALLBACK_CONTEXT), but degrading silently means
     // rendering the raw keys — and `t()` already returns the key when a

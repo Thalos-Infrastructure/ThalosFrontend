@@ -17,9 +17,9 @@ interface ContactSelectorProps {
 }
 
 export function ContactSelector({ value, onChange, placeholder = "Enter wallet address or select contact", className, ownerWallet: propOwnerWallet }: ContactSelectorProps) {
-  const { walletAddress: connectedWallet } = useStellarWallet()
+  const { address: connectedWallet } = useStellarWallet()
   const ownerWallet = propOwnerWallet || connectedWallet
-  
+
   const [contacts, setContacts] = useState<Contact[]>([])
   const [searchResults, setSearchResults] = useState<Array<{ id: string; name: string; email: string; wallet_address: string }>>([])
   const [isOpen, setIsOpen] = useState(false)
@@ -55,7 +55,7 @@ export function ContactSelector({ value, onChange, placeholder = "Enter wallet a
   async function handleAddContact() {
     if (!newContact.name || !ownerWallet) return
     setLoading(true)
-    
+
     const { contact, error } = await addContact(ownerWallet, {
       name: newContact.name,
       email: newContact.email || undefined,
@@ -74,7 +74,7 @@ export function ContactSelector({ value, onChange, placeholder = "Enter wallet a
       await loadContacts()
       setShowAddContact(false)
       setNewContact({ name: "", email: "", phone: "", wallet_address: "" })
-      
+
       // If contact has a wallet, select it
       if (contact.contact_wallet) {
         handleSelectContact(contact.contact_wallet, contact.contact_name)
@@ -106,21 +106,21 @@ export function ContactSelector({ value, onChange, placeholder = "Enter wallet a
     try {
       const props = ["name", "email", "tel"]
       const opts = { multiple: true }
-      
+
       // @ts-expect-error - Contacts API types not in TypeScript
       const phoneContacts = await navigator.contacts.select(props, opts)
-      
+
       // Add each contact to Thalos
       for (const contact of phoneContacts) {
         const name = contact.name?.[0] || "Unknown"
         const email = contact.email?.[0]
         const phone = contact.tel?.[0]
-        
-        if (name) {
-          await addContact({ name, email, phone })
+
+        if (name && ownerWallet) {
+          await addContact(ownerWallet, { name, email, phone })
         }
       }
-      
+
       // Reload contacts
       await loadContacts()
       alert(`Successfully imported ${phoneContacts.length} contacts!`)
@@ -132,7 +132,7 @@ export function ContactSelector({ value, onChange, placeholder = "Enter wallet a
   // Share Thalos referral link
   async function shareReferralLink() {
     const referralLink = `https://thalos.app/invite?ref=${encodeURIComponent(Date.now().toString(36))}`
-    
+
     if (navigator.share) {
       try {
         await navigator.share({
@@ -293,7 +293,7 @@ export function ContactSelector({ value, onChange, placeholder = "Enter wallet a
                   type="button"
                   variant="ghost"
                   size="sm"
-                  onClick={() => { setInviteLink(null); setShowAddContact(false); setNewContact({ name: "", email: "", phone: "" }); }}
+                  onClick={() => { setInviteLink(null); setShowAddContact(false); setNewContact({ name: "", email: "", phone: "", wallet_address: "" }); }}
                   className="text-white/50"
                 >
                   Done

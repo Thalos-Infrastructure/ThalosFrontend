@@ -32,7 +32,6 @@ function makeRequest(body: unknown, authHeader?: string) {
   return {
     json: async () => body,
     headers: new Headers(authHeader ? { authorization: authHeader } : {}),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } as any;
 }
 

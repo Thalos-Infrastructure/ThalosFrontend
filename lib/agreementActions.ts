@@ -391,7 +391,9 @@ async function processTransaction(
   if (!response.success)
     throw new Error(response.error || errorMessage);
 
-  const xdr = response.data?.unsignedTransaction;
+  // Callers route through several response wrappers, all of which carry the
+  // unsigned XDR in the body; the generic is `unknown` at this boundary.
+  const xdr = (response.data as { unsignedTransaction?: string } | undefined)?.unsignedTransaction;
   if (!xdr)
     throw new Error("No XDR returned from agreement API");
 

@@ -85,7 +85,7 @@ const icons: Record<string, React.ReactNode> = {
 
 function FlowDiagram({ steps }: { steps: typeof useCases[0]["steps"] }) {
   const [activeStep, setActiveStep] = useState(-1)
-  const intervalRef = useRef<NodeJS.Timeout>()
+  const intervalRef = useRef<NodeJS.Timeout | undefined>(undefined)
 
   useEffect(() => {
     setActiveStep(-1)
