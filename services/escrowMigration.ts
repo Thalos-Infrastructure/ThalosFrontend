@@ -1,9 +1,3 @@
-/**
- * Per-operation cutover between direct Trustless Work calls and the Nest relay.
- * Routing is configured in `lib/config.ts`; every call emits one structured
- * completion event from `lib/telemetry/escrow-migration.ts`.
- */
-
 import {
   ESCROW_MIGRATION_FLAGS,
   type EscrowMigrationOperation,
@@ -53,7 +47,6 @@ async function route<T>(
     ? "nest"
     : "trustless_work";
   const startedAt = Date.now();
-
   try {
     const result = await (path === "nest" ? nestCall() : trustlessWorkCall());
     const outcome = result.success ? "success" : "failure";
@@ -95,9 +88,7 @@ function createEscrowDto(payload: AgreementPayload): escrowApi.BackendCreateEscr
     },
     milestones: payload.milestones.map((milestone) => ({
       description: milestone.description,
-      ...(isMultiRelease
-        ? { amount: milestone.amount, status: milestone.status }
-        : {}),
+      ...(isMultiRelease ? { amount: milestone.amount, status: milestone.status } : {}),
     })),
   };
 }
@@ -134,11 +125,7 @@ export async function getEscrowsByRole(
   params: GetEscrowsByRoleParams,
   token?: string,
 ): Promise<RoutedResponse<unknown[]>> {
-  // Like getEscrowsBySigner above, this read path works without a token.
-  const trustlessWorkRole = params.role === "service_provider"
-    ? "serviceProvider"
-    : params.role;
-
+  const trustlessWorkRole = params.role === "service_provider" ? "serviceProvider" : params.role;
   return route<unknown[]>(
     "getEscrowsByRole",
     () => escrowApi.getEscrowsByRole(params, token),
@@ -157,8 +144,7 @@ export async function createAgreement(
 ): Promise<RoutedResponse<{ unsignedTransaction: string }>> {
   return route<{ unsignedTransaction: string }>(
     "createAgreement",
-    () => nestWrite(token, (resolvedToken) =>
-      escrowApi.buildCreateEscrow(createEscrowDto(payload), resolvedToken)),
+    () => nestWrite(token, (resolvedToken) => escrowApi.buildCreateEscrow(createEscrowDto(payload), resolvedToken)),
     () => originalService.createAgreement(payload),
   );
 }
@@ -172,10 +158,7 @@ export async function fundEscrow(
 ): Promise<RoutedResponse> {
   return route(
     "fundEscrow",
-    () => nestWrite(token, (resolvedToken) => escrowApi.buildFundEscrow(
-      { contractId, signer, amount, type },
-      resolvedToken,
-    )),
+    () => nestWrite(token, (resolvedToken) => escrowApi.buildFundEscrow({ contractId, signer, amount, type }, resolvedToken)),
     () => originalService.fundEscrow(contractId, signer, amount, type),
   );
 }
@@ -189,10 +172,7 @@ export async function approveMilestone(
 ): Promise<RoutedResponse> {
   return route(
     "approveMilestone",
-    () => nestWrite(token, (resolvedToken) => escrowApi.buildApproveMilestone(
-      { contractId, milestoneIndex, approver, type },
-      resolvedToken,
-    )),
+    () => nestWrite(token, (resolvedToken) => escrowApi.buildApproveMilestone({ contractId, milestoneIndex, approver, type }, resolvedToken)),
     () => originalService.approveMilestone(contractId, milestoneIndex, approver, type),
   );
 }
@@ -208,18 +188,8 @@ export async function changeMilestoneStatus(
 ): Promise<RoutedResponse> {
   return route(
     "changeMilestoneStatus",
-    () => nestWrite(token, (resolvedToken) => escrowApi.buildChangeMilestoneStatus(
-      { contractId, milestoneIndex, newEvidence, newStatus, serviceProvider, type },
-      resolvedToken,
-    )),
-    () => originalService.changeMilestoneStatus(
-      contractId,
-      milestoneIndex,
-      newEvidence,
-      newStatus,
-      serviceProvider,
-      type,
-    ),
+    () => nestWrite(token, (resolvedToken) => escrowApi.buildChangeMilestoneStatus({ contractId, milestoneIndex, newEvidence, newStatus, serviceProvider, type }, resolvedToken)),
+    () => originalService.changeMilestoneStatus(contractId, milestoneIndex, newEvidence, newStatus, serviceProvider, type),
   );
 }
 
@@ -232,10 +202,7 @@ export async function releaseFunds(
 ): Promise<RoutedResponse> {
   return route(
     "releaseFunds",
-    () => nestWrite(token, (resolvedToken) => escrowApi.buildReleaseFunds(
-      { contractId, releaseSigner, type, milestoneIndex },
-      resolvedToken,
-    )),
+    () => nestWrite(token, (resolvedToken) => escrowApi.buildReleaseFunds({ contractId, releaseSigner, type, milestoneIndex }, resolvedToken)),
     () => originalService.releaseFunds(contractId, releaseSigner, type, milestoneIndex),
   );
 }
@@ -245,13 +212,11 @@ export async function disputeMilestone(
   milestoneIndex: string,
   signer: string,
   token?: string,
+  type: ServiceType = "multi-release",
 ): Promise<RoutedResponse<{ unsignedTransaction: string }>> {
   return route(
     "disputeMilestone",
-    () => nestWrite(token, (resolvedToken) => escrowApi.buildDisputeMilestone(
-      { contractId, milestoneIndex, signer, type: "multi-release" },
-      resolvedToken,
-    )),
+    () => nestWrite(token, (resolvedToken) => escrowApi.buildDisputeMilestone({ contractId, milestoneIndex, signer, type }, resolvedToken)),
     () => originalService.disputeMilestone(contractId, milestoneIndex, signer),
   );
 }
@@ -262,8 +227,7 @@ export async function sendTransaction(
 ): Promise<RoutedResponse> {
   return route(
     "sendTransaction",
-    () => nestWrite(token, (resolvedToken) =>
-      escrowApi.submitSignedTransaction(signedXdr, resolvedToken)),
+    () => nestWrite(token, (resolvedToken) => escrowApi.submitSignedTransaction(signedXdr, resolvedToken)),
     () => originalService.sendTransaction(signedXdr),
   );
 }

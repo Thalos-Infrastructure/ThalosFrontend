@@ -214,20 +214,38 @@ export function LinkedWallets({ onWalletSelect, selectedWallet, showBalances = t
     }
   }
 
+  const MAX_WALLET_LABEL_LENGTH = 50
+
   const handleUpdateLabel = async (walletId: string) => {
-    if (!token || !newLabel.trim()) {
-      setEditingLabel(null)
+    if (!token) return
+
+    const trimmedLabel = newLabel.trim()
+
+    if (!trimmedLabel) {
+      setError("Wallet label cannot be empty.")
       return
     }
 
+    if (trimmedLabel.length > MAX_WALLET_LABEL_LENGTH) {
+      setError(`Wallet label must be ${MAX_WALLET_LABEL_LENGTH} characters or fewer.`)
+      return
+    }
+
+    setError(null)
+
     try {
-      const result = await updateWallet(walletId, { label: newLabel.trim() }, token)
-      if (result.success) await loadWallets()
-    } catch (err) {
-      console.error("Failed to update label:", err)
-    } finally {
+      const result = await updateWallet(walletId, { label: trimmedLabel }, token)
+
+      if (!result.success) {
+        setError(result.error || "Failed to update wallet label.")
+        return
+      }
+
+      await loadWallets()
       setEditingLabel(null)
       setNewLabel("")
+    } catch {
+      setError("Failed to update wallet label.")
     }
   }
 
@@ -373,6 +391,7 @@ export function LinkedWallets({ onWalletSelect, selectedWallet, showBalances = t
                               <Input
                                 value={newLabel}
                                 onChange={(e) => setNewLabel(e.target.value)}
+                                maxLength={MAX_WALLET_LABEL_LENGTH}
                                 className="h-7 w-32 text-sm"
                                 placeholder="Enter label"
                                 autoFocus
@@ -394,7 +413,7 @@ export function LinkedWallets({ onWalletSelect, selectedWallet, showBalances = t
                                 setNewLabel(wallet.label || "")
                               }}
                             >
-                              {wallet.label || typeInfo.label}
+                              {wallet.label?.trim() || truncateAddress(wallet.wallet_address)}
                             </span>
                           )}
                           {wallet.is_primary && (

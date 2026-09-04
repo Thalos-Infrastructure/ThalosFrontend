@@ -39,12 +39,13 @@ import { getWalletsWithAgreements, type WalletWithAgreements, type WalletAgreeme
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area,
 } from "recharts"
-import { createAgreement, sendTransaction, AgreementPayload, approveMilestone } from "@/services/trustlessworkService"
-import { STELLAR_EXPLORER_BASE_URL, STELLAR_EXPLORER_ACCOUNT_BASE_URL, TRUSTLINE_USDC } from "@/lib/config";
-import { getWalletBalance } from "@/lib/api/wallets";
+import { createAgreement, sendTransaction, AgreementPayload, approveMilestone } from "@/services/escrowMigration"
+import { STELLAR_EXPLORER_BASE_URL, TRUSTLINE_USDC, SHOW_MOCKED_AGREEMENTS } from "@/lib/config";
 import { getKycStatus, startKycSession } from "@/lib/api/kyc";
+import { MilestonePrPicker } from "@/components/github/milestone-pr-picker";
+import { AttachedPullRequests } from "@/components/github/attached-prs";
+import { getAttachedPrs, type GithubPullRequest } from "@/lib/api/github";
 import { isKycVerified, canStartKycSession, buildCreateKycSessionDto, nextKycStatusAfterSessionStart, type KycVerificationStatus } from "@/lib/kyc";
-import { updateProfile } from "@/lib/actions/profile";
 
 /* ── Use-Case Presets ── */
 const useCases = [
@@ -116,7 +117,22 @@ const formatUsdc = (raw: string | null) =>
 const wizardStepKeys = ["wizard.escrowType", "wizard.useCase", "wizard.agreementInfo", "wizard.paymentWallets", "wizard.reviewSend"]
 
 interface Milestone { description: string; amount: string; status: "pending" | "approved" | "released" }
-interface Agreement { id: string; title: string; status: string; type: "Single Release" | "Multi Release"; counterparty: string; amount: string; currency: string; date: string; releaseStrategy?: "per-milestone" | "all-at-once" | "upon-completion"; milestones: Milestone[]; receiver: string; role?: "buyer" | "seller" }
+interface Agreement {
+  id: string
+  /** Nest `agreements.id` (UUID). Required by ThalosBackend#157 GitHub evidence routes. */
+  nestId?: string
+  title: string
+  status: string
+  type: "Single Release" | "Multi Release"
+  counterparty: string
+  amount: string
+  currency: string
+  date: string
+  releaseStrategy?: "per-milestone" | "all-at-once" | "upon-completion"
+  milestones: Milestone[]
+  receiver: string
+  role?: "buyer" | "seller"
+}
 
 const initialAgreements: Agreement[] = [];
 
@@ -142,6 +158,7 @@ function mapNestAgreementToUi(agreement: AgreementWithParticipants, currentWalle
 
   return {
     id: agreement.contract_id || agreement.id,
+    nestId: agreement.id,
     title: agreement.title,
     status: NEST_STATUS_TO_UI[agreement.status] ?? agreement.status,
     type: isMulti ? "Multi Release" : "Single Release",
@@ -259,9 +276,31 @@ function SellerMilestoneList({ agr, agreements, setAgreements, t }: {
   const [submittedEvidence, setSubmittedEvidence] = React.useState<Record<number, string>>({})
   const [submitting, setSubmitting] = React.useState<number | null>(null)
   const [expandedMs, setExpandedMs] = React.useState<number | null>(null)
+  const [attachedPrs, setAttachedPrs] = React.useState<Record<number, GithubPullRequest[]>>({})
 
   const { address: walletAddress, openWalletModal } = require("@/lib/stellar-wallet").useStellarWallet();
   const { changeMilestoneStatusAgreement } = require("@/lib/agreementActions");
+  const { token } = useAuthStore();
+  const githubAgreementId = agr.nestId
+
+  // Best-effort load of any GitHub PRs already attached to each milestone, so
+  // existing evidence renders. Backed by the Nest route (ThalosBackend#157),
+  // which keys by agreements.id (UUID) — not the Stellar contract id.
+  React.useEffect(() => {
+    if (!token || !githubAgreementId) return
+    let active = true
+    Promise.all(agr.milestones.map((_, idx) => getAttachedPrs(githubAgreementId, idx, token)))
+      .then((results) => {
+        if (!active) return
+        const map: Record<number, GithubPullRequest[]> = {}
+        results.forEach((res, idx) => {
+          if (res.success && res.data && res.data.length) map[idx] = res.data
+        })
+        if (Object.keys(map).length) setAttachedPrs(map)
+      })
+      .catch(() => {})
+    return () => { active = false }
+  }, [agr.milestones.length, githubAgreementId, token])
   const handleSubmitEvidence = async (idx: number) => {
     const evidence = evidenceInputs[idx]?.trim();
     if (!evidence) return;
@@ -274,6 +313,8 @@ function SellerMilestoneList({ agr, agreements, setAgreements, t }: {
       serviceProvider: walletAddress,
       serviceType: agr.type === "Multi Release" ? "multi-release" : "single-release",
       walletAddress,
+      token,
+      openWalletModal,
       setSubmitting: (v: boolean) => v === false && setSubmitting(null),
       setError: (msg: string | null) => msg && alert(msg),
       onSuccess: () => {
@@ -346,6 +387,19 @@ function SellerMilestoneList({ agr, agreements, setAgreements, t }: {
                     {submitting === idx ? "..." : t("flow.submit")}
                   </Button>
                 </div>
+                {/* GitHub-backed evidence: verified merged PRs scoped to the project repo (#128) */}
+                {githubAgreementId ? (
+                <div className="mt-3 border-t border-white/[0.06] pt-3">
+                  <MilestonePrPicker
+                    agreementId={githubAgreementId}
+                    milestoneIndex={idx}
+                    walletAddress={walletAddress ?? undefined}
+                    token={token ?? undefined}
+                    attached={attachedPrs[idx] ?? []}
+                    onAttached={(prs) => setAttachedPrs(prev => ({ ...prev, [idx]: prs }))}
+                  />
+                </div>
+                ) : null}
               </div>
             )}
             {/* Show submitted evidence */}
@@ -353,6 +407,13 @@ function SellerMilestoneList({ agr, agreements, setAgreements, t }: {
               <div className="mt-3 rounded-lg border border-cyan-500/10 bg-cyan-500/5 px-3 py-2">
                 <p className="text-xs text-cyan-400/60 font-medium">{t("flow.viewEvidence")}:</p>
                 <p className="text-xs text-white/60 mt-0.5 break-all">{hasEvidence ? submittedEvidence[idx] : ms.evidence}</p>
+              </div>
+            )}
+            {/* Attached GitHub PRs (verified evidence), always rendered when present */}
+            {(attachedPrs[idx]?.length ?? 0) > 0 && (
+              <div className="mt-3">
+                <p className="mb-1.5 text-xs font-medium text-white/40">GitHub evidence</p>
+                <AttachedPullRequests pullRequests={attachedPrs[idx]} />
               </div>
             )}
           </div>

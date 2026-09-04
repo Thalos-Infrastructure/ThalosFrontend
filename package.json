@@ -12,6 +12,7 @@
     "build": "next build --webpack",
     "dev": "next dev --webpack",
     "lint": "eslint .",
+    "mock:connect": "node scripts/mock-connect-server.mjs",
     "start": "next start",
     "test": "vitest run && node --test tests/*.test.mjs"
   },

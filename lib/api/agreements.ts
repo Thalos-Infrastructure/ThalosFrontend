@@ -108,43 +108,9 @@ export async function createAgreement(
   }
 }
 
-/**
- * Get all agreements (with optional filters)
- * Backend returns: { agreements, error }
- */
-export async function getAgreements(
-  params?: { status?: string; type?: string },
-  token?: string
-): Promise<ApiResponse<Agreement[]>> {
-  try {
-    const queryParams = new URLSearchParams()
-    if (params?.status) queryParams.set("status", params.status)
-    if (params?.type) queryParams.set("type", params.type)
-    
-    const query = queryParams.toString()
-    const endpoint = query ? `/agreements?${query}` : "/agreements"
-
-    const response = await apiRequest<unknown>(endpoint, { method: "GET" }, token)
-
-    if (!response.success) {
-      return { success: false, error: response.error }
-    }
-
-    const payload = response.data as Record<string, unknown>
-    const agreements = (payload.agreements as Agreement[]) || []
-    const error = payload.error as string | undefined
-
-    if (error) {
-      return { success: false, error }
-    }
-
-    return { success: true, data: agreements }
-  } catch (e) {
-    return {
-      success: false,
-      error: e instanceof Error ? e.message : "Failed to fetch agreements",
-    }
-  }
+/** Agreement as returned by the by-wallet listing, with participants when the backend embeds them. */
+export interface AgreementWithParticipants extends Agreement {
+  participants?: AgreementParticipant[]
 }
 
 /**
