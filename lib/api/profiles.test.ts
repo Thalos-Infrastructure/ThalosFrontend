@@ -1,38 +1,63 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
-import { getProfile, saveProfile, type ConnectProfile } from "./profiles"
+import {
+  discoverProfiles,
+  type BuilderProfile,
+  type ProfilePaginatedResponse,
+} from "./profiles"
 
-const bothTypes: ConnectProfile = {
-  profile_types: ["builder", "project"],
+const builder: BuilderProfile = {
+  id: "profile-1",
+  wallet_address: "GABC123",
+  handle: "stellar-builder",
+  display_name: "Stellar Builder",
+  avatar_url: "https://example.com/avatar.png",
   headline: "Stellar engineer",
   bio: "I ship payment products.",
   skills: ["Architecture"],
   tech_stack: ["NestJS", "React"],
   hourly_rate: 100,
-  availability: "20 hours/week",
-  portfolio_links: ["https://example.com/work"],
-  social_links: ["https://github.com/builder"],
-  handle: "stellar-builder",
-  org_name: "Thalos Labs",
-  org_description: "Safer project payments.",
-  org_website: "https://thalos.example",
-  looking_for: ["Designers"],
-  org_links: ["https://github.com/thalos"],
+  availability: "open",
+  portfolio_links: { website: "https://example.com/work" },
+  social_links: { github: "https://github.com/builder" },
 }
 
-describe("profiles API", () => {
+const paginatedResponse: ProfilePaginatedResponse<BuilderProfile> = {
+  data: [builder],
+  total: 1,
+  page: 2,
+  limit: 5,
+  totalPages: 1,
+}
+
+describe("profiles discovery API", () => {
   afterEach(() => vi.unstubAllGlobals())
 
-  it("loads the authenticated editor profile from /profiles/me", async () => {
+  it("loads builders with the current paginated response contract", async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
-      json: async () => bothTypes,
+      json: async () => paginatedResponse,
     })
 
     vi.stubGlobal("fetch", fetchMock)
 
-    await expect(getProfile("jwt")).resolves.toEqual({ success: true, data: bothTypes })
+    await expect(
+      discoverProfiles(
+        {
+          skills: ["Architecture"],
+          tech_stack: ["React"],
+          availability: "open",
+          q: "stellar",
+          page: 2,
+          limit: 5,
+        },
+        "jwt"
+      )
+    ).resolves.toEqual({ success: true, data: paginatedResponse })
+
     expect(fetchMock).toHaveBeenCalledWith(
-      expect.stringMatching(/\/profiles\/me$/),
+      expect.stringMatching(
+        /\/profiles\?skills=Architecture&tech_stack=React&availability=open&q=stellar&page=2&limit=5$/
+      ),
       expect.objectContaining({
         method: "GET",
         headers: expect.objectContaining({ Authorization: "Bearer jwt" }),
@@ -40,36 +65,25 @@ describe("profiles API", () => {
     )
   })
 
-  it("saves both additive profile types through Nest", async () => {
+  it("omits empty filters from the query string", async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
-      json: async () => ({ profile: bothTypes }),
+      json: async () => paginatedResponse,
     })
 
     vi.stubGlobal("fetch", fetchMock)
 
-    const result = await saveProfile(bothTypes, "jwt")
+    await expect(discoverProfiles()).resolves.toEqual({
+      success: true,
+      data: paginatedResponse,
+    })
 
-    expect(result).toEqual({ success: true, data: bothTypes })
     expect(fetchMock).toHaveBeenCalledWith(
       expect.stringMatching(/\/profiles$/),
       expect.objectContaining({
-        method: "PATCH",
-        body: JSON.stringify(bothTypes),
-        headers: expect.objectContaining({ Authorization: "Bearer jwt" }),
+        method: "GET",
+        headers: expect.objectContaining({ "Content-Type": "application/json" }),
       })
     )
-  })
-
-  it("unwraps the { profile } envelope on load and save", async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ profile: bothTypes }) })
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ profile: bothTypes }) })
-
-    vi.stubGlobal("fetch", fetchMock)
-
-    await expect(getProfile("jwt")).resolves.toEqual({ success: true, data: bothTypes })
-    await expect(saveProfile(bothTypes, "jwt")).resolves.toEqual({ success: true, data: bothTypes })
   })
 })

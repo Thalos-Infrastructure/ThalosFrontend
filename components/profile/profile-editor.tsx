@@ -4,11 +4,11 @@ import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
-  getProfile,
-  saveProfile,
+  getOwnConnectProfile,
+  updateOwnConnectProfile,
   type ConnectProfile,
   type ProfileType,
-} from "@/lib/api/profiles"
+} from "@/lib/api/connect-profile"
 import { BriefcaseBusiness, FolderKanban, Save, X } from "lucide-react"
 
 interface ProfileEditorProps {
@@ -78,7 +78,7 @@ export function ProfileEditor({ isOpen, onClose, token }: ProfileEditorProps) {
       setLoading(true)
       setError(null)
 
-      const result = await getProfile(token)
+      const result = await getOwnConnectProfile(token)
       if (!active) return
 
       if (result.success && result.data) {
@@ -130,7 +130,7 @@ export function ProfileEditor({ isOpen, onClose, token }: ProfileEditorProps) {
     setSaving(true)
     setError(null)
 
-    const result = await saveProfile(
+    const result = await updateOwnConnectProfile(
       {
         ...form,
         handle: form.handle?.trim().toLowerCase() || null,
