@@ -72,9 +72,25 @@ export default function ConnectPage() {
   const { t } = useLanguage()
   const { token } = useAuthStore()
 
-  const [activeTab, setActiveTab] = useState("builders")
+  const [activeTab, setActiveTab] = useState(() => {
+    if (typeof window !== "undefined") {
+      const tab = new URLSearchParams(window.location.search).get("tab")
+      if (tab === "opportunities" || tab === "builders") return tab
+    }
+    return "builders"
+  })
   const [isLoading, setIsLoading] = useState(true)
   const [isSearching, setIsSearching] = useState(false)
+
+  // Tracks which tab's discovery data has been fetched, so switching tabs does
+  // NOT re-fetch (which flashes the full-screen loader) once a tab is loaded.
+  const loadedTabsRef = useRef({ builders: false, opportunities: false })
+  // Live current tab, usable from debounced callbacks that intentionally omit
+  // activeTab from their deps so typing in one tab does not refetch the other.
+  const activeTabRef = useRef(activeTab)
+  useEffect(() => {
+    activeTabRef.current = activeTab
+  }, [activeTab])
 
   // Builders state
   const [builders, setBuilders] = useState<BuilderProfile[]>([])
@@ -131,10 +147,11 @@ export default function ConnectPage() {
         setBuildersTotal(0)
       }
 
+      loadedTabsRef.current.builders = true
       setIsLoading(false)
       setIsSearching(false)
     },
-    [builderSearch, builderSkills, builderTechStack, builderAvailability, token]
+    [builderSearch, builderSkills, builderTechStack, builderAvailability, token],
   )
 
   // ── Fetch opportunities ──
@@ -167,24 +184,31 @@ export default function ConnectPage() {
         setOpportunitiesTotal(0)
       }
 
+      loadedTabsRef.current.opportunities = true
       setIsLoading(false)
       setIsSearching(false)
     },
-    [oppSearch, oppSkills, oppEngagementType, oppBudgetMin, oppBudgetMax, token]
+    [oppSearch, oppSkills, oppEngagementType, oppBudgetMin, oppBudgetMax, token],
   )
 
   // ── Initial load ──
   useEffect(() => {
     fetchBuilders(1, true)
+    // If deep-linked to the opportunities tab, load it right away too.
+    if (activeTab === "opportunities") {
+      fetchOpportunities(opportunitiesPage, true)
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // ── Re-fetch when tab changes ──
+  // ── Load a tab's data once; do NOT re-fetch on every switch, so changing
+  // tabs is instant and never flashes the full-screen loader. Localized
+  // `isSearching` spinner is used (immediate=false), never the page-wide one.
   useEffect(() => {
     if (activeTab === "builders") {
-      fetchBuilders(buildersPage, true)
-    } else {
-      fetchOpportunities(opportunitiesPage, true)
+      if (!loadedTabsRef.current.builders) fetchBuilders(buildersPage, false)
+    } else if (!loadedTabsRef.current.opportunities) {
+      fetchOpportunities(opportunitiesPage, false)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab])
@@ -193,34 +217,34 @@ export default function ConnectPage() {
   useEffect(() => {
     if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current)
     searchTimeoutRef.current = setTimeout(() => {
-      if (activeTab === "builders") {
+      if (activeTabRef.current === "builders") {
         fetchBuilders(1)
       }
     }, 400)
     return () => {
       if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current)
     }
-  }, [builderSearch, builderSkills, builderTechStack, builderAvailability, activeTab, fetchBuilders])
+  }, [builderSearch, builderSkills, builderTechStack, builderAvailability, fetchBuilders])
 
   // ── Debounced search for opportunities ──
   useEffect(() => {
     if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current)
     searchTimeoutRef.current = setTimeout(() => {
-      if (activeTab === "opportunities") {
+      if (activeTabRef.current === "opportunities") {
         fetchOpportunities(1)
       }
     }, 400)
     return () => {
       if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current)
     }
-  }, [oppSearch, oppSkills, oppEngagementType, oppBudgetMin, oppBudgetMax, activeTab, fetchOpportunities])
+  }, [oppSearch, oppSkills, oppEngagementType, oppBudgetMin, oppBudgetMax, fetchOpportunities])
 
   // ── Tag helpers ──
   function addTag(
     value: string,
     tags: string[],
     setTags: (v: string[]) => void,
-    setInput: (v: string) => void
+    setInput: (v: string) => void,
   ) {
     const trimmed = value.trim().toLowerCase()
     if (trimmed && !tags.includes(trimmed)) {
@@ -238,7 +262,7 @@ export default function ConnectPage() {
     value: string,
     tags: string[],
     setTags: (v: string[]) => void,
-    setInput: (v: string) => void
+    setInput: (v: string) => void,
   ) {
     if (e.key === "Enter") {
       e.preventDefault()
@@ -295,9 +319,7 @@ export default function ConnectPage() {
             <Users className="h-6 w-6" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold tracking-tight text-foreground">
-              Thalos Connect
-            </h1>
+            <h1 className="text-3xl font-bold tracking-tight text-foreground">Thalos Connect</h1>
             <p className="mt-1 text-muted-foreground">
               Discover builders and opportunities in the Thalos ecosystem
             </p>
@@ -313,7 +335,10 @@ export default function ConnectPage() {
               <Users className="h-4 w-4" />
               Builders
               {activeTab === "builders" && buildersTotal > 0 && (
-                <Badge variant="secondary" className="ml-1 bg-[#f0b400]/20 text-[#f0b400] text-[10px] px-1.5 py-0">
+                <Badge
+                  variant="secondary"
+                  className="ml-1 bg-[#f0b400]/20 text-[#f0b400] text-[10px] px-1.5 py-0"
+                >
                   {buildersTotal}
                 </Badge>
               )}
@@ -325,7 +350,10 @@ export default function ConnectPage() {
               <Briefcase className="h-4 w-4" />
               Opportunities
               {activeTab === "opportunities" && opportunitiesTotal > 0 && (
-                <Badge variant="secondary" className="ml-1 bg-[#f0b400]/20 text-[#f0b400] text-[10px] px-1.5 py-0">
+                <Badge
+                  variant="secondary"
+                  className="ml-1 bg-[#f0b400]/20 text-[#f0b400] text-[10px] px-1.5 py-0"
+                >
                   {opportunitiesTotal}
                 </Badge>
               )}
@@ -378,7 +406,13 @@ export default function ConnectPage() {
                     value={builderSkillInput}
                     onChange={(e) => setBuilderSkillInput(e.target.value)}
                     onKeyDown={(e) =>
-                      handleTagKeyDown(e, builderSkillInput, builderSkills, setBuilderSkills, setBuilderSkillInput)
+                      handleTagKeyDown(
+                        e,
+                        builderSkillInput,
+                        builderSkills,
+                        setBuilderSkills,
+                        setBuilderSkillInput,
+                      )
                     }
                     placeholder="Add skill..."
                     className="h-8 w-32 text-xs bg-card/50 border-border/40"
@@ -391,7 +425,13 @@ export default function ConnectPage() {
                     value={builderTechInput}
                     onChange={(e) => setBuilderTechInput(e.target.value)}
                     onKeyDown={(e) =>
-                      handleTagKeyDown(e, builderTechInput, builderTechStack, setBuilderTechStack, setBuilderTechInput)
+                      handleTagKeyDown(
+                        e,
+                        builderTechInput,
+                        builderTechStack,
+                        setBuilderTechStack,
+                        setBuilderTechInput,
+                      )
                     }
                     placeholder="Add tech..."
                     className="h-8 w-32 text-xs bg-card/50 border-border/40"
@@ -399,7 +439,9 @@ export default function ConnectPage() {
                 </div>
 
                 {/* Clear filters */}
-                {(builderSkills.length > 0 || builderTechStack.length > 0 || builderAvailability) && (
+                {(builderSkills.length > 0 ||
+                  builderTechStack.length > 0 ||
+                  builderAvailability) && (
                   <Button
                     variant="ghost"
                     size="sm"
@@ -632,7 +674,7 @@ export default function ConnectPage() {
 function BuilderCard({ builder }: { builder: BuilderProfile }) {
   return (
     <Link
-      href={builder.handle ? `/profile/${builder.handle}` : "#"}
+      href={builder.handle ? `/connect/${builder.handle}` : "#"}
       className="group rounded-xl border border-border/40 bg-card/50 p-5 transition-all duration-200 hover:border-[#f0b400]/30 hover:bg-card hover:shadow-lg hover:shadow-[#f0b400]/5"
     >
       <div className="flex items-start gap-3">
@@ -695,7 +737,10 @@ function BuilderCard({ builder }: { builder: BuilderProfile }) {
             </Badge>
           ))}
           {builder.skills.length > 4 && (
-            <Badge variant="secondary" className="bg-muted/50 text-muted-foreground text-[10px] px-1.5 py-0">
+            <Badge
+              variant="secondary"
+              className="bg-muted/50 text-muted-foreground text-[10px] px-1.5 py-0"
+            >
               +{builder.skills.length - 4}
             </Badge>
           )}
@@ -715,7 +760,10 @@ function BuilderCard({ builder }: { builder: BuilderProfile }) {
             </Badge>
           ))}
           {builder.tech_stack.length > 3 && (
-            <Badge variant="outline" className="border-blue-500/20 text-blue-400/80 text-[10px] px-1.5 py-0">
+            <Badge
+              variant="outline"
+              className="border-blue-500/20 text-blue-400/80 text-[10px] px-1.5 py-0"
+            >
               +{builder.tech_stack.length - 3}
             </Badge>
           )}
@@ -799,7 +847,10 @@ function OpportunityCard({ opportunity }: { opportunity: Opportunity }) {
             </Badge>
           ))}
           {opportunity.skills_required.length > 4 && (
-            <Badge variant="secondary" className="bg-muted/50 text-muted-foreground text-[10px] px-1.5 py-0">
+            <Badge
+              variant="secondary"
+              className="bg-muted/50 text-muted-foreground text-[10px] px-1.5 py-0"
+            >
               +{opportunity.skills_required.length - 4}
             </Badge>
           )}
@@ -890,7 +941,7 @@ function Pagination({
             >
               {page}
             </Button>
-          )
+          ),
         )}
         <Button
           variant="ghost"

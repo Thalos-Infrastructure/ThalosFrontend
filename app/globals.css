@@ -1,17 +1,18 @@
-@import 'tailwindcss';
-@import 'tw-animate-css';
+@import "tailwindcss";
+@import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
 
 /* Dark (default) */
-:root, .dark {
+:root,
+.dark {
   --background: oklch(0.1 0.005 250);
   --foreground: oklch(0.97 0 0);
   --card: oklch(0.15 0.005 250);
   --card-foreground: oklch(0.97 0 0);
   --popover: oklch(0.15 0.005 250);
   --popover-foreground: oklch(0.97 0 0);
-  --primary: oklch(0.80 0.17 88);
+  --primary: oklch(0.8 0.17 88);
   --primary-foreground: oklch(0.12 0 0);
   --secondary: oklch(0.2 0.005 250);
   --secondary-foreground: oklch(0.9 0 0);
@@ -52,7 +53,7 @@
   --card-foreground: oklch(0.97 0 0);
   --popover: oklch(0.15 0.005 250);
   --popover-foreground: oklch(0.97 0 0);
-  --primary: oklch(0.80 0.17 88);
+  --primary: oklch(0.8 0.17 88);
   --primary-foreground: oklch(0.12 0 0);
   /* Secondary with dark bg for bubbles */
   --secondary: oklch(0.18 0.005 250);
@@ -102,26 +103,45 @@
 .light header a,
 .light header button,
 .light header span,
-.light nav a { 
-  color: white !important; 
+.light nav a {
+  color: white !important;
 }
 
 /* ===== HERO: titles dark, typewriter yellow ===== */
-.light .hero-title { color: #0c1220 !important; }
-.light .hero-trust-layer { color: #1a2a42 !important; }
-.light .typewriter-text, .light .typewriter-text span { color: #f0b400 !important; }
-.light .hero-cta-secondary { border-color: #1a2a42 !important; color: #1a2a42 !important; }
+.light .hero-title {
+  color: #0c1220 !important;
+}
+.light .hero-trust-layer {
+  color: #1a2a42 !important;
+}
+.light .typewriter-text,
+.light .typewriter-text span {
+  color: #f0b400 !important;
+}
+.light .hero-cta-secondary {
+  border-color: #1a2a42 !important;
+  color: #1a2a42 !important;
+}
 
 /* ===== BODY TEXT (sections after hero): dark blue ===== */
-.light .trust-dialog-text, .light .trust-dialog-text p { color: #2a4060 !important; }
-.light .trust-highlight { color: #0c1220 !important; }
+.light .trust-dialog-text,
+.light .trust-dialog-text p {
+  color: #2a4060 !important;
+}
+.light .trust-highlight {
+  color: #0c1220 !important;
+}
 
 /* Section titles: darker, paragraphs: lighter blue */
-.light section h2.text-white { color: #0c1220 !important; }
-.light section p.text-white\/60, 
+.light section h2.text-white {
+  color: #0c1220 !important;
+}
+.light section p.text-white\/60,
 .light section p.text-white\/70,
 .light section span.text-white\/60,
-.light section span.text-white\/70 { color: #2a4060 !important; }
+.light section span.text-white\/70 {
+  color: #2a4060 !important;
+}
 
 /* ===== CARDS (use-cases, FAQ, dashboard): SAME AS DARK MODE ===== */
 .light .bg-\[\#0c1220\],
@@ -147,7 +167,7 @@
 }
 .light [class*="bg-[#0c1220]"] .text-white\/60,
 .light [class*="bg-[#0c1220]"] .text-white\/70 {
-  color: rgba(255,255,255,0.7) !important;
+  color: rgba(255, 255, 255, 0.7) !important;
 }
 .light [class*="bg-[#0c1220]"] .text-\[\#f0b400\] {
   color: #f0b400 !important;
@@ -161,7 +181,7 @@
 }
 .light #faq .bg-\[\#0c1220\] .text-white\/70,
 .light #faq .bg-\[\#0c1220\] p.text-white\/70 {
-  color: rgba(255,255,255,0.7) !important;
+  color: rgba(255, 255, 255, 0.7) !important;
 }
 
 /* ===== FOOTER: text blue, titles yellow ===== */
@@ -169,23 +189,27 @@
 .light footer span.text-white\/60,
 .light footer a.text-white\/60,
 .light footer span.text-white\/30,
-.light footer p.text-white\/30 { 
-  color: #1a2a42 !important; 
+.light footer p.text-white\/30 {
+  color: #1a2a42 !important;
 }
-.light footer .text-\[\#f0b400\] { 
-  color: #f0b400 !important; 
+.light footer .text-\[\#f0b400\] {
+  color: #f0b400 !important;
 }
-.light footer a:hover { 
-  color: #0c1220 !important; 
+.light footer a:hover {
+  color: #0c1220 !important;
 }
 
 /* ===== Stellar logo visibility ===== */
 .light img[alt="Stellar"] {
-  filter: brightness(0) saturate(100%) invert(15%) sepia(20%) saturate(1000%) hue-rotate(190deg) brightness(95%) contrast(95%);
+  filter: brightness(0) saturate(100%) invert(15%) sepia(20%) saturate(1000%) hue-rotate(190deg)
+    brightness(95%) contrast(95%);
 }
 
 /* ===== No shadow on header buttons ===== */
-.light header button, .light nav button { box-shadow: none !important; }
+.light header button,
+.light nav button {
+  box-shadow: none !important;
+}
 
 /* ===== THALOS VERTICAL: dark blue ===== */
 .light .thalos-letter {
@@ -200,37 +224,57 @@
   color: white !important;
 }
 .light .use-case-card .card-text {
-  color: rgba(255,255,255,0.7) !important;
+  color: rgba(255, 255, 255, 0.7) !important;
 }
 .light .use-case-card .seller-label {
-  color: rgba(255,255,255,0.5) !important;
+  color: rgba(255, 255, 255, 0.5) !important;
 }
 /* Buyer labels - FORCE the exact dark mode colors */
-.light .use-case-card:nth-child(1) .buyer-label { color: #f0b400 !important; }
-.light .use-case-card:nth-child(2) .buyer-label { color: #4ade80 !important; }
-.light .use-case-card:nth-child(3) .buyer-label { color: #60a5fa !important; }
-.light .use-case-card:nth-child(4) .buyer-label { color: #f97316 !important; }
-.light .use-case-card:nth-child(5) .buyer-label { color: #a78bfa !important; }
-.light .use-case-card:nth-child(6) .buyer-label { color: #f472b6 !important; }
-.light .use-case-card:nth-child(7) .buyer-label { color: #2dd4bf !important; }
+.light .use-case-card:nth-child(1) .buyer-label {
+  color: #f0b400 !important;
+}
+.light .use-case-card:nth-child(2) .buyer-label {
+  color: #4ade80 !important;
+}
+.light .use-case-card:nth-child(3) .buyer-label {
+  color: #60a5fa !important;
+}
+.light .use-case-card:nth-child(4) .buyer-label {
+  color: #f97316 !important;
+}
+.light .use-case-card:nth-child(5) .buyer-label {
+  color: #a78bfa !important;
+}
+.light .use-case-card:nth-child(6) .buyer-label {
+  color: #f472b6 !important;
+}
+.light .use-case-card:nth-child(7) .buyer-label {
+  color: #2dd4bf !important;
+}
 
 /* Amber/yellow colors for Partial Release status */
-.light .text-amber-400 { color: #f59e0b !important; }
-.light .bg-amber-500\/10 { background-color: rgba(245, 158, 11, 0.1) !important; }
-.light .border-amber-500\/20 { border-color: rgba(245, 158, 11, 0.2) !important; }
+.light .text-amber-400 {
+  color: #f59e0b !important;
+}
+.light .bg-amber-500\/10 {
+  background-color: rgba(245, 158, 11, 0.1) !important;
+}
+.light .border-amber-500\/20 {
+  border-color: rgba(245, 158, 11, 0.2) !important;
+}
 
 /* ===== DASHBOARD STATS CARDS: same colors as dark mode ===== */
 .light .dashboard-stat-card {
   background-color: #0c1220 !important;
 }
 .light .dashboard-stat-card .stat-label {
-  color: rgba(255,255,255,0.6) !important;
+  color: rgba(255, 255, 255, 0.6) !important;
 }
 .light .dashboard-stat-card .stat-value {
   color: white !important;
 }
 .light .dashboard-stat-card .stat-suffix {
-  color: rgba(255,255,255,0.5) !important;
+  color: rgba(255, 255, 255, 0.5) !important;
 }
 
 /* ===== ESCROW CARDS: same colors as dark mode ===== */
@@ -243,7 +287,7 @@
 }
 .light .escrow-card .text-white\/60,
 .light .escrow-card .text-white\/50 {
-  color: rgba(255,255,255,0.6) !important;
+  color: rgba(255, 255, 255, 0.6) !important;
 }
 /* Yield must be green */
 .light .escrow-card .text-emerald-400 {
@@ -266,10 +310,26 @@
   border-color: #1a2a42 !important;
   color: white !important;
 }
-.light #how-it-works button.border-white\/20:nth-child(1) { background-color: rgba(240,180,0,0.15) !important; border-color: #f0b400 !important; color: #f0b400 !important; }
-.light #how-it-works button.border-white\/20:nth-child(2) { background-color: rgba(96,165,250,0.15) !important; border-color: #60a5fa !important; color: #60a5fa !important; }
-.light #how-it-works button.border-white\/20:nth-child(3) { background-color: rgba(249,115,22,0.15) !important; border-color: #f97316 !important; color: #f97316 !important; }
-.light #how-it-works button.border-white\/20:nth-child(4) { background-color: rgba(167,139,250,0.15) !important; border-color: #a78bfa !important; color: #a78bfa !important; }
+.light #how-it-works button.border-white\/20:nth-child(1) {
+  background-color: rgba(240, 180, 0, 0.15) !important;
+  border-color: #f0b400 !important;
+  color: #f0b400 !important;
+}
+.light #how-it-works button.border-white\/20:nth-child(2) {
+  background-color: rgba(96, 165, 250, 0.15) !important;
+  border-color: #60a5fa !important;
+  color: #60a5fa !important;
+}
+.light #how-it-works button.border-white\/20:nth-child(3) {
+  background-color: rgba(249, 115, 22, 0.15) !important;
+  border-color: #f97316 !important;
+  color: #f97316 !important;
+}
+.light #how-it-works button.border-white\/20:nth-child(4) {
+  background-color: rgba(167, 139, 250, 0.15) !important;
+  border-color: #a78bfa !important;
+  color: #a78bfa !important;
+}
 .light #how-it-works button.border-\[\#f0b400\] {
   background-color: rgba(240, 180, 0, 0.2) !important;
 }
@@ -296,10 +356,18 @@
 }
 
 /* ===== DASHBOARD: yield green, release button dark, status colors ===== */
-.light .text-emerald-400 { color: #34d399 !important; }
-.light .text-amber-400 { color: #f59e0b !important; }
-.light .bg-emerald-500\/10 { background-color: rgba(16, 185, 129, 0.1) !important; }
-.light .bg-amber-500\/10 { background-color: rgba(245, 158, 11, 0.1) !important; }
+.light .text-emerald-400 {
+  color: #34d399 !important;
+}
+.light .text-amber-400 {
+  color: #f59e0b !important;
+}
+.light .bg-emerald-500\/10 {
+  background-color: rgba(16, 185, 129, 0.1) !important;
+}
+.light .bg-amber-500\/10 {
+  background-color: rgba(245, 158, 11, 0.1) !important;
+}
 
 /* ===== DASHBOARD LIGHT MODE ===== */
 /*
@@ -314,23 +382,37 @@
 .light aside * {
   color: inherit !important;
 }
-.light aside .text-white { color: #ffffff !important; }
+.light aside .text-white {
+  color: #ffffff !important;
+}
 .light aside .text-white\/60,
 .light aside .text-white\/50,
-.light aside .text-white\/40 { color: rgba(255,255,255,0.5) !important; }
-.light aside .text-\[\#f0b400\] { color: #f0b400 !important; }
-.light aside .text-\[\#3b82f6\] { color: #3b82f6 !important; }
+.light aside .text-white\/40 {
+  color: rgba(255, 255, 255, 0.5) !important;
+}
+.light aside .text-\[\#f0b400\] {
+  color: #f0b400 !important;
+}
+.light aside .text-\[\#3b82f6\] {
+  color: #3b82f6 !important;
+}
 .light aside .border-white\/6,
-.light aside .border-white\/10 { border-color: rgba(255,255,255,0.1) !important; }
+.light aside .border-white\/10 {
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
 
 /* ===== HEADER: Always dark ===== */
 .light header.sticky,
 .light header[class*="bg-"] {
   background: rgba(12, 18, 32, 0.98) !important;
 }
-.light header .text-white { color: #ffffff !important; }
+.light header .text-white {
+  color: #ffffff !important;
+}
 .light header .text-white\/60,
-.light header .text-white\/70 { color: rgba(255,255,255,0.6) !important; }
+.light header .text-white\/70 {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
 
 /* ===== PAGE BACKGROUND: Light gradient ===== */
 .light .fixed.inset-0.z-0 {
@@ -362,7 +444,7 @@
 .light .bg-gradient-to-br.from-\[\#0c1220\] .text-white\/50,
 .light .bg-gradient-to-br.from-\[\#0c1220\] .text-white\/40,
 .light .bg-gradient-to-br.from-\[\#0c1220\] .text-white\/60 {
-  color: rgba(255,255,255,0.5) !important;
+  color: rgba(255, 255, 255, 0.5) !important;
 }
 
 /* Muted text inside cards */
@@ -375,7 +457,7 @@
 .light .bg-\[\#0a0d14\] .text-white\/60,
 .light .bg-\[\#0a0d14\] .text-white\/50,
 .light .bg-\[\#0a0d14\] .text-white\/40 {
-  color: rgba(255,255,255,0.5) !important;
+  color: rgba(255, 255, 255, 0.5) !important;
 }
 
 /* Borders inside cards */
@@ -384,30 +466,44 @@
 .light .bg-\[\#0c1220\] .border-white\/15,
 .light .bg-\[\#0a0d14\] .border-white\/6,
 .light .bg-\[\#0a0d14\] .border-white\/10 {
-  border-color: rgba(255,255,255,0.1) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
 }
 
 /* Inputs inside cards */
 .light .bg-\[\#0c1220\] input,
 .light .bg-\[\#0a0d14\] input {
-  background-color: rgba(255,255,255,0.05) !important;
-  border-color: rgba(255,255,255,0.1) !important;
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
   color: #ffffff !important;
 }
 .light .bg-\[\#0c1220\] input::placeholder,
 .light .bg-\[\#0a0d14\] input::placeholder {
-  color: rgba(255,255,255,0.35) !important;
+  color: rgba(255, 255, 255, 0.35) !important;
 }
 
 /* Status colors inside cards */
 .light .bg-\[\#0c1220\] .text-\[\#f0b400\],
-.light .bg-\[\#0a0d14\] .text-\[\#f0b400\] { color: #f0b400 !important; }
-.light .bg-\[\#0c1220\] .text-amber-400 { color: #fbbf24 !important; }
-.light .bg-\[\#0c1220\] .text-emerald-400 { color: #34d399 !important; }
-.light .bg-\[\#0c1220\] .text-sky-400 { color: #38bdf8 !important; }
-.light .bg-\[\#0c1220\] .text-rose-400 { color: #fb7185 !important; }
-.light .bg-\[\#0c1220\] .text-violet-400 { color: #a78bfa !important; }
-.light .bg-\[\#0c1220\] .text-\[\#3b82f6\] { color: #3b82f6 !important; }
+.light .bg-\[\#0a0d14\] .text-\[\#f0b400\] {
+  color: #f0b400 !important;
+}
+.light .bg-\[\#0c1220\] .text-amber-400 {
+  color: #fbbf24 !important;
+}
+.light .bg-\[\#0c1220\] .text-emerald-400 {
+  color: #34d399 !important;
+}
+.light .bg-\[\#0c1220\] .text-sky-400 {
+  color: #38bdf8 !important;
+}
+.light .bg-\[\#0c1220\] .text-rose-400 {
+  color: #fb7185 !important;
+}
+.light .bg-\[\#0c1220\] .text-violet-400 {
+  color: #a78bfa !important;
+}
+.light .bg-\[\#0c1220\] .text-\[\#3b82f6\] {
+  color: #3b82f6 !important;
+}
 
 /* Buttons inside cards */
 .light .bg-\[\#0c1220\] .bg-\[\#f0b400\],
@@ -450,7 +546,7 @@
 .light .rounded-xl.border.border-white\/10 .text-white\/40,
 .light .rounded-xl.border.border-white\/6 .text-white\/60,
 .light .rounded-xl.border.border-white\/6 .text-white\/50 {
-  color: rgba(255,255,255,0.5) !important;
+  color: rgba(255, 255, 255, 0.5) !important;
 }
 
 /* ===== DASHBOARD-ONLY RULES ===== */
@@ -484,44 +580,48 @@ body:has(aside) .light main button.rounded-full.bg-\[\#3b82f6\] {
     transform: translateX(-100%);
     transition: transform 0.3s ease;
   }
-  
+
   aside.open {
     transform: translateX(0);
   }
-  
+
   /* Main content full width */
   main {
     padding: 1rem !important;
   }
-  
+
   /* Cards stack vertically */
   .grid-cols-2,
   .grid-cols-3,
   .grid-cols-4 {
     grid-template-columns: 1fr !important;
   }
-  
+
   /* Tab buttons wrap */
   .flex.gap-1 {
     flex-wrap: wrap;
   }
-  
+
   /* Smaller text on mobile */
-  h1 { font-size: 1.5rem !important; }
-  h2 { font-size: 1.25rem !important; }
-  
+  h1 {
+    font-size: 1.5rem !important;
+  }
+  h2 {
+    font-size: 1.25rem !important;
+  }
+
   /* Pills/badges smaller */
   .rounded-full {
     padding: 0.25rem 0.5rem !important;
     font-size: 0.65rem !important;
   }
-  
+
   /* Buttons full width on mobile */
   button.rounded-full {
     width: 100%;
     justify-content: center;
   }
-  
+
   /* Chat popup smaller on mobile */
   .fixed.bottom-6.right-6 {
     bottom: 0 !important;
@@ -531,7 +631,7 @@ body:has(aside) .light main button.rounded-full.bg-\[\#3b82f6\] {
     height: 60vh !important;
     border-radius: 1rem 1rem 0 0 !important;
   }
-  
+
   /* Profile editor modal full screen on mobile */
   [class*="fixed"][class*="z-50"] > div {
     max-width: 100% !important;
@@ -545,13 +645,13 @@ body:has(aside) .light main button.rounded-full.bg-\[\#3b82f6\] {
   main {
     padding: 0.75rem !important;
   }
-  
+
   /* Stack tab buttons vertically */
   .flex.p-1.rounded-lg {
     flex-direction: column;
     gap: 0.25rem;
   }
-  
+
   /* View toggle buttons full width */
   .rounded-lg.p-1 button {
     width: 100%;
@@ -596,8 +696,8 @@ main {
 }
 
 @theme inline {
-  --font-sans: 'Inter', 'Inter Fallback';
-  --font-mono: 'Geist Mono', 'Geist Mono Fallback';
+  --font-sans: "Inter", "Inter Fallback";
+  --font-mono: "Geist Mono", "Geist Mono Fallback";
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -651,31 +751,62 @@ main {
 }
 
 @keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
 }
 
 @keyframes thalos-spin {
-  0% { transform: rotateY(0deg) scale(1); }
-  25% { transform: rotateY(90deg) scale(0.95); }
-  50% { transform: rotateY(180deg) scale(1); }
-  75% { transform: rotateY(270deg) scale(0.95); }
-  100% { transform: rotateY(360deg) scale(1); }
+  0% {
+    transform: rotateY(0deg) scale(1);
+  }
+  25% {
+    transform: rotateY(90deg) scale(0.95);
+  }
+  50% {
+    transform: rotateY(180deg) scale(1);
+  }
+  75% {
+    transform: rotateY(270deg) scale(0.95);
+  }
+  100% {
+    transform: rotateY(360deg) scale(1);
+  }
 }
 
 @keyframes pulse-glow {
-  0%, 100% { opacity: 0.4; }
-  50% { opacity: 0.8; }
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 0.8;
+  }
 }
 
 @keyframes fade-in-up {
-  0% { opacity: 0; transform: translateY(30px); }
-  100% { opacity: 1; transform: translateY(0); }
+  0% {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes typewriter-cursor {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
 }
 
 .animate-float {
@@ -690,17 +821,25 @@ main {
   animation: fade-in-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-.animation-delay-200 { animation-delay: 200ms; }
-.animation-delay-400 { animation-delay: 400ms; }
-.animation-delay-600 { animation-delay: 600ms; }
-.animation-delay-800 { animation-delay: 800ms; }
+.animation-delay-200 {
+  animation-delay: 200ms;
+}
+.animation-delay-400 {
+  animation-delay: 400ms;
+}
+.animation-delay-600 {
+  animation-delay: 600ms;
+}
+.animation-delay-800 {
+  animation-delay: 800ms;
+}
 
 /* Section reveal transitions - smooth and modern */
 .section-reveal {
   opacity: 0;
   transform: translateY(80px);
   filter: blur(4px);
-  transition: 
+  transition:
     opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1),
     transform 1s cubic-bezier(0.22, 1, 0.36, 1),
     filter 0.6s ease-out;
@@ -714,7 +853,7 @@ main {
 .section-reveal-child {
   opacity: 0;
   transform: translateY(40px);
-  transition: 
+  transition:
     opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
     transform 0.85s cubic-bezier(0.22, 1, 0.36, 1);
   will-change: opacity, transform;
@@ -724,21 +863,37 @@ main {
   transform: translateY(0);
 }
 /* Stagger delays for children */
-.section-reveal.is-visible .section-reveal-child:nth-child(1) { transition-delay: 0ms; }
-.section-reveal.is-visible .section-reveal-child:nth-child(2) { transition-delay: 80ms; }
-.section-reveal.is-visible .section-reveal-child:nth-child(3) { transition-delay: 160ms; }
-.section-reveal.is-visible .section-reveal-child:nth-child(4) { transition-delay: 240ms; }
-.section-reveal.is-visible .section-reveal-child:nth-child(5) { transition-delay: 320ms; }
-.section-reveal.is-visible .section-reveal-child:nth-child(6) { transition-delay: 400ms; }
-.section-reveal.is-visible .section-reveal-child:nth-child(7) { transition-delay: 480ms; }
-.section-reveal.is-visible .section-reveal-child:nth-child(8) { transition-delay: 560ms; }
+.section-reveal.is-visible .section-reveal-child:nth-child(1) {
+  transition-delay: 0ms;
+}
+.section-reveal.is-visible .section-reveal-child:nth-child(2) {
+  transition-delay: 80ms;
+}
+.section-reveal.is-visible .section-reveal-child:nth-child(3) {
+  transition-delay: 160ms;
+}
+.section-reveal.is-visible .section-reveal-child:nth-child(4) {
+  transition-delay: 240ms;
+}
+.section-reveal.is-visible .section-reveal-child:nth-child(5) {
+  transition-delay: 320ms;
+}
+.section-reveal.is-visible .section-reveal-child:nth-child(6) {
+  transition-delay: 400ms;
+}
+.section-reveal.is-visible .section-reveal-child:nth-child(7) {
+  transition-delay: 480ms;
+}
+.section-reveal.is-visible .section-reveal-child:nth-child(8) {
+  transition-delay: 560ms;
+}
 
 /* Slide from left variant */
 .section-reveal-left {
   opacity: 0;
   transform: translateX(-50px);
-  transition: 
-    opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1), 
+  transition:
+    opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1),
     transform 1s cubic-bezier(0.22, 1, 0.36, 1);
   will-change: opacity, transform;
 }
@@ -751,8 +906,8 @@ main {
 .section-reveal-right {
   opacity: 0;
   transform: translateX(50px);
-  transition: 
-    opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1), 
+  transition:
+    opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1),
     transform 1s cubic-bezier(0.22, 1, 0.36, 1);
   will-change: opacity, transform;
 }
@@ -766,8 +921,8 @@ main {
   opacity: 0;
   transform: scale(0.9);
   filter: blur(2px);
-  transition: 
-    opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1), 
+  transition:
+    opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1),
     transform 1s cubic-bezier(0.22, 1, 0.36, 1),
     filter 0.6s ease-out;
   will-change: opacity, transform, filter;

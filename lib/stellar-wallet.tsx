@@ -39,9 +39,15 @@ type StellarWalletContextValue = {
   isConnecting: boolean
   walletError: string | null
   /** Abre el modal "Connect Wallet" del Stellar Wallets Kit (xBull, Ledger, Freighter, LOBSTR, etc.) */
-  openWalletModal: (onConnected?: (address: string) => void, accountType?: "personal" | "enterprise") => Promise<void>
+  openWalletModal: (
+    onConnected?: (address: string) => void,
+    accountType?: "personal" | "enterprise",
+  ) => Promise<void>
   disconnect: () => void
-  signTransaction: (xdr: string, networkPassphrase: string) => Promise<{ signedTxXdr: string } | null>
+  signTransaction: (
+    xdr: string,
+    networkPassphrase: string,
+  ) => Promise<{ signedTxXdr: string } | null>
   signMessage: (message: string) => Promise<{ signedMessage: string; signerAddress: string } | null>
   refreshProfile: () => Promise<void>
 }
@@ -86,7 +92,10 @@ export function StellarWalletProvider({ children }: { children: React.ReactNode 
   }, [address])
 
   const openWalletModal = useCallback(
-    async (onConnected?: (address: string) => void, accountType: "personal" | "enterprise" = "personal") => {
+    async (
+      onConnected?: (address: string) => void,
+      accountType: "personal" | "enterprise" = "personal",
+    ) => {
       setIsConnecting(true)
       setWalletError(null)
       try {
@@ -95,10 +104,10 @@ export function StellarWalletProvider({ children }: { children: React.ReactNode 
         // cold, which is what made Freighter intermittently show up as "not
         // installed" for people who have it installed. clearKit() belongs in
         // disconnect(), where a reset is actually wanted.
-        const kit = await getKit();
+        const kit = await getKit()
         if (!kit) {
-          setWalletError("Stellar Wallets Kit no disponible.");
-          return;
+          setWalletError("Stellar Wallets Kit no disponible.")
+          return
         }
 
         // Give Freighter's content script a second chance to answer before the
@@ -106,25 +115,28 @@ export function StellarWalletProvider({ children }: { children: React.ReactNode 
         // on purpose: other wallets must still be selectable, and the modal
         // refreshes availability itself — this only makes that refresh find a
         // channel that is already awake.
-        await detectFreighter(2);
+        await detectFreighter(2)
         // En 2.x el modal es una promesa: resuelve con la dirección ya pedida a la
         // wallet elegida (antes llegaba por el callback onWalletSelected) y rechaza
         // si el usuario lo cierra. Refresca por su cuenta las wallets disponibles.
-        const { address: addr } = await kit.authModal();
+        const { address: addr } = await kit.authModal()
 
-        setAddress(addr);
-        if (typeof window !== "undefined") sessionStorage.setItem(STELLAR_WALLET_KEY, addr);
+        setAddress(addr)
+        if (typeof window !== "undefined") sessionStorage.setItem(STELLAR_WALLET_KEY, addr)
 
         // Create or get profile in Supabase
-        const { profile: userProfile, error: profileError } = await getOrCreateProfile(addr, accountType);
+        const { profile: userProfile, error: profileError } = await getOrCreateProfile(
+          addr,
+          accountType,
+        )
         if (userProfile) {
-          setProfile(userProfile);
+          setProfile(userProfile)
           if (typeof window !== "undefined") {
-            sessionStorage.setItem(STELLAR_PROFILE_KEY, JSON.stringify(userProfile));
+            sessionStorage.setItem(STELLAR_PROFILE_KEY, JSON.stringify(userProfile))
           }
         }
         if (profileError) {
-          console.error("Profile error:", profileError);
+          console.error("Profile error:", profileError)
         }
 
         // Connecting a wallet here does NOT sign anyone in. Since #108 the only
@@ -138,31 +150,29 @@ export function StellarWalletProvider({ children }: { children: React.ReactNode 
         // Linked Wallets). That proof is a message signature, handled by
         // lib/signing/providers/kit.ts, not a login.
 
-        onConnected?.(addr);
+        onConnected?.(addr)
 
         // Persist the Kit-connected wallet to user_wallets (non-fatal)
         try {
-          const { token: authToken } = useAuthStore.getState?.() ?? {}
+          const authToken =
+            typeof window !== "undefined" ? window.localStorage.getItem("auth_token") : null
           if (authToken) {
-            await linkWallet(
-              { wallet_address: addr, wallet_type: "other" },
-              authToken,
-            );
+            await linkWallet({ wallet_address: addr, wallet_type: "other" }, authToken)
           }
         } catch {
           // Non-fatal — wallet works for signing without persistence
         }
       } catch (e) {
         // Cerrar el modal es una cancelación normal, no un error que mostrar.
-        if (isUserClosedModal(e)) return;
-        setWalletError(errorMessage(e, "Error al abrir el modal de billeteras."));
+        if (isUserClosedModal(e)) return
+        setWalletError(errorMessage(e, "Error al abrir el modal de billeteras."))
       } finally {
-        setIsConnecting(false);
+        setIsConnecting(false)
       }
     },
     // user/token feed the "skip the signature" check above.
-    []
-  );
+    [],
+  )
 
   const disconnect = useCallback(async () => {
     try {
@@ -187,7 +197,7 @@ export function StellarWalletProvider({ children }: { children: React.ReactNode 
       // Route through the unified signer (Stellar Wallets Kit)
       return unifiedSign(xdr, networkPassphrase, address)
     },
-    [address]
+    [address],
   )
 
   // Use this for wallet ownership proof challenges; pass the exact challenge string to sign.
@@ -197,7 +207,7 @@ export function StellarWalletProvider({ children }: { children: React.ReactNode 
       // Route through the unified signer (Stellar Wallets Kit)
       return unifiedSignMessage(message, address)
     },
-    [address]
+    [address],
   )
 
   const value: StellarWalletContextValue = {
@@ -212,11 +222,7 @@ export function StellarWalletProvider({ children }: { children: React.ReactNode 
     refreshProfile,
   }
 
-  return (
-    <StellarWalletContext.Provider value={value}>
-      {children}
-    </StellarWalletContext.Provider>
-  )
+  return <StellarWalletContext.Provider value={value}>{children}</StellarWalletContext.Provider>
 }
 
 export function useStellarWallet() {

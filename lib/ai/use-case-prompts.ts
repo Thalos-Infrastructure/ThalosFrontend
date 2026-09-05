@@ -13,6 +13,6 @@ export const USE_CASE_PROMPTS = [
   "E-commerce order fulfillment with quality checks",
   "Real estate transaction with legal verification",
   "Import/export with customs clearance milestone",
-];
+]
 
-export type UseCasePrompt = (typeof USE_CASE_PROMPTS)[number];
+export type UseCasePrompt = (typeof USE_CASE_PROMPTS)[number]

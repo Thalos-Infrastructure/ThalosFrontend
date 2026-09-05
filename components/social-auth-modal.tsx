@@ -1,18 +1,18 @@
-"use client";
+"use client"
 
-import React, { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { useLanguage } from "@/lib/i18n";
-import { useRouter } from "next/navigation";
+import React, { useState } from "react"
+import { Button } from "@/components/ui/button"
+import { useLanguage } from "@/lib/i18n"
+import { useRouter } from "next/navigation"
 // Commented with the render below while Accesly is unmounted (see layout.tsx).
 // import { AcceslyAuthModal } from "@/components/accesly-auth-modal";
-import { PollarLoginOptions } from "@/components/auth/pollar-login-options";
-import { dashboardPathFor } from "@/lib/dashboard-path";
-import Image from "next/image";
+import { PollarLoginOptions } from "@/components/auth/pollar-login-options"
+import { dashboardPathFor } from "@/lib/dashboard-path"
+import Image from "next/image"
 
 interface SocialAuthModalProps {
-  open: boolean;
-  onClose: () => void;
+  open: boolean
+  onClose: () => void
 }
 
 /**
@@ -21,18 +21,21 @@ interface SocialAuthModalProps {
  * had nothing left to switch.
  */
 export function SocialAuthModal({ open, onClose }: SocialAuthModalProps) {
-  const { t } = useLanguage();
-  const router = useRouter();
-  const [accountType, setAccountType] = useState<"personal" | "enterprise">("personal");
-  const [showAccesly, setShowAccesly] = useState(false);
+  const { t } = useLanguage()
+  const router = useRouter()
+  const [accountType, setAccountType] = useState<"personal" | "enterprise">("personal")
+  const [showAccesly, setShowAccesly] = useState(false)
 
-  if (!open) return null;
+  if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-[90] flex items-center justify-center p-4 animate-in fade-in duration-200" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-[90] flex items-center justify-center p-4 animate-in fade-in duration-200"
+      onClick={onClose}
+    >
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200" />
-      
+
       {/* Modal - Split layout with image on left */}
       <div
         className="relative z-10 flex w-full max-w-[820px] overflow-hidden rounded-2xl border border-white/10 bg-[#0c1220] shadow-2xl animate-in zoom-in-95 slide-in-from-bottom-4 duration-300"
@@ -40,18 +43,10 @@ export function SocialAuthModal({ open, onClose }: SocialAuthModalProps) {
       >
         {/* Left side - Image */}
         <div className="hidden md:block relative w-[380px] overflow-hidden">
-          <Image
-            src="/earth-space.jpg"
-            alt=""
-            fill
-            className="object-cover"
-            priority
-          />
+          <Image src="/earth-space.jpg" alt="" fill className="object-cover" priority />
           <div className="absolute inset-0 bg-gradient-to-r from-transparent to-[#0c1220]/80" />
           <div className="absolute bottom-8 left-8 right-8">
-            <p className="text-lg font-semibold text-white mb-1">
-              Secure Digital Agreements
-            </p>
+            <p className="text-lg font-semibold text-white mb-1">Secure Digital Agreements</p>
             <p className="text-sm text-white/50 leading-relaxed">
               Protected payments until conditions are verified. Trust built into every transaction.
             </p>
@@ -66,7 +61,14 @@ export function SocialAuthModal({ open, onClose }: SocialAuthModalProps) {
             className="absolute top-4 right-4 flex h-8 w-8 items-center justify-center rounded-full text-white/40 hover:bg-white/10 hover:text-white transition-colors"
             aria-label="Close"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
               <line x1="18" y1="6" x2="6" y2="18" />
               <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
@@ -88,7 +90,14 @@ export function SocialAuthModal({ open, onClose }: SocialAuthModalProps) {
                     : "text-white/50 hover:text-white/70"
                 }`}
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
                   <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                   <circle cx="12" cy="7" r="4" />
                 </svg>
@@ -103,7 +112,14 @@ export function SocialAuthModal({ open, onClose }: SocialAuthModalProps) {
                     : "text-white/50 hover:text-white/70"
                 }`}
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
                   <path d="M3 21h18" />
                   <path d="M5 21V7l8-4v18" />
                   <path d="M19 21V11l-6-4" />
@@ -118,8 +134,8 @@ export function SocialAuthModal({ open, onClose }: SocialAuthModalProps) {
           <PollarLoginOptions
             accountType={accountType}
             onAuthenticated={(_address, profile) => {
-              onClose();
-              router.push(dashboardPathFor(profile, accountType));
+              onClose()
+              router.push(dashboardPathFor(profile, accountType))
             }}
             divider={
               <div className="my-2 flex items-center gap-3">
@@ -149,7 +165,6 @@ export function SocialAuthModal({ open, onClose }: SocialAuthModalProps) {
             </Button>
             */}
           </PollarLoginOptions>
-
         </div>
       </div>
 
@@ -159,5 +174,5 @@ export function SocialAuthModal({ open, onClose }: SocialAuthModalProps) {
       <AcceslyAuthModal open={showAccesly} onClose={() => setShowAccesly(false)} />
       */}
     </div>
-  );
+  )
 }

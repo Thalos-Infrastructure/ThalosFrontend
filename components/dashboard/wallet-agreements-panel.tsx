@@ -12,18 +12,18 @@ import {
 } from "@/lib/api/wallets"
 
 const roleColors: Record<string, { bg: string; text: string }> = {
-  buyer:    { bg: "bg-sky-400/10",     text: "text-sky-400" },
-  seller:   { bg: "bg-violet-400/10",  text: "text-violet-400" },
-  approver: { bg: "bg-amber-400/10",   text: "text-amber-400" },
+  buyer: { bg: "bg-sky-400/10", text: "text-sky-400" },
+  seller: { bg: "bg-violet-400/10", text: "text-violet-400" },
+  approver: { bg: "bg-amber-400/10", text: "text-amber-400" },
 }
 
 const statusColors: Record<string, { bg: string; text: string }> = {
-  pending:     { bg: "bg-amber-400/10",   text: "text-amber-400" },
-  funded:      { bg: "bg-sky-400/10",     text: "text-sky-400" },
-  in_progress: { bg: "bg-violet-400/10",  text: "text-violet-400" },
-  released:    { bg: "bg-emerald-400/10", text: "text-emerald-400" },
-  completed:   { bg: "bg-emerald-400/10", text: "text-emerald-400" },
-  dispute:     { bg: "bg-rose-400/10",    text: "text-rose-400" },
+  pending: { bg: "bg-amber-400/10", text: "text-amber-400" },
+  funded: { bg: "bg-sky-400/10", text: "text-sky-400" },
+  in_progress: { bg: "bg-violet-400/10", text: "text-violet-400" },
+  released: { bg: "bg-emerald-400/10", text: "text-emerald-400" },
+  completed: { bg: "bg-emerald-400/10", text: "text-emerald-400" },
+  dispute: { bg: "bg-rose-400/10", text: "text-rose-400" },
 }
 
 interface WalletAgreementsPanelProps {
@@ -56,19 +56,19 @@ export function WalletAgreementsPanel({
     if (result.success && result.data) {
       setWallets(result.data)
       if (result.data.length > 0 && !expandedWallet) {
-        const top = result.data.reduce((a, b) =>
-          a.agreements_count >= b.agreements_count ? a : b
-        )
+        const top = result.data.reduce((a, b) => (a.agreements_count >= b.agreements_count ? a : b))
         setExpandedWallet(top.wallet_address)
       }
     } else {
       setError(result.error || "Could not load wallet agreements")
     }
     setIsLoading(false)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token])
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => {
+    load()
+  }, [load])
 
   const handleSetPrimary = async (walletId: string) => {
     if (!token) return
@@ -86,8 +86,7 @@ export function WalletAgreementsPanel({
     setActionLoading(null)
   }
 
-  const truncate = (addr: string) =>
-    addr ? `${addr.slice(0, 6)}...${addr.slice(-4)}` : ""
+  const truncate = (addr: string) => (addr ? `${addr.slice(0, 6)}...${addr.slice(-4)}` : "")
 
   if (isLoading) {
     return (
@@ -128,7 +127,7 @@ export function WalletAgreementsPanel({
               "rounded-lg px-3 py-1.5 text-xs font-medium transition-all",
               selectedWallet === null
                 ? "bg-[#f0b400] text-black"
-                : "bg-white/5 text-white/50 hover:bg-white/10 hover:text-white"
+                : "bg-white/5 text-white/50 hover:bg-white/10 hover:text-white",
             )}
           >
             {t("walletPanel.allWallets")}
@@ -141,7 +140,7 @@ export function WalletAgreementsPanel({
                 "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all",
                 selectedWallet === w.wallet_address
                   ? "bg-[#f0b400] text-black"
-                  : "bg-white/5 text-white/50 hover:bg-white/10 hover:text-white"
+                  : "bg-white/5 text-white/50 hover:bg-white/10 hover:text-white",
               )}
             >
               {w.is_primary && (
@@ -170,9 +169,7 @@ export function WalletAgreementsPanel({
             key={wallet.id ?? wallet.wallet_address}
             className={cn(
               "rounded-2xl border transition-all",
-              isSelected
-                ? "border-[#f0b400]/30 bg-[#f0b400]/5"
-                : "border-white/10 bg-[#0c1220]"
+              isSelected ? "border-[#f0b400]/30 bg-[#f0b400]/5" : "border-white/10 bg-[#0c1220]",
             )}
           >
             {/* Wallet header */}
@@ -186,10 +183,17 @@ export function WalletAgreementsPanel({
                     "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl",
                     wallet.is_primary
                       ? "bg-[#f0b400]/20 text-[#f0b400]"
-                      : "bg-white/5 text-white/40"
+                      : "bg-white/5 text-white/40",
                   )}
                 >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                  >
                     <rect x="1" y="4" width="22" height="16" rx="2" />
                     <path d="M1 10h22" />
                   </svg>
@@ -206,7 +210,9 @@ export function WalletAgreementsPanel({
                       </span>
                     )}
                   </div>
-                  <p className="font-mono text-xs text-white/40">{truncate(wallet.wallet_address)}</p>
+                  <p className="font-mono text-xs text-white/40">
+                    {truncate(wallet.wallet_address)}
+                  </p>
                 </div>
 
                 <div className="flex items-center gap-3 shrink-0">
@@ -215,9 +221,16 @@ export function WalletAgreementsPanel({
                     <p className="text-[10px] text-white/30">{t("walletPanel.agreements")}</p>
                   </div>
                   <svg
-                    width="16" height="16" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" strokeWidth="2"
-                    className={cn("text-white/30 transition-transform shrink-0", isExpanded && "rotate-180")}
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    className={cn(
+                      "text-white/30 transition-transform shrink-0",
+                      isExpanded && "rotate-180",
+                    )}
                   >
                     <polyline points="6 9 12 15 18 9" />
                   </svg>
@@ -260,10 +273,22 @@ export function WalletAgreementsPanel({
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium text-white">{agr.title}</p>
                         <div className="mt-0.5 flex items-center gap-2">
-                          <span className={cn("rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider", roleStyle.bg, roleStyle.text)}>
+                          <span
+                            className={cn(
+                              "rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider",
+                              roleStyle.bg,
+                              roleStyle.text,
+                            )}
+                          >
                             {agr.role}
                           </span>
-                          <span className={cn("rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider", statusStyle.bg, statusStyle.text)}>
+                          <span
+                            className={cn(
+                              "rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider",
+                              statusStyle.bg,
+                              statusStyle.text,
+                            )}
+                          >
                             {agr.status.replace("_", " ")}
                           </span>
                         </div>

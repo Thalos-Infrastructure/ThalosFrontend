@@ -10,12 +10,12 @@ export type {
   Agreement,
   AgreementParticipant,
   AgreementActivity,
+  AgreementWithParticipants,
   CreateAgreementInput,
 } from "@/lib/api/agreements"
 
 import {
   createAgreement as createAgreementApi,
-  getAgreements as getAgreementsApi,
   getAgreement as getAgreementApi,
   updateAgreementStatusApi,
   updateMilestoneStatus as updateMilestoneStatusApi,
@@ -29,6 +29,7 @@ import {
   type AgreementMilestone,
   type AgreementActivity,
   type AgreementParticipant,
+  type AgreementWithParticipants,
   type CreateAgreementInput,
 } from "@/lib/api/agreements"
 
@@ -39,7 +40,7 @@ import {
  */
 export async function createAgreementInDb(
   input: CreateAgreementInput,
-  token: string
+  token: string,
 ): Promise<{ agreement: Agreement | null; error: string | null }> {
   try {
     const result = await createAgreementApi(input, token)
@@ -65,7 +66,7 @@ export async function linkContractToAgreement(
   agreementId: string,
   contractId: string,
   actorWallet: string,
-  token: string
+  token: string,
 ): Promise<{ success: boolean; error: string | null }> {
   try {
     const result = await linkContractToAgreementApi(agreementId, contractId, actorWallet, token)
@@ -92,7 +93,7 @@ export async function updateAgreementStatus(
   agreementId: string,
   status: AgreementStatus,
   actorWallet: string,
-  token?: string
+  token?: string,
 ): Promise<{ success: boolean; error: string | null }> {
   try {
     if (!token) {
@@ -124,7 +125,7 @@ export async function updateMilestoneStatus(
   milestoneIndex: number,
   status: AgreementMilestone["status"],
   actorWallet: string,
-  token?: string
+  token?: string,
 ): Promise<{ success: boolean; error: string | null }> {
   try {
     if (!token) {
@@ -137,7 +138,7 @@ export async function updateMilestoneStatus(
       status,
       actorWallet,
       undefined,
-      token
+      token,
     )
     if (!updateResult.success) {
       return { success: false, error: updateResult.error || "Failed to update milestone" }
@@ -151,16 +152,18 @@ export async function updateMilestoneStatus(
 }
 
 /**
- * Get agreements by wallet (as participant)
+ * Get agreements by wallet (as participant), optionally filtered by status/type
  * @param walletAddress Wallet address to filter by
  * @param token JWT token for authentication (optional for public queries)
+ * @param params Optional status/type filters
  */
 export async function getAgreementsByWallet(
   walletAddress: string,
-  token?: string
-): Promise<{ agreements: Agreement[]; error: string | null }> {
+  token?: string,
+  params?: { status?: string; type?: string },
+): Promise<{ agreements: AgreementWithParticipants[]; error: string | null }> {
   try {
-    const result = await getAgreementsByWalletApi(walletAddress, token)
+    const result = await getAgreementsByWalletApi(walletAddress, token, params)
     if (!result.success) {
       return { agreements: [], error: result.error || "Failed to fetch agreements" }
     }
@@ -178,8 +181,12 @@ export async function getAgreementsByWallet(
  */
 export async function getAgreementById(
   agreementId: string,
-  token?: string
-): Promise<{ agreement: Agreement | null; participants: AgreementParticipant[]; error: string | null }> {
+  token?: string,
+): Promise<{
+  agreement: Agreement | null
+  participants: AgreementParticipant[]
+  error: string | null
+}> {
   try {
     const result = await getAgreementByIdWithParticipants(agreementId, token)
     if (!result.success) {
@@ -205,7 +212,7 @@ export async function getAgreementById(
  */
 export async function getAgreementByContractId(
   contractId: string,
-  token?: string
+  token?: string,
 ): Promise<{ agreement: Agreement | null; error: string | null }> {
   try {
     const result = await getAgreementByContractIdApi(contractId, token)
@@ -231,7 +238,7 @@ export async function getAgreementByContractId(
  */
 export async function getAgreementActivity(
   agreementId: string,
-  token?: string
+  token?: string,
 ): Promise<{ activities: AgreementActivity[]; error: string | null }> {
   try {
     const result = await getAgreementActivityApi(agreementId, token)

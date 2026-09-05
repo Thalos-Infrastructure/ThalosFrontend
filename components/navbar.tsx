@@ -22,9 +22,15 @@ const useCaseCategories = {
     { label: "Enterprise", items: ["Vendor Agreements", "B2B Services"] },
   ],
   es: [
-    { label: "Economía Digital", items: ["Freelancers", "Agencias", "Desarrolladores", "Creadores"] },
+    {
+      label: "Economía Digital",
+      items: ["Freelancers", "Agencias", "Desarrolladores", "Creadores"],
+    },
     { label: "Comercio", items: ["Importación/Exportación", "Mayoristas", "Marketplaces"] },
-    { label: "Bienes Raíces", items: ["Venta de Propiedades", "Contratos de Alquiler", "Arrendamiento"] },
+    {
+      label: "Bienes Raíces",
+      items: ["Venta de Propiedades", "Contratos de Alquiler", "Arrendamiento"],
+    },
     { label: "Automotriz", items: ["Concesionarios", "Ventas P2P", "Alquileres"] },
     { label: "Eventos y Servicios", items: ["Organizadores", "Bodas", "Catering"] },
     { label: "Educación", items: ["Academias Online", "Coaching", "Tutores"] },
@@ -37,7 +43,8 @@ const useCaseCategories = {
 
 export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }) {
   const { t, language } = useLanguage()
-  const categories = useCaseCategories[language as keyof typeof useCaseCategories] || useCaseCategories.en
+  const categories =
+    useCaseCategories[language as keyof typeof useCaseCategories] || useCaseCategories.en
   const useCasesLabel = language === "es" ? "Casos de Uso" : "Use Cases"
   const [mobileOpen, setMobileOpen] = useState(false)
   const [showAuthModal, setShowAuthModal] = useState<"login" | "signup" | null>(null)
@@ -57,7 +64,8 @@ export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }
   // Close dropdown on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) setUseCaseOpen(false)
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node))
+        setUseCaseOpen(false)
     }
     document.addEventListener("mousedown", handler)
     return () => document.removeEventListener("mousedown", handler)
@@ -80,7 +88,6 @@ export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }
     return () => window.removeEventListener("scroll", onScroll)
   }, [])
 
-
   return (
     <>
       <header
@@ -88,7 +95,7 @@ export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }
           "fixed top-0 left-0 right-0 z-50 transition-transform duration-500",
           "bg-[#0c1220]/90 backdrop-blur-xl",
           "shadow-[0_4px_24px_rgba(0,0,0,0.3)]",
-          visible ? "translate-y-0" : "-translate-y-full"
+          visible ? "translate-y-0" : "-translate-y-full",
         )}
       >
         <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
@@ -127,26 +134,69 @@ export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }
                 className="flex items-center gap-1.5 text-base font-bold text-white/70 transition-all duration-300 hover:text-white"
               >
                 {useCasesLabel}
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={cn("transition-transform duration-200", useCaseOpen && "rotate-180")}><path d="M6 9l6 6 6-6" /></svg>
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className={cn("transition-transform duration-200", useCaseOpen && "rotate-180")}
+                >
+                  <path d="M6 9l6 6 6-6" />
+                </svg>
               </button>
               {useCaseOpen && (
-                <div className="absolute top-full left-1/2 z-50 mt-3 -translate-x-1/2 w-64 rounded-xl border border-white/15 bg-[#0c0c0e]/95 p-2 backdrop-blur-xl shadow-[0_12px_40px_rgba(0,0,0,0.4)]" style={{ scrollbarWidth: "none" }}>
+                <div
+                  className="absolute top-full left-1/2 z-50 mt-3 -translate-x-1/2 w-64 rounded-xl border border-white/15 bg-[#0c0c0e]/95 p-2 backdrop-blur-xl shadow-[0_12px_40px_rgba(0,0,0,0.4)]"
+                  style={{ scrollbarWidth: "none" }}
+                >
                   <div className="max-h-[460px] overflow-y-auto" style={{ scrollbarWidth: "none" }}>
                     {categories.map((cat) => (
                       <div key={cat.label}>
                         <button
-                          onClick={() => setExpandedCat(expandedCat === cat.label ? null : cat.label)}
+                          onClick={() =>
+                            setExpandedCat(expandedCat === cat.label ? null : cat.label)
+                          }
                           className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-xs font-bold uppercase tracking-wider text-[#f0b400]/80 transition-colors hover:bg-white/10 hover:text-[#f0b400]"
                         >
                           {cat.label}
-                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={cn("transition-transform duration-200", expandedCat === cat.label && "rotate-180")}><path d="M6 9l6 6 6-6" /></svg>
+                          <svg
+                            width="10"
+                            height="10"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className={cn(
+                              "transition-transform duration-200",
+                              expandedCat === cat.label && "rotate-180",
+                            )}
+                          >
+                            <path d="M6 9l6 6 6-6" />
+                          </svg>
                         </button>
-                        <div className={cn("overflow-hidden transition-all duration-300", expandedCat === cat.label ? "max-h-40 opacity-100" : "max-h-0 opacity-0")}>
+                        <div
+                          className={cn(
+                            "overflow-hidden transition-all duration-300",
+                            expandedCat === cat.label
+                              ? "max-h-40 opacity-100"
+                              : "max-h-0 opacity-0",
+                          )}
+                        >
                           <div className="flex flex-col pb-1 pl-2">
                             {cat.items.map((item) => (
                               <button
                                 key={item}
-                                onClick={() => { onNavigate("use-cases"); setUseCaseOpen(false); setExpandedCat(null) }}
+                                onClick={() => {
+                                  onNavigate("use-cases")
+                                  setUseCaseOpen(false)
+                                  setExpandedCat(null)
+                                }}
                                 className="rounded-md px-3 py-1.5 text-left text-xs font-medium text-white/60 transition-colors hover:bg-white/10 hover:text-white"
                               >
                                 {item}
@@ -192,9 +242,15 @@ export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }
             onClick={() => setMobileOpen(!mobileOpen)}
             aria-label="Toggle menu"
           >
-            <span className={`block h-0.5 w-5 bg-white transition-transform ${mobileOpen ? "translate-y-2 rotate-45" : ""}`} />
-            <span className={`block h-0.5 w-5 bg-white transition-opacity ${mobileOpen ? "opacity-0" : ""}`} />
-            <span className={`block h-0.5 w-5 bg-white transition-transform ${mobileOpen ? "-translate-y-2 -rotate-45" : ""}`} />
+            <span
+              className={`block h-0.5 w-5 bg-white transition-transform ${mobileOpen ? "translate-y-2 rotate-45" : ""}`}
+            />
+            <span
+              className={`block h-0.5 w-5 bg-white transition-opacity ${mobileOpen ? "opacity-0" : ""}`}
+            />
+            <span
+              className={`block h-0.5 w-5 bg-white transition-transform ${mobileOpen ? "-translate-y-2 -rotate-45" : ""}`}
+            />
           </button>
         </nav>
 
@@ -205,7 +261,10 @@ export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }
               {navLinks.map((item) => (
                 <button
                   key={item.section}
-                  onClick={() => { onNavigate(item.section); setMobileOpen(false) }}
+                  onClick={() => {
+                    onNavigate(item.section)
+                    setMobileOpen(false)
+                  }}
                   className="rounded-lg px-4 py-3 text-left text-base font-bold text-white/70 transition-colors hover:bg-white/10 hover:text-white"
                 >
                   {item.label}
@@ -214,7 +273,10 @@ export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }
               <div className="mt-2 flex items-center gap-2">
                 <Button
                   size="sm"
-                  onClick={() => { openLogin(); setMobileOpen(false) }}
+                  onClick={() => {
+                    openLogin()
+                    setMobileOpen(false)
+                  }}
                   disabled={resuming}
                   className="flex-1 rounded-full border border-[#f0b400]/40 bg-[#f0b400]/10 text-base font-bold text-[#f0b400] hover:bg-[#f0b400]/20 hover:border-[#f0b400]/60"
                 >
@@ -228,10 +290,7 @@ export function Navbar({ onNavigate }: { onNavigate: (section: string) => void }
         )}
       </header>
 
-      <SocialAuthModal
-        open={showAuthModal !== null}
-        onClose={() => setShowAuthModal(null)}
-      />
+      <SocialAuthModal open={showAuthModal !== null} onClose={() => setShowAuthModal(null)} />
     </>
   )
 }

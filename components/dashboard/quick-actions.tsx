@@ -2,27 +2,27 @@
 
 import { cn } from "@/lib/utils"
 import { useLanguage } from "@/lib/i18n"
-import { 
-  FilePlus, 
-  Share2, 
-  TrendingUp, 
-  CalendarClock, 
-  Trophy, 
-  CreditCard, 
-  Banknote, 
+import {
+  FilePlus,
+  Share2,
+  TrendingUp,
+  CalendarClock,
+  Trophy,
+  CreditCard,
+  Banknote,
   MoreHorizontal,
   ArrowDownToLine,
-  ArrowUpFromLine
+  ArrowUpFromLine,
 } from "lucide-react"
 
-export type QuickActionId = 
-  | "new-agreement" 
-  | "share-link" 
-  | "yield" 
-  | "schedule" 
-  | "bounty" 
-  | "cards" 
-  | "pay-services" 
+export type QuickActionId =
+  | "new-agreement"
+  | "share-link"
+  | "yield"
+  | "schedule"
+  | "bounty"
+  | "cards"
+  | "pay-services"
   | "more"
   | "deposit"
   | "withdraw"
@@ -114,7 +114,7 @@ export function QuickActions({ onAction, className }: QuickActionsProps) {
           className={cn(
             "group relative flex flex-col items-center gap-2 rounded-2xl border border-white/6 bg-[#0c1220]/60 p-4 transition-all duration-200",
             "hover:border-white/15 hover:bg-[#0c1220]/80 hover:shadow-[0_8px_24px_rgba(0,0,0,0.3)]",
-            "active:scale-[0.98]"
+            "active:scale-[0.98]",
           )}
         >
           {action.comingSoon && (
@@ -126,7 +126,7 @@ export function QuickActions({ onAction, className }: QuickActionsProps) {
             <div className={action.color}>{action.icon}</div>
           </div>
           <span className="text-[10px] font-medium text-white/60 text-center leading-tight group-hover:text-white/80 transition-colors">
-            {t(action.labelKey) || action.labelKey.split('.')[1]}
+            {t(action.labelKey) || action.labelKey.split(".")[1]}
           </span>
         </button>
       ))}

@@ -11,11 +11,23 @@ ThalosBackend (`/v1`) which relays to Trustless Work. Runs at http://localhost:3
 - Package manager: **pnpm**.
 - Install: `pnpm install` · Dev: `pnpm dev` → http://localhost:3000 · Build: `pnpm build`
   (`next build --webpack`).
-- **There is no CI in this repo** — no `.github/workflows`, so nothing is checked on push.
-  `pnpm lint` is also a dead script: ESLint is not installed. `tsc --noEmit` reports ~192
-  pre-existing errors and `next.config.mjs` sets `ignoreBuildErrors: true`, so a green
-  build does not mean a clean typecheck. Run `pnpm build` before opening a PR; it is the
-  only real gate.
+- **CI runs five blocking checks** (`.github/workflows/ci.yml`), the same shape as
+  ThalosBackend: `format:check` (Prettier), `lint:check` (ESLint), `typecheck`
+  (`tsc --noEmit`), `test`, `build` — plus a gitleaks secret scan and a non-blocking
+  coverage report. Run them locally before opening a PR; `pnpm lint` and `pnpm format`
+  auto-fix.
+- The typecheck baseline is **zero errors** and `next.config.mjs` sets
+  `ignoreBuildErrors: false`, so the build is a real typecheck again. Do not flip that
+  back on to turn a red build green.
+- ESLint is pinned to **9.x**: `eslint-plugin-react` (via `eslint-config-next`) still uses
+  the pre-10 rule context API and crashes on ESLint 10. The backend is on 10 because it
+  does not use that plugin.
+- `react-hooks/set-state-in-effect` and `exhaustive-deps` are **warnings**, not errors:
+  there are ~44 pre-existing hits across ~20 components, and fixing them means changing
+  effect behaviour with no UI tests to catch regressions. They are a deliberate backlog,
+  not noise — do not add new ones.
+- The footer renders a build stamp (`branch · vX.Y.Z · sha`) so you can tell which deploy
+  you are looking at; see `lib/version.ts` and the `env` block in `next.config.mjs`.
 
 ## Environment (`.env.local`)
 
@@ -34,7 +46,7 @@ not just a reload.
 — it authenticates `POST /v1/tokens/verify`). Both from dashboard.pollar.xyz → Build → API Keys,
 and both are **network-scoped** (`pub_testnet_` / `pub_mainnet_`), so they must match
 `NEXT_PUBLIC_STELLAR_NETWORK`. Optional `POLLAR_SERVER_API_URL` (default
-`https://server.api.pollar.xyz/v1` — that host, *not* the `api.pollar.xyz` in Pollar's
+`https://server.api.pollar.xyz/v1` — that host, _not_ the `api.pollar.xyz` in Pollar's
 server-api docs, which serves no routes; docs at https://server.api.pollar.xyz/docs). With no
 publishable key the Pollar login button is simply hidden
 (`POLLAR_ENABLED` in `lib/config.ts`), so a deploy without these vars still works. USDC must be
@@ -74,7 +86,7 @@ via SEP-0053**, so the verify route tries several schemes (`raw`/`sep53`/`sha256
 and logs which matched. Rejecting the signature is non-fatal — the wallet stays connected in
 wallet-only mode.
 
-The signature is **skipped** when this device already holds a session for the *same* wallet.
+The signature is **skipped** when this device already holds a session for the _same_ wallet.
 A session for a different address does not count: that would let a stale login speak for the
 wallet just connected.
 

@@ -1,9 +1,9 @@
 // Thalos Global Configuration Constants
 
 // App URLs
-export const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://www.thalosplatform.xyz";
-export const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/v1";
-export const APP_NAME = "Thalos";
+export const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://www.thalosplatform.xyz"
+export const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/v1"
+export const APP_NAME = "Thalos"
 
 /**
  * Escrow migration routing.
@@ -17,9 +17,9 @@ export const APP_NAME = "Thalos";
  * route accidentally.
  */
 function migrationFlag(value: string | undefined, fallback: boolean): boolean {
-  if (value === "true") return true;
-  if (value === "false") return false;
-  return fallback;
+  if (value === "true") return true
+  if (value === "false") return false
+  return fallback
 }
 
 export const ESCROW_MIGRATION_FLAGS = Object.freeze({
@@ -35,10 +35,7 @@ export const ESCROW_MIGRATION_FLAGS = Object.freeze({
     process.env.NEXT_PUBLIC_ESCROW_MIGRATION_CREATE_AGREEMENT_USE_NEST,
     false,
   ),
-  fundEscrow: migrationFlag(
-    process.env.NEXT_PUBLIC_ESCROW_MIGRATION_FUND_ESCROW_USE_NEST,
-    false,
-  ),
+  fundEscrow: migrationFlag(process.env.NEXT_PUBLIC_ESCROW_MIGRATION_FUND_ESCROW_USE_NEST, false),
   approveMilestone: migrationFlag(
     process.env.NEXT_PUBLIC_ESCROW_MIGRATION_APPROVE_MILESTONE_USE_NEST,
     false,
@@ -59,24 +56,25 @@ export const ESCROW_MIGRATION_FLAGS = Object.freeze({
     process.env.NEXT_PUBLIC_ESCROW_MIGRATION_SEND_TRANSACTION_USE_NEST,
     false,
   ),
-});
+})
 
-export type EscrowMigrationOperation = keyof typeof ESCROW_MIGRATION_FLAGS;
+export type EscrowMigrationOperation = keyof typeof ESCROW_MIGRATION_FLAGS
+
+// Mock/demo agreement toggle — when OFF (default), only real on-chain agreements
+// are shown on the dashboards.
+export const SHOW_MOCKED_AGREEMENTS = process.env.NEXT_PUBLIC_SHOW_MOCKED_AGREEMENTS === "true"
 
 // Email Configuration (Resend)
-export const EMAIL_FROM = process.env.EMAIL_FROM || "Thalos <notifications@thalosplatform.xyz>";
-export const EMAIL_REPLY_TO = process.env.EMAIL_REPLY_TO || "support@thalosplatform.xyz";
+export const EMAIL_FROM = process.env.EMAIL_FROM || "Thalos <notifications@thalosplatform.xyz>"
+export const EMAIL_REPLY_TO = process.env.EMAIL_REPLY_TO || "support@thalosplatform.xyz"
 
 // Stellar Explorer — la base por red vive en STELLAR_NETWORKS (más abajo); esta
 // variable solo permite apuntar a otro explorer distinto del predeterminado.
 
 export const TRUSTLINE_USDC = {
-	symbol: "USDC",
-	address: "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5",
-};
-
-// show mocked agreements in the UI, set to true to show them (off by default for production safety)
-export const SHOW_MOCKED_AGREEMENTS = process.env.NEXT_PUBLIC_SHOW_MOCKED_AGREEMENTS === "true";
+  symbol: "USDC",
+  address: "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5",
+}
 
 // Stellar Network Configuration
 //
@@ -94,22 +92,22 @@ const STELLAR_NETWORKS = {
     horizonUrl: "https://horizon-testnet.stellar.org",
     explorerBaseUrl: "https://stellar.expert/explorer/testnet/contract/",
   },
-} as const;
+} as const
 
-export type StellarNetwork = keyof typeof STELLAR_NETWORKS;
+export type StellarNetwork = keyof typeof STELLAR_NETWORKS
 
 // Cualquier valor que no sea MAINNET cae en TESTNET, que es como se comportaban ya
 // la passphrase y Horizon. Normalizarlo aquí evita que un valor desconocido deje
 // media configuración en una red y media en otra.
 export const STELLAR_NETWORK: StellarNetwork =
-  process.env.NEXT_PUBLIC_STELLAR_NETWORK === "MAINNET" ? "MAINNET" : "TESTNET";
+  process.env.NEXT_PUBLIC_STELLAR_NETWORK === "MAINNET" ? "MAINNET" : "TESTNET"
 
-const stellarNetworkConfig = STELLAR_NETWORKS[STELLAR_NETWORK];
+const stellarNetworkConfig = STELLAR_NETWORKS[STELLAR_NETWORK]
 
-export const STELLAR_NETWORK_PASSPHRASE = stellarNetworkConfig.passphrase;
-export const HORIZON_URL = stellarNetworkConfig.horizonUrl;
+export const STELLAR_NETWORK_PASSPHRASE = stellarNetworkConfig.passphrase
+export const HORIZON_URL = stellarNetworkConfig.horizonUrl
 export const STELLAR_EXPLORER_BASE_URL =
-  process.env.NEXT_PUBLIC_STELLAR_EXPLORER_URL || stellarNetworkConfig.explorerBaseUrl;
+  process.env.NEXT_PUBLIC_STELLAR_EXPLORER_URL || stellarNetworkConfig.explorerBaseUrl
 
 // El base de arriba enlaza contratos (escrows). Una wallet (G-address) vive en
 // `/account/` en stellar.expert; derivarlo del mismo base mantiene ambas URLs en
@@ -117,7 +115,7 @@ export const STELLAR_EXPLORER_BASE_URL =
 export const STELLAR_EXPLORER_ACCOUNT_BASE_URL = STELLAR_EXPLORER_BASE_URL.replace(
   /contract\/?$/,
   "account/",
-);
+)
 
 // Friendbot is used for testnet wallet activation (free, no funding required)
 
@@ -131,7 +129,7 @@ export const STELLAR_EXPLORER_ACCOUNT_BASE_URL = STELLAR_EXPLORER_BASE_URL.repla
 //
 // Keys are network-scoped (pub_testnet_ / pub_mainnet_), so this must match
 // STELLAR_NETWORK below.
-export const POLLAR_PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_POLLAR_PUBLISHABLE_KEY || "";
+export const POLLAR_PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_POLLAR_PUBLISHABLE_KEY || ""
 
 /**
  * Server API base — secret-key endpoints, e.g. POST /v1/tokens/verify.
@@ -142,11 +140,11 @@ export const POLLAR_PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_POLLAR_PUBLISHABLE
  * https://server.api.pollar.xyz/docs.
  */
 export const POLLAR_SERVER_API_URL =
-  process.env.POLLAR_SERVER_API_URL || "https://server.api.pollar.xyz/v1";
+  process.env.POLLAR_SERVER_API_URL || "https://server.api.pollar.xyz/v1"
 
 // Off unless a publishable key is configured, so a deploy without Pollar env vars
 // simply hides the button instead of rendering a login that always fails.
-export const POLLAR_ENABLED = POLLAR_PUBLISHABLE_KEY !== "";
+export const POLLAR_ENABLED = POLLAR_PUBLISHABLE_KEY !== ""
 
 // The identity providers Thalos drives directly, each behind its own button in
 // our own modal — Pollar's login modal is never opened.
@@ -154,5 +152,5 @@ export const POLLAR_ENABLED = POLLAR_PUBLISHABLE_KEY !== "";
 // Passkey is absent on purpose. Pollar's passkey path yields a `smart`
 // C-address, which Trustless Work escrows cannot use as a party; that flow is
 // #109 (Accesly), which bridges the smart account to a real G-address first.
-export const POLLAR_LOGIN_PROVIDERS = ["google", "github", "email"] as const;
-export type PollarLoginProvider = (typeof POLLAR_LOGIN_PROVIDERS)[number];
+export const POLLAR_LOGIN_PROVIDERS = ["google", "github", "email"] as const
+export type PollarLoginProvider = (typeof POLLAR_LOGIN_PROVIDERS)[number]

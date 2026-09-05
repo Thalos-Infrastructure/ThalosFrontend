@@ -18,9 +18,9 @@ import {
 } from "../wallets"
 
 function mockFetch(body: unknown, status = 200) {
-  return vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
-    new Response(JSON.stringify(body), { status }),
-  )
+  return vi
+    .spyOn(globalThis, "fetch")
+    .mockResolvedValueOnce(new Response(JSON.stringify(body), { status }))
 }
 
 const WALLET: UserWallet = {
@@ -48,14 +48,16 @@ const AGREEMENT_SUMMARY = {
   wallet_address: WALLET.wallet_address,
   wallet_type: WALLET.wallet_type,
   label: WALLET.label,
-  agreements: [{
-    id: "a1",
-    title: "Deal",
-    status: "active",
-    amount: "500",
-    role: "buyer",
-    created_at: "2025-01-02T00:00:00Z",
-  }],
+  agreements: [
+    {
+      id: "a1",
+      title: "Deal",
+      status: "active",
+      amount: "500",
+      role: "buyer",
+      created_at: "2025-01-02T00:00:00Z",
+    },
+  ],
 }
 
 afterEach(() => vi.restoreAllMocks())
@@ -101,10 +103,12 @@ describe("Nest wallet response normalization", () => {
       const result = await getWalletsWithAgreements("token")
 
       expect(result.success).toBe(true)
-      expect(result.data).toEqual([{
-        ...AGREEMENT_SUMMARY,
-        agreements_count: 1,
-      }])
+      expect(result.data).toEqual([
+        {
+          ...AGREEMENT_SUMMARY,
+          agreements_count: 1,
+        },
+      ])
     })
 
     it("turns an embedded backend error into a failed API response", async () => {
@@ -163,20 +167,27 @@ describe("Nest wallet response normalization", () => {
     it("unwraps POST /wallets from { wallet, error }", async () => {
       mockFetch({ wallet: WALLET, error: null })
 
-      await expect(linkWallet({
-        wallet_address: WALLET.wallet_address,
-        wallet_type: "freighter",
-        signed_message: "challenge",
-        signature: "signature",
-      }, "token")).resolves.toEqual({ success: true, data: WALLET })
+      await expect(
+        linkWallet(
+          {
+            wallet_address: WALLET.wallet_address,
+            wallet_type: "freighter",
+            signed_message: "challenge",
+            signature: "signature",
+          },
+          "token",
+        ),
+      ).resolves.toEqual({ success: true, data: WALLET })
     })
 
     it("unwraps PATCH /wallets/:id from { wallet, error }", async () => {
       const updated = { ...WALLET, label: "updated" }
       mockFetch({ wallet: updated, error: null })
 
-      await expect(updateWallet("w1", { label: "updated" }, "token"))
-        .resolves.toEqual({ success: true, data: updated })
+      await expect(updateWallet("w1", { label: "updated" }, "token")).resolves.toEqual({
+        success: true,
+        data: updated,
+      })
     })
 
     it("normalizes a successful DELETE /wallets/:id payload", async () => {
@@ -193,11 +204,10 @@ describe("Nest wallet response normalization", () => {
     it("parses the documented { challenge } payload", async () => {
       mockFetch({ challenge: "challenge-text" })
 
-      await expect(getWalletVerificationChallenge("GABC...", "token"))
-        .resolves.toEqual({
-          success: true,
-          data: { challenge: "challenge-text" },
-        })
+      await expect(getWalletVerificationChallenge("GABC...", "token")).resolves.toEqual({
+        success: true,
+        data: { challenge: "challenge-text" },
+      })
     })
 
     it("maps the current Nest { message, expires_at } payload to the canonical shape", async () => {
@@ -206,14 +216,13 @@ describe("Nest wallet response normalization", () => {
         expires_at: "2026-08-24T12:05:00.000Z",
       })
 
-      await expect(getWalletVerificationChallenge("GABC...", "token"))
-        .resolves.toEqual({
-          success: true,
-          data: {
-            challenge: "signed-message",
-            expires_at: "2026-08-24T12:05:00.000Z",
-          },
-        })
+      await expect(getWalletVerificationChallenge("GABC...", "token")).resolves.toEqual({
+        success: true,
+        data: {
+          challenge: "signed-message",
+          expires_at: "2026-08-24T12:05:00.000Z",
+        },
+      })
     })
 
     it("prepares the exact Nest challenge body for SEP-53 signing", () => {
@@ -228,18 +237,19 @@ describe("Nest wallet response normalization", () => {
         "Proof: payload.signature",
       ].join("\n")
 
-      expect(walletVerificationMessageToSign(challenge)).toBe([
-        "Thalos Wallet Ownership Proof",
-        "",
-        "I authorize linking this wallet to my Thalos account.",
-        "Wallet: GABC...",
-        "Expires At: 2026-08-24T12:05:00.000Z",
-      ].join("\n"))
+      expect(walletVerificationMessageToSign(challenge)).toBe(
+        [
+          "Thalos Wallet Ownership Proof",
+          "",
+          "I authorize linking this wallet to my Thalos account.",
+          "Wallet: GABC...",
+          "Expires At: 2026-08-24T12:05:00.000Z",
+        ].join("\n"),
+      )
     })
 
     it("leaves an unframed challenge body unchanged", () => {
-      expect(walletVerificationMessageToSign("challenge-text"))
-        .toBe("challenge-text")
+      expect(walletVerificationMessageToSign("challenge-text")).toBe("challenge-text")
     })
   })
 })

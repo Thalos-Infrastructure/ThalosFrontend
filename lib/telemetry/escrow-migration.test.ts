@@ -1,31 +1,31 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
-import { emitEscrowMigrationTelemetry } from "./escrow-migration";
+import { emitEscrowMigrationTelemetry } from "./escrow-migration"
 
 describe("escrow migration telemetry", () => {
   beforeEach(() => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date("2026-08-23T12:34:56.000Z"));
-  });
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date("2026-08-23T12:34:56.000Z"))
+  })
 
   afterEach(() => {
-    vi.restoreAllMocks();
-    vi.useRealTimers();
-  });
+    vi.restoreAllMocks()
+    vi.useRealTimers()
+  })
 
   it("serializes successful route decisions as one structured info record", () => {
-    const info = vi.spyOn(console, "info").mockImplementation(() => undefined);
-    const error = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const info = vi.spyOn(console, "info").mockImplementation(() => undefined)
+    const error = vi.spyOn(console, "error").mockImplementation(() => undefined)
 
     emitEscrowMigrationTelemetry({
       operation: "approveMilestone",
       path: "nest",
       outcome: "success",
       durationMs: 42,
-    });
+    })
 
-    expect(info).toHaveBeenCalledOnce();
-    expect(error).not.toHaveBeenCalled();
+    expect(info).toHaveBeenCalledOnce()
+    expect(error).not.toHaveBeenCalled()
     expect(JSON.parse(info.mock.calls[0][0])).toEqual({
       event: "escrow_migration.route",
       schemaVersion: 1,
@@ -34,12 +34,12 @@ describe("escrow migration telemetry", () => {
       path: "nest",
       outcome: "success",
       durationMs: 42,
-    });
-  });
+    })
+  })
 
   it("serializes failed route decisions as one structured error record", () => {
-    const info = vi.spyOn(console, "info").mockImplementation(() => undefined);
-    const error = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const info = vi.spyOn(console, "info").mockImplementation(() => undefined)
+    const error = vi.spyOn(console, "error").mockImplementation(() => undefined)
 
     emitEscrowMigrationTelemetry({
       operation: "releaseFunds",
@@ -47,10 +47,10 @@ describe("escrow migration telemetry", () => {
       outcome: "failure",
       durationMs: 17,
       error: "HTTP 503",
-    });
+    })
 
-    expect(info).not.toHaveBeenCalled();
-    expect(error).toHaveBeenCalledOnce();
+    expect(info).not.toHaveBeenCalled()
+    expect(error).toHaveBeenCalledOnce()
     expect(JSON.parse(error.mock.calls[0][0])).toEqual({
       event: "escrow_migration.route",
       schemaVersion: 1,
@@ -60,6 +60,6 @@ describe("escrow migration telemetry", () => {
       outcome: "failure",
       durationMs: 17,
       error: "HTTP 503",
-    });
-  });
-});
+    })
+  })
+})

@@ -21,13 +21,97 @@ import { dashboardPathFor } from "@/lib/dashboard-path"
 
 /* ── Icons ── */
 const Icons = {
-  trophy: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" /><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" /><path d="M4 22h16" /><path d="M10 22V8h4v14" /><rect x="6" y="2" width="12" height="12" rx="2" /></svg>,
-  plus: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14M5 12h14" /></svg>,
-  arrowLeft: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>,
-  copy: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg>,
-  check: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 6L9 17l-5-5" /></svg>,
-  external: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /><path d="M15 3h6v6" /><path d="M10 14L21 3" /></svg>,
-  x: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" /></svg>,
+  trophy: (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+    >
+      <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
+      <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
+      <path d="M4 22h16" />
+      <path d="M10 22V8h4v14" />
+      <rect x="6" y="2" width="12" height="12" rx="2" />
+    </svg>
+  ),
+  plus: (
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      <path d="M12 5v14M5 12h14" />
+    </svg>
+  ),
+  arrowLeft: (
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+    >
+      <path d="M19 12H5M12 19l-7-7 7-7" />
+    </svg>
+  ),
+  copy: (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+    >
+      <rect x="9" y="9" width="13" height="13" rx="2" />
+      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+    </svg>
+  ),
+  check: (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      <path d="M20 6L9 17l-5-5" />
+    </svg>
+  ),
+  external: (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+    >
+      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+      <path d="M15 3h6v6" />
+      <path d="M10 14L21 3" />
+    </svg>
+  ),
+  x: (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      <path d="M18 6L6 18M6 6l12 12" />
+    </svg>
+  ),
 }
 
 const statusColors: Record<string, string> = {
@@ -51,18 +135,46 @@ const statusLabels: Record<string, string> = {
 }
 
 /* ── Form Input ── */
-function FormInput({ label, value, onChange, placeholder, type = "text", info, required = false }: {
-  label: string; value: string; onChange: (v: string) => void; placeholder?: string; type?: string; info?: string; required?: boolean
+function FormInput({
+  label,
+  value,
+  onChange,
+  placeholder,
+  type = "text",
+  info,
+  required = false,
+}: {
+  label: string
+  value: string
+  onChange: (v: string) => void
+  placeholder?: string
+  type?: string
+  info?: string
+  required?: boolean
 }) {
   const id = useId()
   return (
     <div>
-      <label htmlFor={id} className="mb-1.5 flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-        {label}{required && <span className="text-[#f0b400]">*</span>}
-        {info && <span className="normal-case tracking-normal font-normal text-muted-foreground/50">({info})</span>}
+      <label
+        htmlFor={id}
+        className="mb-1.5 flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground"
+      >
+        {label}
+        {required && <span className="text-[#f0b400]">*</span>}
+        {info && (
+          <span className="normal-case tracking-normal font-normal text-muted-foreground/50">
+            ({info})
+          </span>
+        )}
       </label>
-      <input id={id} type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
-        className="h-12 w-full rounded-xl border border-border/40 bg-card/30 px-4 text-sm text-foreground placeholder:text-muted-foreground/40 focus:border-[#f0b400]/50 focus:outline-none focus:ring-2 focus:ring-[#f0b400]/15 transition-all duration-200" />
+      <input
+        id={id}
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="h-12 w-full rounded-xl border border-border/40 bg-card/30 px-4 text-sm text-foreground placeholder:text-muted-foreground/40 focus:border-[#f0b400]/50 focus:outline-none focus:ring-2 focus:ring-[#f0b400]/15 transition-all duration-200"
+      />
     </div>
   )
 }
@@ -71,12 +183,12 @@ export default function BountiesDashboardPage() {
   const { t } = useLanguage()
   const router = useRouter()
   const { address, profile } = useStellarWallet()
-  
+
   const [isLoading, setIsLoading] = useState(true)
   const [myBounties, setMyBounties] = useState<Bounty[]>([])
   const [validatorBounties, setValidatorBounties] = useState<Bounty[]>([])
   const [openBounties, setOpenBounties] = useState<Bounty[]>([])
-  
+
   // Create bounty form
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [title, setTitle] = useState("")
@@ -86,7 +198,7 @@ export default function BountiesDashboardPage() {
   const [deadline, setDeadline] = useState("")
   const [isCreating, setIsCreating] = useState(false)
   const [createError, setCreateError] = useState<string | null>(null)
-  
+
   const [copiedSlug, setCopiedSlug] = useState<string | null>(null)
 
   useEffect(() => {
@@ -94,20 +206,21 @@ export default function BountiesDashboardPage() {
       router.push("/")
       return
     }
+    const walletAddress: string = address
 
     async function loadBounties() {
       setIsLoading(true)
-      
+
       const [creatorResult, validatorResult, openResult] = await Promise.all([
-        getBountiesByCreator(address),
-        getBountiesForValidator(address),
+        getBountiesByCreator(walletAddress),
+        getBountiesForValidator(walletAddress),
         getOpenBounties(),
       ])
-      
+
       if (!creatorResult.error) setMyBounties(creatorResult.bounties)
       if (!validatorResult.error) setValidatorBounties(validatorResult.bounties)
       if (!openResult.error) setOpenBounties(openResult.bounties)
-      
+
       setIsLoading(false)
     }
 
@@ -116,18 +229,21 @@ export default function BountiesDashboardPage() {
 
   const handleCreate = async () => {
     if (!address || !title || !description || !amount || !validators) return
-    
+
     setIsCreating(true)
     setCreateError(null)
-    
-    const validatorList = validators.split(",").map((v) => v.trim()).filter(Boolean)
-    
+
+    const validatorList = validators
+      .split(",")
+      .map((v) => v.trim())
+      .filter(Boolean)
+
     if (validatorList.length === 0) {
       setCreateError("Please add at least one validator")
       setIsCreating(false)
       return
     }
-    
+
     const { bounty, error } = await createBounty({
       title,
       description,
@@ -136,14 +252,14 @@ export default function BountiesDashboardPage() {
       validators: validatorList,
       deadline: deadline || undefined,
     })
-    
+
     if (error) {
       setCreateError(error)
     } else if (bounty) {
       // Refresh bounties
       const { bounties } = await getBountiesByCreator(address)
       setMyBounties(bounties)
-      
+
       // Reset form
       setShowCreateForm(false)
       setTitle("")
@@ -152,7 +268,7 @@ export default function BountiesDashboardPage() {
       setValidators("")
       setDeadline("")
     }
-    
+
     setIsCreating(false)
   }
 
@@ -183,14 +299,24 @@ export default function BountiesDashboardPage() {
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
           <div className="flex items-center gap-4">
             <Link href={dashboardPathFor(profile)}>
-              <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground hover:text-foreground">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="gap-2 text-muted-foreground hover:text-foreground"
+              >
                 {Icons.arrowLeft}
                 Back
               </Button>
             </Link>
           </div>
           <Link href="/">
-            <Image src="/thalos-icon.png" alt="Thalos" width={32} height={32} className="opacity-80 hover:opacity-100 transition-opacity" />
+            <Image
+              src="/thalos-icon.png"
+              alt="Thalos"
+              width={32}
+              height={32}
+              className="opacity-80 hover:opacity-100 transition-opacity"
+            />
           </Link>
         </div>
       </header>
@@ -207,7 +333,7 @@ export default function BountiesDashboardPage() {
               <p className="mt-1 text-muted-foreground">Create and manage bounty agreements</p>
             </div>
           </div>
-          
+
           <Button
             onClick={() => setShowCreateForm(true)}
             className="gap-2 bg-[#f0b400] text-black hover:bg-[#f0b400]/90"
@@ -219,7 +345,10 @@ export default function BountiesDashboardPage() {
 
         {/* Create Bounty Modal */}
         {showCreateForm && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setShowCreateForm(false)}>
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            onClick={() => setShowCreateForm(false)}
+          >
             <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
             <div
               className="relative z-10 w-full max-w-lg rounded-2xl border border-border/40 bg-card p-8"
@@ -231,9 +360,9 @@ export default function BountiesDashboardPage() {
               >
                 {Icons.x}
               </button>
-              
+
               <h2 className="text-xl font-bold text-foreground mb-6">Create New Bounty</h2>
-              
+
               <div className="space-y-5">
                 <FormInput
                   label="Title"
@@ -242,7 +371,7 @@ export default function BountiesDashboardPage() {
                   placeholder="Design a new logo"
                   required
                 />
-                
+
                 <div>
                   <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
                     Description <span className="text-[#f0b400]">*</span>
@@ -255,7 +384,7 @@ export default function BountiesDashboardPage() {
                     className="w-full rounded-xl border border-border/40 bg-card/30 px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/40 focus:border-[#f0b400]/50 focus:outline-none focus:ring-2 focus:ring-[#f0b400]/15 resize-none"
                   />
                 </div>
-                
+
                 <FormInput
                   label="Amount"
                   value={amount}
@@ -265,7 +394,7 @@ export default function BountiesDashboardPage() {
                   info="USDC"
                   required
                 />
-                
+
                 <FormInput
                   label="Validators"
                   value={validators}
@@ -274,7 +403,7 @@ export default function BountiesDashboardPage() {
                   info="Comma-separated wallet addresses"
                   required
                 />
-                
+
                 <FormInput
                   label="Deadline"
                   value={deadline}
@@ -282,7 +411,7 @@ export default function BountiesDashboardPage() {
                   type="date"
                   info="Optional"
                 />
-                
+
                 <div className="flex items-center gap-3 pt-4">
                   <Button
                     onClick={handleCreate}
@@ -295,10 +424,8 @@ export default function BountiesDashboardPage() {
                     Cancel
                   </Button>
                 </div>
-                
-                {createError && (
-                  <p className="text-sm text-red-400">{createError}</p>
-                )}
+
+                {createError && <p className="text-sm text-red-400">{createError}</p>}
               </div>
             </div>
           </div>
@@ -309,7 +436,7 @@ export default function BountiesDashboardPage() {
           <h2 className="mb-4 text-sm font-medium uppercase tracking-wider text-muted-foreground">
             My Bounties ({myBounties.length})
           </h2>
-          
+
           {myBounties.length === 0 ? (
             <div className="rounded-xl border border-dashed border-border/40 bg-card/30 p-8 text-center">
               <p className="text-muted-foreground">You haven&apos;t created any bounties yet.</p>
@@ -323,7 +450,12 @@ export default function BountiesDashboardPage() {
                 >
                   <div className="flex items-start justify-between gap-2 mb-3">
                     <h3 className="font-medium text-foreground line-clamp-1">{bounty.title}</h3>
-                    <span className={cn("shrink-0 rounded-full border px-2 py-0.5 text-xs font-medium", statusColors[bounty.status])}>
+                    <span
+                      className={cn(
+                        "shrink-0 rounded-full border px-2 py-0.5 text-xs font-medium",
+                        statusColors[bounty.status],
+                      )}
+                    >
                       {statusLabels[bounty.status]}
                     </span>
                   </div>
@@ -355,7 +487,7 @@ export default function BountiesDashboardPage() {
             <h2 className="mb-4 text-sm font-medium uppercase tracking-wider text-muted-foreground">
               Bounties to Validate ({validatorBounties.length})
             </h2>
-            
+
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {validatorBounties.map((bounty) => (
                 <div
@@ -364,7 +496,12 @@ export default function BountiesDashboardPage() {
                 >
                   <div className="flex items-start justify-between gap-2 mb-3">
                     <h3 className="font-medium text-foreground line-clamp-1">{bounty.title}</h3>
-                    <span className={cn("shrink-0 rounded-full border px-2 py-0.5 text-xs font-medium", statusColors[bounty.status])}>
+                    <span
+                      className={cn(
+                        "shrink-0 rounded-full border px-2 py-0.5 text-xs font-medium",
+                        statusColors[bounty.status],
+                      )}
+                    >
                       {statusLabels[bounty.status]}
                     </span>
                   </div>
@@ -373,7 +510,11 @@ export default function BountiesDashboardPage() {
                     Created by {truncateAddress(bounty.created_by)}
                   </p>
                   <Link href={`/bounty/${bounty.slug}`}>
-                    <Button variant="outline" size="sm" className="w-full gap-1 border-blue-500/30 text-blue-400 hover:bg-blue-500/10">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full gap-1 border-blue-500/30 text-blue-400 hover:bg-blue-500/10"
+                    >
                       Review Submissions {Icons.external}
                     </Button>
                   </Link>
@@ -388,7 +529,7 @@ export default function BountiesDashboardPage() {
           <h2 className="mb-4 text-sm font-medium uppercase tracking-wider text-muted-foreground">
             Open Bounties ({openBounties.length})
           </h2>
-          
+
           {openBounties.length === 0 ? (
             <div className="rounded-xl border border-dashed border-border/40 bg-card/30 p-8 text-center">
               <p className="text-muted-foreground">No open bounties available.</p>
@@ -402,11 +543,18 @@ export default function BountiesDashboardPage() {
                 >
                   <div className="flex items-start justify-between gap-2 mb-3">
                     <h3 className="font-medium text-foreground line-clamp-1">{bounty.title}</h3>
-                    <span className={cn("shrink-0 rounded-full border px-2 py-0.5 text-xs font-medium", statusColors[bounty.status])}>
+                    <span
+                      className={cn(
+                        "shrink-0 rounded-full border px-2 py-0.5 text-xs font-medium",
+                        statusColors[bounty.status],
+                      )}
+                    >
                       {statusLabels[bounty.status]}
                     </span>
                   </div>
-                  <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{bounty.description}</p>
+                  <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+                    {bounty.description}
+                  </p>
                   <p className="text-2xl font-bold text-[#f0b400] mb-3">{bounty.amount} USDC</p>
                   <Link href={`/bounty/${bounty.slug}`}>
                     <Button className="w-full bg-[#f0b400] text-black hover:bg-[#f0b400]/90">

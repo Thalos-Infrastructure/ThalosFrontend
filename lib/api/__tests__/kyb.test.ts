@@ -11,9 +11,9 @@ import {
 } from "../kyb"
 
 function mockFetch(body: unknown, status = 200) {
-  return vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
-    new Response(JSON.stringify(body), { status }),
-  )
+  return vi
+    .spyOn(globalThis, "fetch")
+    .mockResolvedValueOnce(new Response(JSON.stringify(body), { status }))
 }
 
 const KYB_VERIFICATION = {

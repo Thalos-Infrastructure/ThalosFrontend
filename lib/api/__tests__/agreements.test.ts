@@ -4,7 +4,6 @@ vi.mock("@/lib/config", () => ({ API_URL: "http://localhost:3001/v1" }))
 
 import {
   createAgreement,
-  getAgreements,
   getAgreementsByWallet,
   getAgreement,
   updateAgreementStatusApi,
@@ -19,9 +18,9 @@ import {
 } from "../agreements"
 
 function mockFetch(body: unknown, status = 200) {
-  return vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
-    new Response(JSON.stringify(body), { status }),
-  )
+  return vi
+    .spyOn(globalThis, "fetch")
+    .mockResolvedValueOnce(new Response(JSON.stringify(body), { status }))
 }
 
 const AGREEMENT: Agreement = {
@@ -75,25 +74,6 @@ describe("agreements contract", () => {
       )
       expect(res.success).toBe(false)
       expect(res.error).toBe("insufficient funds")
-    })
-  })
-
-  describe("getAgreements", () => {
-    it("unwraps { agreements } envelope", async () => {
-      mockFetch({ agreements: [AGREEMENT] })
-      const res = await getAgreements(undefined, "tok")
-      expect(res.success).toBe(true)
-      expect(res.data!).toHaveLength(1)
-      expect(res.data![0].agreement_type).toBe("single")
-    })
-
-    it("sends query params when filters are provided", async () => {
-      mockFetch({ agreements: [] })
-      const fetchSpy = vi.spyOn(globalThis, "fetch")
-      await getAgreements({ status: "active", type: "multi" }, "tok")
-      const url = fetchSpy.mock.calls[0][0] as string
-      expect(url).toContain("status=active")
-      expect(url).toContain("type=multi")
     })
   })
 

@@ -5,22 +5,15 @@ vi.mock("@/lib/config", () => ({ API_URL: "http://localhost:3001/v1" }))
 import {
   buildCreateEscrow,
   submitSignedTransaction,
-  getEscrow,
-  getMyEscrows,
-  fundEscrow,
-  submitEvidence,
-  approveMilestone,
-  cancelEscrow,
-  getEscrowBalance,
   getEscrowsBySigner,
   getEscrowsByRole,
   type Escrow,
 } from "../escrow"
 
 function mockFetch(body: unknown, status = 200) {
-  return vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
-    new Response(JSON.stringify(body), { status }),
-  )
+  return vi
+    .spyOn(globalThis, "fetch")
+    .mockResolvedValueOnce(new Response(JSON.stringify(body), { status }))
 }
 
 const ESCROW: Escrow = {
@@ -56,7 +49,12 @@ describe("escrow contract", () => {
           platformFee: "5",
           signer: "G1...",
           serviceType: "single-release",
-          roles: { approver: "G3...", serviceProvider: "G2...", releaseSigner: "G4...", receiver: "G2..." },
+          roles: {
+            approver: "G3...",
+            serviceProvider: "G2...",
+            releaseSigner: "G4...",
+            receiver: "G2...",
+          },
           milestones: [{ description: "M1" }],
         },
         "tok",
@@ -92,73 +90,6 @@ describe("escrow contract", () => {
       const res = await submitSignedTransaction("AAAA...", "tok")
       expect(res.success).toBe(true)
       expect(res.data).toEqual({ hash: "tx123", status: "success" })
-    })
-  })
-
-  describe("getEscrow", () => {
-    it("parses a single escrow object", async () => {
-      mockFetch(ESCROW)
-      const res = await getEscrow("CABC...", "tok")
-      expect(res.success).toBe(true)
-      expect(res.data!.status).toBe("funded")
-      expect(res.data!.milestones).toHaveLength(1)
-      expect(res.data!.milestones[0].status).toBe("pending")
-    })
-  })
-
-  describe("getMyEscrows", () => {
-    it("parses an array of escrows", async () => {
-      mockFetch([ESCROW])
-      const res = await getMyEscrows("tok")
-      expect(res.success).toBe(true)
-      expect(res.data!).toHaveLength(1)
-      expect(res.data![0].id).toBe("e1")
-    })
-  })
-
-  describe("fundEscrow", () => {
-    it("parses { transaction_hash }", async () => {
-      mockFetch({ transaction_hash: "tx_abc" })
-      const res = await fundEscrow("CABC...", "tok")
-      expect(res.success).toBe(true)
-      expect(res.data!.transaction_hash).toBe("tx_abc")
-    })
-  })
-
-  describe("submitEvidence", () => {
-    it("parses updated escrow", async () => {
-      mockFetch(ESCROW)
-      const res = await submitEvidence("CABC...", 0, { description: "Done" }, "tok")
-      expect(res.success).toBe(true)
-      expect(res.data!.id).toBe("e1")
-    })
-  })
-
-  describe("approveMilestone", () => {
-    it("parses { transaction_hash }", async () => {
-      mockFetch({ transaction_hash: "tx_approve" })
-      const res = await approveMilestone("CABC...", 0, "tok")
-      expect(res.success).toBe(true)
-      expect(res.data!.transaction_hash).toBe("tx_approve")
-    })
-  })
-
-  describe("cancelEscrow", () => {
-    it("parses cancelled escrow", async () => {
-      mockFetch({ ...ESCROW, status: "cancelled" })
-      const res = await cancelEscrow("CABC...", "tok")
-      expect(res.success).toBe(true)
-      expect(res.data!.status).toBe("cancelled")
-    })
-  })
-
-  describe("getEscrowBalance", () => {
-    it("parses { xlm, usdc }", async () => {
-      mockFetch({ xlm: "500", usdc: "500" })
-      const res = await getEscrowBalance("CABC...", "tok")
-      expect(res.success).toBe(true)
-      expect(res.data!.xlm).toBe("500")
-      expect(res.data!.usdc).toBe("500")
     })
   })
 

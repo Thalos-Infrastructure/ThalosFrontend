@@ -1,6 +1,7 @@
 "use server"
 
 import { createClient } from "@/lib/supabase/server"
+import { createServiceClient } from "@/lib/supabase/service"
 import { type KybEntityType, type KybVerificationStatus } from "@/lib/kyb"
 
 export type Profile = {
@@ -17,6 +18,10 @@ export type Profile = {
   entity_type: KybEntityType | null
   kyb_status: KybVerificationStatus
   kyb_session_id: string | null
+  /** Verified GitHub username (OAuth via Nest, not Supabase social) — C6. */
+  github_username?: string | null
+  /** ISO timestamp of GitHub ownership verification — C6. */
+  github_verified_at?: string | null
   created_at: string
   updated_at: string
 }
@@ -40,11 +45,11 @@ export type ProfileUpdateInput = {
  */
 export async function getOrCreateProfile(
   walletAddress: string,
-  accountType: "personal" | "enterprise" = "personal"
+  accountType: "personal" | "enterprise" = "personal",
 ): Promise<{ profile: Profile | null; error: string | null }> {
   try {
     const supabase = await createClient()
-    
+
     // First, try to get existing profile
     const { data: existingProfile, error: fetchError } = await supabase
       .from("profiles")
@@ -92,11 +97,11 @@ export async function getOrCreateProfile(
  * Get a profile by wallet address
  */
 export async function getProfileByWallet(
-  walletAddress: string
+  walletAddress: string,
 ): Promise<{ profile: Profile | null; error: string | null }> {
   try {
     const supabase = await createClient()
-    
+
     const { data, error } = await supabase
       .from("profiles")
       .select("*")
@@ -118,15 +123,44 @@ export async function getProfileByWallet(
 }
 
 /**
+ * Get a profile by auth user id (applications carry the builder's user UUID).
+ * Resolves auth_users.wallet_public_key first, then the wallet-keyed profile.
+ */
+export async function getProfileByUserId(
+  userId: string,
+): Promise<{ profile: Profile | null; wallet: string | null; error: string | null }> {
+  try {
+    const service = createServiceClient()
+
+    const { data: user, error: userError } = await service
+      .from("auth_users")
+      .select("wallet_public_key")
+      .eq("id", userId)
+      .maybeSingle()
+
+    if (userError || !user?.wallet_public_key) {
+      return { profile: null, wallet: null, error: userError?.message ?? "User not found" }
+    }
+
+    const wallet = user.wallet_public_key as string
+    const { profile, error } = await getProfileByWallet(wallet)
+    return { profile, wallet, error }
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "Failed to fetch user profile"
+    return { profile: null, wallet: null, error: message }
+  }
+}
+
+/**
  * Update a profile by wallet address
  */
 export async function updateProfile(
   walletAddress: string,
-  updates: ProfileUpdateInput
+  updates: ProfileUpdateInput,
 ): Promise<{ profile: Profile | null; error: string | null }> {
   try {
     const supabase = await createClient()
-    
+
     const { data, error } = await supabase
       .from("profiles")
       .update({
@@ -153,11 +187,11 @@ export async function updateProfile(
  * Get all profiles with a specific role (e.g., dispute_resolver)
  */
 export async function getProfilesByRole(
-  role: Profile["role"]
+  role: Profile["role"],
 ): Promise<{ profiles: Profile[]; error: string | null }> {
   try {
     const supabase = await createClient()
-    
+
     const { data, error } = await supabase
       .from("profiles")
       .select("*")
@@ -180,11 +214,11 @@ export async function getProfilesByRole(
  */
 export async function setUserRole(
   walletAddress: string,
-  role: Profile["role"]
+  role: Profile["role"],
 ): Promise<{ success: boolean; error: string | null }> {
   try {
     const supabase = await createClient()
-    
+
     const { error } = await supabase
       .from("profiles")
       .update({ role, updated_at: new Date().toISOString() })

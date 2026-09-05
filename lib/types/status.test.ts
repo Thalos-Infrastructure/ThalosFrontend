@@ -16,9 +16,7 @@ import {
 
 describe("MILESTONE_STATUSES set", () => {
   it("contains exactly pending, approved, released, rejected", () => {
-    expect([...MILESTONE_STATUSES]).toEqual([
-      "pending", "approved", "released", "rejected",
-    ])
+    expect([...MILESTONE_STATUSES]).toEqual(["pending", "approved", "released", "rejected"])
   })
 })
 
@@ -40,23 +38,39 @@ describe("twMilestoneStatus", () => {
   const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {})
   afterEach(() => warnSpy.mockClear())
 
-  it("maps pending", () => { expect(twMilestoneStatus("pending")).toBe("pending") })
-  it("maps approved", () => { expect(twMilestoneStatus("approved")).toBe("approved") })
-  it("maps released", () => { expect(twMilestoneStatus("released")).toBe("released") })
-  it("maps rejected", () => { expect(twMilestoneStatus("rejected")).toBe("rejected") })
-  it("maps legacy completed to released", () => { expect(twMilestoneStatus("completed")).toBe("released") })
-  it("maps in-progress to pending", () => { expect(twMilestoneStatus("in-progress")).toBe("pending") })
-  it("maps in_progress to pending", () => { expect(twMilestoneStatus("in_progress")).toBe("pending") })
+  it("maps pending", () => {
+    expect(twMilestoneStatus("pending")).toBe("pending")
+  })
+  it("maps approved", () => {
+    expect(twMilestoneStatus("approved")).toBe("approved")
+  })
+  it("maps released", () => {
+    expect(twMilestoneStatus("released")).toBe("released")
+  })
+  it("maps rejected", () => {
+    expect(twMilestoneStatus("rejected")).toBe("rejected")
+  })
+  it("maps legacy completed to released", () => {
+    expect(twMilestoneStatus("completed")).toBe("released")
+  })
+  it("maps in-progress to pending", () => {
+    expect(twMilestoneStatus("in-progress")).toBe("pending")
+  })
+  it("maps in_progress to pending", () => {
+    expect(twMilestoneStatus("in_progress")).toBe("pending")
+  })
   it("handles mixed case", () => {
     expect(twMilestoneStatus("Approved")).toBe("approved")
     expect(twMilestoneStatus("RELEASED")).toBe("released")
     expect(twMilestoneStatus("Rejected")).toBe("rejected")
     expect(twMilestoneStatus("PENDING")).toBe("pending")
   })
-  it("handles whitespace", () => { expect(twMilestoneStatus("  approved  ")).toBe("approved") })
+  it("handles whitespace", () => {
+    expect(twMilestoneStatus("  approved  ")).toBe("approved")
+  })
   it("returns null and warns for unknown", () => {
     expect(twMilestoneStatus("unknown")).toBeNull()
-    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('unknown status'))
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("unknown status"))
   })
   it("returns null and warns for empty string", () => {
     expect(twMilestoneStatus("")).toBeNull()
@@ -68,11 +82,21 @@ describe("nestMilestoneStatus", () => {
   const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {})
   afterEach(() => warnSpy.mockClear())
 
-  it("maps pending", () => { expect(nestMilestoneStatus("pending")).toBe("pending") })
-  it("maps approved", () => { expect(nestMilestoneStatus("approved")).toBe("approved") })
-  it("maps released", () => { expect(nestMilestoneStatus("released")).toBe("released") })
-  it("maps rejected", () => { expect(nestMilestoneStatus("rejected")).toBe("rejected") })
-  it("maps legacy completed to released", () => { expect(nestMilestoneStatus("completed")).toBe("released") })
+  it("maps pending", () => {
+    expect(nestMilestoneStatus("pending")).toBe("pending")
+  })
+  it("maps approved", () => {
+    expect(nestMilestoneStatus("approved")).toBe("approved")
+  })
+  it("maps released", () => {
+    expect(nestMilestoneStatus("released")).toBe("released")
+  })
+  it("maps rejected", () => {
+    expect(nestMilestoneStatus("rejected")).toBe("rejected")
+  })
+  it("maps legacy completed to released", () => {
+    expect(nestMilestoneStatus("completed")).toBe("released")
+  })
   it("handles mixed case", () => {
     expect(nestMilestoneStatus("Approved")).toBe("approved")
     expect(nestMilestoneStatus("RELEASED")).toBe("released")
@@ -80,7 +104,7 @@ describe("nestMilestoneStatus", () => {
   })
   it("returns null and warns for unknown", () => {
     expect(nestMilestoneStatus("unknown")).toBeNull()
-    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('unknown status'))
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("unknown status"))
   })
   it("returns null for empty string", () => {
     expect(nestMilestoneStatus("")).toBeNull()
@@ -120,17 +144,39 @@ describe("twAgreementStatus", () => {
   const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {})
   afterEach(() => warnSpy.mockClear())
 
-  it("maps pending", () => { expect(twAgreementStatus("pending")).toBe("pending") })
-  it("maps funded", () => { expect(twAgreementStatus("funded")).toBe("funded") })
-  it("maps active", () => { expect(twAgreementStatus("active")).toBe("active") })
-  it("maps in_progress to active", () => { expect(twAgreementStatus("in_progress")).toBe("active") })
-  it("maps in-progress to active", () => { expect(twAgreementStatus("in-progress")).toBe("active") })
-  it("maps completed", () => { expect(twAgreementStatus("completed")).toBe("completed") })
-  it("maps disputed", () => { expect(twAgreementStatus("disputed")).toBe("disputed") })
-  it("maps dispute to disputed", () => { expect(twAgreementStatus("dispute")).toBe("disputed") })
-  it("maps resolved", () => { expect(twAgreementStatus("resolved")).toBe("resolved") })
-  it("maps cancelled", () => { expect(twAgreementStatus("cancelled")).toBe("cancelled") })
-  it("maps canceled to cancelled", () => { expect(twAgreementStatus("canceled")).toBe("cancelled") })
+  it("maps pending", () => {
+    expect(twAgreementStatus("pending")).toBe("pending")
+  })
+  it("maps funded", () => {
+    expect(twAgreementStatus("funded")).toBe("funded")
+  })
+  it("maps active", () => {
+    expect(twAgreementStatus("active")).toBe("active")
+  })
+  it("maps in_progress to active", () => {
+    expect(twAgreementStatus("in_progress")).toBe("active")
+  })
+  it("maps in-progress to active", () => {
+    expect(twAgreementStatus("in-progress")).toBe("active")
+  })
+  it("maps completed", () => {
+    expect(twAgreementStatus("completed")).toBe("completed")
+  })
+  it("maps disputed", () => {
+    expect(twAgreementStatus("disputed")).toBe("disputed")
+  })
+  it("maps dispute to disputed", () => {
+    expect(twAgreementStatus("dispute")).toBe("disputed")
+  })
+  it("maps resolved", () => {
+    expect(twAgreementStatus("resolved")).toBe("resolved")
+  })
+  it("maps cancelled", () => {
+    expect(twAgreementStatus("cancelled")).toBe("cancelled")
+  })
+  it("maps canceled to cancelled", () => {
+    expect(twAgreementStatus("canceled")).toBe("cancelled")
+  })
   it("handles mixed case", () => {
     expect(twAgreementStatus("Funded")).toBe("funded")
     expect(twAgreementStatus("DISPUTED")).toBe("disputed")

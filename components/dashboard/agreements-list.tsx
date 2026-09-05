@@ -49,23 +49,84 @@ const typeConfig: Record<string, { icon: React.ReactNode; label: string; color: 
   freelancer: { icon: <User className="h-4 w-4" />, label: "Freelance", color: "text-sky-400" },
   rental: { icon: <Home className="h-4 w-4" />, label: "Rental", color: "text-violet-400" },
   "car-sale": { icon: <Car className="h-4 w-4" />, label: "Vehicle", color: "text-amber-400" },
-  coaching: { icon: <BookOpen className="h-4 w-4" />, label: "Coaching", color: "text-emerald-400" },
-  "home-repair": { icon: <Wrench className="h-4 w-4" />, label: "Services", color: "text-rose-400" },
+  coaching: {
+    icon: <BookOpen className="h-4 w-4" />,
+    label: "Coaching",
+    color: "text-emerald-400",
+  },
+  "home-repair": {
+    icon: <Wrench className="h-4 w-4" />,
+    label: "Services",
+    color: "text-rose-400",
+  },
   bounty: { icon: <Briefcase className="h-4 w-4" />, label: "Bounty", color: "text-[#f0b400]" },
   other: { icon: <MoreHorizontal className="h-4 w-4" />, label: "Other", color: "text-white/60" },
 }
 
-const statusConfig: Record<string, { icon: React.ReactNode; label: string; color: string; bgColor: string }> = {
-  draft: { icon: <FileText className="h-3 w-3" />, label: "Draft", color: "text-white/50", bgColor: "bg-white/10" },
-  pending: { icon: <Clock className="h-3 w-3" />, label: "Pending", color: "text-amber-400", bgColor: "bg-amber-400/10" },
-  funded: { icon: <DollarSign className="h-3 w-3" />, label: "Funded", color: "text-sky-400", bgColor: "bg-sky-400/10" },
-  active: { icon: <Clock className="h-3 w-3" />, label: "In Progress", color: "text-violet-400", bgColor: "bg-violet-400/10" },
-  in_progress: { icon: <Clock className="h-3 w-3" />, label: "In Progress", color: "text-violet-400", bgColor: "bg-violet-400/10" },
-  completed: { icon: <CheckCircle className="h-3 w-3" />, label: "Completed", color: "text-emerald-400", bgColor: "bg-emerald-400/10" },
-  released: { icon: <CheckCircle className="h-3 w-3" />, label: "Released", color: "text-emerald-400", bgColor: "bg-emerald-400/10" },
-  disputed: { icon: <AlertCircle className="h-3 w-3" />, label: "Dispute", color: "text-rose-400", bgColor: "bg-rose-400/10" },
-  resolved: { icon: <CheckCircle className="h-3 w-3" />, label: "Resolved", color: "text-purple-400", bgColor: "bg-purple-400/10" },
-  cancelled: { icon: <AlertCircle className="h-3 w-3" />, label: "Cancelled", color: "text-gray-400", bgColor: "bg-gray-400/10" },
+const statusConfig: Record<
+  string,
+  { icon: React.ReactNode; label: string; color: string; bgColor: string }
+> = {
+  draft: {
+    icon: <FileText className="h-3 w-3" />,
+    label: "Draft",
+    color: "text-white/50",
+    bgColor: "bg-white/10",
+  },
+  pending: {
+    icon: <Clock className="h-3 w-3" />,
+    label: "Pending",
+    color: "text-amber-400",
+    bgColor: "bg-amber-400/10",
+  },
+  funded: {
+    icon: <DollarSign className="h-3 w-3" />,
+    label: "Funded",
+    color: "text-sky-400",
+    bgColor: "bg-sky-400/10",
+  },
+  active: {
+    icon: <Clock className="h-3 w-3" />,
+    label: "In Progress",
+    color: "text-violet-400",
+    bgColor: "bg-violet-400/10",
+  },
+  in_progress: {
+    icon: <Clock className="h-3 w-3" />,
+    label: "In Progress",
+    color: "text-violet-400",
+    bgColor: "bg-violet-400/10",
+  },
+  completed: {
+    icon: <CheckCircle className="h-3 w-3" />,
+    label: "Completed",
+    color: "text-emerald-400",
+    bgColor: "bg-emerald-400/10",
+  },
+  released: {
+    icon: <CheckCircle className="h-3 w-3" />,
+    label: "Released",
+    color: "text-emerald-400",
+    bgColor: "bg-emerald-400/10",
+  },
+  disputed: {
+    icon: <AlertCircle className="h-3 w-3" />,
+    label: "Dispute",
+    color: "text-rose-400",
+    bgColor: "bg-rose-400/10",
+  },
+  resolved: {
+    icon: <CheckCircle className="h-3 w-3" />,
+    label: "Resolved",
+    color: "text-purple-400",
+    bgColor: "bg-purple-400/10",
+  },
+  cancelled: {
+    icon: <AlertCircle className="h-3 w-3" />,
+    label: "Cancelled",
+    color: "text-gray-400",
+    bgColor: "bg-gray-400/10",
+  },
 }
 
 export function AgreementsList({
@@ -77,13 +138,16 @@ export function AgreementsList({
   const { t } = useLanguage()
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedType, setSelectedType] = useState<string | null>(null)
-  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set(["active", "funded", "pending"]))
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(
+    new Set(["active", "funded", "pending"]),
+  )
   const [copiedId, setCopiedId] = useState<string | null>(null)
 
   // Group agreements by status
   const groupedAgreements = useMemo(() => {
     const filtered = agreements.filter((a) => {
-      const matchesSearch = a.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      const matchesSearch =
+        a.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         a.counterparty.toLowerCase().includes(searchQuery.toLowerCase())
       const matchesType = !selectedType || a.type === selectedType
       return matchesSearch && matchesType
@@ -144,7 +208,9 @@ export function AgreementsList({
             onClick={() => setSelectedType(null)}
             className={cn(
               "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors whitespace-nowrap",
-              !selectedType ? "bg-[#f0b400]/10 text-[#f0b400]" : "bg-white/5 text-white/50 hover:bg-white/10"
+              !selectedType
+                ? "bg-[#f0b400]/10 text-[#f0b400]"
+                : "bg-white/5 text-white/50 hover:bg-white/10",
             )}
           >
             {t("agreements.all") || "All"}
@@ -155,7 +221,9 @@ export function AgreementsList({
               onClick={() => setSelectedType(key === selectedType ? null : key)}
               className={cn(
                 "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors whitespace-nowrap",
-                selectedType === key ? "bg-[#f0b400]/10 text-[#f0b400]" : "bg-white/5 text-white/50 hover:bg-white/10"
+                selectedType === key
+                  ? "bg-[#f0b400]/10 text-[#f0b400]"
+                  : "bg-white/5 text-white/50 hover:bg-white/10",
               )}
             >
               {config.icon}
@@ -173,16 +241,17 @@ export function AgreementsList({
           const isExpanded = expandedGroups.has(status)
 
           return (
-            <div key={status} className="rounded-2xl border border-white/6 bg-[#0c1220]/60 overflow-hidden">
+            <div
+              key={status}
+              className="rounded-2xl border border-white/6 bg-[#0c1220]/60 overflow-hidden"
+            >
               {/* Group header */}
               <button
                 onClick={() => toggleGroup(status)}
                 className="flex w-full items-center justify-between p-4 hover:bg-white/5 transition-colors"
               >
                 <div className="flex items-center gap-3">
-                  <div className={cn("rounded-lg p-1.5", config.bgColor)}>
-                    {config.icon}
-                  </div>
+                  <div className={cn("rounded-lg p-1.5", config.bgColor)}>{config.icon}</div>
                   <span className={cn("text-sm font-medium", config.color)}>
                     {t(`agreements.status.${status}`) || config.label}
                   </span>
@@ -190,7 +259,12 @@ export function AgreementsList({
                     {items.length}
                   </span>
                 </div>
-                <ChevronDown className={cn("h-4 w-4 text-white/30 transition-transform", isExpanded && "rotate-180")} />
+                <ChevronDown
+                  className={cn(
+                    "h-4 w-4 text-white/30 transition-transform",
+                    isExpanded && "rotate-180",
+                  )}
+                />
               </button>
 
               {/* Items */}
@@ -203,7 +277,7 @@ export function AgreementsList({
                         key={agreement.id}
                         className={cn(
                           "flex items-center gap-4 p-4 hover:bg-white/5 transition-colors cursor-pointer",
-                          idx > 0 && "border-t border-white/6"
+                          idx > 0 && "border-t border-white/6",
                         )}
                         onClick={() => onAgreementClick(agreement.id)}
                       >
@@ -214,7 +288,9 @@ export function AgreementsList({
 
                         {/* Info */}
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-white truncate">{agreement.title}</p>
+                          <p className="text-sm font-medium text-white truncate">
+                            {agreement.title}
+                          </p>
                           <div className="flex items-center gap-2 mt-0.5">
                             <span className="text-xs text-white/40">{agreement.counterparty}</span>
                             <span className="text-white/20">·</span>
@@ -224,12 +300,17 @@ export function AgreementsList({
 
                         {/* Amount */}
                         <div className="text-right">
-                          <p className="text-sm font-semibold text-[#f0b400]">${agreement.amount}</p>
+                          <p className="text-sm font-semibold text-[#f0b400]">
+                            ${agreement.amount}
+                          </p>
                           <p className="text-[10px] text-white/30 uppercase">USDC</p>
                         </div>
 
                         {/* Share actions */}
-                        <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                        <div
+                          className="flex items-center gap-1"
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           <button
                             onClick={() => copyAgreementLink(agreement.id)}
                             className="p-2 rounded-lg hover:bg-white/10 transition-colors"

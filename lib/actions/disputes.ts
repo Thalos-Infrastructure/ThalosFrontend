@@ -59,11 +59,11 @@ export interface ResolveDisputeInput {
  */
 export async function openDispute(
   input: OpenDisputeInput,
-  token?: string
+  token?: string,
 ): Promise<{ dispute: Dispute | null; error: string | null }> {
   try {
     const supabase = await createClient()
-    
+
     // Check if there's already an open dispute
     const { data: existingDispute } = await supabase
       .from("disputes")
@@ -114,11 +114,11 @@ export async function openDispute(
 export async function assignDisputeResolver(
   disputeId: string,
   resolverWallet: string,
-  token?: string
+  token?: string,
 ): Promise<{ success: boolean; error: string | null }> {
   try {
     const supabase = await createClient()
-    
+
     const { data: dispute, error: fetchError } = await supabase
       .from("disputes")
       .select("agreement_id, status")
@@ -162,16 +162,16 @@ export async function assignDisputeResolver(
  */
 export async function resolveDispute(
   input: ResolveDisputeInput,
-  token?: string
+  token?: string,
 ): Promise<{ resolution: DisputeResolution | null; error: string | null }> {
   try {
     const supabase = await createClient()
-    
+
     // Validate percentages
     if (input.payer_percentage < 0 || input.payee_percentage < 0) {
       return { resolution: null, error: "Percentages cannot be negative" }
     }
-    
+
     if (input.payer_percentage + input.payee_percentage !== 100) {
       return { resolution: null, error: "Percentages must sum to 100%" }
     }
@@ -244,11 +244,11 @@ export async function resolveDispute(
 export async function cancelDispute(
   disputeId: string,
   cancelledBy: string,
-  token?: string
+  token?: string,
 ): Promise<{ success: boolean; error: string | null }> {
   try {
     const supabase = await createClient()
-    
+
     const { data: dispute, error: fetchError } = await supabase
       .from("disputes")
       .select("agreement_id, opened_by, status")
@@ -294,13 +294,17 @@ export async function cancelDispute(
 /**
  * Get all open disputes (for dispute resolvers)
  */
-export async function getOpenDisputes(): Promise<{ disputes: DisputeWithAgreement[]; error: string | null }> {
+export async function getOpenDisputes(): Promise<{
+  disputes: DisputeWithAgreement[]
+  error: string | null
+}> {
   try {
     const supabase = await createClient()
-    
+
     const { data, error } = await supabase
       .from("disputes")
-      .select(`
+      .select(
+        `
         *,
         agreement:agreements (
           id,
@@ -308,7 +312,8 @@ export async function getOpenDisputes(): Promise<{ disputes: DisputeWithAgreemen
           amount,
           contract_id
         )
-      `)
+      `,
+      )
       .in("status", ["open", "under_review"])
       .order("created_at", { ascending: false })
 
@@ -327,14 +332,15 @@ export async function getOpenDisputes(): Promise<{ disputes: DisputeWithAgreemen
  * Get disputes assigned to a specific resolver
  */
 export async function getDisputesByResolver(
-  resolverWallet: string
+  resolverWallet: string,
 ): Promise<{ disputes: DisputeWithAgreement[]; error: string | null }> {
   try {
     const supabase = await createClient()
-    
+
     const { data, error } = await supabase
       .from("disputes")
-      .select(`
+      .select(
+        `
         *,
         agreement:agreements (
           id,
@@ -342,7 +348,8 @@ export async function getDisputesByResolver(
           amount,
           contract_id
         )
-      `)
+      `,
+      )
       .eq("resolver_wallet", resolverWallet)
       .order("created_at", { ascending: false })
 
@@ -360,15 +367,18 @@ export async function getDisputesByResolver(
 /**
  * Get dispute by ID with full details
  */
-export async function getDisputeById(
-  disputeId: string
-): Promise<{ dispute: DisputeWithAgreement | null; resolution: DisputeResolution | null; error: string | null }> {
+export async function getDisputeById(disputeId: string): Promise<{
+  dispute: DisputeWithAgreement | null
+  resolution: DisputeResolution | null
+  error: string | null
+}> {
   try {
     const supabase = await createClient()
-    
+
     const { data: dispute, error: disputeError } = await supabase
       .from("disputes")
-      .select(`
+      .select(
+        `
         *,
         agreement:agreements (
           id,
@@ -376,7 +386,8 @@ export async function getDisputeById(
           amount,
           contract_id
         )
-      `)
+      `,
+      )
       .eq("id", disputeId)
       .single()
 
@@ -406,11 +417,11 @@ export async function getDisputeById(
  * Get disputes for an agreement
  */
 export async function getDisputesByAgreement(
-  agreementId: string
+  agreementId: string,
 ): Promise<{ disputes: Dispute[]; error: string | null }> {
   try {
     const supabase = await createClient()
-    
+
     const { data, error } = await supabase
       .from("disputes")
       .select("*")

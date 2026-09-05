@@ -1,7 +1,12 @@
 export type KybEntityType = "company" | "startup" | "organization" | "legal_entity"
 export type KybVerificationStatus = "not_started" | "in_review" | "verified" | "rejected"
 
-export const KYB_ENTITY_TYPES: readonly KybEntityType[] = ["company", "startup", "organization", "legal_entity"] as const
+export const KYB_ENTITY_TYPES: readonly KybEntityType[] = [
+  "company",
+  "startup",
+  "organization",
+  "legal_entity",
+] as const
 
 export type KybProfileFields = {
   business_name: string | null
@@ -34,11 +39,14 @@ export function canStartKybSession(fields: Partial<KybProfileFields> | null | un
     fields.business_name?.trim() &&
     fields.registration_number?.trim() &&
     fields.country?.trim() &&
-    isKybEntityType(fields.entity_type)
+    isKybEntityType(fields.entity_type),
   )
 }
 
-export function buildCreateKybSessionDto(walletAddress: string, fields: Partial<KybProfileFields>): CreateKybSessionDto {
+export function buildCreateKybSessionDto(
+  walletAddress: string,
+  fields: Partial<KybProfileFields>,
+): CreateKybSessionDto {
   const business_name = fields.business_name?.trim() ?? ""
   const registration_number = fields.registration_number?.trim() ?? ""
   const country = fields.country?.trim() ?? ""
@@ -48,7 +56,8 @@ export function buildCreateKybSessionDto(walletAddress: string, fields: Partial<
   if (!business_name) throw new Error("Business name is required")
   if (!registration_number) throw new Error("Registration number is required")
   if (!country) throw new Error("Country is required")
-  if (!isKybEntityType(entity_type)) throw new Error("Entity type must be company, startup, organization, or legal_entity")
+  if (!isKybEntityType(entity_type))
+    throw new Error("Entity type must be company, startup, organization, or legal_entity")
 
   return { wallet_address: walletAddress, business_name, registration_number, country, entity_type }
 }

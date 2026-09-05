@@ -10,13 +10,15 @@ import {
   getDispute,
   assignResolver,
   resolveDispute,
+  cancelDispute,
   type Dispute,
+  type DisputeResolution,
 } from "../disputes"
 
 function mockFetch(body: unknown, status = 200) {
-  return vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
-    new Response(JSON.stringify(body), { status }),
-  )
+  return vi
+    .spyOn(globalThis, "fetch")
+    .mockResolvedValueOnce(new Response(JSON.stringify(body), { status }))
 }
 
 const DISPUTE: Dispute = {
@@ -24,6 +26,7 @@ const DISPUTE: Dispute = {
   agreement_id: "a1",
   opened_by: "G1...",
   reason: "Deliverable not met",
+  evidence_urls: [],
   status: "open",
   resolver_wallet: null,
   payer_percentage: null,
@@ -33,14 +36,24 @@ const DISPUTE: Dispute = {
   resolved_at: null,
 }
 
+const RESOLUTION: DisputeResolution = {
+  id: "r1",
+  dispute_id: "d1",
+  resolved_by: "G5...",
+  payer_percentage: 60,
+  payee_percentage: 40,
+  resolution_notes: "Settled",
+  created_at: "2025-02-01T00:00:00Z",
+}
+
 afterEach(() => vi.restoreAllMocks())
 
 describe("disputes contract", () => {
   describe("openDispute", () => {
-    it("parses a new dispute", async () => {
-      mockFetch(DISPUTE)
+    it("parses a new dispute from envelope", async () => {
+      mockFetch({ dispute: DISPUTE, error: null })
       const res = await openDispute(
-        { agreement_id: "a1", reason: "Not delivered" },
+        { agreement_id: "a1", reason: "Not delivered", opened_by: "G1..." },
         "tok",
       )
       expect(res.success).toBe(true)
@@ -50,8 +63,8 @@ describe("disputes contract", () => {
   })
 
   describe("getOpenDisputes", () => {
-    it("parses array of disputes", async () => {
-      mockFetch([DISPUTE])
+    it("parses array of disputes from envelope", async () => {
+      mockFetch({ disputes: [DISPUTE], error: null })
       const res = await getOpenDisputes("tok")
       expect(res.success).toBe(true)
       expect(res.data!).toHaveLength(1)
@@ -60,8 +73,8 @@ describe("disputes contract", () => {
   })
 
   describe("getDisputesByResolver", () => {
-    it("parses array of disputes", async () => {
-      mockFetch([DISPUTE])
+    it("parses array of disputes from envelope", async () => {
+      mockFetch({ disputes: [DISPUTE], error: null })
       const res = await getDisputesByResolver("G1...", "tok")
       expect(res.success).toBe(true)
       expect(res.data!).toHaveLength(1)
@@ -69,8 +82,8 @@ describe("disputes contract", () => {
   })
 
   describe("getDisputesByAgreement", () => {
-    it("parses array of disputes", async () => {
-      mockFetch([DISPUTE])
+    it("parses array of disputes from envelope", async () => {
+      mockFetch({ disputes: [DISPUTE], error: null })
       const res = await getDisputesByAgreement("a1", "tok")
       expect(res.success).toBe(true)
       expect(res.data!).toHaveLength(1)
@@ -78,8 +91,8 @@ describe("disputes contract", () => {
   })
 
   describe("getDispute", () => {
-    it("parses a single dispute", async () => {
-      mockFetch(DISPUTE)
+    it("parses a single dispute from envelope", async () => {
+      mockFetch({ dispute: DISPUTE, error: null })
       const res = await getDispute("d1", "tok")
       expect(res.success).toBe(true)
       expect(res.data!.id).toBe("d1")
@@ -88,40 +101,45 @@ describe("disputes contract", () => {
   })
 
   describe("assignResolver", () => {
-    it("parses dispute with resolver assigned", async () => {
-      mockFetch({ ...DISPUTE, status: "assigned", resolver_wallet: "G5..." })
+    it("returns success when resolver is assigned", async () => {
+      mockFetch({ success: true, error: null })
       const res = await assignResolver("d1", "G5...", "tok")
       expect(res.success).toBe(true)
-      expect(res.data!.status).toBe("assigned")
-      expect(res.data!.resolver_wallet).toBe("G5...")
+      expect(res.data!.success).toBe(true)
     })
   })
 
   describe("resolveDispute", () => {
-    it("parses resolved dispute with percentages", async () => {
-      mockFetch({
-        ...DISPUTE,
-        status: "resolved",
-        payer_percentage: 60,
-        payee_percentage: 40,
-        resolution_notes: "Settled",
-        resolved_at: "2025-02-01T00:00:00Z",
-      })
+    it("parses resolution from envelope", async () => {
+      mockFetch({ resolution: RESOLUTION, error: null })
       const res = await resolveDispute(
         "d1",
-        { payer_percentage: 60, payee_percentage: 40, resolution_notes: "Settled" },
+        {
+          resolved_by: "G5...",
+          payer_percentage: 60,
+          payee_percentage: 40,
+          resolution_notes: "Settled",
+        },
         "tok",
       )
       expect(res.success).toBe(true)
-      expect(res.data!.status).toBe("resolved")
+      expect(res.data!.resolved_by).toBe("G5...")
       expect(res.data!.payer_percentage).toBe(60)
       expect(res.data!.payee_percentage).toBe(40)
-      expect(res.data!.resolution_notes).toBe("Settled")
+    })
+  })
+
+  describe("cancelDispute", () => {
+    it("returns success when dispute is cancelled", async () => {
+      mockFetch({ success: true, error: null })
+      const res = await cancelDispute("d1", "G1...", "tok")
+      expect(res.success).toBe(true)
+      expect(res.data!.success).toBe(true)
     })
   })
 
   it("drift test: removing status enum field breaks contract", async () => {
-    mockFetch({ id: "d1", agreement_id: "a1" })
+    mockFetch({ dispute: { id: "d1", agreement_id: "a1" }, error: null })
     const res = await getDispute("d1", "tok")
     expect(res.success).toBe(true)
     expect(res.data!.status).toBeUndefined()

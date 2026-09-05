@@ -7,7 +7,12 @@
  * than signAndSubmitTx.
  */
 
-import type { SignedMessage, SignedTransaction, SignTransactionOptions, WalletSigner } from "../types"
+import type {
+  SignedMessage,
+  SignedTransaction,
+  SignTransactionOptions,
+  WalletSigner,
+} from "../types"
 import { SignerUnavailableError } from "../types"
 import { getStoredAuthWallet } from "../session"
 import { getPollarClient } from "@/lib/pollar-client"
@@ -40,7 +45,10 @@ export const socialSigner: WalletSigner = {
     return embeddedWallet() !== null
   },
 
-  async signTransaction(xdr: string, opts: SignTransactionOptions): Promise<SignedTransaction | null> {
+  async signTransaction(
+    xdr: string,
+    opts: SignTransactionOptions,
+  ): Promise<SignedTransaction | null> {
     const wallet = embeddedWallet()
     if (!wallet) {
       throw new SignerUnavailableError(NOT_LOGGED_IN_MESSAGE)
@@ -66,7 +74,9 @@ export const socialSigner: WalletSigner = {
       const detail = outcome.message || outcome.details || outcome.code
       console.error("[signing:social] Pollar signTx failed:", outcome)
       throw new SignerUnavailableError(
-        detail ? `Pollar couldn't sign the transaction: ${detail}` : "Pollar couldn't sign the transaction.",
+        detail
+          ? `Pollar couldn't sign the transaction: ${detail}`
+          : "Pollar couldn't sign the transaction.",
       )
     }
 

@@ -3,8 +3,12 @@
 import { useState, useEffect, useRef, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { cn, isMockAgreement } from "@/lib/utils"
-import { getAgreementMessagesApi, sendAgreementMessageApi, type AgreementMessage } from "@/lib/api/agreements"
+import { cn } from "@/lib/utils"
+import {
+  getAgreementMessagesApi,
+  sendAgreementMessageApi,
+  type AgreementMessage,
+} from "@/lib/api/agreements"
 import { Send, MessageCircle, AlertTriangle } from "lucide-react"
 
 interface AgreementChatProps {
@@ -19,8 +23,16 @@ interface AgreementChatProps {
   embedded?: boolean // When true, removes the header and shows full height
 }
 
-export function AgreementChat({ agreementId, currentUserWallet, counterpartyWallet, counterpartyName, token, className, defaultOpen = false, embedded = false }: AgreementChatProps) {
-  const isMock = useMemo(() => isMockAgreement(agreementId), [agreementId])
+export function AgreementChat({
+  agreementId,
+  currentUserWallet,
+  counterpartyWallet,
+  counterpartyName,
+  token,
+  className,
+  defaultOpen = false,
+  embedded = false,
+}: AgreementChatProps) {
   const [messages, setMessages] = useState<AgreementMessage[]>([])
   const [newMessage, setNewMessage] = useState("")
   const [loading, setLoading] = useState(false)
@@ -29,21 +41,6 @@ export function AgreementChat({ agreementId, currentUserWallet, counterpartyWall
   const [chatError, setChatError] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const pollInterval = useRef<NodeJS.Timeout | null>(null)
-
-  useEffect(() => {
-    if (isOpen && !isMock) {
-      loadMessages()
-      // Poll for new messages every 5 seconds when chat is open
-      pollInterval.current = setInterval(loadMessages, 5000)
-    }
-    return () => {
-      if (pollInterval.current) clearInterval(pollInterval.current)
-    }
-  }, [isOpen, agreementId, isMock])
-
-  useEffect(() => {
-    scrollToBottom()
-  }, [messages])
 
   async function loadMessages() {
     setLoading(true)
@@ -62,12 +59,32 @@ export function AgreementChat({ agreementId, currentUserWallet, counterpartyWall
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }
 
+  useEffect(() => {
+    if (isOpen) {
+      loadMessages()
+      // Poll for new messages every 5 seconds when chat is open
+      pollInterval.current = setInterval(loadMessages, 5000)
+    }
+    return () => {
+      if (pollInterval.current) clearInterval(pollInterval.current)
+    }
+  }, [isOpen, agreementId])
+
+  useEffect(() => {
+    scrollToBottom()
+  }, [messages])
+
   async function handleSend() {
     if (!newMessage.trim() || sending) return
 
     setSending(true)
     setChatError(null)
-    const { data, error } = await sendAgreementMessageApi(agreementId, newMessage, currentUserWallet, token ?? undefined)
+    const { data, error } = await sendAgreementMessageApi(
+      agreementId,
+      newMessage,
+      currentUserWallet,
+      token ?? undefined,
+    )
     setSending(false)
 
     if (error) {
@@ -89,7 +106,11 @@ export function AgreementChat({ agreementId, currentUserWallet, counterpartyWall
     if (isToday) {
       return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
     }
-    return date.toLocaleDateString([], { month: "short", day: "numeric" }) + " " + date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+    return (
+      date.toLocaleDateString([], { month: "short", day: "numeric" }) +
+      " " +
+      date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+    )
   }
 
   function isOwnMessage(message: AgreementMessage) {
@@ -98,33 +119,6 @@ export function AgreementChat({ agreementId, currentUserWallet, counterpartyWall
 
   // Embedded mode - always open, no toggle button
   if (embedded) {
-    // Demo / mock agreement - show disabled state
-    if (isMock) {
-      return (
-        <div className={cn("flex flex-col h-full", className)}>
-          <div className="flex-1 flex flex-col items-center justify-center p-6 text-center gap-3">
-            <div className="h-12 w-12 rounded-full bg-amber-500/10 flex items-center justify-center">
-              <AlertTriangle className="h-6 w-6 text-amber-400" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-white/70">Demo Agreement</p>
-              <p className="text-xs text-white/40 mt-1 max-w-[220px]">
-                Chat is unavailable for demo agreements. Create a real agreement to use messaging.
-              </p>
-            </div>
-          </div>
-          <div className="border-t border-white/10 p-4">
-            <Input
-              value=""
-              placeholder="Demo agreement — chat unavailable"
-              className="flex-1 bg-white/5 border-white/10 text-white/30 placeholder:text-white/30 cursor-not-allowed"
-              disabled
-            />
-          </div>
-        </div>
-      )
-    }
-
     return (
       <div className={cn("flex flex-col h-full", className)}>
         {/* Messages */}
@@ -137,7 +131,9 @@ export function AgreementChat({ agreementId, currentUserWallet, counterpartyWall
             <div className="flex flex-col items-center justify-center h-full text-center py-12">
               <MessageCircle className="h-12 w-12 text-white/10 mb-3" />
               <p className="text-sm text-white/40">No messages yet</p>
-              <p className="text-xs text-white/30 mt-1">Start the conversation with {counterpartyName || "your counterparty"}</p>
+              <p className="text-xs text-white/30 mt-1">
+                Start the conversation with {counterpartyName || "your counterparty"}
+              </p>
             </div>
           ) : (
             messages.map((msg) => {
@@ -145,12 +141,15 @@ export function AgreementChat({ agreementId, currentUserWallet, counterpartyWall
               return (
                 <div
                   key={msg.id}
-                  className={cn("flex flex-col max-w-[85%]", isOwn ? "ml-auto items-end" : "items-start")}
+                  className={cn(
+                    "flex flex-col max-w-[85%]",
+                    isOwn ? "ml-auto items-end" : "items-start",
+                  )}
                 >
                   <div
                     className={cn(
                       "rounded-2xl px-4 py-2.5",
-                      isOwn ? "bg-[#f0b400] text-[#0c1220]" : "bg-white/10 text-white"
+                      isOwn ? "bg-[#f0b400] text-[#0c1220]" : "bg-white/10 text-white",
                     )}
                   >
                     <p className="text-sm">{msg.message}</p>
@@ -162,16 +161,17 @@ export function AgreementChat({ agreementId, currentUserWallet, counterpartyWall
               )
             })
           )}
-          {chatError && (
-            <div className="text-xs text-red-400 text-center py-2">{chatError}</div>
-          )}
+          {chatError && <div className="text-xs text-red-400 text-center py-2">{chatError}</div>}
           <div ref={messagesEndRef} />
         </div>
 
         {/* Input */}
         <div className="border-t border-white/10 p-4">
           <form
-            onSubmit={(e) => { e.preventDefault(); handleSend(); }}
+            onSubmit={(e) => {
+              e.preventDefault()
+              handleSend()
+            }}
             className="flex gap-2"
           >
             <Input
@@ -201,12 +201,12 @@ export function AgreementChat({ agreementId, currentUserWallet, counterpartyWall
         onClick={() => setIsOpen(true)}
         className={cn(
           "flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/70 hover:bg-white/10 hover:text-white transition-colors",
-          className
+          className,
         )}
       >
         <MessageCircle className="h-4 w-4" />
-        {isMock ? "Chat (demo)" : "Chat"}
-        {!isMock && messages.length > 0 && (
+        Chat
+        {messages.length > 0 && (
           <span className="ml-1 rounded-full bg-[#f0b400]/20 px-1.5 py-0.5 text-[10px] font-bold text-[#f0b400]">
             {messages.length}
           </span>
@@ -215,47 +215,10 @@ export function AgreementChat({ agreementId, currentUserWallet, counterpartyWall
     )
   }
 
-  // Mock agreement popup - show disabled state
-  if (isMock) {
-    return (
-      <div className={cn("rounded-xl border border-white/10 bg-[#0c1220] overflow-hidden", className)}>
-        <div className="flex items-center justify-between border-b border-white/6 px-4 py-3">
-          <div className="flex items-center gap-2">
-            <MessageCircle className="h-4 w-4 text-[#f0b400]" />
-            <span className="text-sm font-medium text-white">Agreement Chat</span>
-          </div>
-          <button
-            onClick={() => setIsOpen(false)}
-            className="text-xs text-white/50 hover:text-white transition-colors"
-          >
-            Minimize
-          </button>
-        </div>
-        <div className="h-64 flex flex-col items-center justify-center p-6 text-center gap-3">
-          <div className="h-10 w-10 rounded-full bg-amber-500/10 flex items-center justify-center">
-            <AlertTriangle className="h-5 w-5 text-amber-400" />
-          </div>
-          <div>
-            <p className="text-sm font-medium text-white/70">Demo Agreement</p>
-            <p className="text-xs text-white/40 mt-1">
-              Chat is unavailable for demo agreements. Create a real agreement to use messaging.
-            </p>
-          </div>
-        </div>
-        <div className="border-t border-white/6 p-3">
-          <Input
-            value=""
-            placeholder="Demo agreement — chat unavailable"
-            className="flex-1 bg-white/5 border-white/10 text-white/30 placeholder:text-white/30 cursor-not-allowed h-9"
-            disabled
-          />
-        </div>
-      </div>
-    )
-  }
-
   return (
-    <div className={cn("rounded-xl border border-white/10 bg-[#0c1220] overflow-hidden", className)}>
+    <div
+      className={cn("rounded-xl border border-white/10 bg-[#0c1220] overflow-hidden", className)}
+    >
       {/* Header */}
       <div className="flex items-center justify-between border-b border-white/6 px-4 py-3">
         <div className="flex items-center gap-2">
@@ -280,7 +243,9 @@ export function AgreementChat({ agreementId, currentUserWallet, counterpartyWall
           <div className="flex flex-col items-center justify-center h-full text-center">
             <MessageCircle className="h-8 w-8 text-white/20 mb-2" />
             <p className="text-sm text-white/40">No messages yet</p>
-            <p className="text-xs text-white/30">Start the conversation with {counterpartyName || "your counterparty"}</p>
+            <p className="text-xs text-white/30">
+              Start the conversation with {counterpartyName || "your counterparty"}
+            </p>
           </div>
         ) : (
           messages.map((msg) => {
@@ -288,12 +253,15 @@ export function AgreementChat({ agreementId, currentUserWallet, counterpartyWall
             return (
               <div
                 key={msg.id}
-                className={cn("flex flex-col max-w-[80%]", isOwn ? "ml-auto items-end" : "items-start")}
+                className={cn(
+                  "flex flex-col max-w-[80%]",
+                  isOwn ? "ml-auto items-end" : "items-start",
+                )}
               >
                 <div
                   className={cn(
                     "rounded-xl px-3 py-2",
-                    isOwn ? "bg-[#f0b400]/20 text-white" : "bg-white/10 text-white"
+                    isOwn ? "bg-[#f0b400]/20 text-white" : "bg-white/10 text-white",
                   )}
                 >
                   <p className="text-sm">{msg.message}</p>
@@ -305,16 +273,17 @@ export function AgreementChat({ agreementId, currentUserWallet, counterpartyWall
             )
           })
         )}
-        {chatError && (
-          <div className="text-xs text-red-400 text-center py-2">{chatError}</div>
-        )}
+        {chatError && <div className="text-xs text-red-400 text-center py-2">{chatError}</div>}
         <div ref={messagesEndRef} />
       </div>
 
       {/* Input */}
       <div className="border-t border-white/6 p-3">
         <form
-          onSubmit={(e) => { e.preventDefault(); handleSend(); }}
+          onSubmit={(e) => {
+            e.preventDefault()
+            handleSend()
+          }}
           className="flex gap-2"
         >
           <Input
