@@ -17,12 +17,12 @@ import {
   type EscrowRolesInfo,
   type TxStatus,
 } from "@/lib/signing"
-import { linkWallet } from "@/lib/api/wallets"
 import {
   createAgreement as createAgreementRecord,
   type CreateAgreementInput,
   type ParticipantRole,
 } from "@/lib/api/agreements"
+import { linkExternalWalletWithProof } from "@/lib/link-external-wallet"
 
 export interface CreateAndSignAgreementParams {
   payload: AgreementPayload
@@ -94,13 +94,20 @@ function toCreateEscrowDto(payload: AgreementPayload): BackendCreateEscrowDto {
  * Persist an externally-connected Kit wallet into the backend's `user_wallets`
  * table via the /v1/wallets link endpoint. Non-fatal — the wallet still
  * functions for signing even if persistence fails (e.g. no JWT yet).
+ *
+ * Non-custodial link requires a SEP-53 challenge signature; unsigned POSTs
+ * get VALIDATION_ERROR from Nest and leave the creator without a wallet row.
  */
 async function persistKitWallet(address: string, token: string | null): Promise<void> {
   if (!address || !token) return
   try {
-    await linkWallet({ wallet_address: address, wallet_type: "other" }, token)
-  } catch {
+    const result = await linkExternalWalletWithProof(address, token, "other")
+    if (!result.success) {
+      console.warn("[agreements] kit wallet link failed (non-fatal):", result.error)
+    }
+  } catch (e) {
     // Non-fatal — wallet works for signing without persistence
+    console.warn("[agreements] kit wallet link failed (non-fatal):", e)
   }
 }
 

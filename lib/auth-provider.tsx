@@ -34,6 +34,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (typeof window !== "undefined") {
       localStorage.setItem("auth_user", JSON.stringify(newUser))
       localStorage.setItem("auth_token", newToken)
+
+      // Nest lists agreements via resolveUserWallets. If /api/auth/pollar's
+      // server-side Nest persist failed, the session still has a Pollar address
+      // in localStorage but Nest sees none — banner + 403. Best-effort custodial
+      // link (no message signing; Pollar can't) once auth_user is on disk.
+      const addr = newUser.wallet?.publicKey
+      if (addr && newUser.wallet?.provider !== "accesly") {
+        void import("@/lib/link-external-wallet")
+          .then(({ linkExternalWalletWithProof }) =>
+            linkExternalWalletWithProof(addr, newToken, "custodial"),
+          )
+          .then((result) => {
+            if (result && !result.success) {
+              console.warn("[auth] session wallet link failed:", result.error)
+            }
+          })
+          .catch(() => {})
+      }
     }
   }, [])
 
