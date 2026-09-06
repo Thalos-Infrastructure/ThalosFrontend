@@ -238,9 +238,12 @@ export async function POST(req: Request) {
     // id Pollar vouches for. Backfilling the id makes the next login find it by
     // the intended key instead of arriving here again.
     if (insertError?.code === "23505") {
+      // Also backfill wallet_public_key: older rows (or interrupted signups) can
+      // have pollar_user_id missing AND a null wallet. Nest resolveUserWallets
+      // unions this field — leaving it null keeps the "no wallet" agreements banner.
       const { data: adopted, error: adoptError } = await supabase
         .from("auth_users")
-        .update({ pollar_user_id: pollarUserId })
+        .update({ pollar_user_id: pollarUserId, wallet_public_key: walletAddress })
         .eq("email", synthetic)
         .select("id, email, name, wallet_public_key")
         .single()
