@@ -5,7 +5,7 @@ import { getKit, clearKit, detectFreighter, prewarmWalletDetection } from "@/lib
 import { signTransaction as unifiedSign, signMessage as unifiedSignMessage } from "@/lib/signing"
 import { getOrCreateProfile, type Profile } from "@/lib/actions/profile"
 import { useAuthStore } from "@/lib/auth-store"
-import { linkWallet } from "@/lib/api/wallets"
+import { linkExternalWalletWithProof } from "@/lib/link-external-wallet"
 
 import { STELLAR_WALLET_KEY } from "@/lib/signing/session"
 
@@ -152,15 +152,20 @@ export function StellarWalletProvider({ children }: { children: React.ReactNode 
 
         onConnected?.(addr)
 
-        // Persist the Kit-connected wallet to user_wallets (non-fatal)
+        // Persist the Kit-connected wallet to user_wallets (non-fatal).
+        // Nest requires SEP-53 challenge + signature for non-custodial wallets.
         try {
           const authToken =
             typeof window !== "undefined" ? window.localStorage.getItem("auth_token") : null
           if (authToken) {
-            await linkWallet({ wallet_address: addr, wallet_type: "other" }, authToken)
+            const result = await linkExternalWalletWithProof(addr, authToken, "other")
+            if (!result.success) {
+              console.warn("[stellar-wallet] kit wallet link failed (non-fatal):", result.error)
+            }
           }
-        } catch {
+        } catch (e) {
           // Non-fatal — wallet works for signing without persistence
+          console.warn("[stellar-wallet] kit wallet link failed (non-fatal):", e)
         }
       } catch (e) {
         // Cerrar el modal es una cancelación normal, no un error que mostrar.
