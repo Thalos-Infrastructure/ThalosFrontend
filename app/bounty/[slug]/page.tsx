@@ -19,15 +19,125 @@ import { getBountyShareableLink } from "@/lib/utils/bounty"
 
 /* ── Icons ── */
 const Icons = {
-  trophy: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" /><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" /><path d="M4 22h16" /><path d="M10 22V8h4v14" /><rect x="6" y="2" width="12" height="12" rx="2" /></svg>,
-  check: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 6L9 17l-5-5" /></svg>,
-  x: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" /></svg>,
-  clock: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></svg>,
-  link: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg>,
-  copy: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg>,
-  user: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>,
-  wallet: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="1" y="4" width="22" height="16" rx="2" /><path d="M1 10h22" /></svg>,
-  external: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /><path d="M15 3h6v6" /><path d="M10 14L21 3" /></svg>,
+  trophy: (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+    >
+      <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
+      <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
+      <path d="M4 22h16" />
+      <path d="M10 22V8h4v14" />
+      <rect x="6" y="2" width="12" height="12" rx="2" />
+    </svg>
+  ),
+  check: (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      <path d="M20 6L9 17l-5-5" />
+    </svg>
+  ),
+  x: (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      <path d="M18 6L6 18M6 6l12 12" />
+    </svg>
+  ),
+  clock: (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+    >
+      <circle cx="12" cy="12" r="10" />
+      <path d="M12 6v6l4 2" />
+    </svg>
+  ),
+  link: (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+    >
+      <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+      <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+    </svg>
+  ),
+  copy: (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+    >
+      <rect x="9" y="9" width="13" height="13" rx="2" />
+      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+    </svg>
+  ),
+  user: (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+    >
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+      <circle cx="12" cy="7" r="4" />
+    </svg>
+  ),
+  wallet: (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+    >
+      <rect x="1" y="4" width="22" height="16" rx="2" />
+      <path d="M1 10h22" />
+    </svg>
+  ),
+  external: (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+    >
+      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+      <path d="M15 3h6v6" />
+      <path d="M10 14L21 3" />
+    </svg>
+  ),
 }
 
 const statusColors: Record<string, string> = {
@@ -61,18 +171,18 @@ export default function BountyPage({ params }: { params: Promise<{ slug: string 
   const { t } = useLanguage()
   const router = useRouter()
   const { address, profile, openWalletModal } = useStellarWallet()
-  
+
   const [isLoading, setIsLoading] = useState(true)
   const [bounty, setBounty] = useState<BountyWithDetails | null>(null)
   const [error, setError] = useState<string | null>(null)
-  
+
   // Submission form
   const [showSubmitForm, setShowSubmitForm] = useState(false)
   const [submissionUrl, setSubmissionUrl] = useState("")
   const [submissionNotes, setSubmissionNotes] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
-  
+
   // Link copied
   const [linkCopied, setLinkCopied] = useState(false)
 
@@ -83,13 +193,13 @@ export default function BountyPage({ params }: { params: Promise<{ slug: string 
     async function loadBounty() {
       setIsLoading(true)
       const { bounty: data, error: err } = await getBountyBySlug(slug)
-      
+
       if (err) {
         setError(err)
       } else {
         setBounty(data)
       }
-      
+
       setIsLoading(false)
     }
 
@@ -111,17 +221,17 @@ export default function BountyPage({ params }: { params: Promise<{ slug: string 
 
   const handleSubmit = async () => {
     if (!address || !bounty) return
-    
+
     setIsSubmitting(true)
     setSubmitError(null)
-    
+
     const { submission, error } = await submitToBounty(
       bounty.id,
       address,
       submissionUrl,
-      submissionNotes
+      submissionNotes,
     )
-    
+
     if (error) {
       setSubmitError(error)
     } else if (submission) {
@@ -132,17 +242,17 @@ export default function BountyPage({ params }: { params: Promise<{ slug: string 
       setSubmissionUrl("")
       setSubmissionNotes("")
     }
-    
+
     setIsSubmitting(false)
   }
 
   const handleValidate = async (submissionId: string, approved: boolean) => {
     if (!address) return
-    
+
     setValidatingId(submissionId)
-    
+
     const { success, error } = await validateSubmission(submissionId, address, approved)
-    
+
     if (error) {
       console.error("Validation error:", error)
     } else if (success) {
@@ -150,7 +260,7 @@ export default function BountyPage({ params }: { params: Promise<{ slug: string 
       const { bounty: updated } = await getBountyBySlug(slug)
       if (updated) setBounty(updated)
     }
-    
+
     setValidatingId(null)
   }
 
@@ -186,7 +296,9 @@ export default function BountyPage({ params }: { params: Promise<{ slug: string 
               {Icons.x}
             </div>
             <h1 className="text-2xl font-bold text-foreground">Bounty Not Found</h1>
-            <p className="mt-2 text-muted-foreground">{error || "This bounty doesn't exist or has been removed."}</p>
+            <p className="mt-2 text-muted-foreground">
+              {error || "This bounty doesn't exist or has been removed."}
+            </p>
             <Link href="/">
               <Button className="mt-6">Go Home</Button>
             </Link>
@@ -202,18 +314,31 @@ export default function BountyPage({ params }: { params: Promise<{ slug: string 
       <header className="sticky top-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-4xl items-center justify-between px-6">
           <Link href="/">
-            <Image src="/thalos-icon.png" alt="Thalos" width={32} height={32} className="opacity-80 hover:opacity-100 transition-opacity" />
+            <Image
+              src="/thalos-icon.png"
+              alt="Thalos"
+              width={32}
+              height={32}
+              className="opacity-80 hover:opacity-100 transition-opacity"
+            />
           </Link>
-          
+
           {address ? (
             <div className="flex items-center gap-3">
-              <span className="text-sm text-muted-foreground font-mono">{truncateAddress(address)}</span>
+              <span className="text-sm text-muted-foreground font-mono">
+                {truncateAddress(address)}
+              </span>
               <Link href="/profile">
-                <Button variant="outline" size="sm">Profile</Button>
+                <Button variant="outline" size="sm">
+                  Profile
+                </Button>
               </Link>
             </div>
           ) : (
-            <Button onClick={handleConnectWallet} className="bg-[#f0b400] text-black hover:bg-[#f0b400]/90">
+            <Button
+              onClick={handleConnectWallet}
+              className="bg-[#f0b400] text-black hover:bg-[#f0b400]/90"
+            >
               Connect Wallet
             </Button>
           )}
@@ -229,25 +354,27 @@ export default function BountyPage({ params }: { params: Promise<{ slug: string 
                 {Icons.trophy}
               </div>
               <div>
-                <span className={cn("rounded-full border px-3 py-1 text-xs font-medium", statusColors[bounty.status])}>
+                <span
+                  className={cn(
+                    "rounded-full border px-3 py-1 text-xs font-medium",
+                    statusColors[bounty.status],
+                  )}
+                >
                   {statusLabels[bounty.status]}
                 </span>
               </div>
             </div>
-            
+
             {/* Share Button */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleCopyLink}
-              className="gap-2"
-            >
+            <Button variant="outline" size="sm" onClick={handleCopyLink} className="gap-2">
               {linkCopied ? Icons.check : Icons.copy}
               {linkCopied ? "Copied!" : "Copy Link"}
             </Button>
           </div>
-          
-          <h1 className="text-3xl font-bold tracking-tight text-foreground text-balance">{bounty.title}</h1>
+
+          <h1 className="text-3xl font-bold tracking-tight text-foreground text-balance">
+            {bounty.title}
+          </h1>
           <p className="mt-4 text-lg text-muted-foreground">{bounty.description}</p>
         </div>
 
@@ -258,27 +385,40 @@ export default function BountyPage({ params }: { params: Promise<{ slug: string 
             <div className="rounded-2xl border border-border/40 bg-card/50 p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-1">Prize Pool</p>
-                  <p className="text-4xl font-bold text-[#f0b400]">{bounty.amount} <span className="text-xl">{bounty.asset}</span></p>
+                  <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-1">
+                    Prize Pool
+                  </p>
+                  <p className="text-4xl font-bold text-[#f0b400]">
+                    {bounty.amount} <span className="text-xl">{bounty.asset}</span>
+                  </p>
                 </div>
                 {bounty.deadline && (
                   <div className="text-right">
-                    <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-1">Deadline</p>
-                    <p className="text-lg font-semibold text-foreground">{new Date(bounty.deadline).toLocaleDateString()}</p>
+                    <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-1">
+                      Deadline
+                    </p>
+                    <p className="text-lg font-semibold text-foreground">
+                      {new Date(bounty.deadline).toLocaleDateString()}
+                    </p>
                   </div>
                 )}
               </div>
             </div>
 
             {/* Submit Work Section */}
-            {(bounty.status === "open" || bounty.status === "funded" || bounty.status === "in_progress") && (
+            {(bounty.status === "open" ||
+              bounty.status === "funded" ||
+              bounty.status === "in_progress") && (
               <div className="rounded-2xl border border-border/40 bg-card/50 p-6">
                 <h3 className="text-lg font-semibold text-foreground mb-4">Submit Your Work</h3>
-                
+
                 {!address ? (
                   <div className="text-center py-6">
                     <p className="text-muted-foreground mb-4">Connect your wallet to submit work</p>
-                    <Button onClick={handleConnectWallet} className="bg-[#f0b400] text-black hover:bg-[#f0b400]/90">
+                    <Button
+                      onClick={handleConnectWallet}
+                      className="bg-[#f0b400] text-black hover:bg-[#f0b400]/90"
+                    >
                       Connect Wallet
                     </Button>
                   </div>
@@ -320,9 +460,7 @@ export default function BountyPage({ params }: { params: Promise<{ slug: string 
                         Cancel
                       </Button>
                     </div>
-                    {submitError && (
-                      <p className="text-sm text-red-400">{submitError}</p>
-                    )}
+                    {submitError && <p className="text-sm text-red-400">{submitError}</p>}
                   </div>
                 ) : (
                   <Button
@@ -341,7 +479,7 @@ export default function BountyPage({ params }: { params: Promise<{ slug: string 
                 <h3 className="text-lg font-semibold text-foreground mb-4">
                   Submissions ({bounty.submissions.length})
                 </h3>
-                
+
                 <div className="space-y-4">
                   {bounty.submissions.map((submission) => (
                     <div
@@ -354,7 +492,12 @@ export default function BountyPage({ params }: { params: Promise<{ slug: string 
                             <span className="text-sm font-mono text-foreground">
                               {truncateAddress(submission.submitter_wallet)}
                             </span>
-                            <span className={cn("rounded-full px-2 py-0.5 text-xs font-medium", submissionStatusColors[submission.status])}>
+                            <span
+                              className={cn(
+                                "rounded-full px-2 py-0.5 text-xs font-medium",
+                                submissionStatusColors[submission.status],
+                              )}
+                            >
                               {submission.status}
                             </span>
                           </div>
@@ -370,7 +513,7 @@ export default function BountyPage({ params }: { params: Promise<{ slug: string 
                           {submission.notes && (
                             <p className="mt-2 text-sm text-muted-foreground">{submission.notes}</p>
                           )}
-                          
+
                           {/* Validations */}
                           {submission.validations.length > 0 && (
                             <div className="mt-3 flex items-center gap-2">
@@ -380,7 +523,9 @@ export default function BountyPage({ params }: { params: Promise<{ slug: string 
                                   key={i}
                                   className={cn(
                                     "rounded-full px-2 py-0.5 text-xs",
-                                    v.approved ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"
+                                    v.approved
+                                      ? "bg-green-500/20 text-green-400"
+                                      : "bg-red-500/20 text-red-400",
                                   )}
                                 >
                                   {truncateAddress(v.wallet)} {v.approved ? "Approved" : "Rejected"}
@@ -389,30 +534,32 @@ export default function BountyPage({ params }: { params: Promise<{ slug: string 
                             </div>
                           )}
                         </div>
-                        
+
                         {/* Validator Actions */}
-                        {isValidator && submission.status === "pending" && !submission.validations.some((v) => v.wallet === address) && (
-                          <div className="flex items-center gap-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleValidate(submission.id, true)}
-                              disabled={validatingId === submission.id}
-                              className="border-green-500/30 text-green-400 hover:bg-green-500/10"
-                            >
-                              {Icons.check}
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleValidate(submission.id, false)}
-                              disabled={validatingId === submission.id}
-                              className="border-red-500/30 text-red-400 hover:bg-red-500/10"
-                            >
-                              {Icons.x}
-                            </Button>
-                          </div>
-                        )}
+                        {isValidator &&
+                          submission.status === "pending" &&
+                          !submission.validations.some((v) => v.wallet === address) && (
+                            <div className="flex items-center gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleValidate(submission.id, true)}
+                                disabled={validatingId === submission.id}
+                                className="border-green-500/30 text-green-400 hover:bg-green-500/10"
+                              >
+                                {Icons.check}
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleValidate(submission.id, false)}
+                                disabled={validatingId === submission.id}
+                                className="border-red-500/30 text-red-400 hover:bg-red-500/10"
+                              >
+                                {Icons.x}
+                              </Button>
+                            </div>
+                          )}
                       </div>
                     </div>
                   ))}
@@ -438,7 +585,9 @@ export default function BountyPage({ params }: { params: Promise<{ slug: string 
                       {truncateAddress(validator.wallet_address)}
                     </span>
                     {validator.wallet_address === address && (
-                      <span className="rounded-full bg-[#f0b400]/20 px-2 py-0.5 text-xs text-[#f0b400]">You</span>
+                      <span className="rounded-full bg-[#f0b400]/20 px-2 py-0.5 text-xs text-[#f0b400]">
+                        You
+                      </span>
                     )}
                   </div>
                 ))}
@@ -457,15 +606,21 @@ export default function BountyPage({ params }: { params: Promise<{ slug: string 
                 <div className="space-y-3">
                   <div>
                     <p className="text-xs text-muted-foreground">Agreement ID</p>
-                    <p className="font-mono text-sm text-foreground truncate">{bounty.agreement_id}</p>
+                    <p className="font-mono text-sm text-foreground truncate">
+                      {bounty.agreement_id}
+                    </p>
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground">Created By</p>
-                    <p className="font-mono text-sm text-foreground">{truncateAddress(bounty.created_by)}</p>
+                    <p className="font-mono text-sm text-foreground">
+                      {truncateAddress(bounty.created_by)}
+                    </p>
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground">Created</p>
-                    <p className="text-sm text-foreground">{new Date(bounty.created_at).toLocaleDateString()}</p>
+                    <p className="text-sm text-foreground">
+                      {new Date(bounty.created_at).toLocaleDateString()}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -483,12 +638,7 @@ export default function BountyPage({ params }: { params: Promise<{ slug: string 
                   readOnly
                   className="flex-1 h-10 rounded-lg border border-border/40 bg-background/50 px-3 text-xs font-mono text-muted-foreground"
                 />
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={handleCopyLink}
-                  className="shrink-0"
-                >
+                <Button size="sm" variant="outline" onClick={handleCopyLink} className="shrink-0">
                   {linkCopied ? Icons.check : Icons.copy}
                 </Button>
               </div>

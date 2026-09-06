@@ -12,9 +12,9 @@ import {
 } from "../opportunities"
 
 function mockFetch(body: unknown, status = 200) {
-  return vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
-    new Response(JSON.stringify(body), { status }),
-  )
+  return vi
+    .spyOn(globalThis, "fetch")
+    .mockResolvedValueOnce(new Response(JSON.stringify(body), { status }))
 }
 
 const OPPORTUNITY: Opportunity = {
@@ -54,7 +54,15 @@ describe("opportunities contract", () => {
     it("serializes filters as query params (skills repeat, ranges, search)", async () => {
       const fetchSpy = mockFetch({ opportunities: [], total: 0, page: 1, limit: 20, totalPages: 0 })
       await discoverOpportunities(
-        { skills_required: ["Rust", "Soroban"], engagement_type: "milestone", budget_min: 100, budget_max: 9000, q: "escrow", page: 2, limit: 10 },
+        {
+          skills_required: ["Rust", "Soroban"],
+          engagement_type: "milestone",
+          budget_min: 100,
+          budget_max: 9000,
+          q: "escrow",
+          page: 2,
+          limit: 10,
+        },
         "tok",
       )
       const url = fetchSpy.mock.calls[0][0] as string

@@ -9,7 +9,15 @@ import { cn } from "@/lib/utils"
 import { ThalosLoader } from "@/components/thalos-loader"
 import { LanguageToggle } from "@/lib/i18n"
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  AreaChart,
+  Area,
 } from "recharts"
 import type { AgreementStatus } from "@/lib/types/status"
 
@@ -30,18 +38,138 @@ interface Agreement {
 }
 
 const mockAgreements: Agreement[] = [
-  { id: "ESC-001", type: "milestone", sellerWallet: "GBXK7F...4R2P", buyerWallet: "GCQV8L...9T1M", totalAmount: 12500, platformFee: 250, status: "completed", createdAt: "2025-11-15", completedAt: "2025-12-20" },
-  { id: "ESC-002", type: "one-time", sellerWallet: "GDMR3T...7K5N", buyerWallet: "GFPL2Q...8W3J", totalAmount: 3200, platformFee: 64, status: "active", createdAt: "2025-12-01", completedAt: null },
-  { id: "ESC-003", type: "milestone", sellerWallet: "GHNW9P...1L6R", buyerWallet: "GBXK7F...4R2P", totalAmount: 45000, platformFee: 900, status: "funded", createdAt: "2025-12-10", completedAt: null },
-  { id: "ESC-004", type: "one-time", sellerWallet: "GCQV8L...9T1M", buyerWallet: "GDMR3T...7K5N", totalAmount: 800, platformFee: 16, status: "completed", createdAt: "2025-10-05", completedAt: "2025-10-12" },
-  { id: "ESC-005", type: "milestone", sellerWallet: "GFPL2Q...8W3J", buyerWallet: "GHNW9P...1L6R", totalAmount: 18750, platformFee: 375, status: "disputed", createdAt: "2025-11-20", completedAt: null },
-  { id: "ESC-006", type: "one-time", sellerWallet: "GBXK7F...4R2P", buyerWallet: "GCQV8L...9T1M", totalAmount: 5400, platformFee: 108, status: "completed", createdAt: "2025-09-18", completedAt: "2025-09-25" },
-  { id: "ESC-007", type: "milestone", sellerWallet: "GDMR3T...7K5N", buyerWallet: "GFPL2Q...8W3J", totalAmount: 22000, platformFee: 440, status: "active", createdAt: "2026-01-05", completedAt: null },
-  { id: "ESC-008", type: "one-time", sellerWallet: "GHNW9P...1L6R", buyerWallet: "GBXK7F...4R2P", totalAmount: 1500, platformFee: 30, status: "pending", createdAt: "2026-01-10", completedAt: null },
-  { id: "ESC-009", type: "milestone", sellerWallet: "GCQV8L...9T1M", buyerWallet: "GDMR3T...7K5N", totalAmount: 35000, platformFee: 700, status: "completed", createdAt: "2025-08-22", completedAt: "2025-11-30" },
-  { id: "ESC-010", type: "one-time", sellerWallet: "GFPL2Q...8W3J", buyerWallet: "GHNW9P...1L6R", totalAmount: 6800, platformFee: 136, status: "funded", createdAt: "2026-01-15", completedAt: null },
-  { id: "ESC-011", type: "milestone", sellerWallet: "GBXK7F...4R2P", buyerWallet: "GFPL2Q...8W3J", totalAmount: 9200, platformFee: 184, status: "completed", createdAt: "2025-07-10", completedAt: "2025-08-15" },
-  { id: "ESC-012", type: "one-time", sellerWallet: "GDMR3T...7K5N", buyerWallet: "GCQV8L...9T1M", totalAmount: 2100, platformFee: 42, status: "completed", createdAt: "2025-06-05", completedAt: "2025-06-12" },
+  {
+    id: "ESC-001",
+    type: "milestone",
+    sellerWallet: "GBXK7F...4R2P",
+    buyerWallet: "GCQV8L...9T1M",
+    totalAmount: 12500,
+    platformFee: 250,
+    status: "completed",
+    createdAt: "2025-11-15",
+    completedAt: "2025-12-20",
+  },
+  {
+    id: "ESC-002",
+    type: "one-time",
+    sellerWallet: "GDMR3T...7K5N",
+    buyerWallet: "GFPL2Q...8W3J",
+    totalAmount: 3200,
+    platformFee: 64,
+    status: "active",
+    createdAt: "2025-12-01",
+    completedAt: null,
+  },
+  {
+    id: "ESC-003",
+    type: "milestone",
+    sellerWallet: "GHNW9P...1L6R",
+    buyerWallet: "GBXK7F...4R2P",
+    totalAmount: 45000,
+    platformFee: 900,
+    status: "funded",
+    createdAt: "2025-12-10",
+    completedAt: null,
+  },
+  {
+    id: "ESC-004",
+    type: "one-time",
+    sellerWallet: "GCQV8L...9T1M",
+    buyerWallet: "GDMR3T...7K5N",
+    totalAmount: 800,
+    platformFee: 16,
+    status: "completed",
+    createdAt: "2025-10-05",
+    completedAt: "2025-10-12",
+  },
+  {
+    id: "ESC-005",
+    type: "milestone",
+    sellerWallet: "GFPL2Q...8W3J",
+    buyerWallet: "GHNW9P...1L6R",
+    totalAmount: 18750,
+    platformFee: 375,
+    status: "disputed",
+    createdAt: "2025-11-20",
+    completedAt: null,
+  },
+  {
+    id: "ESC-006",
+    type: "one-time",
+    sellerWallet: "GBXK7F...4R2P",
+    buyerWallet: "GCQV8L...9T1M",
+    totalAmount: 5400,
+    platformFee: 108,
+    status: "completed",
+    createdAt: "2025-09-18",
+    completedAt: "2025-09-25",
+  },
+  {
+    id: "ESC-007",
+    type: "milestone",
+    sellerWallet: "GDMR3T...7K5N",
+    buyerWallet: "GFPL2Q...8W3J",
+    totalAmount: 22000,
+    platformFee: 440,
+    status: "active",
+    createdAt: "2026-01-05",
+    completedAt: null,
+  },
+  {
+    id: "ESC-008",
+    type: "one-time",
+    sellerWallet: "GHNW9P...1L6R",
+    buyerWallet: "GBXK7F...4R2P",
+    totalAmount: 1500,
+    platformFee: 30,
+    status: "pending",
+    createdAt: "2026-01-10",
+    completedAt: null,
+  },
+  {
+    id: "ESC-009",
+    type: "milestone",
+    sellerWallet: "GCQV8L...9T1M",
+    buyerWallet: "GDMR3T...7K5N",
+    totalAmount: 35000,
+    platformFee: 700,
+    status: "completed",
+    createdAt: "2025-08-22",
+    completedAt: "2025-11-30",
+  },
+  {
+    id: "ESC-010",
+    type: "one-time",
+    sellerWallet: "GFPL2Q...8W3J",
+    buyerWallet: "GHNW9P...1L6R",
+    totalAmount: 6800,
+    platformFee: 136,
+    status: "funded",
+    createdAt: "2026-01-15",
+    completedAt: null,
+  },
+  {
+    id: "ESC-011",
+    type: "milestone",
+    sellerWallet: "GBXK7F...4R2P",
+    buyerWallet: "GFPL2Q...8W3J",
+    totalAmount: 9200,
+    platformFee: 184,
+    status: "completed",
+    createdAt: "2025-07-10",
+    completedAt: "2025-08-15",
+  },
+  {
+    id: "ESC-012",
+    type: "one-time",
+    sellerWallet: "GDMR3T...7K5N",
+    buyerWallet: "GCQV8L...9T1M",
+    totalAmount: 2100,
+    platformFee: 42,
+    status: "completed",
+    createdAt: "2025-06-05",
+    completedAt: "2025-06-12",
+  },
 ]
 
 const revenueData = [
@@ -108,7 +236,9 @@ export default function AdminDashboardPage() {
   const [sortDir, setSortDir] = useState<"desc" | "asc">("desc")
   const [page, setPage] = useState(0)
 
-  useEffect(() => { setLoading(false) }, [])
+  useEffect(() => {
+    setLoading(false)
+  }, [])
 
   const handlePasswordSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -126,7 +256,11 @@ export default function AdminDashboardPage() {
     let list = [...mockAgreements]
     if (statusFilter !== "all") list = list.filter((a) => a.status === statusFilter)
     if (typeFilter !== "all") list = list.filter((a) => a.type === typeFilter)
-    list.sort((a, b) => sortDir === "desc" ? b.createdAt.localeCompare(a.createdAt) : a.createdAt.localeCompare(b.createdAt))
+    list.sort((a, b) =>
+      sortDir === "desc"
+        ? b.createdAt.localeCompare(a.createdAt)
+        : a.createdAt.localeCompare(b.createdAt),
+    )
     return list
   }, [statusFilter, typeFilter, sortDir])
 
@@ -135,10 +269,15 @@ export default function AdminDashboardPage() {
 
   const totalVolume = mockAgreements.reduce((s, a) => s + a.totalAmount, 0)
   const totalFees = mockAgreements.reduce((s, a) => s + a.platformFee, 0)
-  const activeCount = mockAgreements.filter((a) => a.status !== "completed" && a.status !== "disputed").length
+  const activeCount = mockAgreements.filter(
+    (a) => a.status !== "completed" && a.status !== "disputed",
+  ).length
   const completedCount = mockAgreements.filter((a) => a.status === "completed").length
   const uniqueWallets = new Set(mockAgreements.flatMap((a) => [a.sellerWallet, a.buyerWallet])).size
-  const disputeRate = ((mockAgreements.filter((a) => a.status === "disputed").length / mockAgreements.length) * 100).toFixed(1)
+  const disputeRate = (
+    (mockAgreements.filter((a) => a.status === "disputed").length / mockAgreements.length) *
+    100
+  ).toFixed(1)
 
   if (loading) return <ThalosLoader />
 
@@ -147,15 +286,26 @@ export default function AdminDashboardPage() {
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-[#111] p-8 shadow-2xl">
           <div className="mb-6 flex justify-center">
-            <Image src="/thalos-icon.png" alt="Thalos" width={64} height={64} className="h-16 w-16 object-contain" />
+            <Image
+              src="/thalos-icon.png"
+              alt="Thalos"
+              width={64}
+              height={64}
+              className="h-16 w-16 object-contain"
+            />
           </div>
           <h2 className="mb-1 text-center text-xl font-bold text-foreground">Admin Access</h2>
-          <p className="mb-6 text-center text-sm text-muted-foreground/60">Enter the admin password to continue</p>
+          <p className="mb-6 text-center text-sm text-muted-foreground/60">
+            Enter the admin password to continue
+          </p>
           <form onSubmit={handlePasswordSubmit} className="flex flex-col gap-4">
             <input
               type="password"
               value={password}
-              onChange={(e) => { setPassword(e.target.value); setPasswordError(false) }}
+              onChange={(e) => {
+                setPassword(e.target.value)
+                setPasswordError(false)
+              }}
               placeholder="Password"
               className="h-11 w-full rounded-xl border border-white/10 bg-white/5 px-4 text-sm text-foreground placeholder:text-muted-foreground/40 focus:border-[#f0b400]/50 focus:outline-none focus:ring-1 focus:ring-[#f0b400]/30"
               autoFocus
@@ -171,7 +321,12 @@ export default function AdminDashboardPage() {
             </button>
           </form>
           <div className="mt-4 text-center">
-            <Link href="/" className="text-xs text-muted-foreground/40 transition-colors hover:text-foreground">Back to Home</Link>
+            <Link
+              href="/"
+              className="text-xs text-muted-foreground/40 transition-colors hover:text-foreground"
+            >
+              Back to Home
+            </Link>
           </div>
         </div>
       </div>
@@ -184,20 +339,40 @@ export default function AdminDashboardPage() {
       <header className="sticky top-0 z-50 border-b border-white/5 bg-background/10 backdrop-blur-md">
         <nav className="mx-auto flex h-24 max-w-7xl items-center justify-between px-6">
           <Link href="/" className="group flex items-center [perspective:800px]">
-            <Image src="/thalos-icon.png" alt="Thalos" width={250} height={250}
+            <Image
+              src="/thalos-icon.png"
+              alt="Thalos"
+              width={250}
+              height={250}
               className="h-20 w-auto object-contain [transform-style:preserve-3d] transition-transform duration-[1.2s] ease-[cubic-bezier(0.45,0.05,0.55,0.95)] group-hover:[transform:rotateY(360deg)]"
-              priority />
+              priority
+            />
           </Link>
           <div className="flex items-center gap-3">
             <LanguageToggle />
             <div className="flex items-center gap-2">
               <div className="h-8 w-8 rounded-full bg-red-500/10 flex items-center justify-center text-red-400">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                >
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                </svg>
               </div>
-              <span className="text-sm text-white/70 font-medium hidden sm:inline">Admin Panel</span>
+              <span className="text-sm text-white/70 font-medium hidden sm:inline">
+                Admin Panel
+              </span>
             </div>
             <Link href="/">
-              <Button variant="outline" size="sm" className="rounded-full border-white/20 bg-white/5 text-white/70 font-semibold shadow-[0_2px_8px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.06)] hover:bg-white/10 hover:text-white hover:border-white/30 transition-all duration-300">
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-full border-white/20 bg-white/5 text-white/70 font-semibold shadow-[0_2px_8px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.06)] hover:bg-white/10 hover:text-white hover:border-white/30 transition-all duration-300"
+              >
                 Sign Out
               </Button>
             </Link>
@@ -209,18 +384,31 @@ export default function AdminDashboardPage() {
         {/* Page Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-semibold tracking-tight text-foreground">Admin Dashboard</h1>
-          <p className="mt-1 text-muted-foreground">Platform analytics, agreement monitoring, and compliance overview</p>
+          <p className="mt-1 text-muted-foreground">
+            Platform analytics, agreement monitoring, and compliance overview
+          </p>
         </div>
 
         {/* ── Metric Cards ── */}
         <div className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
           {[
-            { label: "Total Volume", value: `$${totalVolume.toLocaleString()}`, sub: "All time processed" },
-            { label: "Platform Fees", value: `$${totalFees.toLocaleString()}`, sub: "Revenue earned" },
+            {
+              label: "Total Volume",
+              value: `$${totalVolume.toLocaleString()}`,
+              sub: "All time processed",
+            },
+            {
+              label: "Platform Fees",
+              value: `$${totalFees.toLocaleString()}`,
+              sub: "Revenue earned",
+            },
             { label: "Active Agreements", value: String(activeCount), sub: "Currently open" },
             { label: "Completed", value: String(completedCount), sub: "Successfully closed" },
           ].map((m) => (
-            <div key={m.label} className="rounded-2xl border border-border/40 bg-card/40 p-5 shadow-[0_4px_16px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.04)] transition-all duration-300 hover:border-[#f0b400]/30 hover:shadow-[0_4px_24px_rgba(240,180,0,0.08)]">
+            <div
+              key={m.label}
+              className="rounded-2xl border border-border/40 bg-card/40 p-5 shadow-[0_4px_16px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.04)] transition-all duration-300 hover:border-[#f0b400]/30 hover:shadow-[0_4px_24px_rgba(240,180,0,0.08)]"
+            >
               <p className="text-xs text-muted-foreground">{m.label}</p>
               <p className="mt-1 text-2xl font-semibold text-foreground">{m.value}</p>
               <p className="mt-0.5 text-xs text-muted-foreground/60">{m.sub}</p>
@@ -232,16 +420,34 @@ export default function AdminDashboardPage() {
         <div className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
           {/* Revenue Chart */}
           <div className="rounded-2xl border border-border/40 bg-card/40 p-6 shadow-[0_4px_16px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.04)]">
-            <h3 className="mb-1 text-sm font-semibold uppercase tracking-wider text-muted-foreground">Monthly Revenue</h3>
+            <h3 className="mb-1 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+              Monthly Revenue
+            </h3>
             <p className="mb-6 text-xs text-muted-foreground/60">Platform fees earned per month</p>
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={revenueData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                  <XAxis dataKey="month" tick={{ fill: "rgba(255,255,255,0.4)", fontSize: 12 }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fill: "rgba(255,255,255,0.4)", fontSize: 12 }} axisLine={false} tickLine={false} tickFormatter={(v: number) => `$${v}`} />
+                  <XAxis
+                    dataKey="month"
+                    tick={{ fill: "rgba(255,255,255,0.4)", fontSize: 12 }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    tick={{ fill: "rgba(255,255,255,0.4)", fontSize: 12 }}
+                    axisLine={false}
+                    tickLine={false}
+                    tickFormatter={(v: number) => `$${v}`}
+                  />
                   <Tooltip
-                    contentStyle={{ backgroundColor: "rgba(20,20,25,0.95)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "12px", color: "#fff", fontSize: 13 }}
+                    contentStyle={{
+                      backgroundColor: "rgba(20,20,25,0.95)",
+                      border: "1px solid rgba(255,255,255,0.1)",
+                      borderRadius: "12px",
+                      color: "#fff",
+                      fontSize: 13,
+                    }}
                     formatter={(value: number) => [`$${value}`, "Revenue"]}
                   />
                   <Bar dataKey="revenue" fill="#f0b400" radius={[6, 6, 0, 0]} />
@@ -252,7 +458,9 @@ export default function AdminDashboardPage() {
 
           {/* Volume Chart */}
           <div className="rounded-2xl border border-border/40 bg-card/40 p-6 shadow-[0_4px_16px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.04)]">
-            <h3 className="mb-1 text-sm font-semibold uppercase tracking-wider text-muted-foreground">Monthly Volume</h3>
+            <h3 className="mb-1 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+              Monthly Volume
+            </h3>
             <p className="mb-6 text-xs text-muted-foreground/60">Total USDC processed per month</p>
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
@@ -264,13 +472,35 @@ export default function AdminDashboardPage() {
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                  <XAxis dataKey="month" tick={{ fill: "rgba(255,255,255,0.4)", fontSize: 12 }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fill: "rgba(255,255,255,0.4)", fontSize: 12 }} axisLine={false} tickLine={false} tickFormatter={(v: number) => `$${(v / 1000).toFixed(0)}k`} />
+                  <XAxis
+                    dataKey="month"
+                    tick={{ fill: "rgba(255,255,255,0.4)", fontSize: 12 }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    tick={{ fill: "rgba(255,255,255,0.4)", fontSize: 12 }}
+                    axisLine={false}
+                    tickLine={false}
+                    tickFormatter={(v: number) => `$${(v / 1000).toFixed(0)}k`}
+                  />
                   <Tooltip
-                    contentStyle={{ backgroundColor: "rgba(20,20,25,0.95)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "12px", color: "#fff", fontSize: 13 }}
+                    contentStyle={{
+                      backgroundColor: "rgba(20,20,25,0.95)",
+                      border: "1px solid rgba(255,255,255,0.1)",
+                      borderRadius: "12px",
+                      color: "#fff",
+                      fontSize: 13,
+                    }}
                     formatter={(value: number) => [`$${value.toLocaleString()}`, "Volume"]}
                   />
-                  <Area type="monotone" dataKey="volume" stroke="#f0b400" fill="url(#volumeGrad)" strokeWidth={2} />
+                  <Area
+                    type="monotone"
+                    dataKey="volume"
+                    stroke="#f0b400"
+                    fill="url(#volumeGrad)"
+                    strokeWidth={2}
+                  />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
@@ -281,14 +511,20 @@ export default function AdminDashboardPage() {
         <div className="mb-6 flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium text-muted-foreground">Status:</span>
-            {(["all", "draft", "funded", "in_progress", "completed", "disputed"] as const).map((s) => (
-              <button key={s} onClick={() => { setStatusFilter(s); setPage(0) }}
+            {(["all", "pending", "funded", "active", "completed", "disputed"] as const).map((s) => (
+              <button
+                key={s}
+                onClick={() => {
+                  setStatusFilter(s)
+                  setPage(0)
+                }}
                 className={cn(
                   "rounded-full border px-3 py-1 text-xs font-medium transition-all duration-200",
                   statusFilter === s
                     ? "border-[#f0b400]/40 bg-[#f0b400]/10 text-[#f0b400]"
-                    : "border-border/40 bg-card/30 text-muted-foreground hover:border-[#f0b400]/30 hover:text-[#f0b400]"
-                )}>
+                    : "border-border/40 bg-card/30 text-muted-foreground hover:border-[#f0b400]/30 hover:text-[#f0b400]",
+                )}
+              >
                 {s === "all" ? "All" : statusLabels[s]}
               </button>
             ))}
@@ -296,21 +532,40 @@ export default function AdminDashboardPage() {
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium text-muted-foreground">Type:</span>
             {(["all", "one-time", "milestone"] as const).map((t) => (
-              <button key={t} onClick={() => { setTypeFilter(t); setPage(0) }}
+              <button
+                key={t}
+                onClick={() => {
+                  setTypeFilter(t)
+                  setPage(0)
+                }}
                 className={cn(
                   "rounded-full border px-3 py-1 text-xs font-medium transition-all duration-200",
                   typeFilter === t
                     ? "border-[#f0b400]/40 bg-[#f0b400]/10 text-[#f0b400]"
-                    : "border-border/40 bg-card/30 text-muted-foreground hover:border-[#f0b400]/30 hover:text-[#f0b400]"
-                )}>
+                    : "border-border/40 bg-card/30 text-muted-foreground hover:border-[#f0b400]/30 hover:text-[#f0b400]",
+                )}
+              >
                 {t === "all" ? "All" : t === "one-time" ? "One-Time" : "Milestone"}
               </button>
             ))}
           </div>
-          <button onClick={() => setSortDir(sortDir === "desc" ? "asc" : "desc")}
-            className="ml-auto flex items-center gap-1.5 rounded-full border border-border/40 bg-card/30 px-3 py-1 text-xs font-medium text-muted-foreground hover:text-[#f0b400] hover:border-[#f0b400]/30 transition-all">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              {sortDir === "desc" ? <path d="M12 5v14M5 12l7 7 7-7"/> : <path d="M12 19V5M5 12l7-7 7 7"/>}
+          <button
+            onClick={() => setSortDir(sortDir === "desc" ? "asc" : "desc")}
+            className="ml-auto flex items-center gap-1.5 rounded-full border border-border/40 bg-card/30 px-3 py-1 text-xs font-medium text-muted-foreground hover:text-[#f0b400] hover:border-[#f0b400]/30 transition-all"
+          >
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              {sortDir === "desc" ? (
+                <path d="M12 5v14M5 12l7 7 7-7" />
+              ) : (
+                <path d="M12 19V5M5 12l7-7 7 7" />
+              )}
             </svg>
             {sortDir === "desc" ? "Newest First" : "Oldest First"}
           </button>
@@ -323,26 +578,45 @@ export default function AdminDashboardPage() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border/30">
-                  {["ID", "Type", "Seller", "Buyer", "Amount", "Fee", "Status", "Created"].map((h) => (
-                    <th key={h} className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">{h}</th>
-                  ))}
+                  {["ID", "Type", "Seller", "Buyer", "Amount", "Fee", "Status", "Created"].map(
+                    (h) => (
+                      <th
+                        key={h}
+                        className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+                      >
+                        {h}
+                      </th>
+                    ),
+                  )}
                 </tr>
               </thead>
               <tbody>
                 {paged.map((a) => (
-                  <tr key={a.id} className="border-b border-border/20 transition-colors hover:bg-[#f0b400]/[0.02]">
+                  <tr
+                    key={a.id}
+                    className="border-b border-border/20 transition-colors hover:bg-[#f0b400]/[0.02]"
+                  >
                     <td className="px-5 py-4 text-sm font-medium text-foreground">{a.id}</td>
                     <td className="px-5 py-4">
                       <span className="rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
                         {a.type === "one-time" ? "One-Time" : "Milestone"}
                       </span>
                     </td>
-                    <td className="px-5 py-4 text-sm text-muted-foreground font-mono">{a.sellerWallet}</td>
-                    <td className="px-5 py-4 text-sm text-muted-foreground font-mono">{a.buyerWallet}</td>
-                    <td className="px-5 py-4 text-sm font-medium text-foreground">${a.totalAmount.toLocaleString()}</td>
+                    <td className="px-5 py-4 text-sm text-muted-foreground font-mono">
+                      {a.sellerWallet}
+                    </td>
+                    <td className="px-5 py-4 text-sm text-muted-foreground font-mono">
+                      {a.buyerWallet}
+                    </td>
+                    <td className="px-5 py-4 text-sm font-medium text-foreground">
+                      ${a.totalAmount.toLocaleString()}
+                    </td>
                     <td className="px-5 py-4 text-sm text-[#f0b400]">${a.platformFee}</td>
                     <td className="px-5 py-4">
-                      <Badge variant="outline" className={cn("rounded-full text-xs", statusColors[a.status])}>
+                      <Badge
+                        variant="outline"
+                        className={cn("rounded-full text-xs", statusColors[a.status])}
+                      >
                         {statusLabels[a.status]}
                       </Badge>
                     </td>
@@ -350,7 +624,14 @@ export default function AdminDashboardPage() {
                   </tr>
                 ))}
                 {paged.length === 0 && (
-                  <tr><td colSpan={8} className="px-5 py-12 text-center text-sm text-muted-foreground">No agreements match the current filters.</td></tr>
+                  <tr>
+                    <td
+                      colSpan={8}
+                      className="px-5 py-12 text-center text-sm text-muted-foreground"
+                    >
+                      No agreements match the current filters.
+                    </td>
+                  </tr>
                 )}
               </tbody>
             </table>
@@ -362,15 +643,34 @@ export default function AdminDashboardPage() {
               <div key={a.id} className="rounded-xl border border-border/30 bg-card/30 p-4">
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-sm font-semibold text-foreground">{a.id}</span>
-                  <Badge variant="outline" className={cn("rounded-full text-xs", statusColors[a.status])}>
+                  <Badge
+                    variant="outline"
+                    className={cn("rounded-full text-xs", statusColors[a.status])}
+                  >
                     {statusLabels[a.status]}
                   </Badge>
                 </div>
                 <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div><span className="text-muted-foreground">Type: </span><span className="text-foreground">{a.type === "one-time" ? "One-Time" : "Milestone"}</span></div>
-                  <div><span className="text-muted-foreground">Amount: </span><span className="font-medium text-foreground">${a.totalAmount.toLocaleString()}</span></div>
-                  <div><span className="text-muted-foreground">Fee: </span><span className="text-[#f0b400]">${a.platformFee}</span></div>
-                  <div><span className="text-muted-foreground">Date: </span><span className="text-foreground">{a.createdAt}</span></div>
+                  <div>
+                    <span className="text-muted-foreground">Type: </span>
+                    <span className="text-foreground">
+                      {a.type === "one-time" ? "One-Time" : "Milestone"}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Amount: </span>
+                    <span className="font-medium text-foreground">
+                      ${a.totalAmount.toLocaleString()}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Fee: </span>
+                    <span className="text-[#f0b400]">${a.platformFee}</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Date: </span>
+                    <span className="text-foreground">{a.createdAt}</span>
+                  </div>
                 </div>
                 <div className="mt-2 flex flex-col gap-1 text-xs font-mono text-muted-foreground">
                   <span>Seller: {a.sellerWallet}</span>
@@ -379,7 +679,9 @@ export default function AdminDashboardPage() {
               </div>
             ))}
             {paged.length === 0 && (
-              <p className="py-8 text-center text-sm text-muted-foreground">No agreements match the current filters.</p>
+              <p className="py-8 text-center text-sm text-muted-foreground">
+                No agreements match the current filters.
+              </p>
             )}
           </div>
 
@@ -387,15 +689,26 @@ export default function AdminDashboardPage() {
           {totalPages > 1 && (
             <div className="flex items-center justify-between border-t border-border/20 px-5 py-3">
               <p className="text-xs text-muted-foreground">
-                Showing {page * PAGE_SIZE + 1}-{Math.min((page + 1) * PAGE_SIZE, filtered.length)} of {filtered.length}
+                Showing {page * PAGE_SIZE + 1}-{Math.min((page + 1) * PAGE_SIZE, filtered.length)}{" "}
+                of {filtered.length}
               </p>
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => setPage(Math.max(0, page - 1))} disabled={page === 0}
-                  className="rounded-full border-border/40 text-muted-foreground text-xs hover:text-[#f0b400] hover:border-[#f0b400]/30 bg-transparent">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage(Math.max(0, page - 1))}
+                  disabled={page === 0}
+                  className="rounded-full border-border/40 text-muted-foreground text-xs hover:text-[#f0b400] hover:border-[#f0b400]/30 bg-transparent"
+                >
                   Previous
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => setPage(Math.min(totalPages - 1, page + 1))} disabled={page >= totalPages - 1}
-                  className="rounded-full border-border/40 text-muted-foreground text-xs hover:text-[#f0b400] hover:border-[#f0b400]/30 bg-transparent">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage(Math.min(totalPages - 1, page + 1))}
+                  disabled={page >= totalPages - 1}
+                  className="rounded-full border-border/40 text-muted-foreground text-xs hover:text-[#f0b400] hover:border-[#f0b400]/30 bg-transparent"
+                >
                   Next
                 </Button>
               </div>
@@ -408,11 +721,22 @@ export default function AdminDashboardPage() {
           <h2 className="mb-4 text-lg font-semibold text-foreground">Audit Overview</h2>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             {[
-              { label: "Unique Wallets", value: String(uniqueWallets), desc: "Distinct addresses connected" },
-              { label: "Total Agreements", value: String(mockAgreements.length), desc: "All time created" },
+              {
+                label: "Unique Wallets",
+                value: String(uniqueWallets),
+                desc: "Distinct addresses connected",
+              },
+              {
+                label: "Total Agreements",
+                value: String(mockAgreements.length),
+                desc: "All time created",
+              },
               { label: "Dispute Rate", value: `${disputeRate}%`, desc: "Agreements with disputes" },
             ].map((a) => (
-              <div key={a.label} className="rounded-2xl border border-border/40 bg-card/40 p-5 shadow-[0_4px_16px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.04)]">
+              <div
+                key={a.label}
+                className="rounded-2xl border border-border/40 bg-card/40 p-5 shadow-[0_4px_16px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.04)]"
+              >
                 <p className="text-xs text-muted-foreground">{a.label}</p>
                 <p className="mt-1 text-2xl font-semibold text-foreground">{a.value}</p>
                 <p className="mt-0.5 text-xs text-muted-foreground/60">{a.desc}</p>

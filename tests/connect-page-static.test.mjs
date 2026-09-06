@@ -46,7 +46,11 @@ test("connect page exposes per-profile SEO metadata", () => {
 })
 
 test("connect page de-dupes generateMetadata and page fetches with React.cache", () => {
-  assert.match(source, /from "react"[\s\S]*cache|import \{ cache \}/, "must import cache from react")
+  assert.match(
+    source,
+    /from "react"[\s\S]*cache|import \{ cache \}/,
+    "must import cache from react",
+  )
   assert.match(source, /cache\(async /, "data loader must be cached")
 })
 
@@ -76,7 +80,11 @@ test("connect page renders both Builder and Project public views (additive)", ()
 
 test("connect page reserves reputation (C7) and verified GitHub (C6) slots that render only if present", () => {
   assert.match(source, /reputation_score/, "must reference the C7 reputation slot")
-  assert.match(source, /githubVerified|github_verified/, "must reference the C6 verified-GitHub slot")
+  assert.match(
+    source,
+    /githubVerified|github_verified/,
+    "must reference the C6 verified-GitHub slot",
+  )
   assert.match(source, /Verification|Verified GitHub/, "must label the verified-GitHub slot")
 })
 

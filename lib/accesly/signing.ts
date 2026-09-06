@@ -53,7 +53,10 @@ export async function reconstructSeed(
   const wrappedF2 = await endpoints.getFragment2({
     clientEphemeralPubkey: base64FromBytes(ephemeral.publicKey),
   })
-  const sessionPlaintext = unwrapSessionFragment2(wrappedF2 as never, ephemeral.privateKey).plaintext
+  const sessionPlaintext = unwrapSessionFragment2(
+    wrappedF2 as never,
+    ephemeral.privateKey,
+  ).plaintext
   const fragmentF2Wire = JSON.parse(new TextDecoder().decode(sessionPlaintext)) as {
     nonce: string
     ciphertext: string

@@ -19,14 +19,8 @@ import {
   MessageSquare,
 } from "lucide-react"
 
-export type SidebarSection = 
-  | "home" 
-  | "agreements" 
-  | "contacts"
-  | "finances" 
-  | "payments" 
-  | "bounty"
-  | "settings"
+export type SidebarSection =
+  "home" | "agreements" | "contacts" | "finances" | "payments" | "bounty" | "settings"
 
 interface NavItem {
   id: SidebarSection | string
@@ -123,19 +117,14 @@ export function DashboardSidebar({
   return (
     <>
       {/* Overlay for mobile */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
-          onClick={onClose}
-        />
-      )}
+      {isOpen && <div className="fixed inset-0 z-40 bg-black/50 lg:hidden" onClick={onClose} />}
 
       {/* Sidebar */}
       <aside
         className={cn(
           "fixed inset-y-0 left-0 z-50 w-64 flex flex-col bg-[#0c1220] border-r border-white/6 transition-transform duration-300 lg:sticky lg:top-0 lg:z-30 lg:h-screen lg:translate-x-0",
           isOpen ? "translate-x-0" : "-translate-x-full",
-          className
+          className,
         )}
       >
         {/* Logo header */}
@@ -171,20 +160,22 @@ export function DashboardSidebar({
                       "flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
                       activeSection === item.id
                         ? "bg-[#f0b400]/10 text-[#f0b400]"
-                        : "text-white/60 hover:bg-white/5 hover:text-white"
+                        : "text-white/60 hover:bg-white/5 hover:text-white",
                     )}
                   >
                     <div className="flex items-center gap-3">
                       {item.icon}
-                      <span>{t(item.labelKey) || item.labelKey.split('.')[1]}</span>
+                      <span>{t(item.labelKey) || item.labelKey.split(".")[1]}</span>
                     </div>
                     {item.badge && (
-                      <span className={cn(
-                        "flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[10px] font-bold",
-                        activeSection === item.id
-                          ? "bg-[#f0b400]/20 text-[#f0b400]"
-                          : "bg-white/10 text-white/60"
-                      )}>
+                      <span
+                        className={cn(
+                          "flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[10px] font-bold",
+                          activeSection === item.id
+                            ? "bg-[#f0b400]/20 text-[#f0b400]"
+                            : "bg-white/10 text-white/60",
+                        )}
+                      >
                         {item.badge}
                       </span>
                     )}

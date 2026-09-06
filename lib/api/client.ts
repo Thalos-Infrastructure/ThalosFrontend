@@ -36,7 +36,7 @@ function getErrorMessage(data: unknown): string | undefined {
 export async function apiRequest<T>(
   endpoint: string,
   options: RequestInit = {},
-  token?: string
+  token?: string,
 ): Promise<ApiResponse<T>> {
   try {
     const headers: HeadersInit = {
@@ -58,7 +58,11 @@ export async function apiRequest<T>(
     }
 
     if (!response.ok) {
-      return { success: false, error: getErrorMessage(data) ?? "Request failed", status: response.status }
+      return {
+        success: false,
+        error: getErrorMessage(data) ?? "Request failed",
+        status: response.status,
+      }
     }
 
     return { success: true, data: data as T, status: response.status }

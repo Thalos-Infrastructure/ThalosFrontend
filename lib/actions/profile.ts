@@ -45,11 +45,11 @@ export type ProfileUpdateInput = {
  */
 export async function getOrCreateProfile(
   walletAddress: string,
-  accountType: "personal" | "enterprise" = "personal"
+  accountType: "personal" | "enterprise" = "personal",
 ): Promise<{ profile: Profile | null; error: string | null }> {
   try {
     const supabase = await createClient()
-    
+
     // First, try to get existing profile
     const { data: existingProfile, error: fetchError } = await supabase
       .from("profiles")
@@ -97,11 +97,11 @@ export async function getOrCreateProfile(
  * Get a profile by wallet address
  */
 export async function getProfileByWallet(
-  walletAddress: string
+  walletAddress: string,
 ): Promise<{ profile: Profile | null; error: string | null }> {
   try {
     const supabase = await createClient()
-    
+
     const { data, error } = await supabase
       .from("profiles")
       .select("*")
@@ -127,7 +127,7 @@ export async function getProfileByWallet(
  * Resolves auth_users.wallet_public_key first, then the wallet-keyed profile.
  */
 export async function getProfileByUserId(
-  userId: string
+  userId: string,
 ): Promise<{ profile: Profile | null; wallet: string | null; error: string | null }> {
   try {
     const service = createServiceClient()
@@ -156,11 +156,11 @@ export async function getProfileByUserId(
  */
 export async function updateProfile(
   walletAddress: string,
-  updates: ProfileUpdateInput
+  updates: ProfileUpdateInput,
 ): Promise<{ profile: Profile | null; error: string | null }> {
   try {
     const supabase = await createClient()
-    
+
     const { data, error } = await supabase
       .from("profiles")
       .update({
@@ -187,11 +187,11 @@ export async function updateProfile(
  * Get all profiles with a specific role (e.g., dispute_resolver)
  */
 export async function getProfilesByRole(
-  role: Profile["role"]
+  role: Profile["role"],
 ): Promise<{ profiles: Profile[]; error: string | null }> {
   try {
     const supabase = await createClient()
-    
+
     const { data, error } = await supabase
       .from("profiles")
       .select("*")
@@ -214,11 +214,11 @@ export async function getProfilesByRole(
  */
 export async function setUserRole(
   walletAddress: string,
-  role: Profile["role"]
+  role: Profile["role"],
 ): Promise<{ success: boolean; error: string | null }> {
   try {
     const supabase = await createClient()
-    
+
     const { error } = await supabase
       .from("profiles")
       .update({ role, updated_at: new Date().toISOString() })

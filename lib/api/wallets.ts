@@ -84,9 +84,7 @@ const TRAILING_CHALLENGE_PROOF = /\n\s*Proof:\s*.+$/
  */
 export function walletVerificationMessageToSign(challenge: string): string {
   const envelope = challenge.replace(TRAILING_CHALLENGE_PROOF, "").trimEnd()
-  return envelope.startsWith(SEP53_PREFIX)
-    ? envelope.slice(SEP53_PREFIX.length)
-    : envelope
+  return envelope.startsWith(SEP53_PREFIX) ? envelope.slice(SEP53_PREFIX.length) : envelope
 }
 
 type UnknownRecord = Record<string, unknown>
@@ -110,9 +108,7 @@ function isWalletType(value: unknown): value is WalletType {
 
 function envelopeError(value: unknown): string | undefined {
   if (!isRecord(value)) return undefined
-  return typeof value.error === "string" && value.error.length > 0
-    ? value.error
-    : undefined
+  return typeof value.error === "string" && value.error.length > 0 ? value.error : undefined
 }
 
 function invalidResponse<T>(message: string): ApiResponse<T> {
@@ -132,9 +128,7 @@ function normalizeResponse<T>(
   if (backendError) return invalidResponse(backendError)
 
   const data = parse(response.data)
-  return data === undefined
-    ? invalidResponse(invalidMessage)
-    : { success: true, data }
+  return data === undefined ? invalidResponse(invalidMessage) : { success: true, data }
 }
 
 /** The only place that handles Nest's `T[]` versus `{ wallets: T[] }` drift. */
@@ -189,11 +183,7 @@ function parseUserWallet(value: unknown): UserWallet | undefined {
 }
 
 function parseWalletBalance(value: unknown): WalletBalance | undefined {
-  if (
-    !isRecord(value) ||
-    typeof value.xlm !== "string" ||
-    typeof value.usdc !== "string"
-  ) {
+  if (!isRecord(value) || typeof value.xlm !== "string" || typeof value.usdc !== "string") {
     return undefined
   }
   return { xlm: value.xlm, usdc: value.usdc }
@@ -254,14 +244,11 @@ function parseWalletWithAgreements(value: unknown): WalletWithAgreements | undef
   }
 }
 
-function normalizeWalletResponse(
-  response: ApiResponse<unknown>,
-): ApiResponse<UserWallet> {
+function normalizeWalletResponse(response: ApiResponse<unknown>): ApiResponse<UserWallet> {
   return normalizeResponse(
     response,
-    (payload) => parseUserWallet(
-      isRecord(payload) && "wallet" in payload ? payload.wallet : payload,
-    ),
+    (payload) =>
+      parseUserWallet(isRecord(payload) && "wallet" in payload ? payload.wallet : payload),
     "Invalid wallet response",
   )
 }
@@ -276,11 +263,7 @@ export async function getLinkedWallets(token: string): Promise<ApiResponse<UserW
 export async function getWalletsWithBalances(
   token: string,
 ): Promise<ApiResponse<WalletWithBalance[]>> {
-  const response = await apiRequest<unknown>(
-    "/wallets/with-balances",
-    { method: "GET" },
-    token,
-  )
+  const response = await apiRequest<unknown>("/wallets/with-balances", { method: "GET" }, token)
   return normalizeWalletList(response, parseWalletWithBalance)
 }
 
@@ -288,18 +271,12 @@ export async function getWalletsWithBalances(
 export async function getWalletsWithAgreements(
   token: string,
 ): Promise<ApiResponse<WalletWithAgreements[]>> {
-  const response = await apiRequest<unknown>(
-    "/wallets/agreements",
-    { method: "GET" },
-    token,
-  )
+  const response = await apiRequest<unknown>("/wallets/agreements", { method: "GET" }, token)
   return normalizeWalletList(response, parseWalletWithAgreements)
 }
 
 // Get the primary `user_wallets` row. Nest returns `{ wallet }`.
-export async function getPrimaryWallet(
-  token: string,
-): Promise<ApiResponse<UserWallet | null>> {
+export async function getPrimaryWallet(token: string): Promise<ApiResponse<UserWallet | null>> {
   const response = await apiRequest<unknown>("/wallets/primary", { method: "GET" }, token)
   return normalizeResponse(
     response,
@@ -323,9 +300,8 @@ export async function getWalletBalance(
   )
   return normalizeResponse(
     response,
-    (payload) => parseWalletBalance(
-      isRecord(payload) && "balance" in payload ? payload.balance : payload,
-    ),
+    (payload) =>
+      parseWalletBalance(isRecord(payload) && "balance" in payload ? payload.balance : payload),
     "Invalid wallet balance response",
   )
 }
@@ -372,11 +348,12 @@ export async function getWalletVerificationChallenge(
     response,
     (payload) => {
       if (!isRecord(payload)) return undefined
-      const challenge = typeof payload.challenge === "string"
-        ? payload.challenge
-        : typeof payload.message === "string"
-          ? payload.message
-          : undefined
+      const challenge =
+        typeof payload.challenge === "string"
+          ? payload.challenge
+          : typeof payload.message === "string"
+            ? payload.message
+            : undefined
       if (!challenge) return undefined
       if (payload.expires_at !== undefined && typeof payload.expires_at !== "string") {
         return undefined
@@ -416,9 +393,8 @@ export async function unlinkWallet(
   )
   return normalizeResponse(
     response,
-    (payload) => isRecord(payload) && payload.success === true
-      ? { success: true as const }
-      : undefined,
+    (payload) =>
+      isRecord(payload) && payload.success === true ? { success: true as const } : undefined,
     "Wallet unlink failed",
   )
 }

@@ -33,7 +33,14 @@ function SettingsContent() {
       <header className="sticky top-0 z-40 bg-[#0c1220]/90 backdrop-blur-xl">
         <nav className="mx-auto flex h-20 max-w-[720px] items-center justify-between px-4">
           <Link href="/" className="flex items-center">
-            <Image src="/thalos-icon.png" alt="Thalos" width={72} height={72} className="h-16 w-16 object-contain" priority />
+            <Image
+              src="/thalos-icon.png"
+              alt="Thalos"
+              width={72}
+              height={72}
+              className="h-16 w-16 object-contain"
+              priority
+            />
           </Link>
         </nav>
       </header>
@@ -47,7 +54,10 @@ function SettingsContent() {
 
           {linked ? (
             <div className="mb-5 flex items-start gap-3 rounded-lg border border-emerald-500/20 bg-emerald-500/[0.06] px-3 py-3">
-              <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-400" aria-hidden="true" />
+              <CheckCircle2
+                className="mt-0.5 h-5 w-5 shrink-0 text-emerald-400"
+                aria-hidden="true"
+              />
               <div>
                 <p className="text-sm font-semibold text-white">GitHub verified</p>
                 <p className="mt-0.5 text-sm text-white/60">
@@ -72,14 +82,18 @@ function SettingsContent() {
             </div>
           ) : (
             <p className="mb-5 text-sm text-white/60">
-              Verify GitHub ownership to attach merged pull requests as milestone evidence. Your token stays on the server.
+              Verify GitHub ownership to attach merged pull requests as milestone evidence. Your
+              token stays on the server.
             </p>
           )}
 
           <GithubLinkStatusCard walletAddress={walletAddress} token={token ?? undefined} />
 
           <div className="mt-6">
-            <Button asChild className="rounded-lg bg-cyan-500 px-4 text-xs font-semibold text-white hover:bg-cyan-600">
+            <Button
+              asChild
+              className="rounded-lg bg-cyan-500 px-4 text-xs font-semibold text-white hover:bg-cyan-600"
+            >
               <Link href="/dashboard/personal">Continue to dashboard</Link>
             </Button>
           </div>

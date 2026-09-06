@@ -1,25 +1,27 @@
-import { type AgreementDraft } from "./agreement-draft.types";
-import { validateAgreementDraft } from "./validate-agreement-draft";
+import { type AgreementDraft } from "./agreement-draft.types"
+import { validateAgreementDraft } from "./validate-agreement-draft"
 
 export interface ProcessDraftAfterAIInput {
-  draft: AgreementDraft;
+  draft: AgreementDraft
 }
 
 export interface ProcessDraftAfterAIResult {
-  success: boolean;
+  success: boolean
   data?: {
-    draft: AgreementDraft;
-    validationErrors?: string[];
-    confidence: number;
-  };
-  error?: string;
+    draft: AgreementDraft
+    validationErrors?: string[]
+    confidence: number
+  }
+  error?: string
 }
 
 /**
  * Shared post-AI logic: validate draft and normalize confidence.
  */
-export function processDraftAfterAI({ draft }: ProcessDraftAfterAIInput): ProcessDraftAfterAIResult {
-  const validation = validateAgreementDraft(draft);
+export function processDraftAfterAI({
+  draft,
+}: ProcessDraftAfterAIInput): ProcessDraftAfterAIResult {
+  const validation = validateAgreementDraft(draft)
 
   if (!validation.valid) {
     return {
@@ -30,7 +32,7 @@ export function processDraftAfterAI({ draft }: ProcessDraftAfterAIInput): Proces
         validationErrors: validation.errors,
         confidence: 0,
       },
-    };
+    }
   }
 
   return {
@@ -39,5 +41,5 @@ export function processDraftAfterAI({ draft }: ProcessDraftAfterAIInput): Proces
       draft,
       confidence: 0.95,
     },
-  };
+  }
 }

@@ -136,7 +136,7 @@ export async function removeOpportunity(id: string, token: string): Promise<ApiR
 }
 export async function discoverOpportunities(
   params: OpportunityDiscoveryParams = {},
-  token?: string
+  token?: string,
 ): Promise<ApiResponse<OpportunityPaginatedResponse<Opportunity>>> {
   const query = new URLSearchParams()
 
@@ -166,7 +166,7 @@ export async function discoverOpportunities(
   const result = await apiRequest<unknown>(
     `/opportunities${qs ? `?${qs}` : ""}`,
     { method: "GET" },
-    token
+    token,
   )
 
   if (!result.success || !result.data) return { success: false, error: result.error }
@@ -180,7 +180,8 @@ export async function discoverOpportunities(
       ? (record.data as Opportunity[])
       : []
   const total = typeof record.total === "number" ? record.total : list.length
-  const limit = typeof record.limit === "number" && record.limit > 0 ? record.limit : Math.max(list.length, 1)
+  const limit =
+    typeof record.limit === "number" && record.limit > 0 ? record.limit : Math.max(list.length, 1)
 
   return {
     success: true,
@@ -189,7 +190,10 @@ export async function discoverOpportunities(
       total,
       page: typeof record.page === "number" ? record.page : 1,
       limit,
-      totalPages: typeof record.totalPages === "number" ? record.totalPages : Math.max(1, Math.ceil(total / limit)),
+      totalPages:
+        typeof record.totalPages === "number"
+          ? record.totalPages
+          : Math.max(1, Math.ceil(total / limit)),
     },
   }
 }
@@ -233,12 +237,12 @@ function unwrapList(data: unknown): Opportunity[] {
 
 export async function createOpportunity(
   input: CreateOpportunityInput,
-  token?: string | null
+  token?: string | null,
 ): Promise<ApiResponse<Opportunity>> {
   const result = await apiRequest<unknown>(
     "/opportunities",
     { method: "POST", body: JSON.stringify(input) },
-    token ?? undefined
+    token ?? undefined,
   )
 
   if (!result.success || !result.data) return { success: false, error: result.error }
@@ -252,12 +256,12 @@ export async function createOpportunity(
 export async function updateOpportunity(
   id: string,
   input: UpdateOpportunityInput,
-  token?: string | null
+  token?: string | null,
 ): Promise<ApiResponse<Opportunity>> {
   const result = await apiRequest<unknown>(
     `/opportunities/${encodeURIComponent(id)}`,
     { method: "PATCH", body: JSON.stringify(input) },
-    token ?? undefined
+    token ?? undefined,
   )
 
   if (!result.success || !result.data) return { success: false, error: result.error }
@@ -271,14 +275,14 @@ export async function updateOpportunity(
 export async function updateOpportunityStatus(
   id: string,
   status: OpportunityStatus,
-  token?: string | null
+  token?: string | null,
 ): Promise<ApiResponse<Opportunity>> {
   return updateOpportunity(id, { status }, token)
 }
 
 export async function getOpenOpportunities(
   params: OpportunityDiscoveryParams = {},
-  token?: string | null
+  token?: string | null,
 ): Promise<ApiResponse<Opportunity[]>> {
   const result = await discoverOpportunities(params, token ?? undefined)
   if (!result.success || !result.data) return { success: false, error: result.error }
@@ -287,12 +291,12 @@ export async function getOpenOpportunities(
 
 /* All statuses (open/closed/filled) for the authenticated Project. */
 export async function listMyOpportunities(
-  token?: string | null
+  token?: string | null,
 ): Promise<ApiResponse<Opportunity[]>> {
   const result = await apiRequest<unknown>(
     "/opportunities/mine",
     { method: "GET" },
-    token ?? undefined
+    token ?? undefined,
   )
 
   if (!result.success || !result.data) return { success: false, error: result.error }
@@ -302,12 +306,12 @@ export async function listMyOpportunities(
 
 export async function getOpportunity(
   id: string,
-  token?: string | null
+  token?: string | null,
 ): Promise<ApiResponse<Opportunity>> {
   const result = await apiRequest<unknown>(
     `/opportunities/${encodeURIComponent(id)}`,
     { method: "GET" },
-    token ?? undefined
+    token ?? undefined,
   )
 
   if (!result.success || !result.data) return { success: false, error: result.error }

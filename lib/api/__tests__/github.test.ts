@@ -4,7 +4,9 @@ vi.mock("@/lib/config", () => ({ API_URL: "http://localhost:3001/v1" }))
 
 // getGithubLinkStatus reads the profile (no dedicated Nest status route in #157).
 const getProfileByWallet = vi.fn()
-vi.mock("@/lib/actions/profile", () => ({ getProfileByWallet: (w: string) => getProfileByWallet(w) }))
+vi.mock("@/lib/actions/profile", () => ({
+  getProfileByWallet: (w: string) => getProfileByWallet(w),
+}))
 
 import {
   getGithubLinkStatus,
@@ -18,9 +20,9 @@ import {
 } from "../github"
 
 function mockFetch(body: unknown, status = 200) {
-  return vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
-    new Response(JSON.stringify(body), { status }),
-  )
+  return vi
+    .spyOn(globalThis, "fetch")
+    .mockResolvedValueOnce(new Response(JSON.stringify(body), { status }))
 }
 
 const PR: GithubPullRequest = {
@@ -111,7 +113,16 @@ describe("github evidence contract (ThalosBackend#157)", () => {
   describe("getAttachedPrs", () => {
     it("normalizes pr_number → number and keeps the id", async () => {
       const spy = mockFetch({
-        prs: [{ id: "uuid-1", repo: "a/b", pr_number: 7, title: "t", url: "u", merged_at: "2026-01-01T00:00:00Z" }],
+        prs: [
+          {
+            id: "uuid-1",
+            repo: "a/b",
+            pr_number: 7,
+            title: "t",
+            url: "u",
+            merged_at: "2026-01-01T00:00:00Z",
+          },
+        ],
         error: null,
       })
       const res = await getAttachedPrs("agr-1", 2, "tok")

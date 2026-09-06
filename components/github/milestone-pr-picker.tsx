@@ -225,7 +225,9 @@ export function MilestonePrPicker({
               </Button>
             </div>
             {repo.trim() && !repoValid ? (
-              <p className="text-xs text-amber-400">Use the owner/repo format (e.g. stellar/stellar-core).</p>
+              <p className="text-xs text-amber-400">
+                Use the owner/repo format (e.g. stellar/stellar-core).
+              </p>
             ) : null}
 
             {searching ? (
@@ -245,7 +247,7 @@ export function MilestonePrPicker({
                             "flex cursor-pointer items-start gap-3 rounded-lg border px-3 py-2.5 transition-colors",
                             checked
                               ? "border-cyan-500/40 bg-cyan-500/10"
-                              : "border-white/[0.06] bg-[#0a0a0c]/50 hover:border-white/15"
+                              : "border-white/[0.06] bg-[#0a0a0c]/50 hover:border-white/15",
                           )}
                         >
                           <Checkbox
@@ -256,7 +258,9 @@ export function MilestonePrPicker({
                           />
                           <span className="min-w-0 flex-1">
                             <span className="flex items-center gap-1.5">
-                              <span className="truncate text-sm font-medium text-white">{pr.title}</span>
+                              <span className="truncate text-sm font-medium text-white">
+                                {pr.title}
+                              </span>
                               <a
                                 href={pr.url}
                                 target="_blank"
@@ -270,7 +274,9 @@ export function MilestonePrPicker({
                             </span>
                             <span className="mt-0.5 block truncate text-xs text-white/40">
                               {pr.repo}#{pr.number}
-                              {pr.merged_at ? ` · merged ${new Date(pr.merged_at).toLocaleDateString()}` : ""}
+                              {pr.merged_at
+                                ? ` · merged ${new Date(pr.merged_at).toLocaleDateString()}`
+                                : ""}
                             </span>
                           </span>
                         </label>
@@ -282,7 +288,9 @@ export function MilestonePrPicker({
             ) : searched ? (
               <div className="flex flex-col items-center gap-2 py-8 text-center">
                 <GitPullRequest className="h-6 w-6 text-white/25" aria-hidden="true" />
-                <p className="text-sm text-white/50">No merged pull requests found in {repo.trim()}.</p>
+                <p className="text-sm text-white/50">
+                  No merged pull requests found in {repo.trim()}.
+                </p>
               </div>
             ) : (
               <p className="py-6 text-center text-xs text-white/40">
@@ -295,7 +303,12 @@ export function MilestonePrPicker({
         {error ? <p className="text-xs text-red-400">{error}</p> : null}
 
         <DialogFooter>
-          <Button variant="ghost" size="sm" onClick={() => setOpen(false)} className="text-xs text-white/60">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setOpen(false)}
+            className="text-xs text-white/60"
+          >
             Cancel
           </Button>
           <Button
@@ -304,7 +317,9 @@ export function MilestonePrPicker({
             disabled={!verified || attaching || loading}
             className="rounded-lg bg-cyan-500 px-4 text-xs font-semibold text-white hover:bg-cyan-600 disabled:opacity-40"
           >
-            {attaching ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" aria-hidden="true" /> : null}
+            {attaching ? (
+              <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+            ) : null}
             Save evidence
           </Button>
         </DialogFooter>

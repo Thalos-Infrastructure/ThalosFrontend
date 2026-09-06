@@ -88,15 +88,12 @@ function normalizeProfile(payload: unknown): BuilderProfile {
   const linkList = (v: unknown): BuilderProfile["portfolio_links"] => {
     if (v === null || v === undefined) return null
     if (Array.isArray(v)) return v as BuilderProfile["portfolio_links"]
-    if (typeof v === "object")
-      return v as Record<string, string> // { label: url } style object
+    if (typeof v === "object") return v as Record<string, string> // { label: url } style object
     return null
   }
 
   const stringRecordOrNull = (v: unknown): Record<string, string> | null =>
-    v !== null && v !== undefined && typeof v === "object"
-      ? (v as Record<string, string>)
-      : null
+    v !== null && v !== undefined && typeof v === "object" ? (v as Record<string, string>) : null
 
   const asNullableString = (v: unknown): string | null =>
     typeof v === "string" && v.length > 0 ? v : null

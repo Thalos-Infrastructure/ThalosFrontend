@@ -64,16 +64,16 @@ describe("wallet-auth contract", () => {
 
     it("throws on verification failure", async () => {
       mockFetch({ error: "invalid signature" }, 401)
-      await expect(
-        verifyWalletLogin("GABC...", "challenge", "bad-sig"),
-      ).rejects.toThrow("invalid signature")
+      await expect(verifyWalletLogin("GABC...", "challenge", "bad-sig")).rejects.toThrow(
+        "invalid signature",
+      )
     })
 
     it("throws default message on empty error", async () => {
       mockFetch({}, 500)
-      await expect(
-        verifyWalletLogin("GABC...", "challenge", "sig"),
-      ).rejects.toThrow("No se pudo verificar la firma de la wallet")
+      await expect(verifyWalletLogin("GABC...", "challenge", "sig")).rejects.toThrow(
+        "No se pudo verificar la firma de la wallet",
+      )
     })
 
     it("sends provider field when provided", async () => {

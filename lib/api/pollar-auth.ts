@@ -1,4 +1,4 @@
-import type { AuthUser } from "@/lib/auth/types";
+import type { AuthUser } from "@/lib/auth/types"
 
 /**
  * Client for the Pollar login -> app JWT exchange (#108). Hits the Next.js
@@ -7,15 +7,15 @@ import type { AuthUser } from "@/lib/auth/types";
  */
 
 export type PollarLoginResult = {
-  user: AuthUser;
-  token: string;
-};
+  user: AuthUser
+  token: string
+}
 
 /** Thrown while Pollar is still provisioning the wallet, so callers can retry. */
 export class PollarWalletNotReadyError extends Error {
   constructor(message: string) {
-    super(message);
-    this.name = "PollarWalletNotReadyError";
+    super(message)
+    this.name = "PollarWalletNotReadyError"
   }
 }
 
@@ -24,14 +24,14 @@ export async function loginWithPollar(accessToken: string): Promise<PollarLoginR
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ accessToken }),
-  });
-  const data = await res.json().catch(() => ({}));
+  })
+  const data = await res.json().catch(() => ({}))
 
   if (res.status === 409 && data.code === "WALLET_NOT_READY") {
-    throw new PollarWalletNotReadyError(data.error || "La wallet de Pollar todavía no está lista");
+    throw new PollarWalletNotReadyError(data.error || "La wallet de Pollar todavía no está lista")
   }
   if (!res.ok) {
-    throw new Error(data.error || "No se pudo iniciar sesión con Pollar");
+    throw new Error(data.error || "No se pudo iniciar sesión con Pollar")
   }
-  return data;
+  return data
 }

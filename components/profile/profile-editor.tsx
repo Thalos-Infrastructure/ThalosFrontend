@@ -23,7 +23,13 @@ interface ProfileEditorProps {
   type?: "personal" | "enterprise"
 }
 
-export function ProfileEditor({ isOpen, onClose, profile, onSave, type = "personal" }: ProfileEditorProps) {
+export function ProfileEditor({
+  isOpen,
+  onClose,
+  profile,
+  onSave,
+  type = "personal",
+}: ProfileEditorProps) {
   const [formData, setFormData] = useState<ProfileData>(profile)
   const [saving, setSaving] = useState(false)
   const [avatarPreview, setAvatarPreview] = useState<string | null>(profile.avatar || null)
@@ -38,7 +44,15 @@ export function ProfileEditor({ isOpen, onClose, profile, onSave, type = "person
     if (!isOpen) return
     setFormData(profile)
     setAvatarPreview(profile.avatar || null)
-  }, [isOpen, profile.displayName, profile.email, profile.walletAddress, profile.avatar, profile.company, profile.bio])
+  }, [
+    isOpen,
+    profile.displayName,
+    profile.email,
+    profile.walletAddress,
+    profile.avatar,
+    profile.company,
+    profile.bio,
+  ])
 
   if (!isOpen) return null
 
@@ -48,7 +62,7 @@ export function ProfileEditor({ isOpen, onClose, profile, onSave, type = "person
       const reader = new FileReader()
       reader.onloadend = () => {
         setAvatarPreview(reader.result as string)
-        setFormData(prev => ({ ...prev, avatar: reader.result as string }))
+        setFormData((prev) => ({ ...prev, avatar: reader.result as string }))
       }
       reader.readAsDataURL(file)
     }
@@ -71,11 +85,8 @@ export function ProfileEditor({ isOpen, onClose, profile, onSave, type = "person
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Backdrop */}
-      <div 
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-        onClick={onClose}
-      />
-      
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+
       {/* Modal */}
       <div className="relative w-full max-w-md bg-[#0c1220] rounded-2xl border border-white/10 shadow-[0_24px_80px_rgba(0,0,0,0.5)] overflow-hidden">
         {/* Header */}
@@ -96,11 +107,13 @@ export function ProfileEditor({ isOpen, onClose, profile, onSave, type = "person
           {/* Avatar */}
           <div className="flex flex-col items-center">
             <div className="relative">
-              <div 
+              <div
                 className="h-24 w-24 rounded-full flex items-center justify-center text-2xl font-bold overflow-hidden"
-                style={{ 
-                  background: avatarPreview ? 'transparent' : `linear-gradient(135deg, ${accentColor}, ${accentColor}80)`,
-                  color: type === "enterprise" ? "#ffffff" : "#0c1220"
+                style={{
+                  background: avatarPreview
+                    ? "transparent"
+                    : `linear-gradient(135deg, ${accentColor}, ${accentColor}80)`,
+                  color: type === "enterprise" ? "#ffffff" : "#0c1220",
                 }}
               >
                 {avatarPreview ? (
@@ -135,7 +148,7 @@ export function ProfileEditor({ isOpen, onClose, profile, onSave, type = "person
               </label>
               <Input
                 value={formData.displayName}
-                onChange={(e) => setFormData(prev => ({ ...prev, displayName: e.target.value }))}
+                onChange={(e) => setFormData((prev) => ({ ...prev, displayName: e.target.value }))}
                 placeholder={type === "enterprise" ? "Acme Corporation" : "John Doe"}
                 className="bg-white/5 border-white/10 text-white placeholder:text-white/30"
               />
@@ -149,7 +162,7 @@ export function ProfileEditor({ isOpen, onClose, profile, onSave, type = "person
               <Input
                 type="email"
                 value={formData.email}
-                onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))}
                 placeholder="you@example.com"
                 className="bg-white/5 border-white/10 text-white placeholder:text-white/30"
               />
@@ -178,7 +191,7 @@ export function ProfileEditor({ isOpen, onClose, profile, onSave, type = "person
                 </label>
                 <Input
                   value={formData.company || ""}
-                  onChange={(e) => setFormData(prev => ({ ...prev, company: e.target.value }))}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, company: e.target.value }))}
                   placeholder="Technology, Finance, etc."
                   className="bg-white/5 border-white/10 text-white placeholder:text-white/30"
                 />
@@ -191,7 +204,7 @@ export function ProfileEditor({ isOpen, onClose, profile, onSave, type = "person
               </label>
               <textarea
                 value={formData.bio || ""}
-                onChange={(e) => setFormData(prev => ({ ...prev, bio: e.target.value }))}
+                onChange={(e) => setFormData((prev) => ({ ...prev, bio: e.target.value }))}
                 placeholder="Tell us about yourself..."
                 rows={3}
                 className="w-full rounded-lg bg-white/5 border border-white/10 text-white placeholder:text-white/30 px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#f0b400]/50"
@@ -213,7 +226,10 @@ export function ProfileEditor({ isOpen, onClose, profile, onSave, type = "person
             onClick={handleSave}
             disabled={saving}
             className="gap-2"
-            style={{ backgroundColor: accentColor, color: type === "enterprise" ? "#ffffff" : "#0c1220" }}
+            style={{
+              backgroundColor: accentColor,
+              color: type === "enterprise" ? "#ffffff" : "#0c1220",
+            }}
           >
             <Save className="h-4 w-4" />
             {saving ? "Saving..." : "Save Changes"}

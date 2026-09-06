@@ -64,28 +64,102 @@ const useCases = [
 
 const icons: Record<string, React.ReactNode> = {
   user: (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+      <circle cx="12" cy="7" r="4" />
+    </svg>
   ),
   dollar: (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <line x1="12" y1="1" x2="12" y2="23" />
+      <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+    </svg>
   ),
   coin: (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v12"/><path d="M15.5 9.5h-5a2.5 2.5 0 0 0 0 5h3a2.5 2.5 0 0 1 0 5h-5"/></svg>
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <circle cx="12" cy="12" r="10" />
+      <path d="M12 6v12" />
+      <path d="M15.5 9.5h-5a2.5 2.5 0 0 0 0 5h3a2.5 2.5 0 0 1 0 5h-5" />
+    </svg>
   ),
   lock: (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+    </svg>
   ),
   check: (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+      <polyline points="22 4 12 14.01 9 11.01" />
+    </svg>
   ),
   "user-check": (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/></svg>
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+      <circle cx="8.5" cy="7" r="4" />
+      <polyline points="17 11 19 13 23 9" />
+    </svg>
   ),
 }
 
-function FlowDiagram({ steps }: { steps: typeof useCases[0]["steps"] }) {
+function FlowDiagram({ steps }: { steps: (typeof useCases)[0]["steps"] }) {
   const [activeStep, setActiveStep] = useState(-1)
-  const intervalRef = useRef<NodeJS.Timeout>()
+  const intervalRef = useRef<NodeJS.Timeout | undefined>(undefined)
 
   useEffect(() => {
     setActiveStep(-1)
@@ -101,7 +175,10 @@ function FlowDiagram({ steps }: { steps: typeof useCases[0]["steps"] }) {
   return (
     <div className="relative flex flex-col items-stretch gap-6 py-8 md:flex-row md:items-center md:justify-between md:gap-0">
       {/* Desktop horizontal line */}
-      <div className="absolute top-1/2 left-[8%] right-[8%] hidden h-px bg-border/30 md:block" aria-hidden="true">
+      <div
+        className="absolute top-1/2 left-[8%] right-[8%] hidden h-px bg-border/30 md:block"
+        aria-hidden="true"
+      >
         <div
           className="h-full bg-[#f0b400] transition-all duration-700 ease-out"
           style={{ width: `${Math.max(0, (activeStep / (steps.length - 1)) * 100)}%` }}
@@ -109,7 +186,10 @@ function FlowDiagram({ steps }: { steps: typeof useCases[0]["steps"] }) {
       </div>
 
       {/* Mobile vertical line */}
-      <div className="absolute top-4 bottom-4 left-7 w-px bg-border/30 md:hidden" aria-hidden="true">
+      <div
+        className="absolute top-4 bottom-4 left-7 w-px bg-border/30 md:hidden"
+        aria-hidden="true"
+      >
         <div
           className="w-full bg-[#f0b400] transition-all duration-700 ease-out"
           style={{ height: `${Math.max(0, (activeStep / (steps.length - 1)) * 100)}%` }}
@@ -121,7 +201,7 @@ function FlowDiagram({ steps }: { steps: typeof useCases[0]["steps"] }) {
           key={step.label}
           className={cn(
             "relative z-10 flex items-center gap-4 transition-all duration-500 md:flex-col md:gap-3",
-            i <= activeStep ? "opacity-100" : "opacity-30"
+            i <= activeStep ? "opacity-100" : "opacity-30",
           )}
         >
           <div
@@ -129,16 +209,18 @@ function FlowDiagram({ steps }: { steps: typeof useCases[0]["steps"] }) {
               "flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border transition-all duration-500 md:h-14 md:w-14",
               i <= activeStep
                 ? "border-[#f0b400]/30 bg-[#f0b400]/10 text-[#f0b400] shadow-[0_4px_20px_rgba(240,180,0,0.15)]"
-                : "border-white/20 bg-white/5 text-white/50"
+                : "border-white/20 bg-white/5 text-white/50",
             )}
           >
             {icons[step.icon]}
           </div>
           <div className="min-w-0 flex-1 text-left md:flex-initial md:text-center">
-            <p className={cn(
-              "text-sm font-semibold transition-colors",
-              i <= activeStep ? "text-white" : "text-white/50"
-            )}>
+            <p
+              className={cn(
+                "text-sm font-semibold transition-colors",
+                i <= activeStep ? "text-white" : "text-white/50",
+              )}
+            >
               {step.label}
             </p>
             <p className="text-xs text-white/60 leading-relaxed">{step.detail}</p>
@@ -152,20 +234,27 @@ function FlowDiagram({ steps }: { steps: typeof useCases[0]["steps"] }) {
 export function HowItWorks() {
   const { t } = useLanguage()
   const { ref, isVisible } = useSectionReveal()
-  const { displayed: twText, isTyping: twActive } = useTypewriter(t("hiw.tag"), isVisible, { typeSpeed: 120, deleteSpeed: 60, pauseBeforeDelete: 2500, pauseBeforeType: 800 })
+  const { displayed: twText, isTyping: twActive } = useTypewriter(t("hiw.tag"), isVisible, {
+    typeSpeed: 120,
+    deleteSpeed: 60,
+    pauseBeforeDelete: 2500,
+    pauseBeforeType: 800,
+  })
   const [activeUseCase, setActiveUseCase] = useState("freelancer")
   const current = useCases.find((uc) => uc.id === activeUseCase) ?? useCases[0]
 
   return (
     <section id="how-it-works" className="relative py-28" ref={ref}>
-      <div className={cn(
-        "mx-auto max-w-7xl px-6 section-reveal",
-        isVisible && "is-visible"
-      )}>
+      <div className={cn("mx-auto max-w-7xl px-6 section-reveal", isVisible && "is-visible")}>
         <div className="mb-14 text-center">
           <p className="mb-3 text-base font-bold uppercase tracking-wider text-[#f0b400] md:text-lg">
             <span>{twText}</span>
-            <span className={cn("ml-0.5 inline-block h-4 w-0.5 bg-[#f0b400] align-middle", twActive ? "animate-pulse" : "opacity-0")} />
+            <span
+              className={cn(
+                "ml-0.5 inline-block h-4 w-0.5 bg-[#f0b400] align-middle",
+                twActive ? "animate-pulse" : "opacity-0",
+              )}
+            />
           </p>
           <h2 className="mb-4 text-5xl font-bold tracking-tight text-white md:text-6xl text-balance">
             {t("hiw.title")}
@@ -175,7 +264,10 @@ export function HowItWorks() {
           </p>
         </div>
 
-        <div className="section-reveal-child mb-10 grid grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:items-center sm:justify-center sm:gap-4" style={{ transitionDelay: isVisible ? "120ms" : "0ms" }}>
+        <div
+          className="section-reveal-child mb-10 grid grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:items-center sm:justify-center sm:gap-4"
+          style={{ transitionDelay: isVisible ? "120ms" : "0ms" }}
+        >
           {useCases.map((uc) => (
             <button
               key={uc.id}
@@ -184,7 +276,7 @@ export function HowItWorks() {
                 "rounded-xl border-2 px-6 py-3 text-sm font-bold tracking-wide transition-all duration-300",
                 activeUseCase === uc.id
                   ? "border-[#f0b400] bg-[#f0b400]/20 text-[#f0b400] shadow-[0_4px_20px_rgba(240,180,0,0.25),0_0_0_1px_rgba(240,180,0,0.1)]"
-                  : "border-white/20 bg-white/5 text-white/90 shadow-[0_2px_8px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.08)] hover:border-white/40 hover:bg-white/10 hover:text-white"
+                  : "border-white/20 bg-white/5 text-white/90 shadow-[0_2px_8px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.08)] hover:border-white/40 hover:bg-white/10 hover:text-white",
               )}
             >
               {uc.label}
@@ -192,7 +284,10 @@ export function HowItWorks() {
           ))}
         </div>
 
-        <div className="section-reveal-child rounded-2xl border border-white/10 bg-[#0c1220] p-6 shadow-[0_8px_40px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)] md:p-10" style={{ transitionDelay: isVisible ? "200ms" : "0ms" }}>
+        <div
+          className="section-reveal-child rounded-2xl border border-white/10 bg-[#0c1220] p-6 shadow-[0_8px_40px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)] md:p-10"
+          style={{ transitionDelay: isVisible ? "200ms" : "0ms" }}
+        >
           <div className="mb-4 text-center">
             <p className="text-sm font-medium text-white/70">{current.description}</p>
           </div>

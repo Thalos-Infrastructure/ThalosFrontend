@@ -44,9 +44,19 @@ describe("getAgreementsByWallet", () => {
       milestones: [],
       created_by: "GPAYER",
       created_at: "2026-01-15T00:00:00.000Z",
-      participants: [{ id: "p1", agreement_id: "agr-1", wallet_address: "GPAYEE", role: "payee", joined_at: "2026-01-15T00:00:00.000Z" }],
+      participants: [
+        {
+          id: "p1",
+          agreement_id: "agr-1",
+          wallet_address: "GPAYEE",
+          role: "payee",
+          joined_at: "2026-01-15T00:00:00.000Z",
+        },
+      ],
     }
-    fetchMock.mockResolvedValue(new Response(JSON.stringify({ agreements: [agreement] }), { status: 200 }))
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ agreements: [agreement] }), { status: 200 }),
+    )
     vi.stubGlobal("fetch", fetchMock)
 
     const result = await getAgreementsByWallet("GABC123")
@@ -64,7 +74,9 @@ describe("getAgreementsByWallet", () => {
   })
 
   it("surfaces a failure when the request errors (error state)", async () => {
-    fetchMock.mockResolvedValue(new Response(JSON.stringify({ message: "Wallet not linked" }), { status: 404 }))
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ message: "Wallet not linked" }), { status: 404 }),
+    )
     vi.stubGlobal("fetch", fetchMock)
 
     const result = await getAgreementsByWallet("GABC123")

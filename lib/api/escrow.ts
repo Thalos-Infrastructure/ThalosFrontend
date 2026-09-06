@@ -192,13 +192,9 @@ export async function buildDisputeMilestone(
 // `apiRequest` simply omits the Authorization header when there is no token.
 export async function getEscrowsBySigner(
   address: string,
-  token?: string
+  token?: string,
 ): Promise<ApiResponse<Escrow[]>> {
-  return apiRequest<Escrow[]>(
-    `/escrows/by-signer/${address}`,
-    { method: "GET" },
-    token
-  )
+  return apiRequest<Escrow[]>(`/escrows/by-signer/${address}`, { method: "GET" }, token)
 }
 
 // Get escrows by role with filters
@@ -212,7 +208,7 @@ export interface GetEscrowsByRoleParams {
 // `token` optional for the same reason as getEscrowsBySigner above.
 export async function getEscrowsByRole(
   params: GetEscrowsByRoleParams,
-  token?: string
+  token?: string,
 ): Promise<ApiResponse<Escrow[]>> {
   const queryParams = new URLSearchParams({ address: params.address })
   if (params.role) queryParams.set("role", params.role)
@@ -222,7 +218,6 @@ export async function getEscrowsByRole(
   return apiRequest<Escrow[]>(
     `/escrows/by-role?${queryParams.toString()}`,
     { method: "GET" },
-    token
+    token,
   )
 }
-

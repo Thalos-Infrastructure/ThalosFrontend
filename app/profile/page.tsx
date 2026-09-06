@@ -42,7 +42,9 @@ function FormInput({
       >
         {label}
         {info && (
-          <span className="normal-case tracking-normal font-normal text-muted-foreground/50">({info})</span>
+          <span className="normal-case tracking-normal font-normal text-muted-foreground/50">
+            ({info})
+          </span>
         )}
       </label>
       <input
@@ -54,7 +56,7 @@ function FormInput({
         disabled={disabled}
         className={cn(
           "h-12 w-full rounded-xl border border-border/40 bg-card/30 px-4 text-sm text-foreground placeholder:text-muted-foreground/40 focus:border-[#f0b400]/50 focus:outline-none focus:ring-2 focus:ring-[#f0b400]/15 transition-all duration-200",
-          disabled && "opacity-50 cursor-not-allowed"
+          disabled && "opacity-50 cursor-not-allowed",
         )}
       />
     </div>
@@ -63,34 +65,76 @@ function FormInput({
 
 const Icons = {
   user: (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+    >
       <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
       <circle cx="12" cy="7" r="4" />
     </svg>
   ),
   wallet: (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+    >
       <rect x="1" y="4" width="22" height="16" rx="2" />
       <path d="M1 10h22" />
     </svg>
   ),
   shield: (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+    >
       <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
     </svg>
   ),
   check: (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
       <path d="M20 6L9 17l-5-5" />
     </svg>
   ),
   arrowLeft: (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+    >
       <path d="M19 12H5M12 19l-7-7 7-7" />
     </svg>
   ),
   camera: (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+    >
       <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
       <circle cx="12" cy="13" r="4" />
     </svg>
@@ -162,7 +206,8 @@ export default function ProfilePage() {
   }, [hydrated, user, address, profile, router, refreshProfile])
 
   useEffect(() => {
-    if (hydrated && (user || address)) fetchReputation({ token: token || undefined }).then(setReputation)
+    if (hydrated && (user || address))
+      fetchReputation({ token: token || undefined }).then(setReputation)
   }, [hydrated, user, address, token])
 
   const handleSave = async () => {
@@ -243,7 +288,11 @@ export default function ProfilePage() {
         <div className="mx-auto flex h-16 max-w-4xl items-center justify-between px-6">
           <div className="flex items-center gap-4">
             <Link href={dashboardHref}>
-              <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground hover:text-foreground">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="gap-2 text-muted-foreground hover:text-foreground"
+              >
                 {Icons.arrowLeft}
                 {t("profile.backToDashboard")}
               </Button>
@@ -263,7 +312,9 @@ export default function ProfilePage() {
 
       <main className="mx-auto max-w-4xl px-6 py-12">
         <div className="mb-10">
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">{t("profile.title")}</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">
+            {t("profile.title")}
+          </h1>
           <p className="mt-2 text-muted-foreground">{t("profile.subtitle")}</p>
         </div>
 
@@ -274,7 +325,13 @@ export default function ProfilePage() {
                 <div className="relative mb-4">
                   <div className="flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-[#f0b400]/20 to-[#f0b400]/5 border-2 border-[#f0b400]/30">
                     {avatarUrl ? (
-                      <Image src={avatarUrl} alt="Avatar" width={96} height={96} className="rounded-full object-cover" />
+                      <Image
+                        src={avatarUrl}
+                        alt="Avatar"
+                        width={96}
+                        height={96}
+                        className="rounded-full object-cover"
+                      />
                     ) : (
                       <span className="text-3xl font-bold text-[#f0b400]">{avatarInitial()}</span>
                     )}
@@ -286,8 +343,12 @@ export default function ProfilePage() {
                     {Icons.camera}
                   </button>
                 </div>
-                <h2 className="text-lg font-semibold text-foreground text-center">{sidebarTitle()}</h2>
-                <p className="text-sm text-muted-foreground">{email || user?.email || t("profile.noEmail")}</p>
+                <h2 className="text-lg font-semibold text-foreground text-center">
+                  {sidebarTitle()}
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  {email || user?.email || t("profile.noEmail")}
+                </p>
               </div>
 
               <div className="mb-6 flex flex-col gap-2">
@@ -295,7 +356,12 @@ export default function ProfilePage() {
                   <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                     {t("profile.role")}
                   </span>
-                  <span className={cn("rounded-full px-3 py-1 text-xs font-medium", roleLabels[currentRole].color)}>
+                  <span
+                    className={cn(
+                      "rounded-full px-3 py-1 text-xs font-medium",
+                      roleLabels[currentRole].color,
+                    )}
+                  >
                     {roleLabels[currentRole].label}
                   </span>
                 </div>
@@ -303,7 +369,9 @@ export default function ProfilePage() {
                   <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                     {t("profile.accountType")}
                   </span>
-                  <span className="text-sm text-foreground">{accountTypeLabels[currentAccountType]}</span>
+                  <span className="text-sm text-foreground">
+                    {accountTypeLabels[currentAccountType]}
+                  </span>
                 </div>
               </div>
 
@@ -340,13 +408,16 @@ export default function ProfilePage() {
           </div>
 
           <div className="lg:col-span-2">
-            {isAuthUser && (
-              <LinkedWallets />
-            )}
+            {isAuthUser && <LinkedWallets />}
 
             <ReputationSummary reputation={reputation} />
 
-            <div className={cn("rounded-2xl border border-border/40 bg-card/50 p-8", isAuthUser && "mt-8")}>
+            <div
+              className={cn(
+                "rounded-2xl border border-border/40 bg-card/50 p-8",
+                isAuthUser && "mt-8",
+              )}
+            >
               <h3 className="mb-6 text-lg font-semibold text-foreground flex items-center gap-2">
                 {Icons.user}
                 {t("profile.personalInfo")}
@@ -440,10 +511,14 @@ export default function ProfilePage() {
                   <h3 className="text-lg font-semibold text-foreground">Dispute Resolver Access</h3>
                 </div>
                 <p className="text-sm text-muted-foreground mb-4">
-                  You have permission to review and resolve disputes. Access the dispute management panel to handle open cases.
+                  You have permission to review and resolve disputes. Access the dispute management
+                  panel to handle open cases.
                 </p>
                 <Link href="/disputes">
-                  <Button variant="outline" className="border-purple-500/30 text-purple-400 hover:bg-purple-500/10">
+                  <Button
+                    variant="outline"
+                    className="border-purple-500/30 text-purple-400 hover:bg-purple-500/10"
+                  >
                     View Open Disputes
                   </Button>
                 </Link>
@@ -460,7 +535,10 @@ export default function ProfilePage() {
                   You can validate bounty submissions. Check the bounties awaiting your approval.
                 </p>
                 <Link href="/dashboard/bounties">
-                  <Button variant="outline" className="border-blue-500/30 text-blue-400 hover:bg-blue-500/10">
+                  <Button
+                    variant="outline"
+                    className="border-blue-500/30 text-blue-400 hover:bg-blue-500/10"
+                  >
                     View Pending Validations
                   </Button>
                 </Link>

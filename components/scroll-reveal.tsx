@@ -29,7 +29,7 @@ export function ScrollReveal({
       ([entry]) => {
         setIsVisible(entry.isIntersecting)
       },
-      { threshold, rootMargin: "0px 0px -60px 0px" }
+      { threshold, rootMargin: "0px 0px -60px 0px" },
     )
 
     observer.observe(el)

@@ -1,4 +1,4 @@
-import { TestSignMessage } from "@/components/test-sign-message";
+import { TestSignMessage } from "@/components/test-sign-message"
 
 export default function DevSignTestPage() {
   return (
@@ -6,5 +6,5 @@ export default function DevSignTestPage() {
       <h1 className="text-xl font-bold mb-4">Debug: Sign Message Test</h1>
       <TestSignMessage />
     </div>
-  );
+  )
 }

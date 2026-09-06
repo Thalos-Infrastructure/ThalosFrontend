@@ -1,5 +1,10 @@
-import { z } from "zod";
-import { AgreementDraftSchema, validateMilestoneSum, getAgreementType, type AgreementDraft } from "./agreement-draft.types";
+import { z } from "zod"
+import {
+  AgreementDraftSchema,
+  validateMilestoneSum,
+  getAgreementType,
+  type AgreementDraft,
+} from "./agreement-draft.types"
 
 // System prompt for AI agreement draft generation
 const SYSTEM_PROMPT = `You are an expert legal agreement draft generator for Thalos, a decentralized work platform.
@@ -13,32 +18,35 @@ Guidelines:
 5. Set reasonable platform fees (0-5%)
 6. Ensure all required fields are populated
 
-Output ONLY the JSON object, no additional text.`;
+Output ONLY the JSON object, no additional text.`
 
 /**
  * Validates an agreement draft and returns any validation errors
  */
-export function validateAgreementDraft(draft: AgreementDraft): { valid: boolean; errors: string[] } {
-  const errors: string[] = [];
+export function validateAgreementDraft(draft: AgreementDraft): {
+  valid: boolean
+  errors: string[]
+} {
+  const errors: string[] = []
 
   // Validate schema
-  const schemaResult = AgreementDraftSchema.safeParse(draft);
+  const schemaResult = AgreementDraftSchema.safeParse(draft)
   if (!schemaResult.success) {
-    errors.push(...schemaResult.error.errors.map((e) => e.message));
+    errors.push(...schemaResult.error.errors.map((e) => e.message))
   }
 
   // Validate milestone sum
-  const sumValidation = validateMilestoneSum(draft);
+  const sumValidation = validateMilestoneSum(draft)
   if (!sumValidation.valid && sumValidation.error) {
-    errors.push(sumValidation.error);
+    errors.push(sumValidation.error)
   }
 
   // Validate roles
-  if (!draft.roles.approver) errors.push("Approver is required");
-  if (!draft.roles.serviceProvider) errors.push("Service Provider is required");
-  if (!draft.roles.releaseSigner) errors.push("Release Signer is required");
+  if (!draft.roles.approver) errors.push("Approver is required")
+  if (!draft.roles.serviceProvider) errors.push("Service Provider is required")
+  if (!draft.roles.releaseSigner) errors.push("Release Signer is required")
 
-  return { valid: errors.length === 0, errors };
+  return { valid: errors.length === 0, errors }
 }
 
 /**
@@ -47,6 +55,6 @@ export function validateAgreementDraft(draft: AgreementDraft): { valid: boolean;
 export function buildSystemPrompt(useCase?: string): string {
   const useCasePrompt = useCase
     ? `\n\nUse Case: ${useCase}\nApply the appropriate template for this use case.`
-    : "";
-  return `${SYSTEM_PROMPT}${useCasePrompt}`;
+    : ""
+  return `${SYSTEM_PROMPT}${useCasePrompt}`
 }

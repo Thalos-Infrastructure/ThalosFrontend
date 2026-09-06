@@ -18,7 +18,11 @@ const TOKEN = "pollar.access.token"
 const session = { token: { accessToken: TOKEN, refreshToken: "r", expiresAt: 1 } }
 const READY = { step: "authenticated", verified: true, session } as unknown as AuthState
 const OPTIMISTIC = { step: "authenticated", verified: false, session } as unknown as AuthState
-const FAILED = { step: "error", previousStep: "opening_oauth", message: "popup blocked" } as AuthState
+const FAILED = {
+  step: "error",
+  previousStep: "opening_oauth",
+  message: "popup blocked",
+} as AuthState
 
 /**
  * Fake client reproducing the behaviour that matters: onAuthStateChange replays

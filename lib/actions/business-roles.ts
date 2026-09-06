@@ -19,10 +19,15 @@ export interface BusinessMember {
 /**
  * Verify server-side that the logged-in user is an Admin of the business workspace.
  */
-async function verifyAdminPermission(businessWallet: string): Promise<{ authorized: boolean; error: string | null }> {
+async function verifyAdminPermission(
+  businessWallet: string,
+): Promise<{ authorized: boolean; error: string | null }> {
   try {
     const supabase = await createClient()
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser()
     if (authError || !user) {
       return { authorized: false, error: "Unauthenticated" }
     }
@@ -67,7 +72,7 @@ async function verifyAdminPermission(businessWallet: string): Promise<{ authoriz
  * Fetch all team members for a given business wallet
  */
 export async function getBusinessMembers(
-  businessWallet: string
+  businessWallet: string,
 ): Promise<{ members: BusinessMember[]; error: string | null }> {
   try {
     const supabase = createServiceClient()
@@ -123,7 +128,7 @@ export async function getBusinessMembers(
 export async function addBusinessMember(
   businessWallet: string,
   memberWallet: string,
-  role: "Admin" | "Finance" | "Operator"
+  role: "Admin" | "Finance" | "Operator",
 ): Promise<{ success: boolean; error: string | null }> {
   try {
     const authCheck = await verifyAdminPermission(businessWallet)
@@ -133,13 +138,11 @@ export async function addBusinessMember(
 
     const supabase = createServiceClient()
 
-    const { error } = await supabase
-      .from("business_members")
-      .insert({
-        business_wallet: businessWallet,
-        member_wallet: memberWallet,
-        role,
-      })
+    const { error } = await supabase.from("business_members").insert({
+      business_wallet: businessWallet,
+      member_wallet: memberWallet,
+      role,
+    })
 
     if (error) {
       console.error("Error adding business member:", error)
@@ -159,7 +162,7 @@ export async function addBusinessMember(
 export async function updateBusinessMemberRole(
   businessWallet: string,
   memberWallet: string,
-  role: "Admin" | "Finance" | "Operator"
+  role: "Admin" | "Finance" | "Operator",
 ): Promise<{ success: boolean; error: string | null }> {
   try {
     const authCheck = await verifyAdminPermission(businessWallet)
@@ -195,7 +198,7 @@ export async function updateBusinessMemberRole(
  */
 export async function removeBusinessMember(
   businessWallet: string,
-  memberWallet: string
+  memberWallet: string,
 ): Promise<{ success: boolean; error: string | null }> {
   try {
     const authCheck = await verifyAdminPermission(businessWallet)
@@ -226,9 +229,10 @@ export async function removeBusinessMember(
 /**
  * Retrieve all business accounts/wallets that the given wallet address is a member of
  */
-export async function getUserBusinessAccounts(
-  memberWallet: string
-): Promise<{ accounts: { business_wallet: string; role: "Admin" | "Finance" | "Operator" }[]; error: string | null }> {
+export async function getUserBusinessAccounts(memberWallet: string): Promise<{
+  accounts: { business_wallet: string; role: "Admin" | "Finance" | "Operator" }[]
+  error: string | null
+}> {
   try {
     const supabase = createServiceClient()
 

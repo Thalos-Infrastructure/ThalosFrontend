@@ -31,7 +31,8 @@ function seed() {
     id: randomUUID(),
     project_id: "mock-project",
     title: "Stellar Soroban Developer",
-    description: "Build a milestone-based escrow dApp on Stellar. You will implement the Soroban smart contract, wire the frontend to Freighter, and ship a working demo on testnet. Deliverables: contract, integration tests, and a short walkthrough video.",
+    description:
+      "Build a milestone-based escrow dApp on Stellar. You will implement the Soroban smart contract, wire the frontend to Freighter, and ship a working demo on testnet. Deliverables: contract, integration tests, and a short walkthrough video.",
     skills_required: ["Rust", "Soroban", "TypeScript", "Freighter"],
     budget_amount: 8000,
     budget_asset: "USDC",
@@ -43,7 +44,8 @@ function seed() {
     id: randomUUID(),
     project_id: "mock-project",
     title: "Stellar Community Content Writer",
-    description: "Write 4 beginner-friendly guides about escrow agreements, milestones, and trustlines on Stellar. Published on the Thalos blog and mirrored to the community forum.",
+    description:
+      "Write 4 beginner-friendly guides about escrow agreements, milestones, and trustlines on Stellar. Published on the Thalos blog and mirrored to the community forum.",
     skills_required: ["Writing", "Stellar", "DeFi"],
     budget_amount: 1500,
     budget_asset: "USDC",
@@ -83,14 +85,19 @@ function callerSub(req) {
   const token = header.startsWith("Bearer ") ? header.slice(7) : null
   if (!token) return null
   try {
-    const payload = JSON.parse(Buffer.from(token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/"), "base64").toString("utf8"))
+    const payload = JSON.parse(
+      Buffer.from(token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/"), "base64").toString(
+        "utf8",
+      ),
+    )
     return typeof payload.sub === "string" ? payload.sub : null
   } catch {
     return null
   }
 }
 
-const isUuid = (s) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(s))
+const isUuid = (s) =>
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(s))
 const ENGAGEMENTS = ["fixed", "milestone", "hourly"]
 const STATUSES = ["open", "closed", "filled"]
 const APP_STATUSES = ["accepted", "rejected"]
@@ -109,7 +116,10 @@ function handle(req, res) {
   /* GET /v1/opportunities — discovery (open only) */
   if (req.method === "GET" && path === `${V1}/opportunities`) {
     const q = (url.searchParams.get("q") || "").toLowerCase()
-    const skills = (url.searchParams.get("skills_required") || "").split(",").map((s) => s.trim()).filter(Boolean)
+    const skills = (url.searchParams.get("skills_required") || "")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean)
     const engagement = url.searchParams.get("engagement_type")
     const budgetMin = url.searchParams.get("budget_min")
     const budgetMax = url.searchParams.get("budget_max")
@@ -118,10 +128,15 @@ function handle(req, res) {
 
     let rows = [...opportunities.values()].filter((o) => o.status === "open")
     if (q) rows = rows.filter((o) => `${o.title} ${o.description}`.toLowerCase().includes(q))
-    if (skills.length) rows = rows.filter((o) => skills.every((s) => o.skills_required.some((k) => k.toLowerCase() === s.toLowerCase())))
+    if (skills.length)
+      rows = rows.filter((o) =>
+        skills.every((s) => o.skills_required.some((k) => k.toLowerCase() === s.toLowerCase())),
+      )
     if (engagement) rows = rows.filter((o) => o.engagement_type === engagement)
-    if (budgetMin !== null && budgetMin !== "") rows = rows.filter((o) => Number(o.budget_amount) >= Number(budgetMin))
-    if (budgetMax !== null && budgetMax !== "") rows = rows.filter((o) => Number(o.budget_amount) <= Number(budgetMax))
+    if (budgetMin !== null && budgetMin !== "")
+      rows = rows.filter((o) => Number(o.budget_amount) >= Number(budgetMin))
+    if (budgetMax !== null && budgetMax !== "")
+      rows = rows.filter((o) => Number(o.budget_amount) <= Number(budgetMax))
     rows.sort((a, b) => (a.created_at < b.created_at ? 1 : -1))
 
     const total = rows.length
@@ -154,13 +169,26 @@ function handle(req, res) {
       if (!body) return send(res, 400, { opportunity: null, error: "Invalid JSON body" })
       const title = typeof body.title === "string" ? body.title.trim() : ""
       const description = typeof body.description === "string" ? body.description.trim() : ""
-      const skills = Array.isArray(body.skills_required) ? body.skills_required.map(String).map((s) => s.trim()).filter(Boolean) : []
+      const skills = Array.isArray(body.skills_required)
+        ? body.skills_required
+            .map(String)
+            .map((s) => s.trim())
+            .filter(Boolean)
+        : []
       const budget = Number(body.budget_amount)
       const engagement = ENGAGEMENTS.includes(body.engagement_type) ? body.engagement_type : null
 
       if (!title) return send(res, 400, { opportunity: null, error: "title is required" })
-      if (!Number.isFinite(budget) || budget <= 0) return send(res, 400, { opportunity: null, error: "budget_amount must be a positive number" })
-      if (!engagement) return send(res, 400, { opportunity: null, error: "engagement_type must be fixed | milestone | hourly" })
+      if (!Number.isFinite(budget) || budget <= 0)
+        return send(res, 400, {
+          opportunity: null,
+          error: "budget_amount must be a positive number",
+        })
+      if (!engagement)
+        return send(res, 400, {
+          opportunity: null,
+          error: "engagement_type must be fixed | milestone | hourly",
+        })
 
       const opp = {
         id: randomUUID(),
@@ -169,7 +197,8 @@ function handle(req, res) {
         description,
         skills_required: skills,
         budget_amount: budget,
-        budget_asset: typeof body.budget_asset === "string" && body.budget_asset ? body.budget_asset : "USDC",
+        budget_asset:
+          typeof body.budget_asset === "string" && body.budget_asset ? body.budget_asset : "USDC",
         engagement_type: engagement,
         status: "open",
         created_at: new Date().toISOString(),
@@ -190,17 +219,30 @@ function handle(req, res) {
       if (!opp) return send(res, 404, { opportunity: null, error: "Opportunity not found" })
 
       if (body.status !== undefined) {
-        if (!STATUSES.includes(body.status)) return send(res, 400, { opportunity: null, error: "status must be open | closed | filled" })
+        if (!STATUSES.includes(body.status))
+          return send(res, 400, {
+            opportunity: null,
+            error: "status must be open | closed | filled",
+          })
         if (opp.status === "filled" && body.status !== "filled") {
-          return send(res, 409, { opportunity: null, error: "A filled opportunity cannot be reopened" })
+          return send(res, 409, {
+            opportunity: null,
+            error: "A filled opportunity cannot be reopened",
+          })
         }
         opp.status = body.status
       }
       if (typeof body.title === "string") opp.title = body.title.trim()
       if (typeof body.description === "string") opp.description = body.description.trim()
-      if (Array.isArray(body.skills_required)) opp.skills_required = body.skills_required.map(String).map((s) => s.trim()).filter(Boolean)
-      if (body.budget_amount !== undefined && Number.isFinite(Number(body.budget_amount))) opp.budget_amount = Number(body.budget_amount)
-      if (typeof body.budget_asset === "string" && body.budget_asset) opp.budget_asset = body.budget_asset
+      if (Array.isArray(body.skills_required))
+        opp.skills_required = body.skills_required
+          .map(String)
+          .map((s) => s.trim())
+          .filter(Boolean)
+      if (body.budget_amount !== undefined && Number.isFinite(Number(body.budget_amount)))
+        opp.budget_amount = Number(body.budget_amount)
+      if (typeof body.budget_asset === "string" && body.budget_asset)
+        opp.budget_asset = body.budget_asset
       if (ENGAGEMENTS.includes(body.engagement_type)) opp.engagement_type = body.engagement_type
 
       console.log(`[mock] PATCH /opportunities/${opp.id} → status=${opp.status}`)
@@ -225,21 +267,30 @@ function handle(req, res) {
         return send(res, 401, { application: null, error: "Authentication required to apply" })
       }
 
-      if (!isUuid(opportunityId)) return send(res, 400, { application: null, error: "opportunity_id must be a UUID" })
+      if (!isUuid(opportunityId))
+        return send(res, 400, { application: null, error: "opportunity_id must be a UUID" })
       const opp = opportunities.get(opportunityId)
       if (!opp) return send(res, 404, { application: null, error: "Opportunity not found" })
 
       // Owner cannot apply to their own opportunity (matches real BE#139).
       if (opp.project_id === builderId) {
-        return send(res, 403, { application: null, error: "Projects cannot apply to their own opportunities" })
+        return send(res, 403, {
+          application: null,
+          error: "Projects cannot apply to their own opportunities",
+        })
       }
 
-      if (opp.status !== "open") return send(res, 409, { application: null, error: "This opportunity is no longer open" })
+      if (opp.status !== "open")
+        return send(res, 409, { application: null, error: "This opportunity is no longer open" })
 
       const duplicate = [...applications.values()].find(
         (a) => a.opportunity_id === opportunityId && a.builder_id === builderId,
       )
-      if (duplicate) return send(res, 409, { application: null, error: "You have already applied to this opportunity" })
+      if (duplicate)
+        return send(res, 409, {
+          application: null,
+          error: "You have already applied to this opportunity",
+        })
 
       const application = {
         id: randomUUID(),
@@ -260,7 +311,8 @@ function handle(req, res) {
   /* GET /v1/applications?opportunity_id= — applicants for an opportunity */
   if (req.method === "GET" && path === `${V1}/applications`) {
     const opportunityId = url.searchParams.get("opportunity_id")
-    if (!isUuid(opportunityId)) return send(res, 400, { applications: [], error: "opportunity_id is required" })
+    if (!isUuid(opportunityId))
+      return send(res, 400, { applications: [], error: "opportunity_id is required" })
     const callerId = callerSub(req)
     const opp = opportunities.get(opportunityId)
     const isOwner = opp && callerId && opp.project_id === callerId
@@ -284,11 +336,17 @@ function handle(req, res) {
       const callerId = callerSub(req)
       const opp = opportunities.get(application.opportunity_id)
       if (!opp || opp.project_id !== callerId) {
-        return send(res, 403, { application: null, error: "Only the owning Project can perform this action" })
+        return send(res, 403, {
+          application: null,
+          error: "Only the owning Project can perform this action",
+        })
       }
 
       if (application.status !== "pending") {
-        return send(res, 409, { application: null, error: `Application is already ${application.status} and cannot be changed` })
+        return send(res, 409, {
+          application: null,
+          error: `Application is already ${application.status} and cannot be changed`,
+        })
       }
       application.status = body.status
       application.updated_at = new Date().toISOString()
@@ -297,7 +355,11 @@ function handle(req, res) {
         if (opp) opp.status = "filled"
         // Reject all other pending applications for this opportunity.
         for (const other of applications.values()) {
-          if (other.opportunity_id === application.opportunity_id && other.id !== application.id && other.status === "pending") {
+          if (
+            other.opportunity_id === application.opportunity_id &&
+            other.id !== application.id &&
+            other.status === "pending"
+          ) {
             other.status = "rejected"
             other.updated_at = new Date().toISOString()
           }
@@ -324,6 +386,8 @@ createServer(handle).listen(PORT, () => {
   console.log(`[mock]   PATCH  /v1/opportunities/:id        (owner edit + status)`)
   console.log(`[mock]   POST   /v1/applications             (409 on duplicate)`)
   console.log(`[mock]   GET    /v1/applications?opportunity_id=`)
-  console.log(`[mock]   PATCH  /v1/applications/:id         (accepted|rejected, 409 unless pending)`)
+  console.log(
+    `[mock]   PATCH  /v1/applications/:id         (accepted|rejected, 409 unless pending)`,
+  )
   console.log(`[mock] Seeded with 2 demo opportunities. Restart to reset data.\n`)
 })

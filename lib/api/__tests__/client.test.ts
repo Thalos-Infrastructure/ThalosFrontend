@@ -37,20 +37,18 @@ describe("apiRequest contract", () => {
   })
 
   it("sends Authorization header when token is provided", async () => {
-    const spy = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
-      new Response(JSON.stringify({ ok: true }), { status: 200 }),
-    )
+    const spy = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(new Response(JSON.stringify({ ok: true }), { status: 200 }))
     await apiRequest("/test", { method: "GET" }, "my-jwt")
     const init = spy.mock.calls[0][1] as RequestInit
-    expect(init.headers).toEqual(
-      expect.objectContaining({ Authorization: "Bearer my-jwt" }),
-    )
+    expect(init.headers).toEqual(expect.objectContaining({ Authorization: "Bearer my-jwt" }))
   })
 
   it("omits Authorization header when token is absent", async () => {
-    const spy = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
-      new Response(JSON.stringify({ ok: true }), { status: 200 }),
-    )
+    const spy = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(new Response(JSON.stringify({ ok: true }), { status: 200 }))
     await apiRequest("/test", { method: "GET" })
     const init = spy.mock.calls[0][1] as RequestInit
     expect((init.headers as Record<string, string>).Authorization).toBeUndefined()

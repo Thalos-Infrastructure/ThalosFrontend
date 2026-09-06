@@ -1,17 +1,17 @@
-import type { EscrowMigrationOperation } from "@/lib/config";
+import type { EscrowMigrationOperation } from "@/lib/config"
 
-export type EscrowMigrationPath = "nest" | "trustless_work";
-export type EscrowMigrationOutcome = "success" | "failure";
+export type EscrowMigrationPath = "nest" | "trustless_work"
+export type EscrowMigrationOutcome = "success" | "failure"
 
 export interface EscrowMigrationTelemetryEvent {
-  event: "escrow_migration.route";
-  schemaVersion: 1;
-  operation: EscrowMigrationOperation;
-  path: EscrowMigrationPath;
-  outcome: EscrowMigrationOutcome;
-  durationMs: number;
-  timestamp: string;
-  error?: string;
+  event: "escrow_migration.route"
+  schemaVersion: 1
+  operation: EscrowMigrationOperation
+  path: EscrowMigrationPath
+  outcome: EscrowMigrationOutcome
+  durationMs: number
+  timestamp: string
+  error?: string
 }
 
 /**
@@ -27,12 +27,12 @@ export function emitEscrowMigrationTelemetry(
     schemaVersion: 1,
     timestamp: new Date().toISOString(),
     ...event,
-  };
+  }
 
-  const serialized = JSON.stringify(record);
+  const serialized = JSON.stringify(record)
   if (record.outcome === "failure") {
-    globalThis.console.error(serialized);
+    globalThis.console.error(serialized)
   } else {
-    globalThis.console.info(serialized);
+    globalThis.console.info(serialized)
   }
 }

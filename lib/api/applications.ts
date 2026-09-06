@@ -52,7 +52,7 @@ function unwrapList(data: unknown): Application[] {
 export async function applyToOpportunity(
   opportunityId: string,
   message: string,
-  token?: string | null
+  token?: string | null,
 ): Promise<ApiResponse<Application>> {
   const result = await apiRequest<unknown>(
     "/applications",
@@ -60,7 +60,7 @@ export async function applyToOpportunity(
       method: "POST",
       body: JSON.stringify({ opportunity_id: opportunityId, message }),
     },
-    token ?? undefined
+    token ?? undefined,
   )
 
   if (!result.success || !result.data) return { success: false, error: result.error }
@@ -73,12 +73,12 @@ export async function applyToOpportunity(
 
 export async function listApplications(
   opportunityId: string,
-  token?: string | null
+  token?: string | null,
 ): Promise<ApiResponse<Application[]>> {
   const result = await apiRequest<unknown>(
     `/applications?opportunity_id=${encodeURIComponent(opportunityId)}`,
     { method: "GET" },
-    token ?? undefined
+    token ?? undefined,
   )
 
   if (!result.success || !result.data) return { success: false, error: result.error }
@@ -97,7 +97,7 @@ export async function listApplications(
 export async function getMyApplication(
   opportunityId: string,
   builderId: string,
-  token?: string | null
+  token?: string | null,
 ): Promise<ApiResponse<Application | null>> {
   const result = await listApplications(opportunityId, token)
   if (!result.success || !result.data) {
@@ -110,12 +110,12 @@ export async function getMyApplication(
 export async function updateApplicationStatus(
   applicationId: string,
   status: Exclude<ApplicationStatus, "pending">,
-  token?: string | null
+  token?: string | null,
 ): Promise<ApiResponse<Application>> {
   const result = await apiRequest<unknown>(
     `/applications/${encodeURIComponent(applicationId)}`,
     { method: "PATCH", body: JSON.stringify({ status }) },
-    token ?? undefined
+    token ?? undefined,
   )
 
   if (!result.success || !result.data) return { success: false, error: result.error }

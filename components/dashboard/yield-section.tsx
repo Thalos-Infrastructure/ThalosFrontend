@@ -161,7 +161,8 @@ export function YieldSection({
             {t("yield.testnetInfo") || "Testnet Mode"}
           </p>
           <p className="text-xs text-white/50 mt-1">
-            {t("yield.testnetDescription") || "You're using DeFindex on Stellar Testnet. Yields are simulated for testing purposes. Switch to mainnet for real returns."}
+            {t("yield.testnetDescription") ||
+              "You're using DeFindex on Stellar Testnet. Yields are simulated for testing purposes. Switch to mainnet for real returns."}
           </p>
         </div>
       </div>
@@ -180,7 +181,7 @@ export function YieldSection({
               key={vault.id}
               className={cn(
                 "rounded-2xl border bg-[#0c1220]/60 overflow-hidden transition-all duration-200",
-                isSelected ? "border-[#f0b400]/30" : "border-white/6 hover:border-white/15"
+                isSelected ? "border-[#f0b400]/30" : "border-white/6 hover:border-white/15",
               )}
             >
               {/* Vault header */}
@@ -207,7 +208,12 @@ export function YieldSection({
                       {risk.label}
                     </span>
                   </div>
-                  <ChevronRight className={cn("h-5 w-5 text-white/30 transition-transform", isSelected && "rotate-90")} />
+                  <ChevronRight
+                    className={cn(
+                      "h-5 w-5 text-white/30 transition-transform",
+                      isSelected && "rotate-90",
+                    )}
+                  />
                 </div>
               </button>
 

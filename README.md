@@ -21,15 +21,15 @@ Thalos is a platform that lets freelancers, businesses, and everyday users creat
 
 ## Tech Stack
 
-| Layer | Technology |
-|---|---|
-| Framework | Next.js 16 (App Router) |
-| Language | TypeScript 5 |
-| Styling | Tailwind CSS 4, shadcn/ui |
+| Layer      | Technology                                      |
+| ---------- | ----------------------------------------------- |
+| Framework  | Next.js 16 (App Router)                         |
+| Language   | TypeScript 5                                    |
+| Styling    | Tailwind CSS 4, shadcn/ui                       |
 | Blockchain | Stellar SDK, Stellar Wallets Kit, Freighter API |
-| Escrows | Trustless Work API |
-| Charts | Recharts |
-| Deployment | Vercel |
+| Escrows    | Trustless Work API                              |
+| Charts     | Recharts                                        |
+| Deployment | Vercel                                          |
 
 ## Prerequisites
 
@@ -66,15 +66,15 @@ Thalos is a platform that lets freelancers, businesses, and everyday users creat
 
 ## Tech Stack
 
-| Layer | Technology |
-|---|---|
-| Framework | Next.js 16 (App Router) |
-| Language | TypeScript 5 |
-| Styling | Tailwind CSS 4, shadcn/ui |
+| Layer      | Technology                                      |
+| ---------- | ----------------------------------------------- |
+| Framework  | Next.js 16 (App Router)                         |
+| Language   | TypeScript 5                                    |
+| Styling    | Tailwind CSS 4, shadcn/ui                       |
 | Blockchain | Stellar SDK, Stellar Wallets Kit, Freighter API |
-| Escrows | Trustless Work API |
-| Charts | Recharts |
-| Deployment | Vercel |
+| Escrows    | Trustless Work API                              |
+| Charts     | Recharts                                        |
+| Deployment | Vercel                                          |
 
 ## Prerequisites
 
@@ -109,13 +109,13 @@ Copy [`.env.example`](.env.example) to `.env.local` and fill in real values. `.e
 are gitignored and must never be committed. See `.env.example` for the full, commented list;
 the **required** ones are:
 
-| Variable | Description |
-|---|---|
-| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL (same project as the backend). |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon/public key (Dashboard → Project Settings → API). |
-| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key (server-side only — keep secret). |
-| `JWT_SECRET` | App JWT signing secret (HS256). **Must be identical** to the backend's `JWT_SECRET`. |
-| `NEXT_PUBLIC_API_URL` | Base URL of the NestJS backend, **including `/v1`** (e.g. `http://localhost:3001/v1` in dev). Points to the backend host, not the frontend site. |
+| Variable                        | Description                                                                                                                                      |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `NEXT_PUBLIC_SUPABASE_URL`      | Supabase project URL (same project as the backend).                                                                                              |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon/public key (Dashboard → Project Settings → API).                                                                                   |
+| `SUPABASE_SERVICE_ROLE_KEY`     | Supabase service role key (server-side only — keep secret).                                                                                      |
+| `JWT_SECRET`                    | App JWT signing secret (HS256). **Must be identical** to the backend's `JWT_SECRET`.                                                             |
+| `NEXT_PUBLIC_API_URL`           | Base URL of the NestJS backend, **including `/v1`** (e.g. `http://localhost:3001/v1` in dev). Points to the backend host, not the frontend site. |
 
 Everything else (email, Stellar/UI, Trustless Work) is optional and documented in `.env.example`.
 
@@ -193,12 +193,12 @@ All transactions are signed client-side by your Stellar wallet. Thalos never hol
 
 ## Scripts
 
-| Command | Description |
-|---|---|
-| `pnpm dev` | Start development server |
-| `pnpm build` | Production build |
-| `pnpm start` | Start production server |
-| `pnpm lint` | Run ESLint |
+| Command      | Description              |
+| ------------ | ------------------------ |
+| `pnpm dev`   | Start development server |
+| `pnpm build` | Production build         |
+| `pnpm start` | Start production server  |
+| `pnpm lint`  | Run ESLint               |
 
 ## Links
 
@@ -218,29 +218,29 @@ The canonical `AuthUser` type is defined in `lib/auth/types.ts` and is the singl
 
 ```ts
 type AuthWallet = {
-  publicKey: string; // Stellar public key of the custodial wallet
-  provider: string;  // wallet origin, e.g. "embedded"
-};
+  publicKey: string // Stellar public key of the custodial wallet
+  provider: string // wallet origin, e.g. "embedded"
+}
 
 type AuthUser = {
-  id: string;            // auth_users UUID — never empty
-  email: string;         // verified email — never empty
-  name: string | null;   // optional display name; null if not provided
-  avatarUrl: string | null; // OAuth avatar URL; null for email flows
-  wallet: AuthWallet | null; // null if the user has no custodial wallet
-};
+  id: string // auth_users UUID — never empty
+  email: string // verified email — never empty
+  name: string | null // optional display name; null if not provided
+  avatarUrl: string | null // OAuth avatar URL; null for email flows
+  wallet: AuthWallet | null // null if the user has no custodial wallet
+}
 ```
 
 ### Field guarantees
 
-| Field | Type | Guarantee |
-|---|---|---|
-| `id` | `string` | Non-empty UUID; session is rejected if absent |
-| `email` | `string` | Non-empty email; session is rejected if absent |
-| `name` | `string \| null` | Explicit `null` (never `undefined`) to preserve JSON serialization round-trips |
-| `avatarUrl` | `string \| null` | Extracted from `user_metadata.avatar_url` or `picture` in the OAuth flow; `null` for email login and registration |
-| `wallet.provider` | `string` | Normalizes the legacy server `type` field to `provider` at the hydration layer |
-| `wallet.publicKey` | `string` | Strictly validated as a non-empty string; absent or null keys map to `wallet: null` |
+| Field              | Type             | Guarantee                                                                                                         |
+| ------------------ | ---------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `id`               | `string`         | Non-empty UUID; session is rejected if absent                                                                     |
+| `email`            | `string`         | Non-empty email; session is rejected if absent                                                                    |
+| `name`             | `string \| null` | Explicit `null` (never `undefined`) to preserve JSON serialization round-trips                                    |
+| `avatarUrl`        | `string \| null` | Extracted from `user_metadata.avatar_url` or `picture` in the OAuth flow; `null` for email login and registration |
+| `wallet.provider`  | `string`         | Normalizes the legacy server `type` field to `provider` at the hydration layer                                    |
+| `wallet.publicKey` | `string`         | Strictly validated as a non-empty string; absent or null keys map to `wallet: null`                               |
 
 ### Normalizer
 
@@ -248,9 +248,9 @@ type AuthUser = {
 
 ### Entry points
 
-| File | Event | Normalized |
-|---|---|---|
-| `components/sign-in-panel.tsx` | Email login and registration | `normalizeAuthUser(data.user)` |
-| `components/social-auth-modal.tsx` | Email login and registration | `normalizeAuthUser(data.user)` |
-| `app/auth/callback/success/page.tsx` | OAuth callback (Google) | `normalizeAuthUser(data.user)` |
-| `lib/auth-provider.tsx` | Hydration from `localStorage` | `normalizeAuthUser(JSON.parse(...))` |
+| File                                 | Event                         | Normalized                           |
+| ------------------------------------ | ----------------------------- | ------------------------------------ |
+| `components/sign-in-panel.tsx`       | Email login and registration  | `normalizeAuthUser(data.user)`       |
+| `components/social-auth-modal.tsx`   | Email login and registration  | `normalizeAuthUser(data.user)`       |
+| `app/auth/callback/success/page.tsx` | OAuth callback (Google)       | `normalizeAuthUser(data.user)`       |
+| `lib/auth-provider.tsx`              | Hydration from `localStorage` | `normalizeAuthUser(JSON.parse(...))` |

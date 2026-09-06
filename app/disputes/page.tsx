@@ -19,13 +19,94 @@ import {
 
 /* ── Icons ── */
 const Icons = {
-  shield: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>,
-  alert: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>,
-  check: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 6L9 17l-5-5" /></svg>,
-  clock: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></svg>,
-  arrowLeft: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>,
-  user: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>,
-  scale: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 3v18M3 7l9-4 9 4M3 7v4a9 9 0 0 0 9 9 9 9 0 0 0 9-9V7" /></svg>,
+  shield: (
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+    >
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+    </svg>
+  ),
+  alert: (
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+    >
+      <circle cx="12" cy="12" r="10" />
+      <line x1="12" y1="8" x2="12" y2="12" />
+      <line x1="12" y1="16" x2="12.01" y2="16" />
+    </svg>
+  ),
+  check: (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      <path d="M20 6L9 17l-5-5" />
+    </svg>
+  ),
+  clock: (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+    >
+      <circle cx="12" cy="12" r="10" />
+      <path d="M12 6v6l4 2" />
+    </svg>
+  ),
+  arrowLeft: (
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+    >
+      <path d="M19 12H5M12 19l-7-7 7-7" />
+    </svg>
+  ),
+  user: (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+    >
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+      <circle cx="12" cy="7" r="4" />
+    </svg>
+  ),
+  scale: (
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+    >
+      <path d="M12 3v18M3 7l9-4 9 4M3 7v4a9 9 0 0 0 9 9 9 9 0 0 0 9-9V7" />
+    </svg>
+  ),
 }
 
 const statusColors: Record<string, string> = {
@@ -47,13 +128,13 @@ export default function DisputesPage() {
   const router = useRouter()
   const { address, profile } = useStellarWallet()
   const { token } = useAuthStore()
-  
+
   const [isLoading, setIsLoading] = useState(true)
   const [disputes, setDisputes] = useState<DisputeWithAgreement[]>([])
   const [selectedDispute, setSelectedDispute] = useState<DisputeWithAgreement | null>(null)
   const [isResolving, setIsResolving] = useState(false)
   const [isAssigning, setIsAssigning] = useState(false)
-  
+
   // Resolution form state
   const [payerPercentage, setPayerPercentage] = useState(50)
   const [resolutionNotes, setResolutionNotes] = useState("")
@@ -70,20 +151,20 @@ export default function DisputesPage() {
 
     async function loadDisputes() {
       setIsLoading(true)
-      
+
       if (!token) {
         setIsLoading(false)
         return
       }
 
       const result = await getOpenDisputes(token)
-      
+
       if (!result.success) {
         console.error("Error loading disputes:", result.error)
       } else {
         setDisputes(result.data || [])
       }
-      
+
       setIsLoading(false)
     }
 
@@ -92,10 +173,10 @@ export default function DisputesPage() {
 
   const handleAssignToMe = async (dispute: DisputeWithAgreement) => {
     if (!address || !canResolve || !token) return
-    
+
     setIsAssigning(true)
     const result = await assignResolver(dispute.id, address, token)
-    
+
     if (!result.success) {
       console.error("Error assigning dispute:", result.error)
     } else {
@@ -105,13 +186,13 @@ export default function DisputesPage() {
         setDisputes(refreshResult.data || [])
       }
     }
-    
+
     setIsAssigning(false)
   }
 
   const handleResolve = async () => {
     if (!selectedDispute || !address || !canResolve || !token) return
-    
+
     setIsResolving(true)
     setResolveError(null)
     setResolveSuccess(false)
@@ -124,7 +205,7 @@ export default function DisputesPage() {
         payee_percentage: 100 - payerPercentage,
         resolution_notes: resolutionNotes,
       },
-      token
+      token,
     )
 
     if (!result.success) {
@@ -168,13 +249,23 @@ export default function DisputesPage() {
         <header className="sticky top-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-xl">
           <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
             <Link href="/dashboard/personal">
-              <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground hover:text-foreground">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="gap-2 text-muted-foreground hover:text-foreground"
+              >
                 {Icons.arrowLeft}
                 Back
               </Button>
             </Link>
             <Link href="/">
-              <Image src="/thalos-icon.png" alt="Thalos" width={32} height={32} className="opacity-80" />
+              <Image
+                src="/thalos-icon.png"
+                alt="Thalos"
+                width={32}
+                height={32}
+                className="opacity-80"
+              />
             </Link>
           </div>
         </header>
@@ -198,14 +289,24 @@ export default function DisputesPage() {
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
           <div className="flex items-center gap-4">
             <Link href={dashboardPathFor(profile)}>
-              <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground hover:text-foreground">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="gap-2 text-muted-foreground hover:text-foreground"
+              >
                 {Icons.arrowLeft}
                 Back to Dashboard
               </Button>
             </Link>
           </div>
           <Link href="/">
-            <Image src="/thalos-icon.png" alt="Thalos" width={32} height={32} className="opacity-80 hover:opacity-100 transition-opacity" />
+            <Image
+              src="/thalos-icon.png"
+              alt="Thalos"
+              width={32}
+              height={32}
+              className="opacity-80 hover:opacity-100 transition-opacity"
+            />
           </Link>
         </div>
       </header>
@@ -217,7 +318,9 @@ export default function DisputesPage() {
             {Icons.scale}
           </div>
           <div>
-            <h1 className="text-3xl font-bold tracking-tight text-foreground">Dispute Resolution</h1>
+            <h1 className="text-3xl font-bold tracking-tight text-foreground">
+              Dispute Resolution
+            </h1>
             <p className="mt-1 text-muted-foreground">Review and resolve open disputes</p>
           </div>
         </div>
@@ -226,16 +329,19 @@ export default function DisputesPage() {
           {/* Disputes List */}
           <div>
             <h2 className="mb-4 text-sm font-medium uppercase tracking-wider text-muted-foreground">
-              Open Disputes ({disputes.filter(d => d.status !== "resolved" && d.status !== "cancelled").length})
+              Open Disputes (
+              {disputes.filter((d) => d.status !== "resolved" && d.status !== "cancelled").length})
             </h2>
-            
+
             {disputes.length === 0 ? (
               <div className="rounded-xl border border-border/40 bg-card/50 p-8 text-center">
                 <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-500/20 text-green-400">
                   {Icons.check}
                 </div>
                 <p className="text-foreground font-medium">No open disputes</p>
-                <p className="mt-1 text-sm text-muted-foreground">All disputes have been resolved.</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  All disputes have been resolved.
+                </p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -245,7 +351,7 @@ export default function DisputesPage() {
                     onClick={() => setSelectedDispute(dispute)}
                     className={cn(
                       "w-full rounded-xl border bg-card/50 p-4 text-left transition-all duration-200 hover:border-purple-500/30 hover:bg-card",
-                      selectedDispute?.id === dispute.id && "border-purple-500/50 bg-card"
+                      selectedDispute?.id === dispute.id && "border-purple-500/50 bg-card",
                     )}
                   >
                     <div className="flex items-start justify-between gap-4">
@@ -257,7 +363,12 @@ export default function DisputesPage() {
                           {dispute.reason}
                         </p>
                         <div className="mt-2 flex items-center gap-3">
-                          <span className={cn("rounded-full border px-2 py-0.5 text-xs font-medium", statusColors[dispute.status])}>
+                          <span
+                            className={cn(
+                              "rounded-full border px-2 py-0.5 text-xs font-medium",
+                              statusColors[dispute.status],
+                            )}
+                          >
                             {statusLabels[dispute.status]}
                           </span>
                           {dispute.agreement?.amount && (
@@ -272,9 +383,7 @@ export default function DisputesPage() {
                           {new Date(dispute.created_at).toLocaleDateString()}
                         </p>
                         {dispute.resolver_wallet && (
-                          <p className="mt-1 text-xs text-purple-400">
-                            Assigned
-                          </p>
+                          <p className="mt-1 text-xs text-purple-400">Assigned</p>
                         )}
                       </div>
                     </div>
@@ -290,33 +399,56 @@ export default function DisputesPage() {
               <div className="rounded-2xl border border-border/40 bg-card/50 p-6">
                 <div className="mb-6 flex items-center justify-between">
                   <h2 className="text-lg font-semibold text-foreground">Resolve Dispute</h2>
-                  <span className={cn("rounded-full border px-3 py-1 text-xs font-medium", statusColors[selectedDispute.status])}>
+                  <span
+                    className={cn(
+                      "rounded-full border px-3 py-1 text-xs font-medium",
+                      statusColors[selectedDispute.status],
+                    )}
+                  >
                     {statusLabels[selectedDispute.status]}
                   </span>
                 </div>
 
                 {/* Agreement Info */}
                 <div className="mb-6 rounded-xl bg-background/50 p-4 border border-border/30">
-                  <h3 className="font-medium text-foreground">{selectedDispute.agreement?.title}</h3>
-                  <p className="mt-1 text-2xl font-bold text-[#f0b400]">{selectedDispute.agreement?.amount} USDC</p>
+                  <h3 className="font-medium text-foreground">
+                    {selectedDispute.agreement?.title}
+                  </h3>
+                  <p className="mt-1 text-2xl font-bold text-[#f0b400]">
+                    {selectedDispute.agreement?.amount} USDC
+                  </p>
                 </div>
 
                 {/* Dispute Details */}
                 <div className="mb-6 space-y-4">
                   <div>
-                    <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-1">Reason</p>
+                    <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-1">
+                      Reason
+                    </p>
                     <p className="text-sm text-foreground">{selectedDispute.reason}</p>
                   </div>
                   <div>
-                    <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-1">Opened By</p>
-                    <p className="text-sm font-mono text-foreground">{truncateAddress(selectedDispute.opened_by)}</p>
+                    <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-1">
+                      Opened By
+                    </p>
+                    <p className="text-sm font-mono text-foreground">
+                      {truncateAddress(selectedDispute.opened_by)}
+                    </p>
                   </div>
                   {selectedDispute.evidence_urls.length > 0 && (
                     <div>
-                      <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-1">Evidence</p>
+                      <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-1">
+                        Evidence
+                      </p>
                       <div className="space-y-1">
                         {selectedDispute.evidence_urls.map((url, i) => (
-                          <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="block text-sm text-[#f0b400] hover:underline truncate">
+                          <a
+                            key={i}
+                            href={url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="block text-sm text-[#f0b400] hover:underline truncate"
+                          >
                             {url}
                           </a>
                         ))}
@@ -337,89 +469,107 @@ export default function DisputesPage() {
                 )}
 
                 {/* Resolution Form */}
-                {(selectedDispute.resolver_wallet === address || profile?.role === "admin") && selectedDispute.status !== "resolved" && selectedDispute.status !== "cancelled" && (
-                  <>
-                    <div className="mb-6">
-                      <p className="mb-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                        Fund Distribution
-                      </p>
-                      
-                      {/* Slider */}
-                      <div className="mb-4">
-                        <input
-                          type="range"
-                          min="0"
-                          max="100"
-                          value={payerPercentage}
-                          onChange={(e) => setPayerPercentage(Number(e.target.value))}
-                          className="w-full h-2 rounded-lg appearance-none cursor-pointer bg-gradient-to-r from-blue-500 to-green-500"
+                {(selectedDispute.resolver_wallet === address || profile?.role === "admin") &&
+                  selectedDispute.status !== "resolved" &&
+                  selectedDispute.status !== "cancelled" && (
+                    <>
+                      <div className="mb-6">
+                        <p className="mb-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                          Fund Distribution
+                        </p>
+
+                        {/* Slider */}
+                        <div className="mb-4">
+                          <input
+                            type="range"
+                            min="0"
+                            max="100"
+                            value={payerPercentage}
+                            onChange={(e) => setPayerPercentage(Number(e.target.value))}
+                            className="w-full h-2 rounded-lg appearance-none cursor-pointer bg-gradient-to-r from-blue-500 to-green-500"
+                          />
+                        </div>
+
+                        {/* Distribution Display */}
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="rounded-xl bg-blue-500/10 border border-blue-500/30 p-4 text-center">
+                            <p className="text-xs font-medium uppercase tracking-wider text-blue-400 mb-1">
+                              Payer
+                            </p>
+                            <p className="text-2xl font-bold text-blue-400">{payerPercentage}%</p>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              {(
+                                ((Number(selectedDispute.agreement?.amount.replace(",", "")) || 0) *
+                                  payerPercentage) /
+                                100
+                              ).toFixed(2)}{" "}
+                              USDC
+                            </p>
+                          </div>
+                          <div className="rounded-xl bg-green-500/10 border border-green-500/30 p-4 text-center">
+                            <p className="text-xs font-medium uppercase tracking-wider text-green-400 mb-1">
+                              Payee
+                            </p>
+                            <p className="text-2xl font-bold text-green-400">
+                              {100 - payerPercentage}%
+                            </p>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              {(
+                                ((Number(selectedDispute.agreement?.amount.replace(",", "")) || 0) *
+                                  (100 - payerPercentage)) /
+                                100
+                              ).toFixed(2)}{" "}
+                              USDC
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Notes */}
+                      <div className="mb-6">
+                        <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                          Resolution Notes
+                        </label>
+                        <textarea
+                          value={resolutionNotes}
+                          onChange={(e) => setResolutionNotes(e.target.value)}
+                          placeholder="Explain the reasoning for this resolution..."
+                          rows={3}
+                          className="w-full rounded-xl border border-border/40 bg-background/50 px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/40 focus:border-purple-500/50 focus:outline-none focus:ring-2 focus:ring-purple-500/15 transition-all resize-none"
                         />
                       </div>
-                      
-                      {/* Distribution Display */}
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="rounded-xl bg-blue-500/10 border border-blue-500/30 p-4 text-center">
-                          <p className="text-xs font-medium uppercase tracking-wider text-blue-400 mb-1">Payer</p>
-                          <p className="text-2xl font-bold text-blue-400">{payerPercentage}%</p>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            {((Number(selectedDispute.agreement?.amount.replace(",", "")) || 0) * payerPercentage / 100).toFixed(2)} USDC
-                          </p>
-                        </div>
-                        <div className="rounded-xl bg-green-500/10 border border-green-500/30 p-4 text-center">
-                          <p className="text-xs font-medium uppercase tracking-wider text-green-400 mb-1">Payee</p>
-                          <p className="text-2xl font-bold text-green-400">{100 - payerPercentage}%</p>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            {((Number(selectedDispute.agreement?.amount.replace(",", "")) || 0) * (100 - payerPercentage) / 100).toFixed(2)} USDC
-                          </p>
-                        </div>
-                      </div>
-                    </div>
 
-                    {/* Notes */}
-                    <div className="mb-6">
-                      <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                        Resolution Notes
-                      </label>
-                      <textarea
-                        value={resolutionNotes}
-                        onChange={(e) => setResolutionNotes(e.target.value)}
-                        placeholder="Explain the reasoning for this resolution..."
-                        rows={3}
-                        className="w-full rounded-xl border border-border/40 bg-background/50 px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/40 focus:border-purple-500/50 focus:outline-none focus:ring-2 focus:ring-purple-500/15 transition-all resize-none"
-                      />
-                    </div>
+                      {/* Resolve Button */}
+                      <Button
+                        onClick={handleResolve}
+                        disabled={isResolving || resolveSuccess}
+                        className={cn(
+                          "w-full",
+                          resolveSuccess
+                            ? "bg-green-500 text-white"
+                            : "bg-purple-500 text-white hover:bg-purple-600",
+                        )}
+                      >
+                        {isResolving ? (
+                          <>
+                            <span className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></span>
+                            Resolving...
+                          </>
+                        ) : resolveSuccess ? (
+                          <>
+                            {Icons.check}
+                            <span className="ml-2">Resolved Successfully</span>
+                          </>
+                        ) : (
+                          "Resolve Dispute"
+                        )}
+                      </Button>
 
-                    {/* Resolve Button */}
-                    <Button
-                      onClick={handleResolve}
-                      disabled={isResolving || resolveSuccess}
-                      className={cn(
-                        "w-full",
-                        resolveSuccess
-                          ? "bg-green-500 text-white"
-                          : "bg-purple-500 text-white hover:bg-purple-600"
+                      {resolveError && (
+                        <p className="mt-3 text-sm text-red-400 text-center">{resolveError}</p>
                       )}
-                    >
-                      {isResolving ? (
-                        <>
-                          <span className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></span>
-                          Resolving...
-                        </>
-                      ) : resolveSuccess ? (
-                        <>
-                          {Icons.check}
-                          <span className="ml-2">Resolved Successfully</span>
-                        </>
-                      ) : (
-                        "Resolve Dispute"
-                      )}
-                    </Button>
-
-                    {resolveError && (
-                      <p className="mt-3 text-sm text-red-400 text-center">{resolveError}</p>
-                    )}
-                  </>
-                )}
+                    </>
+                  )}
 
                 {selectedDispute.status === "resolved" && (
                   <div className="rounded-xl bg-green-500/10 border border-green-500/30 p-4 text-center">

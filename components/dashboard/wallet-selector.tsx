@@ -34,10 +34,6 @@ function connectedWalletFallback(address: string): WalletWithBalance {
   }
 }
 
-function hasBalance(wallet: WalletSelectorWallet): wallet is WalletWithBalance {
-  return "balance" in wallet
-}
-
 export function WalletSelector({
   selectedWallet,
   onWalletChange,
@@ -72,7 +68,7 @@ export function WalletSelector({
         const result = await getWalletsWithBalances(token)
 
         if (isMounted && result.success && result.data && result.data.length > 0) {
-          setInternalWallets(result.data)
+          setInternalWallets(result.data.map((w) => ({ ...w, agreements: [] })))
         } else if (isMounted && currentAddress) {
           setInternalWallets([connectedWalletFallback(currentAddress)])
         }
@@ -113,7 +109,7 @@ export function WalletSelector({
   if (wallets.length === 0) return null
 
   const totalAgreementsCount = wallets.reduce(
-    (sum, wallet) => sum + wallet.agreements_count,
+    (sum, w) => sum + (w.agreements_count ?? w.agreements?.length ?? 0),
     0,
   )
   const isAllSelected =
@@ -175,9 +171,7 @@ export function WalletSelector({
             <span
               className={cn(
                 "rounded-full px-1.5 py-0.5 text-[10px] font-bold",
-                isSelected
-                  ? "bg-black/20 text-black"
-                  : "bg-white/10 text-white/70"
+                isSelected ? "bg-black/20 text-black" : "bg-white/10 text-white/70",
               )}
             >
               {count}

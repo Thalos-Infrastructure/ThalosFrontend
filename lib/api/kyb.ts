@@ -75,12 +75,12 @@ export function mapKybVerificationResponse(data: BackendKybVerificationEnvelope)
 
 export async function startKybSession(
   request: CreateKybSessionDto,
-  token?: string | null
+  token?: string | null,
 ): Promise<ApiResponse<KybSession>> {
   const result = await apiRequest<BackendKybVerificationEnvelope>(
     "/kyb/session",
     { method: "POST", body: JSON.stringify(request) },
-    token ?? undefined
+    token ?? undefined,
   )
 
   if (!result.success || !result.data) return { success: false, error: result.error }
@@ -90,12 +90,12 @@ export async function startKybSession(
 
 export async function getKybStatus(
   organizationId: string,
-  token?: string | null
+  token?: string | null,
 ): Promise<ApiResponse<KybStatusResponse>> {
   const result = await apiRequest<BackendKybVerificationEnvelope>(
     `/kyb/status/${encodeURIComponent(organizationId)}`,
     { method: "GET" },
-    token ?? undefined
+    token ?? undefined,
   )
 
   if (!result.success || !result.data) return { success: false, error: result.error }

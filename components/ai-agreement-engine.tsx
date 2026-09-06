@@ -1,32 +1,36 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import { Loader2, Sparkles, Check, AlertCircle, Copy, RefreshCw } from "lucide-react";
-import { AgreementDraftSchema, type AgreementDraft, type DraftRequest } from "@/lib/ai/agreement-draft.types";
-import { validateAgreementDraft } from "@/lib/ai/validate-agreement-draft";
-import { USE_CASE_PROMPTS } from "@/lib/ai/use-case-prompts";
-import { toast } from "sonner";
+import { useState } from "react"
+import { Loader2, Sparkles, Check, AlertCircle, Copy, RefreshCw } from "lucide-react"
+import {
+  AgreementDraftSchema,
+  type AgreementDraft,
+  type DraftRequest,
+} from "@/lib/ai/agreement-draft.types"
+import { validateAgreementDraft } from "@/lib/ai/validate-agreement-draft"
+import { USE_CASE_PROMPTS } from "@/lib/ai/use-case-prompts"
+import { toast } from "sonner"
 
 interface AIEngineResponse {
-  success: boolean;
+  success: boolean
   data?: {
-    draft: AgreementDraft;
-    validationErrors?: string[];
-    confidence?: number;
-  };
-  error?: string;
+    draft: AgreementDraft
+    validationErrors?: string[]
+    confidence?: number
+  }
+  error?: string
 }
 
 interface Props {
-  onDraftGenerated: (draft: AgreementDraft) => void;
-  initialPrompt?: string;
+  onDraftGenerated: (draft: AgreementDraft) => void
+  initialPrompt?: string
 }
 
 export function AIAgreementEngine({ onDraftGenerated, initialPrompt }: Props) {
-  const [prompt, setPrompt] = useState(initialPrompt || "");
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedDraft, setGeneratedDraft] = useState<AgreementDraft | null>(null);
-  const [response, setResponse] = useState<AIEngineResponse | null>(null);
+  const [prompt, setPrompt] = useState(initialPrompt || "")
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [generatedDraft, setGeneratedDraft] = useState<AgreementDraft | null>(null)
+  const [response, setResponse] = useState<AIEngineResponse | null>(null)
 
   const useCases = [
     "Freelance software development with milestone payments",
@@ -35,68 +39,68 @@ export function AIAgreementEngine({ onDraftGenerated, initialPrompt }: Props) {
     "E-commerce order fulfillment with quality checks",
     "Real estate transaction with legal verification",
     "Import/export with customs clearance milestone",
-  ];
+  ]
 
   const handleGenerate = async () => {
     if (!prompt.trim()) {
-      toast.error("Please enter a description of the agreement");
-      return;
+      toast.error("Please enter a description of the agreement")
+      return
     }
 
-    setIsGenerating(true);
-    setResponse(null);
+    setIsGenerating(true)
+    setResponse(null)
 
     try {
       const res = await fetch("/api/ai/agreement-draft", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt } as DraftRequest),
-      });
+      })
 
-      const data = await res.json();
+      const data = await res.json()
       const aiResponse: AIEngineResponse = {
         success: data.success,
         data: data.data,
         error: data.error,
-      };
+      }
 
-      setResponse(aiResponse);
+      setResponse(aiResponse)
 
       if (aiResponse.success && aiResponse.data?.draft) {
-        setGeneratedDraft(aiResponse.data.draft);
-        onDraftGenerated(aiResponse.data.draft);
-        toast.success("Agreement draft generated successfully!");
+        setGeneratedDraft(aiResponse.data.draft)
+        onDraftGenerated(aiResponse.data.draft)
+        toast.success("Agreement draft generated successfully!")
       } else {
-        toast.error(aiResponse.error || "Failed to generate draft");
+        toast.error(aiResponse.error || "Failed to generate draft")
       }
     } catch (e) {
       const errorResponse: AIEngineResponse = {
         success: false,
         error: "Network error or API failure",
-      };
-      setResponse(errorResponse);
-      toast.error(errorResponse.error);
+      }
+      setResponse(errorResponse)
+      toast.error(errorResponse.error)
     } finally {
-      setIsGenerating(false);
+      setIsGenerating(false)
     }
-  };
+  }
 
   const handleCopyDraft = () => {
     if (generatedDraft) {
-      navigator.clipboard.writeText(JSON.stringify(generatedDraft, null, 2));
-      toast.success("Draft copied to clipboard");
+      navigator.clipboard.writeText(JSON.stringify(generatedDraft, null, 2))
+      toast.success("Draft copied to clipboard")
     }
-  };
+  }
 
   const handleRegenerate = () => {
-    setGeneratedDraft(null);
-    setResponse(null);
-    handleGenerate();
-  };
+    setGeneratedDraft(null)
+    setResponse(null)
+    handleGenerate()
+  }
 
   const handleUsePrompt = (useCase: string) => {
-    setPrompt(useCase);
-  };
+    setPrompt(useCase)
+  }
 
   return (
     <div className="w-full space-y-4">
@@ -180,7 +184,11 @@ export function AIAgreementEngine({ onDraftGenerated, initialPrompt }: Props) {
 
             <div>
               <p className="text-xs text-slate-400">Service Type</p>
-              <p className="text-sm">{generatedDraft.serviceType === "multi-release" ? "Multi-release (milestones)" : "Single release"}</p>
+              <p className="text-sm">
+                {generatedDraft.serviceType === "multi-release"
+                  ? "Multi-release (milestones)"
+                  : "Single release"}
+              </p>
             </div>
 
             <div>
@@ -216,9 +224,11 @@ export function AIAgreementEngine({ onDraftGenerated, initialPrompt }: Props) {
           {response?.data?.confidence && (
             <div className="mt-3 flex items-center gap-2 text-xs text-slate-400">
               <div className="flex items-center gap-1">
-                <div 
-                  className="h-2 w-2 rounded-full" 
-                  style={{ backgroundColor: response.data.confidence > 0.8 ? "#22c55e" : "#eab308" }}
+                <div
+                  className="h-2 w-2 rounded-full"
+                  style={{
+                    backgroundColor: response.data.confidence > 0.8 ? "#22c55e" : "#eab308",
+                  }}
                 />
                 <span>Confidence: {Math.round(response.data.confidence * 100)}%</span>
               </div>
@@ -249,5 +259,5 @@ export function AIAgreementEngine({ onDraftGenerated, initialPrompt }: Props) {
         </div>
       )}
     </div>
-  );
+  )
 }

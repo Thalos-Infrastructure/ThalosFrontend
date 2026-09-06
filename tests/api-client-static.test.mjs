@@ -7,14 +7,22 @@ const apiDir = path.resolve("lib/api")
 const modules = ["agreements.ts", "disputes.ts", "escrow.ts", "kyb.ts", "wallets.ts"]
 
 test("all API modules import the shared apiRequest helper", () => {
-  for (const module of modules) {
-    const source = fs.readFileSync(path.join(apiDir, module), "utf8")
+  for (const moduleFile of modules) {
+    const source = fs.readFileSync(path.join(apiDir, moduleFile), "utf8")
     assert.match(
       source,
       /import \{ apiRequest, type ApiResponse \} from "\.\/client"/,
-      `${module} must import apiRequest from ./client`,
+      `${moduleFile} must import apiRequest from ./client`,
     )
-    assert.doesNotMatch(source, /function apiRequest/, `${module} must not define apiRequest locally`)
-    assert.doesNotMatch(source, /interface ApiResponse/, `${module} must not define ApiResponse locally`)
+    assert.doesNotMatch(
+      source,
+      /function apiRequest/,
+      `${moduleFile} must not define apiRequest locally`,
+    )
+    assert.doesNotMatch(
+      source,
+      /interface ApiResponse/,
+      `${moduleFile} must not define ApiResponse locally`,
+    )
   }
 })

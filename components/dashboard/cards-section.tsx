@@ -3,16 +3,7 @@
 import { useState } from "react"
 import { cn } from "@/lib/utils"
 import { useLanguage } from "@/lib/i18n"
-import {
-  CreditCard,
-  Plus,
-  ChevronRight,
-  Lock,
-  Eye,
-  EyeOff,
-  Smartphone,
-  Shield,
-} from "lucide-react"
+import { CreditCard, Plus, ChevronRight, Lock, Eye, EyeOff, Smartphone, Shield } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Image from "next/image"
 
@@ -121,7 +112,8 @@ export function CardsSection({ className, onRequestCard }: CardsSectionProps) {
             {t("cards.noCards") || "No cards yet"}
           </p>
           <p className="text-xs text-white/30 max-w-xs">
-            {t("cards.noCardsDescription") || "Request your Thalos card to start spending your balance worldwide"}
+            {t("cards.noCardsDescription") ||
+              "Request your Thalos card to start spending your balance worldwide"}
           </p>
         </div>
       </div>
@@ -139,9 +131,9 @@ export function CardsSection({ className, onRequestCard }: CardsSectionProps) {
               disabled={provider.comingSoon}
               className={cn(
                 "relative flex flex-col rounded-2xl border bg-[#0c1220]/60 p-5 text-left transition-all duration-200",
-                provider.comingSoon 
-                  ? "border-white/6 opacity-60 cursor-not-allowed" 
-                  : "border-white/6 hover:border-white/15 hover:bg-[#0c1220]/80"
+                provider.comingSoon
+                  ? "border-white/6 opacity-60 cursor-not-allowed"
+                  : "border-white/6 hover:border-white/15 hover:bg-[#0c1220]/80",
               )}
             >
               {provider.comingSoon && (
@@ -151,7 +143,7 @@ export function CardsSection({ className, onRequestCard }: CardsSectionProps) {
               )}
               <div className="h-10 w-16 mb-4 flex items-center">
                 {/* Logo placeholder with text */}
-                <div className="text-lg font-bold text-white/80">{provider.name.split(' ')[0]}</div>
+                <div className="text-lg font-bold text-white/80">{provider.name.split(" ")[0]}</div>
               </div>
               <p className="text-sm font-medium text-white mb-1">{provider.name}</p>
               <p className="text-xs text-white/40 mb-3 line-clamp-2">{provider.description}</p>
@@ -198,7 +190,8 @@ export function CardsSection({ className, onRequestCard }: CardsSectionProps) {
                 {t("cards.securePayments") || "Secure Payments"}
               </p>
               <p className="text-xs text-white/40 mt-0.5">
-                {t("cards.securePaymentsDesc") || "Bank-grade security with instant freeze controls"}
+                {t("cards.securePaymentsDesc") ||
+                  "Bank-grade security with instant freeze controls"}
               </p>
             </div>
           </div>

@@ -17,7 +17,9 @@ export function TestSignMessage() {
     try {
       const res = await signMessage("Hello Thalos!")
       if (res) {
-        setResult(`Success! Signed by: ${res.signerAddress.substring(0, 6)}...\nSig: ${res.signedMessage.substring(0, 20)}...`)
+        setResult(
+          `Success! Signed by: ${res.signerAddress.substring(0, 6)}...\nSig: ${res.signedMessage.substring(0, 20)}...`,
+        )
       } else {
         setResult("User rejected or failed")
       }
@@ -29,13 +31,17 @@ export function TestSignMessage() {
   return (
     <div className="fixed bottom-24 right-4 p-4 bg-background border border-border/50 rounded-lg z-[100] text-xs shadow-xl backdrop-blur-md">
       <p className="mb-2 font-bold text-foreground">SignMessage Test (Dev)</p>
-      <button 
+      <button
         onClick={handleSign}
         className="px-3 py-1.5 bg-primary text-primary-foreground font-medium rounded hover:opacity-90 transition-opacity"
       >
-        Sign "Hello Thalos!"
+        Sign &quot;Hello Thalos!&quot;
       </button>
-      {result && <pre className="mt-2 p-2 bg-muted text-muted-foreground rounded overflow-auto max-w-[250px] whitespace-pre-wrap break-all">{result}</pre>}
+      {result && (
+        <pre className="mt-2 p-2 bg-muted text-muted-foreground rounded overflow-auto max-w-[250px] whitespace-pre-wrap break-all">
+          {result}
+        </pre>
+      )}
     </div>
   )
 }
