@@ -41,8 +41,7 @@ export async function linkExternalWalletWithProof(
       // Re-login / remount often re-POSTs; Nest 409 = already linked.
       if (
         !result.success &&
-        (result.status === 409 ||
-          /already linked/i.test(result.error ?? ""))
+        (result.status === 409 || /already linked/i.test(result.error ?? ""))
       ) {
         return { success: true as const, data: result.data, status: result.status ?? 409 }
       }
