@@ -71,12 +71,16 @@ export const socialSigner: WalletSigner = {
 
     if (outcome.status === "error") {
       // Pollar's own message beats a generic failure.
-      const detail = outcome.message || outcome.details || outcome.code
+      const detail =
+        outcome.message ||
+        outcome.details ||
+        outcome.code ||
+        (typeof outcome === "object" ? JSON.stringify(outcome) : null)
       console.error("[signing:social] Pollar signTx failed:", outcome)
       throw new SignerUnavailableError(
         detail
           ? `Pollar couldn't sign the transaction: ${detail}`
-          : "Pollar couldn't sign the transaction.",
+          : "Pollar couldn't sign the transaction. Log out and sign in again so Pollar can refresh the session.",
       )
     }
 
