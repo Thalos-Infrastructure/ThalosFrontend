@@ -281,6 +281,8 @@ interface Agreement {
   releaseStrategy?: "per-milestone" | "all-at-once" | "upon-completion"
   milestones: Milestone[]
   receiver: string
+  /** On-chain / Nest payee — must match TW serviceProvider to submit evidence. */
+  serviceProvider?: string
   role?: "buyer" | "seller"
 }
 
@@ -316,9 +318,12 @@ function mapNestAgreementToUi(
   currentWallet: string | null,
 ): Agreement {
   const isMulti = agreement.agreement_type === "multi"
+  const payee = agreement.participants?.find((p) => p.role === "payee")?.wallet_address
   const counterparty = agreement.participants?.find(
     (p) => p.wallet_address !== currentWallet,
   )?.wallet_address
+  const isCreator = Boolean(currentWallet && agreement.created_by === currentWallet)
+  const isPayee = Boolean(currentWallet && payee && payee === currentWallet)
 
   return {
     id: agreement.contract_id || agreement.id,
@@ -338,8 +343,10 @@ function mapNestAgreementToUi(
       amount: asAmountString(m.amount),
       status: m.status,
     })),
-    receiver: counterparty || "",
-    role: agreement.created_by === currentWallet ? "buyer" : "seller",
+    receiver: payee || counterparty || "",
+    serviceProvider: payee || undefined,
+    // Prefer Nest participant role; fall back to creator = buyer.
+    role: isPayee ? "seller" : isCreator ? "buyer" : "seller",
   }
 }
 
@@ -740,6 +747,12 @@ function SellerMilestoneList({
       alert("Conectá o iniciá sesión con la wallet del service provider para enviar evidencia.")
       return
     }
+    if (agr.serviceProvider && agr.serviceProvider !== walletAddress) {
+      alert(
+        `Solo el service provider on-chain puede enviar evidencia (${agr.serviceProvider.slice(0, 8)}…). Esta sesión es ${walletAddress.slice(0, 8)}…`,
+      )
+      return
+    }
     setSubmitting(idx)
     await changeMilestoneStatusAgreement({
       contractId: agr.id,
@@ -747,7 +760,7 @@ function SellerMilestoneList({
       newEvidence: evidence,
       // Evidence submission marks work done — "released" is the fund-release step.
       newStatus: "completed",
-      serviceProvider: walletAddress,
+      serviceProvider: agr.serviceProvider || walletAddress,
       serviceType: agr.type === "Multi Release" ? "multi-release" : "single-release",
       walletAddress,
       token,
@@ -1443,11 +1456,15 @@ export default function PersonalDashboardPage() {
     platformFee: platformFee.toString(),
     signer: walletAddress || "",
     serviceType: escrowType === "single" ? "single-release" : "multi-release",
+    // Buyer (creator) funds/approves/releases. Counterparty (signerWallet) is the
+    // freelancer: serviceProvider + receiver. The old mapping inverted SP/receiver
+    // onto the creator, so wallet B saw Seller View but TW rejected evidence with
+    // "Only the service provider can change milestone status".
     roles: {
-      approver: signerWallet,
-      serviceProvider: walletAddress || "",
-      releaseSigner: signerWallet,
-      receiver: walletAddress || "",
+      approver: walletAddress || "",
+      serviceProvider: signerWallet,
+      releaseSigner: walletAddress || "",
+      receiver: signerWallet,
     },
     milestones:
       escrowType === "single"
@@ -3312,7 +3329,7 @@ export default function PersonalDashboardPage() {
                           {/* Counterparty Selection with Contact Selector */}
                           <div className="flex flex-col gap-2">
                             <label className="text-xs font-medium uppercase tracking-wider text-white/50">
-                              {t("wizard.releaseSignerWallet")}{" "}
+                              {t("wizard.counterpartyWallet")}{" "}
                               <span className="text-rose-400">*</span>
                             </label>
                             <ContactSelector
@@ -3320,7 +3337,10 @@ export default function PersonalDashboardPage() {
                               onChange={(wallet, name) => setSignerWallet(wallet)}
                               placeholder="Select contact or enter wallet address..."
                             />
-                            <p className="text-[11px] text-white/30">{t("wizard.whoReleases")}</p>
+                            <p className="text-[11px] text-white/30">
+                              Freelancer / seller — on-chain service provider &amp; receiver. You
+                              (buyer) approve and release.
+                            </p>
                           </div>
                           {escrowType === "single" ? (
                             <FormInput
@@ -3537,8 +3557,9 @@ export default function PersonalDashboardPage() {
                             <Button
                               onClick={async () => {
                                 const payload = generateAgreementPayload()
-                                const { createAndSignAgreement } =
-                                  await import("@/lib/agreementActions")
+                                const { createAndSignAgreement } = await import(
+                                  "@/lib/agreementActions"
+                                )
                                 await createAndSignAgreement({
                                   payload,
                                   token,
