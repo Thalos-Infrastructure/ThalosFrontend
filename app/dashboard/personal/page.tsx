@@ -3579,7 +3579,10 @@ export default function PersonalDashboardPage() {
                                         payload.serviceType === "single-release"
                                           ? "Single Release"
                                           : "Multi Release",
-                                      counterparty: payload.roles.approver?.slice(0, 8) + "...",
+                                      counterparty:
+                                        (
+                                          payload.roles.serviceProvider || payload.roles.approver
+                                        )?.slice(0, 8) + "...",
                                       amount: totalAmount.toLocaleString(),
                                       currency: "USDC",
                                       date: new Date().toISOString().split("T")[0],
@@ -3588,7 +3591,9 @@ export default function PersonalDashboardPage() {
                                         amount: m.amount,
                                         status: "pending" as const,
                                       })),
-                                      receiver: payload.roles.receiver || walletAddress || "",
+                                      receiver: payload.roles.receiver || signerWallet || "",
+                                      serviceProvider:
+                                        payload.roles.serviceProvider || signerWallet,
                                       role: "buyer",
                                     }
                                     setAgreements((prev) => [newAgr, ...prev])
