@@ -499,7 +499,8 @@ export default function DisputesPage() {
                             <p className="text-2xl font-bold text-blue-400">{payerPercentage}%</p>
                             <p className="text-sm text-muted-foreground mt-1">
                               {(
-                                ((Number(selectedDispute.agreement?.amount.replace(",", "")) || 0) *
+                                ((Number(String(selectedDispute.agreement?.amount ?? "0").replace(",", "")) ||
+                                  0) *
                                   payerPercentage) /
                                 100
                               ).toFixed(2)}{" "}
@@ -515,7 +516,8 @@ export default function DisputesPage() {
                             </p>
                             <p className="text-sm text-muted-foreground mt-1">
                               {(
-                                ((Number(selectedDispute.agreement?.amount.replace(",", "")) || 0) *
+                                ((Number(String(selectedDispute.agreement?.amount ?? "0").replace(",", "")) ||
+                                  0) *
                                   (100 - payerPercentage)) /
                                 100
                               ).toFixed(2)}{" "}

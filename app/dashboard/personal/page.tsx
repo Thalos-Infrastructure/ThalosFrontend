@@ -305,6 +305,12 @@ const NEST_STATUS_TO_UI: Record<NestAgreementStatus, string> = {
   cancelled: "cancelled",
 }
 
+function asAmountString(value: unknown): string {
+  if (typeof value === "number" && Number.isFinite(value)) return String(value)
+  if (typeof value === "string") return value
+  return "0"
+}
+
 function mapNestAgreementToUi(
   agreement: AgreementWithParticipants,
   currentWallet: string | null,
@@ -323,12 +329,13 @@ function mapNestAgreementToUi(
     counterparty: counterparty
       ? `${counterparty.slice(0, 8)}...`
       : `${agreement.created_by.slice(0, 8)}...`,
-    amount: agreement.amount,
+    // Nest/Postgres may JSON-serialize numeric columns as numbers.
+    amount: asAmountString(agreement.amount),
     currency: agreement.asset || "USDC",
     date: agreement.created_at.split("T")[0],
     milestones: agreement.milestones.map((m) => ({
       description: m.description,
-      amount: m.amount,
+      amount: asAmountString(m.amount),
       status: m.status,
     })),
     receiver: counterparty || "",
@@ -1947,7 +1954,11 @@ export default function PersonalDashboardPage() {
                     </p>
                     <p className="text-lg font-semibold text-[#f0b400]">
                       {agreements
-                        .reduce((sum, a) => sum + parseFloat(a.amount.replace(/,/g, "") || "0"), 0)
+                        .reduce(
+                          (sum, a) =>
+                            sum + (parseFloat(String(a.amount ?? "0").replace(/,/g, "")) || 0),
+                          0,
+                        )
                         .toLocaleString()}
                     </p>
                   </div>
