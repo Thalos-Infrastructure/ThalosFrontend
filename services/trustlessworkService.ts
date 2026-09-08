@@ -173,7 +173,18 @@ async function safeFetch<T>(url: string, options: RequestInit): Promise<Agreemen
     })
 
     if (!response.ok) {
-      return { success: false, error: `HTTP ${response.status}` }
+      let detail = `HTTP ${response.status}`
+      try {
+        const body = (await response.json()) as { message?: unknown; error?: unknown }
+        const msg =
+          (typeof body.message === "string" && body.message) ||
+          (typeof body.error === "string" && body.error) ||
+          null
+        if (msg) detail = `${detail}: ${msg}`
+      } catch {
+        // keep status-only message
+      }
+      return { success: false, error: detail }
     }
 
     const data = (await response.json()) as T

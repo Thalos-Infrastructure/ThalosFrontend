@@ -705,8 +705,10 @@ function SellerMilestoneList({
   const [expandedMs, setExpandedMs] = React.useState<number | null>(null)
   const [attachedPrs, setAttachedPrs] = React.useState<Record<number, GithubPullRequest[]>>({})
 
-  const { address: walletAddress, openWalletModal } =
-    require("@/lib/stellar-wallet").useStellarWallet()
+  const { openWalletModal } = require("@/lib/stellar-wallet").useStellarWallet()
+  // Pollar session address — Kit-only was null here and TW rejected with HTTP 400
+  // (serviceProvider required / not the on-chain SP).
+  const walletAddress = useCurrentAddress()
   const { changeMilestoneStatusAgreement } = require("@/lib/agreementActions")
   const { token } = useAuthStore()
   const githubAgreementId = agr.nestId
@@ -734,12 +736,17 @@ function SellerMilestoneList({
   const handleSubmitEvidence = async (idx: number) => {
     const evidence = evidenceInputs[idx]?.trim()
     if (!evidence) return
+    if (!walletAddress) {
+      alert("Conectá o iniciá sesión con la wallet del service provider para enviar evidencia.")
+      return
+    }
     setSubmitting(idx)
     await changeMilestoneStatusAgreement({
       contractId: agr.id,
       milestoneIndex: String(idx),
       newEvidence: evidence,
-      newStatus: "released",
+      // Evidence submission marks work done — "released" is the fund-release step.
+      newStatus: "completed",
       serviceProvider: walletAddress,
       serviceType: agr.type === "Multi Release" ? "multi-release" : "single-release",
       walletAddress,
@@ -756,7 +763,9 @@ function SellerMilestoneList({
               ? {
                   ...a,
                   milestones: a.milestones.map((m, i) =>
-                    i === idx && m.status === "pending" ? { ...m, status: "approved" as const } : m,
+                    i === idx && m.status === "pending"
+                      ? { ...m, status: "approved" as const, evidence }
+                      : m,
                   ),
                 }
               : a,
