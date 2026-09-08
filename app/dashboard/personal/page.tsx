@@ -1047,7 +1047,8 @@ export default function PersonalDashboardPage() {
     ((userProfile as any)?.kyc_status as KycVerificationStatus) ?? "not_started"
   const kycStatus = activeKycStatus ?? profileKycStatus
   const kycVerified = isKycVerified(kycStatus)
-  const userId = userProfile?.id ?? walletAddress
+  // Nest /verification/user/:id requires auth_users.id (JWT sub), not profiles.id.
+  const userId = socialUser?.id ?? undefined
 
   const refreshKycStatus = useCallback(
     async (uid: string) => {
@@ -3556,6 +3557,12 @@ export default function PersonalDashboardPage() {
                           <>
                             <Button
                               onClick={async () => {
+                                if (!isExternalWallet) {
+                                  setError(
+                                    "La sesión de Pollar no puede firmar (venció o no está verificada). Cerrá sesión y volvé a entrar con Pollar.",
+                                  )
+                                  return
+                                }
                                 const payload = generateAgreementPayload()
                                 const { createAndSignAgreement } = await import(
                                   "@/lib/agreementActions"
@@ -3600,7 +3607,7 @@ export default function PersonalDashboardPage() {
                                   },
                                 })
                               }}
-                              disabled={!signerEmail.trim() || creating}
+                              disabled={!signerEmail.trim() || creating || !isExternalWallet}
                               className="rounded-full bg-[#f0b400] px-8 text-sm font-semibold text-background hover:bg-[#d4a000] disabled:opacity-20 shadow-[0_4px_16px_rgba(240,180,0,0.25)]"
                             >
                               {creating
@@ -3609,7 +3616,9 @@ export default function PersonalDashboardPage() {
                                   : createTxStatus === "submitting"
                                     ? "Submitting..."
                                     : "Creating..."
-                                : "Create & Notify Signer"}
+                                : !isExternalWallet
+                                  ? "Re-login with Pollar to sign"
+                                  : "Create & Notify Signer"}
                             </Button>
                             {error && <div className="mt-2 text-sm text-red-400">{error}</div>}
                           </>
