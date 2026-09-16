@@ -14,7 +14,7 @@ import { useSignOut } from "@/lib/use-sign-out"
 import { WalletGuard, WalletPrompt } from "@/components/shared/wallet-guard"
 import { useAuthStore } from "@/lib/auth-store"
 import { WalletAddress } from "@/components/ui/wallet-address"
-import { AlertTriangle, RefreshCw, Pin } from "lucide-react"
+import { AlertTriangle, RefreshCw, Pin, PanelLeftOpen } from "lucide-react"
 import { fundAndSignEscrow } from "@/lib/agreementActions"
 import { Footer } from "@/components/footer"
 import { RampsSection } from "@/components/ramps/ramps-section"
@@ -1743,6 +1743,19 @@ export default function PersonalDashboardPage() {
 
       <div className="relative z-10 flex min-h-[calc(100vh-80px)]">
         {/* Modern Sidebar */}
+        {!sidebarPinned && !sidebarHovered && (
+          <button
+            type="button"
+            onMouseEnter={() => setSidebarHovered(true)}
+            onFocus={() => setSidebarHovered(true)}
+            onClick={() => setSidebarPinned(true)}
+            className="fixed left-0 top-1/2 z-40 flex -translate-y-1/2 items-center rounded-r-xl border border-l-0 border-white/10 bg-[#0c1220]/95 px-2 py-3 text-white/50 shadow-lg backdrop-blur-md transition-all hover:px-3 hover:text-[#f0b400]"
+            aria-label="Show sidebar"
+            title="Show sidebar"
+          >
+            <PanelLeftOpen className="size-4" />
+          </button>
+        )}
   <aside
   className={cn(
   "fixed inset-y-20 left-0 z-30 overflow-visible transition-[width,transform] duration-300 lg:sticky lg:top-20 lg:translate-x-0 lg:h-[calc(100vh-80px)]",
