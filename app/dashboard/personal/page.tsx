@@ -1034,6 +1034,7 @@ export default function PersonalDashboardPage() {
   }
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [sidebarPinned, setSidebarPinned] = useState(true)
+  const [sidebarHovered, setSidebarHovered] = useState(false)
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
   const [agreements, setAgreements] = useState<Agreement[]>(initialAgreements)
   const [agreementsLoading, setAgreementsLoading] = useState(false)
@@ -1744,12 +1745,19 @@ export default function PersonalDashboardPage() {
         {/* Modern Sidebar */}
   <aside
   className={cn(
-  "fixed inset-y-20 left-0 z-30 transition-[width,transform] duration-300 lg:sticky lg:top-20 lg:translate-x-0 lg:h-[calc(100vh-80px)]",
-  sidebarPinned ? "w-64" : "w-20",
+  "fixed inset-y-20 left-0 z-30 overflow-visible transition-[width,transform] duration-300 lg:sticky lg:top-20 lg:translate-x-0 lg:h-[calc(100vh-80px)]",
+  sidebarPinned || sidebarHovered ? "w-64" : "w-2",
   sidebarOpen ? "translate-x-0" : "-translate-x-full",
   )}
   >
-          <div className="h-full flex flex-col bg-[#0a0d14]/95 backdrop-blur-xl border-r border-white/[0.06]">
+          <div
+    onMouseEnter={() => setSidebarHovered(true)}
+    onMouseLeave={() => setSidebarHovered(false)}
+    className={cn(
+      "absolute left-0 top-0 flex h-full flex-col overflow-hidden bg-[#0a0d14]/98 backdrop-blur-xl border-r border-white/[0.06] shadow-[12px_0_30px_rgba(0,0,0,0.2)] transition-[width,opacity] duration-200",
+      sidebarPinned || sidebarHovered ? "w-64 opacity-100" : "w-0 opacity-0",
+    )}
+  >
             {/* User Profile Section - Clickable to edit */}
             <div className="p-4 border-b border-white/[0.06]">
               <button
@@ -2062,12 +2070,23 @@ export default function PersonalDashboardPage() {
                   </button>
                 </div>
                 <AgreementsView
-                  agreements={filteredAgreements.map((a) => ({
-                    ...a,
-                    updatedAt: a.date,
-                    currency: "USDC" as const,
-                  }))}
-                  onAgreementClick={(id) => setViewingAgreement(id)}
+                  agreements={[
+                    ...filteredAgreements.map((a) => ({
+                      ...a,
+                      updatedAt: a.date,
+                      currency: "USDC" as const,
+                    })),
+                    ...approverEscrows.map((e) => ({
+                      ...e,
+                      updatedAt: e.date,
+                      currency: "USDC" as const,
+                      role: "buyer" as const,
+                    })),
+                  ]}
+                  onAgreementClick={(id) => {
+                    setViewingAgreement(id)
+                    setActiveSection("agreements")
+                  }}
                   onOpenChat={(id) => setShowAgreementChat(id)}
                   currentUserWallet={walletAddress ?? undefined}
                 />
@@ -2685,7 +2704,10 @@ export default function PersonalDashboardPage() {
                       role: "buyer" as const,
                     })),
                   ]}
-                  onAgreementClick={(id) => setViewingAgreement(id)}
+                  onAgreementClick={(id) => {
+                    setViewingAgreement(id)
+                    setActiveSection("agreements")
+                  }}
                   onOpenChat={(id) => setShowAgreementChat(id)}
                   currentUserWallet={walletAddress ?? undefined}
                 />
@@ -2697,7 +2719,7 @@ export default function PersonalDashboardPage() {
           {activeSection === "agreements" &&
             viewingAgreement &&
             (() => {
-              const agr = agreements.find((a) => a.id === viewingAgreement)
+              const agr = agreements.find((a) => a.id === viewingAgreement) ?? approverEscrows.find((a) => a.id === viewingAgreement)
               if (!agr) return null
               const allReleased = agr.milestones.every((m) => m.status === "released")
               const allApproved = agr.milestones.every(
