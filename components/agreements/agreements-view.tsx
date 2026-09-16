@@ -89,17 +89,18 @@ export function AgreementsView({
 
       if (status === "completed" || status === "released" || allMilestonesReleased) {
         completed.push(agreement)
+      } else if (status === "in_progress" || status === "active") {
+        active.push(agreement)
       } else if (
         status === "pending" ||
+        status === "awaiting_funding" ||
         status === "funded" ||
         status === "dispute" ||
+        status === "disputed" ||
         hasPendingMilestones
       ) {
         // Pending = needs action from someone
         pending.push(agreement)
-      } else if (status === "in_progress") {
-        // Active = work is being done
-        active.push(agreement)
       } else {
         // Default to pending if unclear
         pending.push(agreement)

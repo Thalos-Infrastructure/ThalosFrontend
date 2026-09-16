@@ -161,7 +161,7 @@ export function DashboardHome({
     let timeoutId: ReturnType<typeof setTimeout>
     const resetInactivityTimer = () => {
       clearTimeout(timeoutId)
-      timeoutId =       timeoutId = setTimeout(() => {
+      timeoutId = setTimeout(() => {
         signOut()
       }, 15 * 60 * 1000)
     }
@@ -242,8 +242,8 @@ export function DashboardHome({
     return (
       <div className={cn("flex min-h-[420px] items-center justify-center", className)}>
         <div className="flex flex-col items-center gap-4 text-center">
-          <div className="flex size-16 items-center justify-center rounded-2xl border border-[#f0b400]/30 bg-[#f0b400]/10 shadow-[0_0_32px_rgba(240,180,0,0.12)]">
-            <span className="text-xl font-black tracking-tight text-[#f0b400]">T</span>
+          <div className="flex size-20 items-center justify-center rounded-2xl border border-[#f0b400]/30 bg-[#f0b400]/10 shadow-[0_0_32px_rgba(240,180,0,0.12)]">
+            <Image src="/thalos-logo-new.png" alt="Thalos" width={58} height={58} className="object-contain" priority />
           </div>
           <div>
             <p className="text-sm font-medium text-white">Loading your dashboard</p>

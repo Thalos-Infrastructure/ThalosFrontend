@@ -14,7 +14,8 @@ import { useSignOut } from "@/lib/use-sign-out"
 import { WalletGuard, WalletPrompt } from "@/components/shared/wallet-guard"
 import { useAuthStore } from "@/lib/auth-store"
 import { WalletAddress } from "@/components/ui/wallet-address"
-import { AlertTriangle } from "lucide-react"
+import { AlertTriangle, RefreshCw } from "lucide-react"
+import { fundAndSignEscrow } from "@/lib/agreementActions"
 import { Footer } from "@/components/footer"
 import { RampsSection } from "@/components/ramps/ramps-section"
 import { InlineOnramp } from "@/components/ramps/inline-onramp"
@@ -694,6 +695,55 @@ const moreSidebarItems = [
     ),
   },
 ]
+
+function BuyerFundingAction({
+  agr,
+  onRefresh,
+}: {
+  agr: Agreement
+  onRefresh: () => Promise<void>
+}) {
+  const { openWalletModal } = useStellarWallet()
+  const walletAddress = useCurrentAddress()
+  const { token } = useAuthStore()
+  const [funding, setFunding] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState(false)
+
+  const handleFund = async () => {
+    if (!walletAddress) return setError("Connect your wallet to fund this agreement.")
+    setFunding(true)
+    setError(null)
+    await fundAndSignEscrow({
+      contractId: agr.id,
+      amount: String(agr.amount),
+      serviceType: agr.type === "Multi Release" ? "multi-release" : "single-release",
+      walletAddress,
+      token,
+      openWalletModal,
+      setFunding,
+      setError,
+      setSuccess,
+    })
+    setSuccess(true)
+    await onRefresh()
+  }
+
+  return (
+    <div className="rounded-xl border border-sky-400/20 bg-sky-400/5 p-4">
+      <p className="text-sm font-semibold text-white">This agreement is awaiting funding</p>
+      <p className="mt-1 text-xs text-white/50">Fund it from your connected wallet to start the work.</p>
+      {error && <p className="mt-2 text-xs text-rose-400">{error}</p>}
+      {success ? (
+        <p className="mt-3 text-sm font-semibold text-emerald-400">Agreement funded successfully.</p>
+      ) : (
+        <Button onClick={handleFund} disabled={funding} className="mt-3 bg-[#f0b400] text-[#0c1220] hover:bg-[#e5ab00]">
+          {funding ? "Funding..." : "Fund Agreement"}
+        </Button>
+      )}
+    </div>
+  )
+}
 
 /* ── Seller Evidence Submission Component ── */
 function SellerMilestoneList({
@@ -1905,6 +1955,21 @@ export default function PersonalDashboardPage() {
             <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 space-y-5 mt-6">
               {/* Compact Balance Row */}
               <div className="flex items-center justify-between rounded-xl border border-white/10 bg-[#0c1220] p-4">
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      fetchedEscrowsRef.current = null
+                      await refreshAgreements()
+                      setActiveSection("home")
+                    }}
+                    className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-white/70 transition-colors hover:bg-white/10 hover:text-white"
+                    aria-label="Refresh dashboard"
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                    Refresh
+                  </button>
+                </div>
                 <div className="flex items-center gap-6">
                   <div>
                     <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">
@@ -2701,6 +2766,11 @@ export default function PersonalDashboardPage() {
                       </p>
                     </div>
                   )}
+
+                  {/* Role-specific agreement actions */}
+                  {agr.role === "buyer" && agr.status === "pending" ? (
+                    <BuyerFundingAction agr={agr} onRefresh={refreshAgreements} />
+                  ) : null}
 
                   {/* Seller role badge */}
                   <div className="mb-4 rounded-xl border border-[#f0b400]/15 bg-[#f0b400]/5 px-4 py-2.5 flex items-center gap-2">
