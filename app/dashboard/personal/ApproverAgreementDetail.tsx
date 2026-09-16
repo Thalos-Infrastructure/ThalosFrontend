@@ -40,7 +40,7 @@ import { useStellarWallet } from "@/lib/stellar-wallet"
 import { WalletPrompt } from "@/components/shared/wallet-guard"
 import { fundAndSignEscrow } from "@/lib/agreementActions"
 import { signEscrowOperation, type EscrowOperation, type TxStatus } from "@/lib/signing"
-import type { AgreementResponse } from "@/services/trustlessworkService"
+import type { AgreementResponse } from "@/services/escrow.types"
 import { useAuthStore } from "@/lib/auth-store"
 import { AlertTriangle } from "lucide-react"
 
@@ -111,16 +111,12 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
       onStatus: setTxStatus,
     })
     setTxStatus("submitting")
-    // GF-2: when token is available, submit through the Nest backend
-    // (keeps API key server-side and maintains auth audit trail).
-    let sendRes
-    if (token) {
-      const { submitSignedTransaction } = await import("@/lib/api/escrow")
-      sendRes = await submitSignedTransaction(signedResult.signedTxXdr, token)
-    } else {
-      const { sendTransaction } = await import("@/services/trustlessworkService")
-      sendRes = await sendTransaction(signedResult.signedTxXdr)
-    }
+    // Submission goes through the Nest backend, which keeps the Trustless Work
+    // API key server-side. There is no unauthenticated path: a session is
+    // required to move funds.
+    if (!token) throw new Error("Sign in to submit this transaction")
+    const { submitSignedTransaction } = await import("@/lib/api/escrow")
+    const sendRes = await submitSignedTransaction(signedResult.signedTxXdr, token)
     if (!sendRes.success) throw new Error(sendRes.error || "Error sending transaction")
     setTxStatus("confirmed")
     return true
@@ -131,7 +127,7 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
     setErrorMs(null)
     setTxStatus("building")
     try {
-      const { disputeMilestone } = await import("@/services/escrowMigration")
+      const { disputeMilestone } = await import("@/services/escrowService")
       const { openDispute } = await import("@/lib/actions/disputes")
 
       const escrowType = agr.type === "Multi Release" ? "multi-release" : "single-release"
@@ -170,7 +166,7 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
     setErrorMs(null)
     setTxStatus("building")
     try {
-      const { approveMilestone } = await import("@/services/escrowMigration")
+      const { approveMilestone } = await import("@/services/escrowService")
       const res = await approveMilestone(
         agr.id,
         idx.toString(),
@@ -195,7 +191,7 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
     setErrorMs(null)
     setTxStatus("building")
     try {
-      const { releaseFunds } = await import("@/services/escrowMigration")
+      const { releaseFunds } = await import("@/services/escrowService")
       const type = agr.type === "Multi Release" ? "multi-release" : "single-release"
       const res = await releaseFunds(agr.id, walletAddress, type, undefined, token ?? undefined)
       await signAndSubmit("releaseFunds", res, "Error releasing funds")

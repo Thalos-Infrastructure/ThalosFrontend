@@ -50,7 +50,7 @@ import {
   sendTransaction,
   AgreementPayload,
   approveMilestone,
-} from "@/services/escrowMigration"
+} from "@/services/escrowService"
 import {
   STELLAR_EXPLORER_BASE_URL,
   STELLAR_EXPLORER_ACCOUNT_BASE_URL,
@@ -1294,8 +1294,7 @@ export default function PersonalDashboardPage() {
     // Fetch escrows where user is approver (for approver tab)
     async function fetchApproverEscrows() {
       setApproverLoading(true)
-      // MIGRATION: Using escrowMigration wrapper
-      const { getEscrowsByRole } = await import("@/services/escrowMigration")
+      const { getEscrowsByRole } = await import("@/services/escrowService")
       const res = await getEscrowsByRole(
         { role: "approver", address: activeAddress },
         token ?? undefined,
