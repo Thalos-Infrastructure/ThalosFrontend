@@ -30,6 +30,9 @@ export async function loginWithPollar(accessToken: string): Promise<PollarLoginR
   if (res.status === 409 && data.code === "WALLET_NOT_READY") {
     throw new PollarWalletNotReadyError(data.error || "La wallet de Pollar todavía no está lista")
   }
+  if (res.status === 503 && data.code === "POLLAR_CONFIGURATION_ERROR") {
+    throw new Error("El login de staging está mal configurado. El equipo debe revisar la clave secreta de Pollar.")
+  }
   if (!res.ok) {
     throw new Error(data.error || "No se pudo iniciar sesión con Pollar")
   }

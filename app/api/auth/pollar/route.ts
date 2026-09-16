@@ -46,6 +46,12 @@ const TOKEN_REJECTION_CODES = new Set([
   "SDK_TOKEN_WRONG_APPLICATION",
 ])
 
+const CONFIGURATION_ERROR_CODES = new Set([
+  "API_KEY_NOT_FOUND",
+  "API_KEY_TYPE_NOT_ALLOWED",
+  "API_KEY_INVALID",
+])
+
 function asString(value: unknown): string | null {
   return typeof value === "string" && value ? value : null
 }
@@ -107,15 +113,28 @@ export async function POST(req: Request) {
     }
 
     if (!res.ok || payload.success !== true) {
+      const upstreamCode = typeof payload.code === "string" ? payload.code : null
+      const isConfigurationError = upstreamCode !== null && CONFIGURATION_ERROR_CODES.has(upstreamCode)
+
       console.error(
-        `auth/pollar: unexpected reply from ${POLLAR_SERVER_API_URL}/tokens/verify ` +
-          `(HTTP ${res.status}, code=${String(payload.code)})`,
+        `auth/pollar: ${isConfigurationError ? "configuration error" : "unexpected reply"} from ` +
+          `${POLLAR_SERVER_API_URL}/tokens/verify (HTTP ${res.status}, code=${String(payload.code)})`,
       )
+
+      if (isConfigurationError) {
+        return NextResponse.json(
+          {
+            error: "El inicio de sesión de staging está mal configurado. Contacta al equipo.",
+            code: "POLLAR_CONFIGURATION_ERROR",
+          },
+          { status: 503 },
+        )
+      }
+
       return NextResponse.json(
         {
           error: "Pollar respondió de forma inesperada",
-          code: typeof payload.code === "string" ? payload.code : "POLLAR_BAD_RESPONSE",
-          upstreamStatus: res.status,
+          code: "POLLAR_BAD_RESPONSE",
         },
         { status: 502 },
       )
