@@ -14,7 +14,7 @@ import { useSignOut } from "@/lib/use-sign-out"
 import { WalletGuard, WalletPrompt } from "@/components/shared/wallet-guard"
 import { useAuthStore } from "@/lib/auth-store"
 import { WalletAddress } from "@/components/ui/wallet-address"
-import { AlertTriangle, RefreshCw } from "lucide-react"
+import { AlertTriangle, RefreshCw, Pin } from "lucide-react"
 import { fundAndSignEscrow } from "@/lib/agreementActions"
 import { Footer } from "@/components/footer"
 import { RampsSection } from "@/components/ramps/ramps-section"
@@ -1746,13 +1746,17 @@ export default function PersonalDashboardPage() {
   <aside
   className={cn(
   "fixed inset-y-20 left-0 z-30 overflow-visible transition-[width,transform] duration-300 lg:sticky lg:top-20 lg:translate-x-0 lg:h-[calc(100vh-80px)]",
-  sidebarPinned || sidebarHovered ? "w-64" : "w-2",
+  sidebarPinned || sidebarHovered ? "w-64" : "w-0",
   sidebarOpen ? "translate-x-0" : "-translate-x-full",
   )}
   >
           <div
     onMouseEnter={() => setSidebarHovered(true)}
     onMouseLeave={() => setSidebarHovered(false)}
+    onFocus={() => setSidebarHovered(true)}
+    onBlur={() => {
+      if (!sidebarPinned) setSidebarHovered(false)
+    }}
     className={cn(
       "absolute left-0 top-0 flex h-full flex-col overflow-hidden bg-[#0a0d14]/98 backdrop-blur-xl border-r border-white/[0.06] shadow-[12px_0_30px_rgba(0,0,0,0.2)] transition-[width,opacity] duration-200",
       sidebarPinned || sidebarHovered ? "w-64 opacity-100" : "w-0 opacity-0",
@@ -1809,13 +1813,20 @@ export default function PersonalDashboardPage() {
       onClick={() => {
         const next = !sidebarPinned
         setSidebarPinned(next)
+        setSidebarHovered(false)
         window.localStorage.setItem("thalos-sidebar-pinned", String(next))
       }}
-      className="rounded-lg p-2 text-white/45 transition-colors hover:bg-white/10 hover:text-white"
-      aria-label={sidebarPinned ? "Collapse sidebar" : "Pin sidebar open"}
-      title={sidebarPinned ? "Collapse sidebar" : "Pin sidebar open"}
+      className={cn(
+        "group flex size-9 items-center justify-center rounded-xl border transition-all",
+        sidebarPinned
+          ? "border-[#f0b400]/30 bg-[#f0b400]/10 text-[#f0b400] shadow-[0_0_16px_rgba(240,180,0,0.08)]"
+          : "border-white/10 bg-white/[0.04] text-white/50 hover:border-white/20 hover:bg-white/[0.08] hover:text-white",
+      )}
+      aria-label={sidebarPinned ? "Unpin and auto-hide sidebar" : "Pin sidebar open"}
+      title={sidebarPinned ? "Unpin and auto-hide sidebar" : "Pin sidebar open"}
     >
-      {sidebarPinned ? "←" : "→"}
+      <Pin className={cn("size-4 transition-transform", sidebarPinned && "-rotate-45")} />
+      <span className="sr-only">{sidebarPinned ? "Unpin sidebar" : "Pin sidebar"}</span>
     </button>
   </div>
   <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
