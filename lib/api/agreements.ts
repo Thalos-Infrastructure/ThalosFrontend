@@ -1,7 +1,7 @@
 import { API_URL } from "@/lib/config"
 
 // Re-export types from actions for backwards compatibility
-export type AgreementStatus = "pending" | "funded" | "active" | "completed" | "disputed" | "resolved" | "cancelled"
+export type AgreementStatus = "initialized" | "pending" | "waiting_for_funding" | "funded" | "active" | "in_progress" | "completed" | "disputed" | "resolved" | "cancelled" | string
 export type AgreementType = "single" | "multi" | "bounty"
 export type ParticipantRole = "payer" | "payee" | "approver" | "dispute_resolver" | "validator"
 
@@ -27,6 +27,9 @@ export interface Agreement {
   updated_at: string
   funded_at: string | null
   completed_at: string | null
+  nextAction?: string | null
+  lastSyncedAt?: string
+  syncError?: string | null
 }
 
 export interface AgreementParticipant {

@@ -1,4 +1,4 @@
-type Milestone = { description: string; amount: string; status: "pending" | "approved" | "released" | "Completed"; approved?: boolean };
+type Milestone = { description: string; amount: string; status: "pending" | "approved" | "released" | "Completed" | "disputed"; approved?: boolean };
 type Agreement = {
   id: string;
   title: string;
@@ -21,6 +21,8 @@ type Agreement = {
 interface ApproverAgreementDetailProps {
   agr: Agreement;
   walletAddress: string;
+  /** Re-fetches the agreement from Nest and returns false when confirmation is unavailable. */
+  onRefresh?: () => Promise<boolean>;
 }
 
 import React from "react";
@@ -36,19 +38,18 @@ import { signEscrowOperation, type EscrowOperation, type TxStatus } from "@/lib/
 import type { AgreementResponse } from "@/services/trustlessworkService";
 import { AlertTriangle } from "lucide-react";
 
-export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreementDetailProps) {
+export function ApproverAgreementDetail({ agr, walletAddress, onRefresh }: ApproverAgreementDetailProps) {
   const walletType = useWalletType();
   const { openWalletModal } = useStellarWallet();
   const isExternalWallet = walletType === "external";
   const [showDetail, setShowDetail] = React.useState(false);
   const [loadingMs, setLoadingMs] = React.useState<number | null>(null);
   const [errorMs, setErrorMs] = React.useState<string | null>(null);
-  const [localMilestones, setLocalMilestones] = React.useState<Milestone[]>(agr.milestones);
+  const localMilestones = agr.milestones;
   const [funding, setFunding] = React.useState(false);
-  const [fundSuccess, setFundSuccess] = React.useState(false);
+  const [syncPending, setSyncPending] = React.useState(false);
   const [fundError, setFundError] = React.useState<string | null>(null);
   const [disputingMs, setDisputingMs] = React.useState<number | null>(null);
-  const [disputedMs, setDisputedMs] = React.useState<Set<number>>(new Set());
   const [showDisputeConfirm, setShowDisputeConfirm] = React.useState<number | null>(null);
   const [txStatus, setTxStatus] = React.useState<TxStatus | null>(null);
   const allApproved = localMilestones.every(m => m.approved === true);
@@ -58,12 +59,21 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
   const progressPct = localMilestones.length > 0 ? (completedMs / localMilestones.length) * 100 : 0;
   const amountNum = Number(agr.amount);
   const balanceNum = Number(agr.balance);
-  const isFunded = fundSuccess || (balanceNum >= amountNum);
-  const disableFund = funding || isFunded;
+  const backendFunded = agr.status === "funded" || agr.status === "active" || agr.status === "completed" || agr.status === "disputed" || (balanceNum >= amountNum && amountNum > 0);
+  const isFunded = backendFunded && !syncPending;
+  const disableFund = funding || isFunded || syncPending;
   const { t } = useLanguage();
 
   // Determine current step for the 3-step indicator
   const currentStep = allReleased ? 3 : (someApproved || allApproved) ? 2 : isFunded ? 1 : 0;
+
+  async function confirmBackendState() {
+    setSyncPending(true);
+    const confirmed = onRefresh ? await onRefresh() : false;
+    setSyncPending(!confirmed);
+    if (!confirmed) setErrorMs("Status pending confirmation");
+    return confirmed;
+  }
 
   const escrowRoles = {
     approver: agr.approver,
@@ -129,7 +139,7 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
           evidence_urls: []
         });
       }
-      setDisputedMs(prev => new Set(prev).add(idx));
+      await confirmBackendState();
       setShowDisputeConfirm(null);
     } catch (e: any) {
       setTxStatus("error");
@@ -151,7 +161,7 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
       const { approveMilestone } = await import("@/services/trustlessworkService");
       const res = await approveMilestone(agr.id, idx.toString(), walletAddress, agr.type === "Multi Release" ? "multi-release" : "single-release");
       await signAndSubmit("approveMilestone", res, "Error approving milestone");
-      setLocalMilestones(ms => ms.map((m, i) => i === idx ? { ...m, status: "approved" as const, approved: true } : m));
+      await confirmBackendState();
     } catch (e: any) {
       setTxStatus("error");
       setErrorMs(e.message || "Unknown error");
@@ -173,7 +183,7 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
       const type = agr.type === "Multi Release" ? "multi-release" : "single-release";
       const res = await releaseFunds(agr.id, walletAddress, type);
       await signAndSubmit("releaseFunds", res, "Error releasing funds");
-      setLocalMilestones(ms => ms.map(m => ({ ...m, status: "released" as const })));
+      await confirmBackendState();
     } catch (e: any) {
       setTxStatus("error");
       setErrorMs(e.message || "Unknown error");
@@ -263,7 +273,7 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
             <p className="text-xs text-white/35 mt-0.5">{t("flow.pendingFundingDesc")}</p>
           </div>
           <Button
-            onClick={() => {
+            onClick={async () => {
               if (isMockAgreement(agr.id)) {
                 alert("Demo agreement — actions are unavailable.");
                 return;
@@ -276,9 +286,11 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
               openWalletModal: async () => {},
               setFunding,
               setError: setFundError,
-              setSuccess: setFundSuccess,
+              setSuccess: () => undefined,
               onStatus: setTxStatus,
-            })}}
+            });
+            await confirmBackendState();
+            }}
             disabled={disableFund}
             className="rounded-full bg-blue-500 px-6 text-sm font-semibold text-white hover:bg-blue-600 shadow-[0_4px_16px_rgba(59,130,246,0.25)]"
           >
@@ -293,7 +305,7 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
         />
       )}
       {fundError && <div className="text-red-400 text-xs mt-2">{fundError}</div>}
-      {fundSuccess && <div className="text-emerald-400 text-xs mt-2">{t("flow.funded")} - Escrow funded successfully!</div>}
+      {syncPending && <div className="text-amber-300 text-xs mt-2">Status pending confirmation</div>}
 
       {/* Transaction progress: build → sign → submit → confirmed */}
       {txStatus && txStatus !== "error" && (
@@ -356,7 +368,7 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
                   
                   {/* Dispute button - appears when evidence is submitted but not yet released */}
                   {/* Dispute button - show for funded escrows on any milestone that is not released and not already disputed */}
-                  {isFunded && ms.status !== "released" && !disputedMs.has(idx) && isExternalWallet && (
+                  {isFunded && ms.status !== "released" && isExternalWallet && (
                     <Button 
                       size="sm" 
                       onClick={() => setShowDisputeConfirm(idx)} 
@@ -369,14 +381,14 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
                   )}
                   
                   {/* Disputed badge */}
-                  {disputedMs.has(idx) && (
+                  {ms.status === "disputed" && (
                     <span className="rounded-full bg-red-500/15 px-3 py-1 text-xs font-semibold text-red-400 border border-red-500/20 flex items-center gap-1">
                       <AlertTriangle className="h-3 w-3" />
                       {t("dispute.inDispute")}
                     </span>
                   )}
                   
-                  {isFunded && (ms.status === "pending" || ms.status === "Completed") && !allReleased && ms.approved === false && !disputedMs.has(idx) && isExternalWallet && (
+                  {isFunded && (ms.status === "pending" || ms.status === "Completed") && !allReleased && ms.approved === false && isExternalWallet && (
                     <Button size="sm" onClick={() => handleApprove(idx)} disabled={loadingMs === idx}
                       className="rounded-full bg-[#f0b400]/15 text-xs font-semibold text-[#f0b400] hover:bg-[#f0b400]/25 border border-[#f0b400]/20">
                       {loadingMs === idx ? t("flow.approving") : t("flow.approveMs")}
