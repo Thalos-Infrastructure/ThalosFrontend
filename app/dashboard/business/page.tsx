@@ -1005,8 +1005,8 @@ export default function BusinessDashboardPage() {
   useEffect(() => {
     if (!currentWorkspaceWallet) return
     const workspaceWallet: string = currentWorkspaceWallet
-    // Include the token so we re-fetch once auth loads and route through the
-    // backend instead of falling back to the direct Trustless Work service.
+    // Include the token so we re-fetch once auth loads. The escrow reads are
+    // public, so this only upgrades an anonymous read to an authenticated one.
     const fetchKey = `${workspaceWallet}::${token ?? ""}`
     if (fetchedEscrowsRef.current === fetchKey) return
     fetchedEscrowsRef.current = fetchKey
