@@ -337,8 +337,8 @@ export async function fundAndSignEscrow({
       throw new Error("Wallet address is required to fund escrow")
     }
     onStatus?.("building")
-    // GF-2: route through migration layer — when flag ON, builds unsigned XDR
-    // via Nest backend instead of calling Trustless Work directly from the browser.
+    // Builds the unsigned XDR via the Nest backend, which holds the Trustless
+    // Work key server-side.
     const response = await fundEscrow(
       contractId,
       walletAddress,
@@ -385,8 +385,8 @@ export async function changeMilestoneStatusAgreement({
   setError(null)
   try {
     onStatus?.("building")
-    // GF-2: route through migration layer — when flag ON, builds unsigned XDR
-    // via Nest backend instead of calling Trustless Work directly from the browser.
+    // Builds the unsigned XDR via the Nest backend, which holds the Trustless
+    // Work key server-side.
     const response = await changeMilestoneStatus(
       contractId,
       milestoneIndex,
@@ -419,8 +419,9 @@ export async function changeMilestoneStatusAgreement({
 
 /**
  * Unified transaction processing — validates the Trustless Work role, signs via
- * the unified signer and submits through the Thalos backend when a token is
- * available (GF-2), falling back to Trustless Work's send-transaction endpoint.
+ * the unified signer and submits through the Thalos backend, which relays to
+ * Trustless Work with a server-side key. A session is required; there is no
+ * unauthenticated submit path.
  */
 async function processTransaction(
   response: AgreementResponse<unknown>,

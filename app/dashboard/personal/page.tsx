@@ -1266,8 +1266,8 @@ export default function PersonalDashboardPage() {
     if (!walletAddress) return
     const activeAddress: string = walletAddress
     // Only fetch if we haven't already for this address + token combination.
-    // Including the token means we re-fetch once auth loads, so we route through
-    // the backend instead of falling back to the direct Trustless Work service.
+    // Including the token means we re-fetch once auth loads. The escrow reads
+    // are public, so this only upgrades an anonymous read to an authenticated one.
     const fetchKey = `${activeAddress}::${token ?? ""}`
     if (fetchedEscrowsRef.current === fetchKey) return
     fetchedEscrowsRef.current = fetchKey
