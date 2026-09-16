@@ -395,13 +395,14 @@ function mapEscrowToApproverAgreement(escrow: TrustlessEscrow) {
   const allUnapproved = milestones.length > 0 && milestones.every((m) => m.approved === false)
   const balanceNum = Number(escrow.balance)
   const amountNum = Number(amount)
-  let status = "funded"
+  const hasConfirmedBalance = Number.isFinite(balanceNum) && Number.isFinite(amountNum) && amountNum > 0
+  let status = "pending"
   if (escrow.flags?.released) {
     status = "released"
-  } else if (anyUnapproved && balanceNum < amountNum) {
-    status = "pending"
-  } else if (allUnapproved && balanceNum >= amountNum) {
+  } else if (hasConfirmedBalance && balanceNum >= amountNum) {
     status = "funded"
+  } else if (anyUnapproved && hasConfirmedBalance && balanceNum < amountNum) {
+    status = "pending"
   }
 
   return {

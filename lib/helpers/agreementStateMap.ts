@@ -35,14 +35,17 @@ export function getAgreementStateSnapshot(input: StateInput): AgreementStateSnap
     return value === "released" || value === "completed"
   })
   const hasApproved = milestones.some((milestone) => milestone.approved === true || milestone.status?.toLowerCase() === "approved")
-  const balance = Number(input.balance)
-  const amount = Number(input.amount)
-  const fundedByBackend = status === "funded" || status === "active" || status === "in_progress" || status === "completed" || status === "disputed" || status === "resolved"
-  const fundedByBalance = Number.isFinite(balance) && Number.isFinite(amount) && amount > 0 && balance >= amount
+  const fundedByBackend =
+    status === "funded" ||
+    status === "active" ||
+    status === "in_progress" ||
+    status === "completed" ||
+    status === "disputed" ||
+    status === "resolved"
 
   if (status === "disputed") return { state: "disputed", nextAction: "resolve", isConfirmed: true }
   if (hasReleased || status === "completed" || status === "released") return { state: "completed", nextAction: null, isConfirmed: true }
-  if (fundedByBackend || fundedByBalance) {
+  if (fundedByBackend) {
     if (hasApproved) return { state: "in_progress", nextAction: "release", isConfirmed: true }
     return { state: "funded", nextAction: "submit_evidence", isConfirmed: true }
   }
