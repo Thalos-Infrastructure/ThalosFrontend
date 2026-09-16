@@ -3564,9 +3564,8 @@ export default function PersonalDashboardPage() {
                                   return
                                 }
                                 const payload = generateAgreementPayload()
-                                const { createAndSignAgreement } = await import(
-                                  "@/lib/agreementActions"
-                                )
+                                const { createAndSignAgreement } =
+                                  await import("@/lib/agreementActions")
                                 await createAndSignAgreement({
                                   payload,
                                   token,
