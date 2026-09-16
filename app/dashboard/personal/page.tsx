@@ -757,7 +757,9 @@ function SellerMilestoneList({
   }) {
 
   const [evidenceInputs, setEvidenceInputs] = React.useState<Record<number, string>>({})
-  const [submittedEvidence, setSubmittedEvidence] = React.useState<Record<number, string>>({})
+  const [submittedEvidence, setSubmittedEvidence] = React.useState<Record<number, string>>(() =>
+    Object.fromEntries(agr.milestones.map((milestone, index) => [index, milestone.evidence || ""]).filter(([, evidence]) => evidence)),
+  )
   const [submitting, setSubmitting] = React.useState<number | null>(null)
   const [expandedMs, setExpandedMs] = React.useState<number | null>(null)
   const [attachedPrs, setAttachedPrs] = React.useState<Record<number, GithubPullRequest[]>>({})
@@ -984,6 +986,11 @@ export default function PersonalDashboardPage() {
   const [copiedAddress, setCopiedAddress] = useState<string | null>(null)
 
   useEffect(() => {
+    const savedPinned = window.localStorage.getItem("thalos-sidebar-pinned")
+    if (savedPinned !== null) setSidebarPinned(savedPinned === "true")
+  }, [])
+
+  useEffect(() => {
     setUsdcBalance(null)
     if (!walletAddress || !token) return
     let cancelled = false
@@ -1026,6 +1033,7 @@ export default function PersonalDashboardPage() {
     }
   }
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [sidebarPinned, setSidebarPinned] = useState(true)
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
   const [agreements, setAgreements] = useState<Agreement[]>(initialAgreements)
   const [agreementsLoading, setAgreementsLoading] = useState(false)
@@ -1653,7 +1661,7 @@ export default function PersonalDashboardPage() {
                   onClick={() => setProfileMenuOpen(false)}
                 >
                   <button
-                    onClick={() => setActiveSection("dashboard")}
+                    onClick={() => setActiveSection("home")}
                     className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-white/70 hover:bg-white/8 hover:text-white transition-colors"
                   >
                     <svg
@@ -1734,12 +1742,13 @@ export default function PersonalDashboardPage() {
 
       <div className="relative z-10 flex min-h-[calc(100vh-80px)]">
         {/* Modern Sidebar */}
-        <aside
-          className={cn(
-            "fixed inset-y-20 left-0 z-30 w-64 transition-transform duration-300 lg:sticky lg:top-20 lg:translate-x-0 lg:h-[calc(100vh-80px)]",
-            sidebarOpen ? "translate-x-0" : "-translate-x-full",
-          )}
-        >
+  <aside
+  className={cn(
+  "fixed inset-y-20 left-0 z-30 transition-[width,transform] duration-300 lg:sticky lg:top-20 lg:translate-x-0 lg:h-[calc(100vh-80px)]",
+  sidebarPinned ? "w-64" : "w-20",
+  sidebarOpen ? "translate-x-0" : "-translate-x-full",
+  )}
+  >
           <div className="h-full flex flex-col bg-[#0a0d14]/95 backdrop-blur-xl border-r border-white/[0.06]">
             {/* User Profile Section - Clickable to edit */}
             <div className="p-4 border-b border-white/[0.06]">
@@ -1785,8 +1794,23 @@ export default function PersonalDashboardPage() {
               </button>
             </div>
 
-            {/* Main Navigation */}
-            <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
+  {/* Main Navigation */}
+  <div className="flex items-center justify-end px-3 pt-3">
+    <button
+      type="button"
+      onClick={() => {
+        const next = !sidebarPinned
+        setSidebarPinned(next)
+        window.localStorage.setItem("thalos-sidebar-pinned", String(next))
+      }}
+      className="rounded-lg p-2 text-white/45 transition-colors hover:bg-white/10 hover:text-white"
+      aria-label={sidebarPinned ? "Collapse sidebar" : "Pin sidebar open"}
+      title={sidebarPinned ? "Collapse sidebar" : "Pin sidebar open"}
+    >
+      {sidebarPinned ? "←" : "→"}
+    </button>
+  </div>
+  <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
               {sidebarItems.filter((item) => item.id !== "agreements").map((item) => {
                 const isActive = activeSection === item.id
                 return (
@@ -2807,7 +2831,7 @@ export default function PersonalDashboardPage() {
                   )}
 
                   {/* Role-specific agreement actions */}
-                  {agr.role === "buyer" && agr.status === "pending" ? (
+                  {agr.role === "buyer" && ["pending", "awaiting_funding"].includes(agr.status) ? (
                     <BuyerFundingAction agr={agr} onRefresh={refreshAgreements} />
                   ) : null}
 
@@ -2829,9 +2853,13 @@ export default function PersonalDashboardPage() {
                     </p>
                   </div>
 
-                  {/* Milestones */}
-                  <div className="flex flex-col gap-3 mb-6">
-                    {isExternalWallet ? (
+  {/* Milestones */}
+  <div className="flex flex-col gap-3 mb-6">
+  {["pending", "awaiting_funding"].includes(agr.status) ? (
+  <div className="rounded-xl border border-sky-400/20 bg-sky-400/5 p-4 text-sm text-sky-200">
+  Funding is required before evidence can be submitted.
+  </div>
+  ) : isExternalWallet ? (
   <SellerMilestoneList
   agr={agr}
   t={t}
