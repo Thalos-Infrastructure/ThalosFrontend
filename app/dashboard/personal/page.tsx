@@ -1349,9 +1349,18 @@ export default function PersonalDashboardPage() {
 
   const refreshAgreements = useCallback(async () => {
     if (!walletAddress) return
-    const result = await getAgreementsByWallet(walletAddress, token ?? undefined)
+    fetchedEscrowsRef.current = null
+    const [result, approverResult] = await Promise.all([
+      getAgreementsByWallet(walletAddress, token ?? undefined),
+      import("@/services/escrowMigration").then(({ getEscrowsByRole }) =>
+        getEscrowsByRole({ role: "approver", address: walletAddress }, token ?? undefined),
+      ),
+    ])
     if (!result.error && result.agreements) {
       setAgreements(result.agreements.map((agreement) => mapNestAgreementToUi(agreement, walletAddress)))
+    }
+    if (approverResult.success && Array.isArray(approverResult.data)) {
+      setApproverEscrows((approverResult.data as TrustlessEscrow[]).map(mapEscrowToApproverAgreement))
     }
   }, [walletAddress, token])
 
@@ -1778,7 +1787,7 @@ export default function PersonalDashboardPage() {
 
             {/* Main Navigation */}
             <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
-              {sidebarItems.map((item) => {
+              {sidebarItems.filter((item) => item.id !== "agreements").map((item) => {
                 const isActive = activeSection === item.id
                 return (
                   <button
@@ -2011,8 +2020,36 @@ export default function PersonalDashboardPage() {
                 </div>
               </div>
 
-              {/* Quick Actions - Simplified (4 main actions) */}
-              <div className="grid grid-cols-4 gap-3">
+              {/* Agreements are the primary dashboard workspace. Navigation remains in the sidebar. */}
+              <section className="rounded-xl border border-white/10 bg-[#0c1220] p-5">
+                <div className="mb-4 flex items-center justify-between">
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">Your workspace</p>
+                    <h2 className="mt-1 text-lg font-semibold text-white">Agreements</h2>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setActiveSection("create")
+                      resetWizard()
+                    }}
+                    className="rounded-lg bg-[#f0b400] px-4 py-2 text-sm font-semibold text-[#0c1220] transition-colors hover:bg-[#e5ab00]"
+                  >
+                    + {t("dashPage.newAgreement")}
+                  </button>
+                </div>
+                <AgreementsView
+                  agreements={filteredAgreements.map((a) => ({
+                    ...a,
+                    updatedAt: a.date,
+                    currency: "USDC" as const,
+                  }))}
+                  onAgreementClick={(id) => setViewingAgreement(id)}
+                  onOpenChat={(id) => setShowAgreementChat(id)}
+                  currentUserWallet={walletAddress ?? undefined}
+                />
+              </section>
+              {/* Legacy quick actions removed: these destinations belong in the sidebar. */}
+              <div className="hidden grid grid-cols-4 gap-3">
                 <button
                   onClick={() => {
                     setActiveSection("create")
@@ -2121,6 +2158,7 @@ export default function PersonalDashboardPage() {
                 </button>
               </div>
 
+              <div className="hidden">
               {/* Pending Actions */}
               <div className="rounded-xl border border-white/10 bg-[#0c1220] p-5">
                 <div className="flex items-center justify-between mb-4">
@@ -2173,6 +2211,7 @@ export default function PersonalDashboardPage() {
                       ))}
                   </div>
                 )}
+              </div>
               </div>
             </div>
           )}
@@ -2390,10 +2429,10 @@ export default function PersonalDashboardPage() {
               {/* Stats row */}
               <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
                 {[
-                  { l: t("dashPage.active"), v: "3" },
-                  { l: t("dashPage.totalVolume"), v: "$4,500" },
-                  { l: t("dashPage.yieldEarned"), v: "$32.50" },
-                  { l: t("dashPage.completed"), v: "1" },
+  { l: t("dashPage.active"), v: String(agreements.filter((a) => ["funded", "in_progress", "active"].includes(a.status)).length) },
+  { l: t("dashPage.totalVolume"), v: `${agreements.reduce((sum, a) => sum + (Number.parseFloat(String(a.amount).replace(/,/g, "")) || 0), 0).toLocaleString()} USDC` },
+  { l: t("dashPage.yieldEarned"), v: `${agreements.filter((a) => a.status === "released" || a.status === "completed").length} released` },
+  { l: t("dashPage.completed"), v: String(agreements.filter((a) => a.status === "released" || a.status === "completed").length) },
                 ].map((s) => (
                   <div
                     key={s.l}
