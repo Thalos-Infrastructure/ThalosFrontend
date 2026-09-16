@@ -134,7 +134,12 @@ export async function getAttachedPrs(
     { method: "GET" },
     token,
   )
-  if (!response.success) return { success: false, error: response.error }
+  // A milestone without GitHub evidence is a valid empty state. Older backend
+  // deployments return 404 for this collection instead of an empty array.
+  if (!response.success) {
+    if (response.status === 404) return { success: true, data: [] }
+    return { success: false, error: response.error }
+  }
 
   const payload = (response.data ?? {}) as Record<string, unknown>
   if (payload.error) return { success: false, error: payload.error as string }
