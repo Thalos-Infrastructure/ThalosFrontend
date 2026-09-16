@@ -345,7 +345,7 @@ function mapNestAgreementToUi(
 ): Agreement {
   const isMulti = agreement.agreement_type === "multi"
   const counterparty = agreement.participants?.find(
-    (p) => p.wallet_address !== workspaceWallet,
+    (p: { wallet_address: string }) => p.wallet_address !== workspaceWallet,
   )?.wallet_address
 
   return {
