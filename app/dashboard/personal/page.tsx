@@ -302,7 +302,7 @@ const NEST_STATUS_TO_UI: Record<NestAgreementStatus, string> = {
   funded: "funded",
   active: "in_progress",
   completed: "released",
-  disputed: "awaiting",
+  disputed: "disputed",
   resolved: "released",
   cancelled: "cancelled",
 }
