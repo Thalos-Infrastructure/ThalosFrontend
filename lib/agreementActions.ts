@@ -1,11 +1,11 @@
-import { AgreementPayload, AgreementResponse, ServiceType } from "@/services/trustlessworkService"
+import { AgreementPayload, AgreementResponse, ServiceType } from "@/services/escrow.types"
 import {
   fundEscrow,
   approveMilestone,
   changeMilestoneStatus,
   releaseFunds,
   disputeMilestone,
-} from "@/services/escrowMigration"
+} from "@/services/escrowService"
 import {
   buildCreateEscrow,
   submitSignedTransaction,
@@ -451,16 +451,11 @@ async function processTransaction(
   })
 
   opts.onStatus?.("submitting")
-  // GF-2: when token is available, submit through the Nest backend
-  // (keeps API key server-side and maintains auth audit trail).
-  // When no token, fall back to the original TW helper (wallet-only mode).
-  let sendRes
-  if (token) {
-    sendRes = await submitSignedTransaction(signedResult.signedTxXdr, token)
-  } else {
-    const { sendTransaction } = await import("@/services/trustlessworkService")
-    sendRes = await sendTransaction(signedResult.signedTxXdr)
-  }
+  // Submission goes through the Nest backend, which keeps the Trustless Work
+  // API key server-side. There is no unauthenticated path: a session is
+  // required to move funds.
+  if (!token) throw new Error("Sign in to submit this transaction")
+  const sendRes = await submitSignedTransaction(signedResult.signedTxXdr, token)
   if (!sendRes.success) throw new Error(sendRes.error || "Transaction send failed")
 }
 

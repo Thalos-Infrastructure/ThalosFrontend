@@ -54,7 +54,7 @@ import {
   sendTransaction,
   AgreementPayload,
   approveMilestone,
-} from "@/services/escrowMigration"
+} from "@/services/escrowService"
 import { STELLAR_EXPLORER_BASE_URL, SHOW_MOCKED_AGREEMENTS } from "@/lib/config"
 import { getKybStatus, startKybSession } from "@/lib/api/kyb"
 import {
@@ -1038,7 +1038,7 @@ export default function BusinessDashboardPage() {
     async function fetchApproverEscrows() {
       setApproverLoading(true)
       try {
-        const { getEscrowsByRole } = await import("@/services/escrowMigration")
+        const { getEscrowsByRole } = await import("@/services/escrowService")
         const res = await getEscrowsByRole(
           { role: "approver", address: workspaceWallet },
           token ?? undefined,
