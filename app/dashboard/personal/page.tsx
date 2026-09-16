@@ -2881,23 +2881,17 @@ export default function PersonalDashboardPage() {
                     <BuyerFundingAction agr={agr} onRefresh={refreshAgreements} />
                   ) : null}
 
-                  {/* Seller role badge */}
-                  <div className="mb-4 rounded-xl border border-[#f0b400]/15 bg-[#f0b400]/5 px-4 py-2.5 flex items-center gap-2">
-                    <svg
-                      width="14"
-                      height="14"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="#f0b400"
-                      strokeWidth="1.5"
-                    >
-                      <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
-                      <circle cx="12" cy="7" r="4" />
-                    </svg>
-                    <p className="text-xs text-[#f0b400]/80 font-semibold">
-                      {t("flow.sellerView")} {" - "} {t("flow.evidenceDesc")}
-                    </p>
-                  </div>
+                  {agr.role === "seller" && !["pending", "awaiting_funding"].includes(agr.status) && (
+                    <div className="mb-4 flex items-center gap-2 rounded-xl border border-[#f0b400]/15 bg-[#f0b400]/5 px-4 py-2.5">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f0b400" strokeWidth="1.5" aria-hidden="true">
+                        <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
+                        <circle cx="12" cy="7" r="4" />
+                      </svg>
+                      <p className="text-xs font-semibold text-[#f0b400]/80">
+                        {t("flow.sellerView")} {" - "} {t("flow.evidenceDesc")}
+                      </p>
+                    </div>
+                  )}
 
   {/* Milestones */}
   <div className="flex flex-col gap-3 mb-6">
@@ -2905,7 +2899,7 @@ export default function PersonalDashboardPage() {
   <div className="rounded-xl border border-sky-400/20 bg-sky-400/5 p-4 text-sm text-sky-200">
   Funding is required before evidence can be submitted.
   </div>
-  ) : isExternalWallet ? (
+  ) : agr.role === "seller" && isExternalWallet ? (
   <SellerMilestoneList
   agr={agr}
   t={t}
