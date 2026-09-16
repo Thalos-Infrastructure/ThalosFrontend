@@ -698,13 +698,9 @@ const moreSidebarItems = [
 /* ── Seller Evidence Submission Component ── */
 function SellerMilestoneList({
   agr,
-  agreements,
-  setAgreements,
   t,
 }: {
   agr: Agreement
-  agreements: Agreement[]
-  setAgreements: React.Dispatch<React.SetStateAction<Agreement[]>>
   t: (k: string) => string
 }) {
   const [evidenceInputs, setEvidenceInputs] = React.useState<Record<number, string>>({})
@@ -771,20 +767,6 @@ function SellerMilestoneList({
       onSuccess: () => {
         setSubmittedEvidence((prev) => ({ ...prev, [idx]: evidence }))
         setEvidenceInputs((prev) => ({ ...prev, [idx]: "" }))
-        setAgreements((prev) =>
-          prev.map((a) =>
-            a.id === agr.id
-              ? {
-                  ...a,
-                  milestones: a.milestones.map((m, i) =>
-                    i === idx && m.status === "pending"
-                      ? { ...m, status: "approved" as const, evidence }
-                      : m,
-                  ),
-                }
-              : a,
-          ),
-        )
         setExpandedMs(null)
       },
     })
@@ -2784,12 +2766,10 @@ export default function PersonalDashboardPage() {
                   {/* Milestones */}
                   <div className="flex flex-col gap-3 mb-6">
                     {isExternalWallet ? (
-                      <SellerMilestoneList
-                        agr={agr}
-                        agreements={agreements}
-                        setAgreements={setAgreements}
-                        t={t}
-                      />
+  <SellerMilestoneList
+  agr={agr}
+  t={t}
+  />
                     ) : (
                       <WalletPrompt message="Connect and verify a wallet to submit evidence and manage this agreement." />
                     )}
