@@ -62,14 +62,18 @@ export function ApproverAgreementDetail({ agr, walletAddress, onRefresh }: Appro
   const [disputedMs, setDisputedMs] = React.useState<Set<number>>(new Set())
   const [showDisputeConfirm, setShowDisputeConfirm] = React.useState<number | null>(null)
   const [txStatus, setTxStatus] = React.useState<TxStatus | null>(null)
+
+  React.useEffect(() => {
+    setLocalMilestones(agr.milestones)
+  }, [agr.milestones])
+
   const allApproved = localMilestones.every((m) => m.approved === true)
   const allReleased = agr.released
   const someApproved = localMilestones.some((m) => m.approved === true || m.status === "approved")
   const completedMs = localMilestones.filter((m) => m.status === "released").length
   const progressPct = localMilestones.length > 0 ? (completedMs / localMilestones.length) * 100 : 0
-  const amountNum = Number(agr.amount)
-  const balanceNum = Number(agr.balance)
-  const isFunded = fundSuccess || balanceNum >= amountNum
+  const confirmedStatus = agr.status.toLowerCase()
+  const isFunded = ["funded", "active", "in_progress", "completed", "disputed", "resolved"].includes(confirmedStatus)
   const disableFund = funding || isFunded
   const { t } = useLanguage()
 
