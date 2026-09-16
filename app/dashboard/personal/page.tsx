@@ -1296,62 +1296,6 @@ export default function PersonalDashboardPage() {
   const [showAgreementChat, setShowAgreementChat] = useState<string | null>(null)
   const [showProfileEditor, setShowProfileEditor] = useState(false)
 
-  const approveMilestone = (agrId: string, msIdx: number) => {
-    setAgreements((prev) =>
-      prev.map((a) =>
-        a.id === agrId
-          ? {
-              ...a,
-              milestones: a.milestones.map((m, i) =>
-                i === msIdx && m.status === "pending" ? { ...m, status: "approved" as const } : m,
-              ),
-            }
-          : a,
-      ),
-    )
-  }
-  const releaseMilestone = (agrId: string, msIdx: number) => {
-    setAgreements((prev) =>
-      prev.map((a) =>
-        a.id === agrId
-          ? {
-              ...a,
-              milestones: a.milestones.map((m, i) =>
-                i === msIdx && m.status === "approved" ? { ...m, status: "released" as const } : m,
-              ),
-            }
-          : a,
-      ),
-    )
-  }
-  const releaseAllApproved = (agrId: string) => {
-    setAgreements((prev) =>
-      prev.map((a) =>
-        a.id === agrId
-          ? {
-              ...a,
-              milestones: a.milestones.map((m) =>
-                m.status === "approved" ? { ...m, status: "released" as const } : m,
-              ),
-            }
-          : a,
-      ),
-    )
-  }
-  const approveAndReleaseAll = (agrId: string) => {
-    setAgreements((prev) =>
-      prev.map((a) =>
-        a.id === agrId
-          ? {
-              ...a,
-              status: "released",
-              milestones: a.milestones.map((m) => ({ ...m, status: "released" as const })),
-            }
-          : a,
-      ),
-    )
-  }
-
   /* ── Wizard State ── */
   const [step, setStep] = useState(0)
   const [submitted, setSubmitted] = useState(false)
