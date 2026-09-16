@@ -699,10 +699,13 @@ const moreSidebarItems = [
 function SellerMilestoneList({
   agr,
   t,
+  onRefresh,
 }: {
   agr: Agreement
   t: (k: string) => string
-}) {
+  onRefresh: () => Promise<void>
+  }) {
+
   const [evidenceInputs, setEvidenceInputs] = React.useState<Record<number, string>>({})
   const [submittedEvidence, setSubmittedEvidence] = React.useState<Record<number, string>>({})
   const [submitting, setSubmitting] = React.useState<number | null>(null)
@@ -764,7 +767,8 @@ function SellerMilestoneList({
       openWalletModal,
       setSubmitting: (v: boolean) => v === false && setSubmitting(null),
       setError: (msg: string | null) => msg && alert(msg),
-      onSuccess: () => {
+      onSuccess: async () => {
+        await onRefresh()
         setSubmittedEvidence((prev) => ({ ...prev, [idx]: evidence }))
         setEvidenceInputs((prev) => ({ ...prev, [idx]: "" }))
         setExpandedMs(null)
@@ -1292,6 +1296,15 @@ export default function PersonalDashboardPage() {
     }
     fetchApproverEscrows()
   }, [walletAddress, token])
+
+  const refreshAgreements = useCallback(async () => {
+    if (!walletAddress) return
+    const result = await getAgreementsByWallet(walletAddress, token ?? undefined)
+    if (!result.error && result.agreements) {
+      setAgreements(result.agreements.map((agreement) => mapNestAgreementToUi(agreement, walletAddress)))
+    }
+  }, [walletAddress, token])
+
   const [viewingAgreement, setViewingAgreement] = useState<string | null>(null)
   const [showAgreementChat, setShowAgreementChat] = useState<string | null>(null)
   const [showProfileEditor, setShowProfileEditor] = useState(false)
@@ -2713,6 +2726,7 @@ export default function PersonalDashboardPage() {
   <SellerMilestoneList
   agr={agr}
   t={t}
+  onRefresh={refreshAgreements}
   />
                     ) : (
                       <WalletPrompt message="Connect and verify a wallet to submit evidence and manage this agreement." />
