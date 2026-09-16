@@ -28,6 +28,7 @@ type Agreement = {
 interface ApproverAgreementDetailProps {
   agr: Agreement
   walletAddress: string
+  onRefresh?: () => Promise<void>
 }
 
 import React from "react"
@@ -44,7 +45,7 @@ import type { AgreementResponse } from "@/services/trustlessworkService"
 import { useAuthStore } from "@/lib/auth-store"
 import { AlertTriangle } from "lucide-react"
 
-export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreementDetailProps) {
+export function ApproverAgreementDetail({ agr, walletAddress, onRefresh }: ApproverAgreementDetailProps) {
   const { openWalletModal } = useStellarWallet()
   const { token } = useAuthStore()
   // Signing-capable wallet: external Kit, or custodial with a signing provider
@@ -155,7 +156,7 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
           evidence_urls: [],
         })
       }
-      setDisputedMs((prev) => new Set(prev).add(idx))
+      await onRefresh?.()
       setShowDisputeConfirm(null)
     } catch (e: any) {
       setTxStatus("error")
@@ -179,9 +180,7 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
         token ?? undefined,
       )
       await signAndSubmit("approveMilestone", res, "Error approving milestone")
-      setLocalMilestones((ms) =>
-        ms.map((m, i) => (i === idx ? { ...m, status: "approved" as const, approved: true } : m)),
-      )
+      await onRefresh?.()
     } catch (e: any) {
       setTxStatus("error")
       setErrorMs(e.message || "Unknown error")
@@ -199,7 +198,7 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
       const type = agr.type === "Multi Release" ? "multi-release" : "single-release"
       const res = await releaseFunds(agr.id, walletAddress, type, undefined, token ?? undefined)
       await signAndSubmit("releaseFunds", res, "Error releasing funds")
-      setLocalMilestones((ms) => ms.map((m) => ({ ...m, status: "released" as const })))
+      await onRefresh?.()
     } catch (e: any) {
       setTxStatus("error")
       setErrorMs(e.message || "Unknown error")
@@ -370,9 +369,12 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
                 token: token ?? undefined,
                 setFunding,
                 setError: setFundError,
-                setSuccess: setFundSuccess,
-                onStatus: setTxStatus,
-              })
+  setSuccess: async (success) => {
+    setFundSuccess(success)
+    if (success) await onRefresh?.()
+  },
+  onStatus: setTxStatus,
+  })
             }}
             disabled={disableFund}
             className="rounded-full bg-blue-500 px-6 text-sm font-semibold text-white hover:bg-blue-600 shadow-[0_4px_16px_rgba(59,130,246,0.25)]"
