@@ -1,24 +1,24 @@
-"use client";
+"use client"
 
-import React from "react";
-import { Button } from "@/components/ui/button";
+import React from "react"
+import { Button } from "@/components/ui/button"
 
 interface WalletAddressProps {
-  address: string;
+  address: string
 }
 
 export function WalletAddress({ address }: WalletAddressProps) {
-  if (!address) return null;
+  if (!address) return null
 
-  const short = `${address.slice(0, 6)}…${address.slice(-4)}`;
+  const short = `${address.slice(0, 6)}…${address.slice(-4)}`
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(address);
+      await navigator.clipboard.writeText(address)
     } catch {
       // ignore copy errors
     }
-  };
+  }
 
   return (
     <div className="inline-flex items-center gap-2 rounded-full border border-border/30 bg-card/60 px-3 py-1.5 shadow-sm">
@@ -46,6 +46,5 @@ export function WalletAddress({ address }: WalletAddressProps) {
         Copy
       </Button>
     </div>
-  );
+  )
 }
-

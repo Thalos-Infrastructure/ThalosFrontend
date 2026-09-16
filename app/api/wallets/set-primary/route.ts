@@ -12,10 +12,7 @@ export async function POST(req: Request) {
     const supabase = createServiceClient()
 
     // Remove primary from all user wallets
-    await supabase
-      .from("linked_wallets")
-      .update({ is_primary: false })
-      .eq("user_id", userId)
+    await supabase.from("linked_wallets").update({ is_primary: false }).eq("user_id", userId)
 
     // Set the selected wallet as primary
     const { error } = await supabase

@@ -61,29 +61,44 @@ const escrows = [
 
 const statusConfig = {
   locked: { label: "Locked", className: "bg-[#f0b400]/10 text-[#f0b400] border-[#f0b400]/20" },
-  partial: { label: "Partial Release", className: "bg-amber-500/10 text-amber-400 border-amber-500/20" },
-  completed: { label: "Completed", className: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" },
+  partial: {
+    label: "Partial Release",
+    className: "bg-amber-500/10 text-amber-400 border-amber-500/20",
+  },
+  completed: {
+    label: "Completed",
+    className: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+  },
 }
 
 export function DashboardSection() {
   const { t } = useLanguage()
   const { ref, isVisible } = useSectionReveal()
-  const { displayed: twText, isTyping: twActive } = useTypewriter(t("dash.tag"), isVisible, { typeSpeed: 120, deleteSpeed: 60, pauseBeforeDelete: 2500, pauseBeforeType: 800 })
+  const { displayed: twText, isTyping: twActive } = useTypewriter(t("dash.tag"), isVisible, {
+    typeSpeed: 120,
+    deleteSpeed: 60,
+    pauseBeforeDelete: 2500,
+    pauseBeforeType: 800,
+  })
   const [selectedEscrow, setSelectedEscrow] = useState<string | null>(null)
 
-  const totalLocked = escrows.filter((e) => e.status !== "completed").reduce((sum, e) => sum + Number.parseFloat(e.amount.replace(",", "")), 0)
+  const totalLocked = escrows
+    .filter((e) => e.status !== "completed")
+    .reduce((sum, e) => sum + Number.parseFloat(e.amount.replace(",", "")), 0)
   const totalYield = escrows.reduce((sum, e) => sum + (e.yield ? Number.parseFloat(e.yield) : 0), 0)
 
   return (
     <section id="dashboard" className="relative py-28" ref={ref}>
-      <div className={cn(
-        "mx-auto max-w-7xl px-6 section-reveal",
-        isVisible && "is-visible"
-      )}>
+      <div className={cn("mx-auto max-w-7xl px-6 section-reveal", isVisible && "is-visible")}>
         <div className="mb-14 text-center">
           <p className="mb-3 text-base font-bold uppercase tracking-wider text-[#f0b400] md:text-lg">
             <span>{twText}</span>
-            <span className={cn("ml-0.5 inline-block h-4 w-0.5 bg-[#f0b400] align-middle", twActive ? "animate-pulse" : "opacity-0")} />
+            <span
+              className={cn(
+                "ml-0.5 inline-block h-4 w-0.5 bg-[#f0b400] align-middle",
+                twActive ? "animate-pulse" : "opacity-0",
+              )}
+            />
           </p>
           <h2 className="mb-4 text-4xl font-bold tracking-tight text-white md:text-5xl text-balance">
             {t("dash.title")}
@@ -96,10 +111,18 @@ export function DashboardSection() {
         {/* Summary Cards */}
         <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {[
-            { label: "Active Agreements", value: escrows.filter((e) => e.status !== "completed").length.toString(), suffix: "" },
+            {
+              label: "Active Agreements",
+              value: escrows.filter((e) => e.status !== "completed").length.toString(),
+              suffix: "",
+            },
             { label: "Total Locked", value: `$${totalLocked.toLocaleString()}`, suffix: "USDC" },
             { label: "Total Yield", value: `+$${totalYield.toFixed(2)}`, suffix: "earned" },
-            { label: "Completed", value: escrows.filter((e) => e.status === "completed").length.toString(), suffix: "agreements" },
+            {
+              label: "Completed",
+              value: escrows.filter((e) => e.status === "completed").length.toString(),
+              suffix: "agreements",
+            },
           ].map((stat, idx) => (
             <div
               key={stat.label}
@@ -109,7 +132,11 @@ export function DashboardSection() {
               <p className="stat-label text-xs font-semibold text-white/60">{stat.label}</p>
               <div className="mt-1 flex items-baseline gap-1.5">
                 <p className="stat-value text-2xl font-bold text-white">{stat.value}</p>
-                {stat.suffix && <span className="stat-suffix text-xs font-medium text-white/50">{stat.suffix}</span>}
+                {stat.suffix && (
+                  <span className="stat-suffix text-xs font-medium text-white/50">
+                    {stat.suffix}
+                  </span>
+                )}
               </div>
             </div>
           ))}
@@ -132,7 +159,10 @@ export function DashboardSection() {
                 <div className="flex flex-col gap-1">
                   <div className="flex items-center gap-3">
                     <h3 className="text-sm font-bold text-white">{escrow.title}</h3>
-                    <Badge variant="outline" className={cn("text-xs font-semibold", statusConfig[escrow.status].className)}>
+                    <Badge
+                      variant="outline"
+                      className={cn("text-xs font-semibold", statusConfig[escrow.status].className)}
+                    >
                       {statusConfig[escrow.status].label}
                     </Badge>
                   </div>
@@ -142,7 +172,10 @@ export function DashboardSection() {
                 <div className="flex flex-wrap items-center gap-6">
                   <div>
                     <p className="text-xs font-semibold text-white/60">Amount</p>
-                    <p className="text-sm font-bold text-white">${escrow.amount} <span className="text-xs font-medium text-white/60">USDC</span></p>
+                    <p className="text-sm font-bold text-white">
+                      ${escrow.amount}{" "}
+                      <span className="text-xs font-medium text-white/60">USDC</span>
+                    </p>
                   </div>
                   <div>
                     <p className="text-xs font-semibold text-white/60">Time</p>
@@ -161,12 +194,14 @@ export function DashboardSection() {
                         <div
                           className={cn(
                             "h-full rounded-full transition-all",
-                            escrow.status === "completed" ? "bg-emerald-400" : "bg-[#f0b400]"
+                            escrow.status === "completed" ? "bg-emerald-400" : "bg-[#f0b400]",
                           )}
                           style={{ width: `${escrow.progress}%` }}
                         />
                       </div>
-                      <span className="text-xs font-medium text-white/50">{escrow.completedMilestones}/{escrow.milestones}</span>
+                      <span className="text-xs font-medium text-white/50">
+                        {escrow.completedMilestones}/{escrow.milestones}
+                      </span>
                     </div>
                   </div>
 
@@ -174,7 +209,9 @@ export function DashboardSection() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => setSelectedEscrow(selectedEscrow === escrow.id ? null : escrow.id)}
+                      onClick={() =>
+                        setSelectedEscrow(selectedEscrow === escrow.id ? null : escrow.id)
+                      }
                       className="text-xs font-semibold text-white/60 hover:text-[#b0c4de] hover:bg-[#b0c4de]/10"
                     >
                       View
@@ -195,32 +232,43 @@ export function DashboardSection() {
                 <div className="mt-4 border-t border-white/10 pt-4">
                   <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                     <div className="rounded-xl bg-white/5 p-4 border border-white/10">
-                      <p className="mb-2 text-xs font-bold uppercase tracking-wider text-white/50">Milestones</p>
+                      <p className="mb-2 text-xs font-bold uppercase tracking-wider text-white/50">
+                        Milestones
+                      </p>
                       <div className="flex flex-col gap-2">
                         {Array.from({ length: escrow.milestones }, (_, i) => (
-                          <div key={`milestone-${escrow.id}-${i}`} className="flex items-center gap-2">
-                            <div className={cn(
-                              "h-2 w-2 rounded-full",
-                              i < escrow.completedMilestones ? "bg-emerald-400" : "bg-white/30"
-                            )} />
+                          <div
+                            key={`milestone-${escrow.id}-${i}`}
+                            className="flex items-center gap-2"
+                          >
+                            <div
+                              className={cn(
+                                "h-2 w-2 rounded-full",
+                                i < escrow.completedMilestones ? "bg-emerald-400" : "bg-white/30",
+                              )}
+                            />
                             <span className="text-xs font-medium text-white/60">
-                              Milestone {i + 1} {i < escrow.completedMilestones ? "(Completed)" : "(Pending)"}
+                              Milestone {i + 1}{" "}
+                              {i < escrow.completedMilestones ? "(Completed)" : "(Pending)"}
                             </span>
                           </div>
                         ))}
                       </div>
                     </div>
                     <div className="rounded-xl bg-white/5 p-4 border border-white/10">
-                      <p className="mb-2 text-xs font-bold uppercase tracking-wider text-white/50">Conditions</p>
+                      <p className="mb-2 text-xs font-bold uppercase tracking-wider text-white/50">
+                        Conditions
+                      </p>
                       <p className="text-xs font-medium text-white/60">
-                        Funds are released based on verified milestone completion. All parties must confirm before each release stage.
+                        Funds are released based on verified milestone completion. All parties must
+                        confirm before each release stage.
                       </p>
                     </div>
                     <div className="rounded-xl bg-white/5 p-4 border border-white/10">
-                      <p className="mb-2 text-xs font-bold uppercase tracking-wider text-white/50">Contract</p>
-                      <p className="text-xs font-mono font-medium text-white/60">
-                        GBXK...7F2D
+                      <p className="mb-2 text-xs font-bold uppercase tracking-wider text-white/50">
+                        Contract
                       </p>
+                      <p className="text-xs font-mono font-medium text-white/60">GBXK...7F2D</p>
                       <p className="mt-1 text-xs font-medium text-white/60">Stellar Network</p>
                     </div>
                   </div>

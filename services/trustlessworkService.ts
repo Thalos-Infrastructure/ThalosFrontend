@@ -6,92 +6,92 @@
    TYPES
 ===================================================== */
 
-export type ServiceType = "single-release" | "multi-release";
+export type ServiceType = "single-release" | "multi-release"
 
 export interface AgreementPayload {
-  title: string;
-  description: string;
-  amount: string;
-  platformFee: string;
-  signer: string;
-  serviceType: ServiceType;
-  roles: Record<string, string>;
+  title: string
+  description: string
+  amount: string
+  platformFee: string
+  signer: string
+  serviceType: ServiceType
+  roles: Record<string, string>
   milestones: Array<{
-    description: string;
-    amount: string;
-    status: string;
-  }>;
+    description: string
+    amount: string
+    status: string
+  }>
   notifications: {
-    notifyEmail: string;
-    signerEmail: string;
-  };
+    notifyEmail: string
+    signerEmail: string
+  }
 }
 
 export interface AgreementResponse<T = unknown> {
-  success: boolean;
-  data?: T;
-  error?: string;
+  success: boolean
+  data?: T
+  error?: string
 }
 
 /* ---------------- Escrow Types ---------------- */
 
 export interface EscrowRole {
-  approver: string;
-  serviceProvider: string;
-  platformAddress: string;
-  releaseSigner: string;
-  disputeResolver: string;
-  receiver?: string;
-  observers?: string[];
+  approver: string
+  serviceProvider: string
+  platformAddress: string
+  releaseSigner: string
+  disputeResolver: string
+  receiver?: string
+  observers?: string[]
 }
 
 export interface EscrowFlags {
-  disputed: boolean;
-  released: boolean;
-  resolved: boolean;
+  disputed: boolean
+  released: boolean
+  resolved: boolean
 }
 
 export interface EscrowTrustline {
-  address: string;
-  contractId: string;
-  symbol: string;
+  address: string
+  contractId: string
+  symbol: string
 }
 
 export interface EscrowMilestone {
-  description: string;
-  status: string;
-  evidence: string;
-  approved?: boolean;
-  amount?: number;
-  flags?: EscrowFlags;
-  receiver?: string;
+  description: string
+  status: string
+  evidence: string
+  approved?: boolean
+  amount?: number
+  flags?: EscrowFlags
+  receiver?: string
 }
 
 export interface EscrowInconsistencies {
-  inconsistencyFound: boolean;
-  message: string;
-  differences: string[];
+  inconsistencyFound: boolean
+  message: string
+  differences: string[]
 }
 
 export interface Escrow {
-  contractId: string;
-  contractBaseId: string;
-  signer: string;
-  type: string;
-  engagementId: string;
-  title: string;
-  description: string;
-  amount?: number;
-  platformFee: number;
-  roles: EscrowRole;
-  flags?: EscrowFlags;
-  trustline: EscrowTrustline;
-  milestones: EscrowMilestone[];
-  isActive: boolean;
-  createdAt: { _seconds: number; _nanoseconds: number };
-  updatedAt: { _seconds: number; _nanoseconds: number };
-  balance: number;
-  inconsistencies: EscrowInconsistencies;
+  contractId: string
+  contractBaseId: string
+  signer: string
+  type: string
+  engagementId: string
+  title: string
+  description: string
+  amount?: number
+  platformFee: number
+  roles: EscrowRole
+  flags?: EscrowFlags
+  trustline: EscrowTrustline
+  milestones: EscrowMilestone[]
+  isActive: boolean
+  createdAt: { _seconds: number; _nanoseconds: number }
+  updatedAt: { _seconds: number; _nanoseconds: number }
+  balance: number
+  inconsistencies: EscrowInconsistencies
 }
 
 /* =====================================================
@@ -99,20 +99,36 @@ export interface Escrow {
 ===================================================== */
 
 const BASE_URL =
-  process.env.NEXT_PUBLIC_TRUSTLESSWORK_API_URL ??
-  "https://dev.api.trustlesswork.com";
+  process.env.NEXT_PUBLIC_TRUSTLESSWORK_API_URL ?? "https://dev.api.trustlesswork.com"
 
-const API_KEY =
-  process.env.NEXT_PUBLIC_TRUSTLESSWORK_API_KEY ??
-  "bJJ8-62SYFUzv3kwajoLEw.2b170e199a57120ec56de4bdece08f54b03e5242fea50c5e44ca810b987412ea";
+/**
+ * Trustless Work API key, read from the environment ONLY.
+ *
+ * This used to fall back to a key hardcoded right here, which meant the secret
+ * shipped inside the browser bundle and sat in a public repo. Without the env var
+ * the direct calls below now fail loudly instead of quietly working off a
+ * committed credential.
+ *
+ * The real fix is migrating these writes to the backend relay (see the migration
+ * flags in `services/escrowMigration.ts`), which keeps the key server-side.
+ */
+const API_KEY = process.env.NEXT_PUBLIC_TRUSTLESSWORK_API_KEY ?? ""
+
+if (typeof window !== "undefined" && !API_KEY) {
+  console.error(
+    "[trustlesswork] NEXT_PUBLIC_TRUSTLESSWORK_API_KEY is not set — direct Trustless Work calls will be rejected. Add it to .env.local.",
+  )
+}
 
 const PLATFORM_ADDRESS =
-  process.env.NEXT_PUBLIC_PLATFORM_ADDRESS ?? "GBTTKTSBLHGMRY3T65JXT423MHQZXTD26TTHQEY5HNF2KWFFDKKVHVPD";
+  process.env.NEXT_PUBLIC_PLATFORM_ADDRESS ??
+  "GBTTKTSBLHGMRY3T65JXT423MHQZXTD26TTHQEY5HNF2KWFFDKKVHVPD"
 
 const DISPUTE_RESOLVER =
-  process.env.NEXT_PUBLIC_DISPUTE_RESOLVER ?? "GB6MP3L6UGIDY6O6MXNLSKHLXT2T2TCMPZIZGUTOGYKOLHW7EORWMFCK";
+  process.env.NEXT_PUBLIC_DISPUTE_RESOLVER ??
+  "GB6MP3L6UGIDY6O6MXNLSKHLXT2T2TCMPZIZGUTOGYKOLHW7EORWMFCK"
 
-import { TRUSTLINE_USDC } from "@/lib/config";
+import { TRUSTLINE_USDC } from "@/lib/config"
 
 /* =====================================================
    ENDPOINT BUILDER
@@ -124,14 +140,12 @@ const endpoints = {
     multi: `${BASE_URL}/deployer/multi-release`,
   },
   escrow: {
-    fund: (type: ServiceType) =>
-      `${BASE_URL}/escrow/${type}/fund-escrow`,
+    fund: (type: ServiceType) => `${BASE_URL}/escrow/${type}/fund-escrow`,
     release: (type: ServiceType) =>
       type === "single-release"
         ? `${BASE_URL}/escrow/${type}/release-funds`
         : `${BASE_URL}/escrow/${type}/release-milestone-funds`,
-    approve: (type: ServiceType) =>
-      `${BASE_URL}/escrow/${type}/approve-milestone`,
+    approve: (type: ServiceType) => `${BASE_URL}/escrow/${type}/approve-milestone`,
     changeMilestoneStatus: (type: ServiceType) =>
       `${BASE_URL}/escrow/${type}/change-milestone-status`,
     disputeMilestone: `${BASE_URL}/escrow/multi-release/dispute-milestone`,
@@ -140,7 +154,7 @@ const endpoints = {
     sendTransaction: `${BASE_URL}/helper/send-transaction`,
     getEscrowsBySigner: `${BASE_URL}/helper/get-escrows-by-signer`,
   },
-};
+}
 
 /* =====================================================
    HTTP LAYER
@@ -149,29 +163,37 @@ const endpoints = {
 const buildHeaders = (): HeadersInit => ({
   "Content-Type": "application/json",
   ...(API_KEY && { "x-api-key": API_KEY }),
-});
+})
 
-async function safeFetch<T>(
-  url: string,
-  options: RequestInit
-): Promise<AgreementResponse<T>> {
+async function safeFetch<T>(url: string, options: RequestInit): Promise<AgreementResponse<T>> {
   try {
     const response = await fetch(url, {
       headers: buildHeaders(),
       ...options,
-    });
+    })
 
     if (!response.ok) {
-      return { success: false, error: `HTTP ${response.status}` };
+      let detail = `HTTP ${response.status}`
+      try {
+        const body = (await response.json()) as { message?: unknown; error?: unknown }
+        const msg =
+          (typeof body.message === "string" && body.message) ||
+          (typeof body.error === "string" && body.error) ||
+          null
+        if (msg) detail = `${detail}: ${msg}`
+      } catch {
+        // keep status-only message
+      }
+      return { success: false, error: detail }
     }
 
-    const data = (await response.json()) as T;
-    return { success: true, data };
+    const data = (await response.json()) as T
+    return { success: true, data }
   } catch (error) {
     return {
       success: false,
       error: error instanceof Error ? error.message : "Unknown error",
-    };
+    }
   }
 }
 
@@ -180,7 +202,7 @@ async function safeFetch<T>(
 ===================================================== */
 
 function generateEngagementId(type: "MULTIRELEASE" | "SINGLERELEASE") {
-  return `THALOS-v2-${type}-${Date.now().toString(36).toUpperCase()}`;
+  return `THALOS-v2-${type}-${Date.now().toString(36).toUpperCase()}`
 }
 
 function buildRoles(serviceType: ServiceType, roles: Record<string, string>) {
@@ -190,27 +212,23 @@ function buildRoles(serviceType: ServiceType, roles: Record<string, string>) {
     platformAddress: PLATFORM_ADDRESS,
     releaseSigner: roles.releaseSigner,
     disputeResolver: DISPUTE_RESOLVER,
-  };
+  }
 
-  return serviceType === "single-release"
-    ? { ...base, receiver: roles.receiver }
-    : base;
+  return serviceType === "single-release" ? { ...base, receiver: roles.receiver } : base
 }
 
 function buildAgreementBody(payload: AgreementPayload) {
-  const isMulti = payload.serviceType === "multi-release";
+  const isMulti = payload.serviceType === "multi-release"
 
   const base = {
     signer: payload.signer,
-    engagementId: generateEngagementId(
-      isMulti ? "MULTIRELEASE" : "SINGLERELEASE"
-    ),
+    engagementId: generateEngagementId(isMulti ? "MULTIRELEASE" : "SINGLERELEASE"),
     title: payload.title,
     description: payload.description,
     roles: buildRoles(payload.serviceType, payload.roles),
     platformFee: Number(payload.platformFee),
     trustline: TRUSTLINE_USDC,
-  };
+  }
 
   if (isMulti) {
     return {
@@ -221,7 +239,7 @@ function buildAgreementBody(payload: AgreementPayload) {
         status: m.status,
         receiver: payload.signer,
       })),
-    };
+    }
   }
 
   return {
@@ -230,7 +248,7 @@ function buildAgreementBody(payload: AgreementPayload) {
     milestones: payload.milestones.map((m) => ({
       description: m.description,
     })),
-  };
+  }
 }
 
 /* =====================================================
@@ -238,73 +256,73 @@ function buildAgreementBody(payload: AgreementPayload) {
 ===================================================== */
 
 export async function createAgreement(
-  payload: AgreementPayload
-): Promise<AgreementResponse> {
+  payload: AgreementPayload,
+): Promise<AgreementResponse<{ unsignedTransaction: string }>> {
   // Validate receiver wallet has USDC trustline before creating escrow
-  const receiverWallet = payload.roles.receiver;
+  const receiverWallet = payload.roles.receiver
   if (receiverWallet) {
     try {
-      const { validateWalletForEscrow } = await import("@/lib/stellar/trustline");
-      const validation = await validateWalletForEscrow(receiverWallet);
+      const { validateWalletForEscrow } = await import("@/lib/stellar/trustline")
+      const validation = await validateWalletForEscrow(receiverWallet)
       if (!validation.valid) {
         return {
           success: false,
-          error: validation.error || "Receiver wallet cannot receive USDC. Please ensure the wallet has USDC trustline configured.",
-        };
+          error:
+            validation.error ||
+            "Receiver wallet cannot receive USDC. Please ensure the wallet has USDC trustline configured.",
+        }
       }
     } catch (e) {
-      console.warn("Could not validate receiver trustline:", e);
+      console.warn("Could not validate receiver trustline:", e)
       // Continue anyway - Trustless Work will catch it if invalid
     }
   }
-  
-  const body = buildAgreementBody(payload);
-  
-  const url =
-  payload.serviceType === "multi-release"
-  ? endpoints.deployer.multi
-  : endpoints.deployer.single;
 
-  return safeFetch(url, {
+  const body = buildAgreementBody(payload)
+
+  const url =
+    payload.serviceType === "multi-release" ? endpoints.deployer.multi : endpoints.deployer.single
+
+  return safeFetch<{ unsignedTransaction: string }>(url, {
     method: "POST",
     body: JSON.stringify(body),
-  });
+  })
 }
 
 export async function fundEscrow(
   contractId: string,
   signer: string,
   amount: number,
-  type: ServiceType
+  type: ServiceType,
 ) {
   return safeFetch(endpoints.escrow.fund(type), {
     method: "POST",
     body: JSON.stringify({ contractId, signer, amount }),
-  });
+  })
 }
 
 export async function releaseFunds(
   contractId: string,
   releaseSigner: string,
   type: ServiceType,
-  milestoneIndex?: string
+  milestoneIndex?: string,
 ) {
   return safeFetch(endpoints.escrow.release(type), {
     method: "POST",
     body: JSON.stringify({ contractId, releaseSigner, milestoneIndex }),
-  });
+  })
 }
 
 export async function approveMilestone(
   contractId: string,
   milestoneIndex: string,
   approver: string,
-  type: ServiceType
+  type: ServiceType,
 ) {
   return safeFetch(endpoints.escrow.approve(type), {
     method: "POST",
     body: JSON.stringify({ contractId, milestoneIndex, approver }),
-  });
+  })
 }
 
 export async function changeMilestoneStatus(
@@ -313,19 +331,19 @@ export async function changeMilestoneStatus(
   newEvidence: string,
   newStatus: string,
   serviceProvider: string,
-  type: ServiceType
+  type: ServiceType,
 ) {
   return safeFetch(endpoints.escrow.changeMilestoneStatus(type), {
     method: "POST",
     body: JSON.stringify({ contractId, milestoneIndex, newEvidence, newStatus, serviceProvider }),
-  });
+  })
 }
 
 export async function sendTransaction(signedXdr: string) {
   return safeFetch(endpoints.helper.sendTransaction, {
     method: "POST",
     body: JSON.stringify({ signedXdr }),
-  });
+  })
 }
 
 /**
@@ -333,30 +351,26 @@ export async function sendTransaction(signedXdr: string) {
  * Can only be called by the approver or service provider (not the dispute resolver).
  * Returns an unsigned XDR that needs to be signed and submitted.
  */
-export async function disputeMilestone(
-  contractId: string,
-  milestoneIndex: string,
-  signer: string
-) {
+export async function disputeMilestone(contractId: string, milestoneIndex: string, signer: string) {
   return safeFetch<{ unsignedTransaction: string }>(endpoints.escrow.disputeMilestone, {
     method: "POST",
     body: JSON.stringify({ contractId, milestoneIndex, signer }),
-  });
+  })
 }
 
 export async function getEscrowsBySigner(
   signer: string,
   page = 1,
   validateOnChain = true,
-  pageSize = 5
+  pageSize = 5,
 ): Promise<AgreementResponse<Escrow[]>> {
   const url = `${endpoints.helper.getEscrowsBySigner}?signer=${encodeURIComponent(
-    signer
-  )}&page=${page}&validateOnChain=${validateOnChain}&pageSize=${pageSize}`;
+    signer,
+  )}&page=${page}&validateOnChain=${validateOnChain}&pageSize=${pageSize}`
 
   return safeFetch<Escrow[]>(url, {
     method: "GET",
-  });
+  })
 }
 
 /**
@@ -364,30 +378,30 @@ export async function getEscrowsBySigner(
  * @param params All possible filters for the endpoint.
  */
 export async function getEscrowsByRole(params: {
-  signer?: string;
-  role?: string;
-  roleAddress?: string;
-  status?: string;
-  type?: string;
-  engagementId?: string;
-  title?: string;
-  startDate?: string;
-  minAmount?: number;
-  maxAmount?: number;
-  orderBy?: string;
-  orderDirection?: "asc" | "desc";
-  page?: number;
-  pageSize?: number;
-  contractID?: string;
-  endDate?: string;
+  signer?: string
+  role?: string
+  roleAddress?: string
+  status?: string
+  type?: string
+  engagementId?: string
+  title?: string
+  startDate?: string
+  minAmount?: number
+  maxAmount?: number
+  orderBy?: string
+  orderDirection?: "asc" | "desc"
+  page?: number
+  pageSize?: number
+  contractID?: string
+  endDate?: string
 }) {
-  const url = new URL(`${BASE_URL}/helper/get-escrows-by-role`);
+  const url = new URL(`${BASE_URL}/helper/get-escrows-by-role`)
   Object.entries(params).forEach(([key, value]) => {
     if (value !== undefined && value !== null && value !== "") {
-      url.searchParams.append(key, String(value));
+      url.searchParams.append(key, String(value))
     }
-  });
+  })
   return safeFetch<Escrow[]>(url.toString(), {
     method: "GET",
-  });
+  })
 }

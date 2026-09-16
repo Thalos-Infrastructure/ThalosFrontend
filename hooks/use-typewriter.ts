@@ -2,8 +2,22 @@
 
 import { useState, useEffect, useCallback } from "react"
 
-export function useTypewriter(text: string, isVisible: boolean, options?: { typeSpeed?: number; deleteSpeed?: number; pauseBeforeDelete?: number; pauseBeforeType?: number }) {
-  const { typeSpeed = 140, deleteSpeed = 70, pauseBeforeDelete = 2200, pauseBeforeType = 600 } = options ?? {}
+export function useTypewriter(
+  text: string,
+  isVisible: boolean,
+  options?: {
+    typeSpeed?: number
+    deleteSpeed?: number
+    pauseBeforeDelete?: number
+    pauseBeforeType?: number
+  },
+) {
+  const {
+    typeSpeed = 140,
+    deleteSpeed = 70,
+    pauseBeforeDelete = 2200,
+    pauseBeforeType = 600,
+  } = options ?? {}
   const [displayed, setDisplayed] = useState("")
   const [phase, setPhase] = useState<"typing" | "pause" | "deleting" | "wait">("wait")
 
@@ -55,7 +69,16 @@ export function useTypewriter(text: string, isVisible: boolean, options?: { type
     }, delay)
 
     return () => clearTimeout(timer)
-  }, [displayed, phase, isVisible, tick, typeSpeed, deleteSpeed, pauseBeforeDelete, pauseBeforeType])
+  }, [
+    displayed,
+    phase,
+    isVisible,
+    tick,
+    typeSpeed,
+    deleteSpeed,
+    pauseBeforeDelete,
+    pauseBeforeType,
+  ])
 
   return { displayed, isTyping: phase === "typing" || phase === "deleting" }
 }

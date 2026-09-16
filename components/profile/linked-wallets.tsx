@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, type ReactNode } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
@@ -11,17 +11,25 @@ import {
   getWalletsWithBalances,
   getWalletVerificationChallenge,
   linkWallet,
+  walletVerificationMessageToSign,
   updateWallet,
   unlinkWallet,
   type WalletWithBalance,
 } from "@/lib/api/wallets"
 import { Wallet } from "lucide-react"
 
-const walletTypeLabels: Record<string, { label: string; icon: JSX.Element }> = {
+const walletTypeLabels: Record<string, { label: string; icon: ReactNode }> = {
   custodial: {
     label: "Email Wallet",
     icon: (
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+      >
         <rect x="2" y="4" width="20" height="16" rx="2" />
         <path d="M22 7l-10 7L2 7" />
       </svg>
@@ -30,7 +38,14 @@ const walletTypeLabels: Record<string, { label: string; icon: JSX.Element }> = {
   freighter: {
     label: "Freighter",
     icon: (
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+      >
         <rect x="1" y="4" width="22" height="16" rx="2" />
         <path d="M1 10h22" />
       </svg>
@@ -39,7 +54,14 @@ const walletTypeLabels: Record<string, { label: string; icon: JSX.Element }> = {
   lobstr: {
     label: "LOBSTR",
     icon: (
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+      >
         <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
       </svg>
     ),
@@ -47,7 +69,14 @@ const walletTypeLabels: Record<string, { label: string; icon: JSX.Element }> = {
   xbull: {
     label: "xBull",
     icon: (
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+      >
         <circle cx="12" cy="12" r="10" />
         <path d="M8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01" />
       </svg>
@@ -56,7 +85,14 @@ const walletTypeLabels: Record<string, { label: string; icon: JSX.Element }> = {
   albedo: {
     label: "Albedo",
     icon: (
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+      >
         <circle cx="12" cy="12" r="10" />
         <path d="M12 2v20M2 12h20" />
       </svg>
@@ -65,7 +101,14 @@ const walletTypeLabels: Record<string, { label: string; icon: JSX.Element }> = {
   other: {
     label: "External Wallet",
     icon: (
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+      >
         <rect x="1" y="4" width="22" height="16" rx="2" />
         <path d="M1 10h22" />
       </svg>
@@ -79,7 +122,11 @@ interface LinkedWalletsProps {
   showBalances?: boolean
 }
 
-export function LinkedWallets({ onWalletSelect, selectedWallet, showBalances = true }: LinkedWalletsProps) {
+export function LinkedWallets({
+  onWalletSelect,
+  selectedWallet,
+  showBalances = true,
+}: LinkedWalletsProps) {
   const { t } = useLanguage()
   const { address: connectedWallet, openWalletModal, signMessage } = useStellarWallet()
   const { token } = useAuthStore()
@@ -145,7 +192,7 @@ export function LinkedWallets({ onWalletSelect, selectedWallet, showBalances = t
         // Backend may not support challenge endpoint yet — link without proof
         const result = await linkWallet(
           { wallet_address: walletAddress, wallet_type: "freighter" },
-          token
+          token,
         )
         if (result.success) {
           await loadWallets()
@@ -155,9 +202,11 @@ export function LinkedWallets({ onWalletSelect, selectedWallet, showBalances = t
         return false
       }
 
-      // Step 2: Sign the challenge message with the connected wallet
-      const signature = await signMessage(challengeResult.data.challenge)
-      if (!signature) {
+      // Step 2: Nest's Proof line is server metadata, and SEP-53 wallets add
+      // the canonical prefix themselves. Sign only the user-visible body.
+      const challenge = challengeResult.data.challenge
+      const signed = await signMessage(walletVerificationMessageToSign(challenge))
+      if (!signed) {
         setError(t("linkedWallets.signatureCancelled"))
         return false
       }
@@ -167,10 +216,11 @@ export function LinkedWallets({ onWalletSelect, selectedWallet, showBalances = t
         {
           wallet_address: walletAddress,
           wallet_type: "freighter",
-          signed_message: challengeResult.data.challenge,
-          signature,
+          // Nest still needs the original envelope to validate its HMAC proof.
+          signed_message: challenge,
+          signature: signed.signedMessage,
         },
-        token
+        token,
       )
 
       if (result.success) {
@@ -210,20 +260,38 @@ export function LinkedWallets({ onWalletSelect, selectedWallet, showBalances = t
     }
   }
 
+  const MAX_WALLET_LABEL_LENGTH = 50
+
   const handleUpdateLabel = async (walletId: string) => {
-    if (!token || !newLabel.trim()) {
-      setEditingLabel(null)
+    if (!token) return
+
+    const trimmedLabel = newLabel.trim()
+
+    if (!trimmedLabel) {
+      setError("Wallet label cannot be empty.")
       return
     }
 
+    if (trimmedLabel.length > MAX_WALLET_LABEL_LENGTH) {
+      setError(`Wallet label must be ${MAX_WALLET_LABEL_LENGTH} characters or fewer.`)
+      return
+    }
+
+    setError(null)
+
     try {
-      const result = await updateWallet(walletId, { label: newLabel.trim() }, token)
-      if (result.success) await loadWallets()
-    } catch (err) {
-      console.error("Failed to update label:", err)
-    } finally {
+      const result = await updateWallet(walletId, { label: trimmedLabel }, token)
+
+      if (!result.success) {
+        setError(result.error || "Failed to update wallet label.")
+        return
+      }
+
+      await loadWallets()
       setEditingLabel(null)
       setNewLabel("")
+    } catch {
+      setError("Failed to update wallet label.")
     }
   }
 
@@ -304,7 +372,9 @@ export function LinkedWallets({ onWalletSelect, selectedWallet, showBalances = t
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#f0b400]/10 text-[#f0b400]">
             <Wallet className="h-7 w-7" />
           </div>
-          <h4 className="text-base font-semibold text-foreground">{t("linkedWallets.noOperatingWallet")}</h4>
+          <h4 className="text-base font-semibold text-foreground">
+            {t("linkedWallets.noOperatingWallet")}
+          </h4>
           <p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">
             {t("linkedWallets.noOperatingWalletDesc")}
           </p>
@@ -317,7 +387,9 @@ export function LinkedWallets({ onWalletSelect, selectedWallet, showBalances = t
             </Button>
           ) : (
             <div className="mt-6 space-y-3">
-              <p className="font-mono text-xs text-muted-foreground">{truncateAddress(connectedWallet)}</p>
+              <p className="font-mono text-xs text-muted-foreground">
+                {truncateAddress(connectedWallet)}
+              </p>
               <Button
                 onClick={handleLinkWallet}
                 disabled={isLinking}
@@ -347,7 +419,7 @@ export function LinkedWallets({ onWalletSelect, selectedWallet, showBalances = t
                     isSelected
                       ? "border-[#f0b400]/50 bg-[#f0b400]/10"
                       : "border-border/40 bg-background/50 hover:border-border/60",
-                    onWalletSelect && "cursor-pointer"
+                    onWalletSelect && "cursor-pointer",
                   )}
                 >
                   <div className="flex items-center justify-between">
@@ -357,7 +429,7 @@ export function LinkedWallets({ onWalletSelect, selectedWallet, showBalances = t
                           "flex h-10 w-10 items-center justify-center rounded-lg",
                           wallet.is_primary
                             ? "bg-[#f0b400]/20 text-[#f0b400]"
-                            : "bg-muted/50 text-muted-foreground"
+                            : "bg-muted/50 text-muted-foreground",
                         )}
                       >
                         {typeInfo.icon}
@@ -365,10 +437,14 @@ export function LinkedWallets({ onWalletSelect, selectedWallet, showBalances = t
                       <div>
                         <div className="flex flex-wrap items-center gap-2">
                           {isEditing ? (
-                            <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                            <div
+                              className="flex items-center gap-2"
+                              onClick={(e) => e.stopPropagation()}
+                            >
                               <Input
                                 value={newLabel}
                                 onChange={(e) => setNewLabel(e.target.value)}
+                                maxLength={MAX_WALLET_LABEL_LENGTH}
                                 className="h-7 w-32 text-sm"
                                 placeholder="Enter label"
                                 autoFocus
@@ -377,7 +453,11 @@ export function LinkedWallets({ onWalletSelect, selectedWallet, showBalances = t
                                   if (e.key === "Escape") setEditingLabel(null)
                                 }}
                               />
-                              <Button size="sm" className="h-7 px-2" onClick={() => handleUpdateLabel(wallet.id)}>
+                              <Button
+                                size="sm"
+                                className="h-7 px-2"
+                                onClick={() => handleUpdateLabel(wallet.id)}
+                              >
                                 Save
                               </Button>
                             </div>
@@ -390,7 +470,7 @@ export function LinkedWallets({ onWalletSelect, selectedWallet, showBalances = t
                                 setNewLabel(wallet.label || "")
                               }}
                             >
-                              {wallet.label || typeInfo.label}
+                              {wallet.label?.trim() || truncateAddress(wallet.wallet_address)}
                             </span>
                           )}
                           {wallet.is_primary && (
@@ -452,13 +532,17 @@ export function LinkedWallets({ onWalletSelect, selectedWallet, showBalances = t
                   {showBalances && (
                     <div className="mt-3 grid grid-cols-2 gap-4 border-t border-border/30 pt-3">
                       <div>
-                        <p className="mb-1 text-[10px] uppercase tracking-wider text-muted-foreground">XLM Balance</p>
+                        <p className="mb-1 text-[10px] uppercase tracking-wider text-muted-foreground">
+                          XLM Balance
+                        </p>
                         <p className="text-sm font-medium text-foreground">
                           {formatBalance(wallet.balance?.xlm || "0")} XLM
                         </p>
                       </div>
                       <div>
-                        <p className="mb-1 text-[10px] uppercase tracking-wider text-muted-foreground">USDC Balance</p>
+                        <p className="mb-1 text-[10px] uppercase tracking-wider text-muted-foreground">
+                          USDC Balance
+                        </p>
                         <p className="text-sm font-medium text-[#f0b400]">
                           ${formatBalance(wallet.balance?.usdc || "0")}
                         </p>

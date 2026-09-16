@@ -129,18 +129,19 @@ interface PayServicesSectionProps {
   onPayService?: (serviceId: string) => void
 }
 
-export function PayServicesSection({ 
-  className, 
+export function PayServicesSection({
+  className,
   userCountry = "Argentina",
-  onPayService 
+  onPayService,
 }: PayServicesSectionProps) {
   const { t } = useLanguage()
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
 
-  const filteredCategories = serviceCategories.filter((cat) =>
-    cat.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    cat.services.some((s) => s.toLowerCase().includes(searchQuery.toLowerCase()))
+  const filteredCategories = serviceCategories.filter(
+    (cat) =>
+      cat.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      cat.services.some((s) => s.toLowerCase().includes(searchQuery.toLowerCase())),
   )
 
   return (
@@ -184,7 +185,7 @@ export function PayServicesSection({
               "relative group flex flex-col items-center rounded-2xl border bg-[#0c1220]/60 p-5 text-center transition-all duration-200",
               category.comingSoon
                 ? "border-white/6 opacity-60 cursor-not-allowed"
-                : "border-white/6 hover:border-white/15 hover:bg-[#0c1220]/80"
+                : "border-white/6 hover:border-white/15 hover:bg-[#0c1220]/80",
             )}
           >
             {category.comingSoon && (
@@ -213,7 +214,8 @@ export function PayServicesSection({
               {t("services.poweredBy") || "Powered by Local Partners"}
             </h3>
             <p className="text-xs text-white/50">
-              {t("services.poweredByDescription") || `We partner with local on/off ramp providers in ${userCountry} to enable seamless bill payments. Your payments are processed through regulated financial institutions.`}
+              {t("services.poweredByDescription") ||
+                `We partner with local on/off ramp providers in ${userCountry} to enable seamless bill payments. Your payments are processed through regulated financial institutions.`}
             </p>
           </div>
           <Button

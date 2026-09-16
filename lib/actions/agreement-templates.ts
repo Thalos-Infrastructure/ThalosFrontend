@@ -1,11 +1,12 @@
 "use server"
 
 import { createClient } from "@/lib/supabase/server"
+import type { MilestoneStatus } from "@/lib/types/status"
 
 export interface TemplateMilestone {
   description: string
   amount: string
-  status: "pending" | "approved" | "released"
+  status: MilestoneStatus
 }
 
 export interface AgreementTemplate {
@@ -36,7 +37,7 @@ export interface CreateTemplateInput {
 }
 
 export async function createTemplate(
-  input: CreateTemplateInput
+  input: CreateTemplateInput,
 ): Promise<{ template: AgreementTemplate | null; error: string | null }> {
   try {
     const supabase = await createClient()
@@ -67,7 +68,7 @@ export async function createTemplate(
 export async function updateTemplate(
   id: string,
   ownerWallet: string,
-  updates: Partial<Omit<CreateTemplateInput, "owner_wallet">>
+  updates: Partial<Omit<CreateTemplateInput, "owner_wallet">>,
 ): Promise<{ template: AgreementTemplate | null; error: string | null }> {
   try {
     const supabase = await createClient()
@@ -98,7 +99,7 @@ export async function updateTemplate(
 
 export async function deleteTemplate(
   id: string,
-  ownerWallet: string
+  ownerWallet: string,
 ): Promise<{ success: boolean; error: string | null }> {
   try {
     const supabase = await createClient()
@@ -117,7 +118,7 @@ export async function deleteTemplate(
 }
 
 export async function getTemplatesByOwner(
-  ownerWallet: string
+  ownerWallet: string,
 ): Promise<{ templates: AgreementTemplate[] | null; error: string | null }> {
   try {
     const supabase = await createClient()
@@ -137,7 +138,7 @@ export async function getTemplatesByOwner(
 
 export async function getTemplateById(
   id: string,
-  ownerWallet: string
+  ownerWallet: string,
 ): Promise<{ template: AgreementTemplate | null; error: string | null }> {
   try {
     const supabase = await createClient()

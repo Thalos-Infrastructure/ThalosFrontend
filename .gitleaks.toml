@@ -1,0 +1,20 @@
+# gitleaks config for ThalosFrontend
+# Extends the built-in rules; add project-specific allowlisting below.
+title = "ThalosFrontend gitleaks"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Project allowlist"
+# Build output and dependencies only. Nothing in the source tree is allowlisted on
+# purpose: this repo shipped a Trustless Work API key hardcoded in
+# `services/trustlessworkService.ts` for months precisely because nothing scanned it.
+# If a finding here turns out to be a false positive, allowlist that one rule with a
+# comment saying why — never a whole source path.
+paths = [
+  '''(^|/)node_modules/''',
+  '''(^|/)\.next/''',
+  '''(^|/)coverage/''',
+  '''(^|/)pnpm-lock\.yaml$''',
+]

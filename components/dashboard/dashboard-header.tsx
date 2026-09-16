@@ -5,7 +5,7 @@ import { Bell, HelpCircle, Copy, Check, ChevronDown, User, Settings, LogOut } fr
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useLanguage } from "@/lib/i18n"
-import Link from "next/link"
+import { useSignOut } from "@/lib/use-sign-out"
 import Image from "next/image"
 
 interface DashboardHeaderProps {
@@ -28,10 +28,13 @@ export function DashboardHeader({
   notificationCount = 0,
 }: DashboardHeaderProps) {
   const { t } = useLanguage()
+  const signOut = useSignOut()
   const [copied, setCopied] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
 
-  const userName = displayName || (walletAddress ? `${walletAddress.slice(0, 4)}...${walletAddress.slice(-4)}` : "User")
+  const userName =
+    displayName ||
+    (walletAddress ? `${walletAddress.slice(0, 4)}...${walletAddress.slice(-4)}` : "User")
   const greeting = getGreeting()
 
   function getGreeting() {
@@ -51,12 +54,12 @@ export function DashboardHeader({
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (profileOpen && !(e.target as Element).closest('.profile-dropdown')) {
+      if (profileOpen && !(e.target as Element).closest(".profile-dropdown")) {
         setProfileOpen(false)
       }
     }
-    document.addEventListener('click', handleClickOutside)
-    return () => document.removeEventListener('click', handleClickOutside)
+    document.addEventListener("click", handleClickOutside)
+    return () => document.removeEventListener("click", handleClickOutside)
   }, [profileOpen])
 
   return (
@@ -64,9 +67,12 @@ export function DashboardHeader({
       {/* Left: User greeting and wallet */}
       <div className="flex items-center gap-4">
         {/* Avatar */}
-        <div 
+        <div
           className="profile-dropdown relative cursor-pointer"
-          onClick={(e) => { e.stopPropagation(); setProfileOpen(!profileOpen) }}
+          onClick={(e) => {
+            e.stopPropagation()
+            setProfileOpen(!profileOpen)
+          }}
         >
           <div className="relative">
             {avatarUrl ? (
@@ -93,7 +99,10 @@ export function DashboardHeader({
                 <p className="text-sm font-semibold text-white">{userName}</p>
                 {walletAddress && (
                   <button
-                    onClick={(e) => { e.stopPropagation(); copyAddress() }}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      copyAddress()
+                    }}
                     className="flex items-center gap-2 mt-1 text-xs font-mono text-white/50 hover:text-white/70 transition-colors"
                   >
                     {walletAddress.slice(0, 8)}...{walletAddress.slice(-6)}
@@ -106,19 +115,23 @@ export function DashboardHeader({
                 )}
               </div>
               <button
-                onClick={(e) => { e.stopPropagation(); onEditProfile?.(); setProfileOpen(false) }}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onEditProfile?.()
+                  setProfileOpen(false)
+                }}
                 className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-white/70 hover:bg-white/8 hover:text-white transition-colors"
               >
                 <Settings className="h-4 w-4" />
                 {t("dashboard.editProfile") || "Edit Profile"}
               </button>
-              <Link
-                href="/"
+              <button
+                onClick={signOut}
                 className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-white/70 hover:bg-white/8 hover:text-white transition-colors"
               >
                 <LogOut className="h-4 w-4" />
                 {t("dashboard.signOut") || "Sign Out"}
-              </Link>
+              </button>
             </div>
           )}
         </div>

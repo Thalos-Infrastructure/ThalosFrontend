@@ -6,7 +6,10 @@ export async function POST(req: Request) {
     const { userId, walletAddress, walletType, label } = await req.json()
 
     if (!userId || !walletAddress) {
-      return NextResponse.json({ error: "User ID and wallet address are required" }, { status: 400 })
+      return NextResponse.json(
+        { error: "User ID and wallet address are required" },
+        { status: 400 },
+      )
     }
 
     const supabase = createServiceClient()

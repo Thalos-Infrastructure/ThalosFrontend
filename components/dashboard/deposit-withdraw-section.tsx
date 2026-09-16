@@ -98,7 +98,7 @@ export function DepositWithdrawSection({
 
   const handleSubmit = async () => {
     if (!selectedMethod || !amount || parseFloat(amount) <= 0) return
-    
+
     setIsProcessing(true)
     try {
       if (activeTab === "deposit") {
@@ -129,24 +129,30 @@ export function DepositWithdrawSection({
       {/* Tabs */}
       <div className="flex rounded-xl bg-white/5 p-1">
         <button
-          onClick={() => { setActiveTab("deposit"); setSelectedMethod(null) }}
+          onClick={() => {
+            setActiveTab("deposit")
+            setSelectedMethod(null)
+          }}
           className={cn(
             "flex-1 flex items-center justify-center gap-2 rounded-lg py-3 text-sm font-medium transition-all",
             activeTab === "deposit"
               ? "bg-[#f0b400] text-[#0c1220]"
-              : "text-white/60 hover:text-white"
+              : "text-white/60 hover:text-white",
           )}
         >
           <ArrowDownToLine className="h-4 w-4" />
           {t("ramps.deposit") || "Deposit"}
         </button>
         <button
-          onClick={() => { setActiveTab("withdraw"); setSelectedMethod(null) }}
+          onClick={() => {
+            setActiveTab("withdraw")
+            setSelectedMethod(null)
+          }}
           className={cn(
             "flex-1 flex items-center justify-center gap-2 rounded-lg py-3 text-sm font-medium transition-all",
             activeTab === "withdraw"
               ? "bg-[#f0b400] text-[#0c1220]"
-              : "text-white/60 hover:text-white"
+              : "text-white/60 hover:text-white",
           )}
         >
           <ArrowUpFromLine className="h-4 w-4" />
@@ -159,9 +165,9 @@ export function DepositWithdrawSection({
         <div className="flex items-center justify-between">
           <div>
             <p className="text-[10px] font-bold uppercase tracking-wider text-white/40">
-              {activeTab === "deposit" 
-                ? (t("ramps.yourAddress") || "Your Deposit Address") 
-                : (t("ramps.availableToWithdraw") || "Available to Withdraw")}
+              {activeTab === "deposit"
+                ? t("ramps.yourAddress") || "Your Deposit Address"
+                : t("ramps.availableToWithdraw") || "Available to Withdraw"}
             </p>
             {activeTab === "deposit" && walletAddress ? (
               <p className="text-sm font-mono text-white mt-1 truncate max-w-[200px] md:max-w-none">
@@ -189,9 +195,9 @@ export function DepositWithdrawSection({
       {/* Methods */}
       <div className="space-y-3">
         <h3 className="text-sm font-semibold uppercase tracking-wider text-white/40">
-          {activeTab === "deposit" 
-            ? (t("ramps.depositMethods") || "Deposit Methods") 
-            : (t("ramps.withdrawMethods") || "Withdraw To")}
+          {activeTab === "deposit"
+            ? t("ramps.depositMethods") || "Deposit Methods"
+            : t("ramps.withdrawMethods") || "Withdraw To"}
         </h3>
         {methods.map((method) => (
           <button
@@ -201,24 +207,30 @@ export function DepositWithdrawSection({
               "w-full rounded-2xl border bg-[#0c1220]/60 p-5 text-left transition-all duration-200",
               selectedMethod === method.id
                 ? "border-[#f0b400]/30 bg-[#0c1220]/80"
-                : "border-white/6 hover:border-white/15"
+                : "border-white/6 hover:border-white/15",
             )}
           >
             <div className="flex items-center gap-4">
-              <div className={cn(
-                "rounded-xl p-3",
-                selectedMethod === method.id ? "bg-[#f0b400]/10 text-[#f0b400]" : "bg-white/5 text-white/60"
-              )}>
+              <div
+                className={cn(
+                  "rounded-xl p-3",
+                  selectedMethod === method.id
+                    ? "bg-[#f0b400]/10 text-[#f0b400]"
+                    : "bg-white/5 text-white/60",
+                )}
+              >
                 {method.icon}
               </div>
               <div className="flex-1">
                 <p className="text-sm font-medium text-white">{method.name}</p>
                 <p className="text-xs text-white/40 mt-0.5">{method.description}</p>
               </div>
-              <ChevronRight className={cn(
-                "h-5 w-5 text-white/30 transition-transform",
-                selectedMethod === method.id && "rotate-90"
-              )} />
+              <ChevronRight
+                className={cn(
+                  "h-5 w-5 text-white/30 transition-transform",
+                  selectedMethod === method.id && "rotate-90",
+                )}
+              />
             </div>
 
             {/* Expanded details */}
@@ -256,7 +268,10 @@ export function DepositWithdrawSection({
                       <span className="text-xs text-white/40">USDC</span>
                       {activeTab === "withdraw" && (
                         <button
-                          onClick={(e) => { e.stopPropagation(); setAmount(availableBalance) }}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setAmount(availableBalance)
+                          }}
                           className="text-xs font-bold text-[#f0b400] hover:text-[#f0b400]/80"
                         >
                           MAX
@@ -277,11 +292,23 @@ export function DepositWithdrawSection({
                   )}
 
                   <Button
-                    onClick={(e) => { e.stopPropagation(); handleSubmit() }}
-                    disabled={!amount || parseFloat(amount) <= 0 || isProcessing || (activeTab === "withdraw" && method.id === "stellar" && !destination)}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleSubmit()
+                    }}
+                    disabled={
+                      !amount ||
+                      parseFloat(amount) <= 0 ||
+                      isProcessing ||
+                      (activeTab === "withdraw" && method.id === "stellar" && !destination)
+                    }
                     className="w-full h-12 rounded-xl bg-[#f0b400] text-[#0c1220] font-semibold hover:bg-[#e5ab00] disabled:opacity-50"
                   >
-                    {isProcessing ? "Processing..." : activeTab === "deposit" ? "Continue to Deposit" : "Withdraw Funds"}
+                    {isProcessing
+                      ? "Processing..."
+                      : activeTab === "deposit"
+                        ? "Continue to Deposit"
+                        : "Withdraw Funds"}
                   </Button>
                 </div>
               </div>
@@ -298,7 +325,8 @@ export function DepositWithdrawSection({
             {t("ramps.secureTransfers") || "Secure Transfers"}
           </p>
           <p className="text-xs text-white/50 mt-1">
-            {t("ramps.secureTransfersDesc") || "All deposits and withdrawals are processed through Stellar anchors, ensuring your funds are secure and compliant with local regulations."}
+            {t("ramps.secureTransfersDesc") ||
+              "All deposits and withdrawals are processed through Stellar anchors, ensuring your funds are secure and compliant with local regulations."}
           </p>
         </div>
       </div>

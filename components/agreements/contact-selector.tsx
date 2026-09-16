@@ -16,16 +16,29 @@ interface ContactSelectorProps {
   ownerWallet?: string // Optional, will use connected wallet if not provided
 }
 
-export function ContactSelector({ value, onChange, placeholder = "Enter wallet address or select contact", className, ownerWallet: propOwnerWallet }: ContactSelectorProps) {
-  const { walletAddress: connectedWallet } = useStellarWallet()
+export function ContactSelector({
+  value,
+  onChange,
+  placeholder = "Enter wallet address or select contact",
+  className,
+  ownerWallet: propOwnerWallet,
+}: ContactSelectorProps) {
+  const { address: connectedWallet } = useStellarWallet()
   const ownerWallet = propOwnerWallet || connectedWallet
-  
+
   const [contacts, setContacts] = useState<Contact[]>([])
-  const [searchResults, setSearchResults] = useState<Array<{ id: string; name: string; email: string; wallet_address: string }>>([])
+  const [searchResults, setSearchResults] = useState<
+    Array<{ id: string; name: string; email: string; wallet_address: string }>
+  >([])
   const [isOpen, setIsOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const [showAddContact, setShowAddContact] = useState(false)
-  const [newContact, setNewContact] = useState({ name: "", email: "", phone: "", wallet_address: "" })
+  const [newContact, setNewContact] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    wallet_address: "",
+  })
   const [inviteLink, setInviteLink] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -55,7 +68,7 @@ export function ContactSelector({ value, onChange, placeholder = "Enter wallet a
   async function handleAddContact() {
     if (!newContact.name || !ownerWallet) return
     setLoading(true)
-    
+
     const { contact, error } = await addContact(ownerWallet, {
       name: newContact.name,
       email: newContact.email || undefined,
@@ -74,7 +87,7 @@ export function ContactSelector({ value, onChange, placeholder = "Enter wallet a
       await loadContacts()
       setShowAddContact(false)
       setNewContact({ name: "", email: "", phone: "", wallet_address: "" })
-      
+
       // If contact has a wallet, select it
       if (contact.contact_wallet) {
         handleSelectContact(contact.contact_wallet, contact.contact_name)
@@ -99,28 +112,30 @@ export function ContactSelector({ value, onChange, placeholder = "Enter wallet a
   async function importPhoneContacts() {
     // Check if Contacts API is supported
     if (!("contacts" in navigator && "ContactsManager" in window)) {
-      alert("Contact import is not supported on this device. Please use a mobile device with a compatible browser.")
+      alert(
+        "Contact import is not supported on this device. Please use a mobile device with a compatible browser.",
+      )
       return
     }
 
     try {
       const props = ["name", "email", "tel"]
       const opts = { multiple: true }
-      
+
       // @ts-expect-error - Contacts API types not in TypeScript
       const phoneContacts = await navigator.contacts.select(props, opts)
-      
+
       // Add each contact to Thalos
       for (const contact of phoneContacts) {
         const name = contact.name?.[0] || "Unknown"
         const email = contact.email?.[0]
         const phone = contact.tel?.[0]
-        
-        if (name) {
-          await addContact({ name, email, phone })
+
+        if (name && ownerWallet) {
+          await addContact(ownerWallet, { name, email, phone })
         }
       }
-      
+
       // Reload contacts
       await loadContacts()
       alert(`Successfully imported ${phoneContacts.length} contacts!`)
@@ -132,7 +147,7 @@ export function ContactSelector({ value, onChange, placeholder = "Enter wallet a
   // Share Thalos referral link
   async function shareReferralLink() {
     const referralLink = `https://thalos.app/invite?ref=${encodeURIComponent(Date.now().toString(36))}`
-    
+
     if (navigator.share) {
       try {
         await navigator.share({
@@ -151,7 +166,7 @@ export function ContactSelector({ value, onChange, placeholder = "Enter wallet a
     }
   }
 
-  const activeContacts = contacts.filter(c => c.status === "active" && c.contact_wallet)
+  const activeContacts = contacts.filter((c) => c.status === "active" && c.contact_wallet)
 
   return (
     <div className={cn("relative", className)}>
@@ -186,13 +201,17 @@ export function ContactSelector({ value, onChange, placeholder = "Enter wallet a
                 className="pl-9 bg-white/5 border-white/10 text-white placeholder:text-white/40 h-9 text-sm"
               />
             </div>
-            <p className="mt-2 text-[10px] text-white/30">Search contacts or Thalos users by name, wallet address, or user ID</p>
+            <p className="mt-2 text-[10px] text-white/30">
+              Search contacts or Thalos users by name, wallet address, or user ID
+            </p>
           </div>
 
           {/* Search Results */}
           {searchResults.length > 0 && (
             <div className="p-2 border-b border-white/6">
-              <p className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-white/40">Search Results</p>
+              <p className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-white/40">
+                Search Results
+              </p>
               {searchResults.map((user) => (
                 <button
                   key={user.id}
@@ -200,11 +219,15 @@ export function ContactSelector({ value, onChange, placeholder = "Enter wallet a
                   className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left hover:bg-white/5 transition-colors"
                 >
                   <div className="h-8 w-8 rounded-full bg-sky-400/10 flex items-center justify-center">
-                    <span className="text-xs font-bold text-sky-400">{user.name.charAt(0).toUpperCase()}</span>
+                    <span className="text-xs font-bold text-sky-400">
+                      {user.name.charAt(0).toUpperCase()}
+                    </span>
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-white truncate">{user.name}</p>
-                    <p className="text-xs text-white/50 truncate">{user.email || user.wallet_address.slice(0, 12) + "..."}</p>
+                    <p className="text-xs text-white/50 truncate">
+                      {user.email || user.wallet_address.slice(0, 12) + "..."}
+                    </p>
                   </div>
                 </button>
               ))}
@@ -213,7 +236,9 @@ export function ContactSelector({ value, onChange, placeholder = "Enter wallet a
 
           {/* My Contacts */}
           <div className="p-2 max-h-48 overflow-y-auto">
-            <p className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-white/40">My Contacts</p>
+            <p className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-white/40">
+              My Contacts
+            </p>
             {activeContacts.length === 0 ? (
               <p className="px-3 py-2 text-sm text-white/40">No contacts yet</p>
             ) : (
@@ -224,11 +249,17 @@ export function ContactSelector({ value, onChange, placeholder = "Enter wallet a
                   className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left hover:bg-white/5 transition-colors"
                 >
                   <div className="h-8 w-8 rounded-full bg-[#f0b400]/10 flex items-center justify-center">
-                    <span className="text-xs font-bold text-[#f0b400]">{contact.contact_name.charAt(0).toUpperCase()}</span>
+                    <span className="text-xs font-bold text-[#f0b400]">
+                      {contact.contact_name.charAt(0).toUpperCase()}
+                    </span>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-white truncate">{contact.contact_name}</p>
-                    <p className="text-xs text-white/50 font-mono truncate">{contact.contact_wallet?.slice(0, 12)}...</p>
+                    <p className="text-sm font-medium text-white truncate">
+                      {contact.contact_name}
+                    </p>
+                    <p className="text-xs text-white/50 font-mono truncate">
+                      {contact.contact_wallet?.slice(0, 12)}...
+                    </p>
                   </div>
                 </button>
               ))
@@ -273,7 +304,9 @@ export function ContactSelector({ value, onChange, placeholder = "Enter wallet a
               </Button>
             ) : inviteLink ? (
               <div className="space-y-3">
-                <p className="text-sm text-white/70">Contact not on Thalos yet. Share this invite link:</p>
+                <p className="text-sm text-white/70">
+                  Contact not on Thalos yet. Share this invite link:
+                </p>
                 <div className="flex gap-2">
                   <Input
                     value={inviteLink}
@@ -293,7 +326,11 @@ export function ContactSelector({ value, onChange, placeholder = "Enter wallet a
                   type="button"
                   variant="ghost"
                   size="sm"
-                  onClick={() => { setInviteLink(null); setShowAddContact(false); setNewContact({ name: "", email: "", phone: "" }); }}
+                  onClick={() => {
+                    setInviteLink(null)
+                    setShowAddContact(false)
+                    setNewContact({ name: "", email: "", phone: "", wallet_address: "" })
+                  }}
                   className="text-white/50"
                 >
                   Done
@@ -303,7 +340,10 @@ export function ContactSelector({ value, onChange, placeholder = "Enter wallet a
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-medium text-white">Add Contact</p>
-                  <button onClick={() => setShowAddContact(false)} className="p-1 hover:bg-white/10 rounded">
+                  <button
+                    onClick={() => setShowAddContact(false)}
+                    className="p-1 hover:bg-white/10 rounded"
+                  >
                     <X className="h-4 w-4 text-white/50" />
                   </button>
                 </div>

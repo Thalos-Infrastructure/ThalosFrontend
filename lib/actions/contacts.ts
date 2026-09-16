@@ -14,7 +14,9 @@ export interface Contact {
   updated_at: string
 }
 
-export async function getContacts(ownerWallet: string): Promise<{ contacts: Contact[]; error: string | null }> {
+export async function getContacts(
+  ownerWallet: string,
+): Promise<{ contacts: Contact[]; error: string | null }> {
   if (!ownerWallet) {
     return { contacts: [], error: "Wallet address is required" }
   }
@@ -42,7 +44,7 @@ export async function addContact(
     phone?: string
     wallet_address?: string
     notes?: string
-  }
+  },
 ): Promise<{ contact: Contact | null; error: string | null }> {
   if (!ownerWallet) {
     return { contact: null, error: "Wallet address is required" }
@@ -86,8 +88,11 @@ export async function addContact(
 
 export async function searchThalosUsers(
   query: string,
-  excludeWallet?: string
-): Promise<{ users: Array<{ id: string; name: string; email: string; wallet_address: string }>; error: string | null }> {
+  excludeWallet?: string,
+): Promise<{
+  users: Array<{ id: string; name: string; email: string; wallet_address: string }>
+  error: string | null
+}> {
   if (!query || query.length < 2) {
     return { users: [], error: null }
   }
@@ -96,13 +101,13 @@ export async function searchThalosUsers(
 
   // Sanitize query for safe use
   const sanitizedQuery = query.replace(/[%_]/g, "")
-  
+
   // Check if it looks like a wallet address (starts with G)
   const isWalletAddress = query.startsWith("G") && query.length >= 10
-  
+
   let data
   let error
-  
+
   if (isWalletAddress) {
     // Search by wallet address prefix
     const result = await supabase
@@ -128,12 +133,12 @@ export async function searchThalosUsers(
   }
 
   // Filter out the exclude wallet if provided
-  const filtered = excludeWallet 
-    ? (data || []).filter(u => u.wallet_address !== excludeWallet)
-    : (data || [])
+  const filtered = excludeWallet
+    ? (data || []).filter((u) => u.wallet_address !== excludeWallet)
+    : data || []
 
   return {
-    users: filtered.map(u => ({
+    users: filtered.map((u) => ({
       id: u.id,
       name: u.display_name || "Unknown",
       email: u.email || "",
@@ -143,7 +148,10 @@ export async function searchThalosUsers(
   }
 }
 
-export async function deleteContact(ownerWallet: string, contactId: string): Promise<{ error: string | null }> {
+export async function deleteContact(
+  ownerWallet: string,
+  contactId: string,
+): Promise<{ error: string | null }> {
   if (!ownerWallet || !contactId) {
     return { error: "Wallet and contact ID are required" }
   }
@@ -164,14 +172,14 @@ export async function deleteContact(ownerWallet: string, contactId: string): Pro
  */
 export async function updateContact(
   ownerWallet: string,
-  contactId: string, 
+  contactId: string,
   data: {
     name?: string
     email?: string
     phone?: string
     wallet_address?: string
     notes?: string
-  }
+  },
 ): Promise<{ contact: Contact | null; error: string | null }> {
   if (!ownerWallet || !contactId) {
     return { contact: null, error: "Wallet and contact ID are required" }

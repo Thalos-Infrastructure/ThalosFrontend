@@ -36,7 +36,8 @@ const useCasesData = {
     },
     {
       title: "Car Dealership",
-      buyer: "I want to secure the car, but only release funds once ownership transfer is processed.",
+      buyer:
+        "I want to secure the car, but only release funds once ownership transfer is processed.",
       seller: "We use Thalos for secure transfers.",
       result: "Trust without relying purely on dealership reputation.",
       buyerLabel: "Buyer",
@@ -74,9 +75,12 @@ const useCasesData = {
   es: [
     {
       title: "Venta de Inmueble",
-      buyer: "Quiero reservar la casa, pero no me siento seguro enviando todo el depósito por adelantado.",
-      seller: "Usemos Thalos. Los fondos quedan bloqueados hasta que se firmen los documentos legales.",
-      result: "Fondos asegurados on-chain. Se liberan solo cuando se confirma la transferencia de propiedad.",
+      buyer:
+        "Quiero reservar la casa, pero no me siento seguro enviando todo el depósito por adelantado.",
+      seller:
+        "Usemos Thalos. Los fondos quedan bloqueados hasta que se firmen los documentos legales.",
+      result:
+        "Fondos asegurados on-chain. Se liberan solo cuando se confirma la transferencia de propiedad.",
       buyerLabel: "Comprador",
       sellerLabel: "Vendedor",
       color: "#f0b400",
@@ -85,7 +89,8 @@ const useCasesData = {
       title: "Pre-venta Agrícola",
       buyer: "Compraré tu cosecha, pero necesito garantía de entrega.",
       seller: "Bloquea el pago en Thalos. Una vez confirmada la entrega, se liberan los fondos.",
-      result: "El agricultor obtiene seguridad de pago. El distribuidor reduce el riesgo de suministro.",
+      result:
+        "El agricultor obtiene seguridad de pago. El distribuidor reduce el riesgo de suministro.",
       buyerLabel: "Distribuidor",
       sellerLabel: "Agricultor",
       color: "#4ade80",
@@ -94,14 +99,16 @@ const useCasesData = {
       title: "Gestión de Eventos",
       buyer: "No quiero pagar todo antes del evento.",
       seller: "Lo dividiremos en hitos usando Thalos.",
-      result: "Depósito bloqueado, lugar confirmado, liberación parcial, evento completado, liberación final.",
+      result:
+        "Depósito bloqueado, lugar confirmado, liberación parcial, evento completado, liberación final.",
       buyerLabel: "Cliente",
       sellerLabel: "Organizador",
       color: "#60a5fa",
     },
     {
       title: "Concesionario de Autos",
-      buyer: "Quiero asegurar el auto, pero solo liberar fondos cuando se procese la transferencia de propiedad.",
+      buyer:
+        "Quiero asegurar el auto, pero solo liberar fondos cuando se procese la transferencia de propiedad.",
       seller: "Usamos Thalos para transferencias seguras.",
       result: "Confianza sin depender únicamente de la reputación del concesionario.",
       buyerLabel: "Comprador",
@@ -138,7 +145,13 @@ const useCasesData = {
   ],
 }
 
-function UseCaseCard({ uc, resultLabel }: { uc: typeof useCasesData.en[number]; resultLabel: string }) {
+function UseCaseCard({
+  uc,
+  resultLabel,
+}: {
+  uc: (typeof useCasesData.en)[number]
+  resultLabel: string
+}) {
   return (
     <div className="use-case-card w-[340px] shrink-0 rounded-2xl border border-white/10 bg-[#0c1220] p-6 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)] md:w-[380px]">
       {/* Title */}
@@ -150,18 +163,30 @@ function UseCaseCard({ uc, resultLabel }: { uc: typeof useCasesData.en[number]; 
       {/* Conversation */}
       <div className="flex flex-col gap-3 mb-4">
         <div>
-          <p className="buyer-label text-xs font-bold mb-1" style={{ color: uc.color }}>{uc.buyerLabel}</p>
-          <p className="card-text text-sm leading-relaxed text-white/70 italic">{'"'}{uc.buyer}{'"'}</p>
+          <p className="buyer-label text-xs font-bold mb-1" style={{ color: uc.color }}>
+            {uc.buyerLabel}
+          </p>
+          <p className="card-text text-sm leading-relaxed text-white/70 italic">
+            {'"'}
+            {uc.buyer}
+            {'"'}
+          </p>
         </div>
         <div>
           <p className="seller-label text-xs font-bold text-white/50 mb-1">{uc.sellerLabel}</p>
-          <p className="card-text text-sm leading-relaxed text-white/70 italic">{'"'}{uc.seller}{'"'}</p>
+          <p className="card-text text-sm leading-relaxed text-white/70 italic">
+            {'"'}
+            {uc.seller}
+            {'"'}
+          </p>
         </div>
       </div>
 
       {/* Result */}
       <div className="rounded-xl border border-white/10 bg-white/8 px-4 py-3">
-        <p className="text-[10px] font-bold uppercase tracking-wider text-[#f0b400] mb-1">{resultLabel}</p>
+        <p className="text-[10px] font-bold uppercase tracking-wider text-[#f0b400] mb-1">
+          {resultLabel}
+        </p>
         <p className="card-text text-xs font-medium leading-relaxed text-white/70">{uc.result}</p>
       </div>
     </div>
@@ -171,8 +196,13 @@ function UseCaseCard({ uc, resultLabel }: { uc: typeof useCasesData.en[number]; 
 export function UseCases() {
   const { t, language } = useLanguage()
   const { ref, isVisible } = useSectionReveal()
-  const { displayed: twText, isTyping: twActive } = useTypewriter(t("useCases.tag"), isVisible, { typeSpeed: 120, deleteSpeed: 60, pauseBeforeDelete: 2500, pauseBeforeType: 800 })
-  
+  const { displayed: twText, isTyping: twActive } = useTypewriter(t("useCases.tag"), isVisible, {
+    typeSpeed: 120,
+    deleteSpeed: 60,
+    pauseBeforeDelete: 2500,
+    pauseBeforeType: 800,
+  })
+
   const useCases = useCasesData[language as keyof typeof useCasesData] || useCasesData.en
   const marqueeItems = [...useCases, ...useCases]
   const resultLabel = language === "es" ? "Resultado" : "Result"
@@ -184,7 +214,12 @@ export function UseCases() {
         <div className="mx-auto max-w-7xl px-6 mb-14 text-center">
           <p className="mb-3 text-base font-bold uppercase tracking-wider text-[#f0b400] md:text-lg">
             <span>{twText}</span>
-            <span className={cn("ml-0.5 inline-block h-4 w-0.5 bg-[#f0b400] align-middle", twActive ? "animate-pulse" : "opacity-0")} />
+            <span
+              className={cn(
+                "ml-0.5 inline-block h-4 w-0.5 bg-[#f0b400] align-middle",
+                twActive ? "animate-pulse" : "opacity-0",
+              )}
+            />
           </p>
           <h2 className="mb-4 text-4xl font-bold tracking-tight text-white md:text-6xl text-balance">
             {t("useCases.title")}
@@ -211,8 +246,12 @@ export function UseCases() {
       {/* Marquee animation */}
       <style jsx>{`
         @keyframes marquee {
-          0% { transform: translateX(0); }
-          100% { transform: translateX(-50%); }
+          0% {
+            transform: translateX(0);
+          }
+          100% {
+            transform: translateX(-50%);
+          }
         }
         .animate-marquee {
           animation: marquee 40s linear infinite;
