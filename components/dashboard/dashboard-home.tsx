@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils"
 import { useLanguage } from "@/lib/i18n"
 import { useCurrentAddress } from "@/lib/use-current-address"
 import { useAuthStore } from "@/lib/auth-store"
+import { useSignOut } from "@/lib/use-sign-out"
 import { getProfileByWallet, type Profile } from "@/lib/actions/profile"
 import { getWalletsWithBalances } from "@/lib/api/wallets"
 import { WalletAddress } from "@/components/ui/wallet-address"
@@ -13,10 +14,10 @@ import { BalanceCard } from "./balance-card"
 import { QuickActions, type QuickActionId } from "./quick-actions"
 import {
   FilePlus,
-  FileText,
+  Sparkles,
   TrendingUp,
-  Wallet,
   Bell,
+  RefreshCw,
   HelpCircle,
   ChevronRight,
   Clock,
@@ -54,6 +55,7 @@ export function DashboardHome({
   const { t } = useLanguage()
   const currentAddress = useCurrentAddress()
   const { user, token } = useAuthStore()
+  const signOut = useSignOut()
   const [profile, setProfile] = useState<Profile | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
@@ -61,6 +63,7 @@ export function DashboardHome({
   const [totalBalance, setTotalBalance] = useState("0.00")
   const [balanceLoading, setBalanceLoading] = useState(false)
   const [balanceError, setBalanceError] = useState(false)
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
   const loadProfile = async () => {
     if (!currentAddress) return
@@ -105,8 +108,9 @@ export function DashboardHome({
     return `${intStr}.${trimmedFrac}`
   }
 
-  const loadBalances = async (authToken: string) => {
-    setBalanceLoading(true)
+  const loadBalances = async (authToken: string, refreshing = false) => {
+    setBalanceLoading(!refreshing)
+    setIsRefreshing(refreshing)
     setBalanceError(false)
     try {
       const result = await getWalletsWithBalances(authToken)
@@ -122,7 +126,14 @@ export function DashboardHome({
       setBalanceError(true)
     } finally {
       setBalanceLoading(false)
+      setIsRefreshing(false)
     }
+  }
+
+  const handleRefresh = async () => {
+    if (!token || isRefreshing) return
+    setIsRefreshing(true)
+    await loadBalances(token, true)
   }
 
   const getGreeting = () => {
@@ -144,20 +155,43 @@ export function DashboardHome({
     }
   }, [token])
 
+  useEffect(() => {
+    if (!token) return
+
+    let timeoutId: ReturnType<typeof setTimeout>
+    const resetInactivityTimer = () => {
+      clearTimeout(timeoutId)
+      timeoutId =       timeoutId = setTimeout(() => {
+        signOut()
+      }, 15 * 60 * 1000)
+    }
+
+    const events = ["click", "keydown", "mousemove", "scroll", "touchstart"]
+    events.forEach((event) => window.addEventListener(event, resetInactivityTimer, { passive: true }))
+    resetInactivityTimer()
+
+    return () => {
+      clearTimeout(timeoutId)
+      events.forEach((event) => window.removeEventListener(event, resetInactivityTimer))
+    }
+  }, [signOut, token])
+
   const displayName = profile?.display_name || user?.name || "User"
 
   // Calculate pending actions from agreements
   const pendingActions: PendingAction[] = agreements
-    .filter((a) => a.status === "pending" || a.status === "awaiting_funding")
+    .filter((a) => a.status === "pending" || a.status === "awaiting_funding" || a.status === "funded" || a.status === "in_progress")
     .slice(0, 5)
     .map((a) => ({
       id: a.id,
-      type: a.status === "awaiting_funding" ? "fund" : "review",
+      type: a.status === "awaiting_funding" || a.status === "pending" ? "fund" : "review",
       title: a.title,
       description:
-        a.status === "awaiting_funding"
-          ? "Waiting for funds to be deposited"
-          : "Requires your attention",
+        a.status === "awaiting_funding" || a.status === "pending"
+          ? "Fund this agreement to get started"
+          : a.status === "funded"
+            ? "Submit the next milestone"
+            : "Review the latest milestone",
       agreementId: a.id,
       createdAt: new Date().toISOString(),
     }))
@@ -189,11 +223,11 @@ export function DashboardHome({
       bg: "bg-[#f0b400]/10",
     },
     {
-      id: "agreements",
-      label: t("sidebar.agreements") || "Agreements",
-      icon: FileText,
-      color: "text-sky-400",
-      bg: "bg-sky-400/10",
+      id: "ai-agreement",
+      label: "Create with AI",
+      icon: Sparkles,
+      color: "text-violet-400",
+      bg: "bg-violet-400/10",
     },
     {
       id: "yield",
@@ -202,14 +236,23 @@ export function DashboardHome({
       color: "text-emerald-400",
       bg: "bg-emerald-400/10",
     },
-    {
-      id: "wallets",
-      label: t("sidebar.wallets") || "My Wallet",
-      icon: Wallet,
-      color: "text-amber-400",
-      bg: "bg-amber-400/10",
-    },
   ]
+
+  if (isLoading && !profile) {
+    return (
+      <div className={cn("flex min-h-[420px] items-center justify-center", className)}>
+        <div className="flex flex-col items-center gap-4 text-center">
+          <div className="flex size-16 items-center justify-center rounded-2xl border border-[#f0b400]/30 bg-[#f0b400]/10 shadow-[0_0_32px_rgba(240,180,0,0.12)]">
+            <span className="text-xl font-black tracking-tight text-[#f0b400]">T</span>
+          </div>
+          <div>
+            <p className="text-sm font-medium text-white">Loading your dashboard</p>
+            <p className="mt-1 text-xs text-white/40">Preparing your agreements and wallet</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className={cn("space-y-6", className)}>
@@ -241,6 +284,15 @@ export function DashboardHome({
 
         {/* Header actions */}
         <div className="flex items-center gap-2">
+          <button
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs text-white/60 transition-colors hover:bg-white/10 hover:text-white disabled:opacity-50"
+            aria-label="Refresh dashboard"
+          >
+            <RefreshCw className={cn("h-4 w-4", isRefreshing && "animate-spin")} />
+            <span className="hidden sm:inline">Refresh</span>
+          </button>
           <button className="relative p-2.5 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 transition-colors">
             <Bell className="h-5 w-5 text-white/60" />
             <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-[#f0b400]" />
@@ -255,7 +307,7 @@ export function DashboardHome({
       <BalanceCard
         totalBalance={totalBalance}
         availableBalance={totalBalance}
-        lockedInEscrow="0.00"
+        lockedInEscrow={agreements.filter((agreement) => agreement.status === "funded" || agreement.status === "in_progress").length.toFixed(0)}
         onDeposit={() => onNavigate("ramps")}
         onWithdraw={() => onNavigate("ramps")}
         isLoading={balanceLoading}
@@ -265,12 +317,12 @@ export function DashboardHome({
       />
 
       {/* Quick Action Cards */}
-      <div className="grid grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {mainActions.map((action) => (
           <button
             key={action.id}
             onClick={() =>
-              action.id === "new-agreement" ? onCreateAgreement() : onNavigate(action.id)
+              action.id === "new-agreement" ? onCreateAgreement() : onNavigate(action.id === "ai-agreement" ? "ai" : action.id)
             }
             className={cn(
               "group flex flex-col items-center gap-3 rounded-2xl border border-white/6 bg-[#0c1220]/60 p-5 transition-all duration-200",

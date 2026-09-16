@@ -260,7 +260,7 @@ export function AgreementsView({
             )}
           >
             <ShoppingCart className="h-4 w-4" />
-            As Buyer
+            As             I&apos;m Paying
           </button>
           <button
             onClick={() => setViewMode("seller")}
@@ -272,7 +272,7 @@ export function AgreementsView({
             )}
           >
             <Store className="h-4 w-4" />
-            As Seller
+            As             I&apos;m Getting Paid
           </button>
         </div>
 
