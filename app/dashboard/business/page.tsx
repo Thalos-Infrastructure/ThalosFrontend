@@ -2030,10 +2030,10 @@ export default function BusinessDashboardPage() {
 
                     <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
                       {[
-                        { l: t("dashPage.active"), v: "12" },
-                        { l: t("dashPage.totalVolume"), v: "$2.4M" },
-                        { l: t("dashPage.yieldEarned"), v: "$24K" },
-                        { l: t("dashPage.completed"), v: "48" },
+                        { l: t("dashPage.active"), v: String(agreements.filter((a) => ["funded", "in_progress", "active"].includes(a.status)).length) },
+                        { l: t("dashPage.totalVolume"), v: `${agreements.reduce((sum, a) => sum + (Number.parseFloat(String(a.amount).replace(/,/g, "")) || 0), 0).toLocaleString()} USDC` },
+                        { l: t("dashPage.yieldEarned"), v: `${agreements.filter((a) => a.status === "released" || a.status === "completed").length} released` },
+                        { l: t("dashPage.completed"), v: String(agreements.filter((a) => a.status === "released" || a.status === "completed").length) },
                       ].map((s) => (
                         <div
                           key={s.l}
@@ -2226,7 +2226,10 @@ export default function BusinessDashboardPage() {
                     /* Agreements view, pre-filtered by selected wallet */
                     <AgreementsView
                       agreements={filteredAgreements}
-                      onAgreementClick={(id) => setViewingAgreement(id)}
+                      onAgreementClick={(id) => {
+    setViewingAgreement(id)
+    setActiveSection("agreements")
+  }}
                       onOpenChat={(id) => setShowAgreementChat(id)}
                       currentUserWallet={walletAddress || undefined}
                     />
@@ -3925,9 +3928,10 @@ export default function BusinessDashboardPage() {
               <AgreementChat
                 agreementId={showAgreementChat}
                 currentUserWallet={walletAddress || ""}
-                counterpartyWallet={
-                  agreements.find((a) => a.id === showAgreementChat)?.receiver || ""
-                }
+  counterpartyWallet={
+    agreements.find((a) => a.id === showAgreementChat)?.receiver ||
+    approverEscrows.find((a) => a.id === showAgreementChat)?.receiver || ""
+  }
                 token={token}
                 defaultOpen={true}
                 embedded={true}
