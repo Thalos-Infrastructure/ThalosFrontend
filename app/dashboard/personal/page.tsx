@@ -2,6 +2,7 @@
 
 import { ApproverAgreementDetail } from "./ApproverAgreementDetail"
 import { findApproverEscrow } from "@/lib/helpers/approverEscrow"
+import { canSubmitEvidence } from "@/lib/helpers/evidencePermission"
 import React, { useState, useEffect, useCallback, useId, useRef, useMemo } from "react"
 import Image from "next/image"
 import Link from "next/link"
@@ -722,6 +723,13 @@ function SellerMilestoneList({
   const { changeMilestoneStatusAgreement } = require("@/lib/agreementActions")
   const { token } = useAuthStore()
   const githubAgreementId = agr.nestId
+  // Only the escrow's service provider may submit evidence; the backend rejects
+  // anyone else. Decide before rendering the button, not after the user has
+  // typed evidence and been asked to sign.
+  const evidencePermission = canSubmitEvidence({
+    serviceProvider: agr.serviceProvider,
+    walletAddress,
+  })
 
   // Best-effort load of any GitHub PRs already attached to each milestone, so
   // existing evidence renders. Backed by the Nest route (ThalosBackend#157),
@@ -746,14 +754,8 @@ function SellerMilestoneList({
   const handleSubmitEvidence = async (idx: number) => {
     const evidence = evidenceInputs[idx]?.trim()
     if (!evidence) return
-    if (!walletAddress) {
-      alert("Conectá o iniciá sesión con la wallet del service provider para enviar evidencia.")
-      return
-    }
-    if (agr.serviceProvider && agr.serviceProvider !== walletAddress) {
-      alert(
-        `Solo el service provider on-chain puede enviar evidencia (${agr.serviceProvider.slice(0, 8)}…). Esta sesión es ${walletAddress.slice(0, 8)}…`,
-      )
+    if (!evidencePermission.allowed) {
+      alert(t(`flow.evidenceBlocked.${evidencePermission.reason}`))
       return
     }
     setSubmitting(idx)
@@ -763,7 +765,7 @@ function SellerMilestoneList({
       newEvidence: evidence,
       // Evidence submission marks work done — "released" is the fund-release step.
       newStatus: "completed",
-      serviceProvider: agr.serviceProvider || walletAddress,
+      serviceProvider: evidencePermission.serviceProvider,
       serviceType: agr.type === "Multi Release" ? "multi-release" : "single-release",
       walletAddress,
       token,
@@ -847,7 +849,7 @@ function SellerMilestoneList({
                   {"$"}
                   {ms.amount} <span className="text-xs font-normal text-white/35">USDC</span>
                 </p>
-                {ms.status === "pending" && !hasEvidence && (
+                {ms.status === "pending" && !hasEvidence && evidencePermission.allowed && (
                   <Button
                     size="sm"
                     onClick={() => setExpandedMs(expandedMs === idx ? null : idx)}
@@ -855,6 +857,11 @@ function SellerMilestoneList({
                   >
                     {t("flow.submitEvidence")}
                   </Button>
+                )}
+                {ms.status === "pending" && !hasEvidence && !evidencePermission.allowed && (
+                  <span className="max-w-[16rem] text-right text-xs text-white/35">
+                    {t(`flow.evidenceBlocked.${evidencePermission.reason}`)}
+                  </span>
                 )}
                 {hasEvidence && ms.status !== "released" && (
                   <span className="rounded-full bg-cyan-500/15 px-3 py-1 text-xs font-semibold text-cyan-400 border border-cyan-500/20">
@@ -864,45 +871,48 @@ function SellerMilestoneList({
               </div>
             </div>
             {/* Evidence input form (expanded) */}
-            {expandedMs === idx && ms.status === "pending" && !hasEvidence && (
-              <div className="mt-4 rounded-xl border border-white/[0.06] bg-[#0a0a0c]/50 p-4">
-                <label className="mb-2 block text-xs font-medium uppercase tracking-wider text-white/40">
-                  {t("flow.evidenceLink")}
-                </label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={evidenceInputs[idx] || ""}
-                    onChange={(e) =>
-                      setEvidenceInputs((prev) => ({ ...prev, [idx]: e.target.value }))
-                    }
-                    placeholder={t("flow.evidencePlaceholder")}
-                    className="h-10 flex-1 rounded-lg border border-white/15 bg-[#0a0a0c]/50 px-3 text-sm text-white placeholder:text-white/25 focus:border-cyan-500/50 focus:outline-none focus:ring-1 focus:ring-cyan-500/20 transition-all"
-                  />
-                  <Button
-                    size="sm"
-                    onClick={() => handleSubmitEvidence(idx)}
-                    disabled={!evidenceInputs[idx]?.trim() || submitting === idx}
-                    className="rounded-lg bg-cyan-500 px-4 text-xs font-semibold text-white hover:bg-cyan-600 disabled:opacity-30"
-                  >
-                    {submitting === idx ? "..." : t("flow.submit")}
-                  </Button>
-                </div>
-                {/* GitHub-backed evidence: verified merged PRs scoped to the project repo (#128) */}
-                {githubAgreementId ? (
-                  <div className="mt-3 border-t border-white/[0.06] pt-3">
-                    <MilestonePrPicker
-                      agreementId={githubAgreementId}
-                      milestoneIndex={idx}
-                      walletAddress={walletAddress ?? undefined}
-                      token={token ?? undefined}
-                      attached={attachedPrs[idx] ?? []}
-                      onAttached={(prs) => setAttachedPrs((prev) => ({ ...prev, [idx]: prs }))}
+            {expandedMs === idx &&
+              ms.status === "pending" &&
+              !hasEvidence &&
+              evidencePermission.allowed && (
+                <div className="mt-4 rounded-xl border border-white/[0.06] bg-[#0a0a0c]/50 p-4">
+                  <label className="mb-2 block text-xs font-medium uppercase tracking-wider text-white/40">
+                    {t("flow.evidenceLink")}
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={evidenceInputs[idx] || ""}
+                      onChange={(e) =>
+                        setEvidenceInputs((prev) => ({ ...prev, [idx]: e.target.value }))
+                      }
+                      placeholder={t("flow.evidencePlaceholder")}
+                      className="h-10 flex-1 rounded-lg border border-white/15 bg-[#0a0a0c]/50 px-3 text-sm text-white placeholder:text-white/25 focus:border-cyan-500/50 focus:outline-none focus:ring-1 focus:ring-cyan-500/20 transition-all"
                     />
+                    <Button
+                      size="sm"
+                      onClick={() => handleSubmitEvidence(idx)}
+                      disabled={!evidenceInputs[idx]?.trim() || submitting === idx}
+                      className="rounded-lg bg-cyan-500 px-4 text-xs font-semibold text-white hover:bg-cyan-600 disabled:opacity-30"
+                    >
+                      {submitting === idx ? "..." : t("flow.submit")}
+                    </Button>
                   </div>
-                ) : null}
-              </div>
-            )}
+                  {/* GitHub-backed evidence: verified merged PRs scoped to the project repo (#128) */}
+                  {githubAgreementId ? (
+                    <div className="mt-3 border-t border-white/[0.06] pt-3">
+                      <MilestonePrPicker
+                        agreementId={githubAgreementId}
+                        milestoneIndex={idx}
+                        walletAddress={walletAddress ?? undefined}
+                        token={token ?? undefined}
+                        attached={attachedPrs[idx] ?? []}
+                        onAttached={(prs) => setAttachedPrs((prev) => ({ ...prev, [idx]: prs }))}
+                      />
+                    </div>
+                  ) : null}
+                </div>
+              )}
             {/* Show submitted evidence */}
             {(hasEvidence || (ms.status === "released" && ms.evidence)) && (
               <div className="mt-3 rounded-lg border border-cyan-500/10 bg-cyan-500/5 px-3 py-2">
