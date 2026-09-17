@@ -4,52 +4,47 @@
  * Each build endpoint expects the signer to hold a specific escrow role; TW
  * rejects the submission otherwise, but only after the user has already been
  * asked to sign. Validating here fails cleanly *before* the wallet popup.
+ *
+ * The rule itself lives in `lib/permissions/escrowActions` so that what the
+ * dashboard renders and what signing accepts cannot drift apart — they were
+ * separate decisions, which is how the approver ended up being offered a button
+ * the backend rejects.
  */
 
+import { checkRole, describeRequiredRoles } from "@/lib/permissions/escrowActions"
 import type { EscrowOperation, EscrowRolesInfo } from "./types"
 import { RoleValidationError } from "./types"
 
-/** Roles allowed to sign each operation. Empty array = any wallet may sign. */
-const ALLOWED_ROLES: Record<EscrowOperation, (keyof EscrowRolesInfo)[]> = {
-  create: [],
-  fund: [],
-  approveMilestone: ["approver"],
-  releaseFunds: ["releaseSigner"],
-  // TW allows either party (not the resolver) to raise a dispute.
-  dispute: ["approver", "serviceProvider"],
-  resolve: ["disputeResolver"],
-  changeMilestoneStatus: ["serviceProvider"],
-}
-
-const ROLE_LABELS: Record<keyof EscrowRolesInfo, string> = {
-  approver: "approver",
-  serviceProvider: "service provider",
-  releaseSigner: "release signer",
-  disputeResolver: "dispute resolver",
-  receiver: "receiver",
-}
+export { ALLOWED_ROLES, ROLE_LABELS } from "@/lib/permissions/escrowActions"
 
 /**
- * Throw a RoleValidationError when the wallet doesn't hold any role the
- * operation requires. Roles the caller doesn't know (undefined) are skipped:
- * validation only runs against known role addresses, and TW remains the
- * final authority on submit.
+ * Throw a RoleValidationError when the wallet may not sign this operation.
+ *
+ * An unresolved role is a refusal, not a pass. It used to be skipped, and the
+ * caller then submitted its own wallet as that role — a claim it had no basis
+ * for, which the backend threw on.
  */
 export function assertOperationRole(
   operation: EscrowOperation,
   roles: EscrowRolesInfo | undefined,
   walletAddress: string,
 ): void {
-  const allowed = ALLOWED_ROLES[operation]
-  if (allowed.length === 0 || !roles) return
+  const decision = checkRole(operation, roles, walletAddress)
+  if (decision.allowed) return
 
-  const known = allowed.filter((role) => roles[role])
-  if (known.length === 0) return
+  if (decision.reason === "no-session") {
+    throw new RoleValidationError("Connect a wallet before signing this operation.")
+  }
 
-  if (!known.some((role) => roles[role] === walletAddress)) {
-    const labels = known.map((role) => ROLE_LABELS[role]).join(" or ")
+  const labels = describeRequiredRoles(decision.requiredRoles)
+
+  if (decision.reason === "unresolved-roles") {
     throw new RoleValidationError(
-      `Your connected wallet is not the ${labels} of this escrow, so it can't sign this operation.`,
+      `This escrow's ${labels || "roles"} could not be resolved, so this operation cannot be signed yet.`,
     )
   }
+
+  throw new RoleValidationError(
+    `Your connected wallet is not the ${labels} of this escrow, so it can't sign this operation.`,
+  )
 }
