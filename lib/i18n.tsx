@@ -687,6 +687,8 @@ const translations: Record<Lang, Record<string, string>> = {
 
     // Status labels
     "status.funded": "Funded",
+    "status.disputed": "Disputed",
+    "flow.statusPendingConfirmation": "Status pending confirmation",
     "status.inProgress": "In Progress",
     "status.awaitingApproval": "Awaiting Approval",
     "status.released": "Released",
@@ -1631,6 +1633,8 @@ const translations: Record<Lang, Record<string, string>> = {
 
     // Status labels
     "status.funded": "Fondos Depositados",
+    "status.disputed": "En Disputa",
+    "flow.statusPendingConfirmation": "Estado pendiente de confirmacion",
     "status.inProgress": "En Progreso",
     "status.awaitingApproval": "Esperando Aprobacion",
     "status.released": "Liberado",
