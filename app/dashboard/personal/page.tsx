@@ -1,6 +1,7 @@
 "use client"
 
 import { ApproverAgreementDetail } from "./ApproverAgreementDetail"
+import { findApproverEscrow } from "@/lib/helpers/approverEscrow"
 import React, { useState, useEffect, useCallback, useId, useRef, useMemo } from "react"
 import Image from "next/image"
 import Link from "next/link"
@@ -380,6 +381,8 @@ interface TrustlessEscrow {
 
 // Raw Trustless Work payload: camelCase and carrying on-chain flags, so it is
 // not the snake_case `Escrow` from lib/api/escrow.
+type ApproverEscrow = ReturnType<typeof mapEscrowToApproverAgreement>
+
 function mapEscrowToApproverAgreement(escrow: TrustlessEscrow) {
   const isMulti = escrow.type === "multi-release"
   const amount = isMulti
@@ -993,7 +996,7 @@ export default function PersonalDashboardPage() {
   const [agreements, setAgreements] = useState<Agreement[]>(initialAgreements)
   const [agreementsLoading, setAgreementsLoading] = useState(false)
   const [agreementsError, setAgreementsError] = useState<string | null>(null)
-  const [approverEscrows, setApproverEscrows] = useState<Agreement[]>([])
+  const [approverEscrows, setApproverEscrows] = useState<ApproverEscrow[]>([])
   const [approverLoading, setApproverLoading] = useState(false)
   const [walletsData, setWalletsData] = useState<WalletWithAgreements[]>([])
   const [userProfile, setUserProfile] = useState<Profile | null>(null)
@@ -2628,6 +2631,38 @@ export default function PersonalDashboardPage() {
           {activeSection === "agreements" &&
             viewingAgreement &&
             (() => {
+              // Escrows read on-chain by role carry the roles and balance the
+              // approver actions need; the Nest list does not. See
+              // lib/helpers/approverEscrow for why this view wins.
+              const approverEscrow = findApproverEscrow(
+                approverEscrows,
+                viewingAgreement,
+                walletAddress,
+              )
+              if (approverEscrow && walletAddress) {
+                return (
+                  <div className="mx-auto max-w-4xl">
+                    <button
+                      onClick={() => setViewingAgreement(null)}
+                      className="mb-6 flex items-center gap-2 text-sm text-white/40 transition-colors hover:text-white"
+                    >
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
+                        <polyline points="15 18 9 12 15 6" />
+                      </svg>
+                      Back to Agreements
+                    </button>
+                    <ApproverAgreementDetail agr={approverEscrow} walletAddress={walletAddress} />
+                  </div>
+                )
+              }
+
               const agr = agreements.find((a) => a.id === viewingAgreement)
               if (!agr) return null
               const allReleased = agr.milestones.every((m) => m.status === "released")
