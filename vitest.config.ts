@@ -11,6 +11,11 @@ export default defineConfig({
     globals: true,
     environment: "node",
     // .test.ts suites run under vitest; tests/*.test.mjs run under node --test (see package.json)
-    include: ["lib/**/*.test.ts", "lib/**/__tests__/**/*.test.ts", "services/**/*.test.ts"],
+    include: [
+      "lib/**/*.test.ts",
+      "lib/**/__tests__/**/*.test.ts",
+      "services/**/*.test.ts",
+      "app/**/*.test.ts",
+    ],
   },
 })

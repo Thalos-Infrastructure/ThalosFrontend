@@ -1003,6 +1003,7 @@ export default function PersonalDashboardPage() {
   const [agreementsError, setAgreementsError] = useState<string | null>(null)
   const [approverEscrows, setApproverEscrows] = useState<ApproverEscrow[]>([])
   const [approverLoading, setApproverLoading] = useState(false)
+  const [escrowRefreshNonce, setEscrowRefreshNonce] = useState(0)
   const [walletsData, setWalletsData] = useState<WalletWithAgreements[]>([])
   const [userProfile, setUserProfile] = useState<Profile | null>(null)
   const [showEditProfile, setShowEditProfile] = useState(false)
@@ -1276,7 +1277,7 @@ export default function PersonalDashboardPage() {
     // Only fetch if we haven't already for this address + token combination.
     // Including the token means we re-fetch once auth loads. The escrow reads
     // are public, so this only upgrades an anonymous read to an authenticated one.
-    const fetchKey = `${activeAddress}::${token ?? ""}`
+    const fetchKey = `${activeAddress}::${token ?? ""}::${escrowRefreshNonce}`
     if (fetchedEscrowsRef.current === fetchKey) return
     fetchedEscrowsRef.current = fetchKey
 
@@ -1315,7 +1316,15 @@ export default function PersonalDashboardPage() {
       setApproverLoading(false)
     }
     fetchApproverEscrows()
-  }, [walletAddress, token])
+  }, [walletAddress, token, escrowRefreshNonce])
+
+  /**
+   * Re-read agreements and escrows from their sources. Funding, approving,
+   * releasing and disputing all change on-chain state that the cached read
+   * cannot know about — the fetch effect above is keyed on wallet + token, and
+   * neither changes when funds move.
+   */
+  const refreshEscrows = useCallback(() => setEscrowRefreshNonce((n) => n + 1), [])
   const [viewingAgreement, setViewingAgreement] = useState<string | null>(null)
   const [showAgreementChat, setShowAgreementChat] = useState<string | null>(null)
   const [showProfileEditor, setShowProfileEditor] = useState(false)
@@ -2607,7 +2616,11 @@ export default function PersonalDashboardPage() {
                       </svg>
                       Back to Agreements
                     </button>
-                    <ApproverAgreementDetail agr={approverEscrow} walletAddress={walletAddress} />
+                    <ApproverAgreementDetail
+                      agr={approverEscrow}
+                      walletAddress={walletAddress}
+                      onEscrowChanged={refreshEscrows}
+                    />
                   </div>
                 )
               }

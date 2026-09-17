@@ -28,12 +28,19 @@ type Agreement = {
 interface ApproverAgreementDetailProps {
   agr: Agreement
   walletAddress: string
+  /**
+   * Re-read the escrow from chain. Funding changes the balance, and nothing
+   * else re-fetches: the list effect is keyed on wallet + token, neither of
+   * which changes when funds move.
+   */
+  onEscrowChanged?: () => void
 }
 
 import React from "react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { statusConfig } from "./statusConfig"
+import { statusConfigForState } from "./statusConfig"
+import { deriveLifecycleState } from "@/lib/permissions/agreementState"
 import { useLanguage } from "@/lib/i18n"
 import { useHasSigningWallet } from "@/lib/use-current-address"
 import { useStellarWallet } from "@/lib/stellar-wallet"
@@ -44,7 +51,11 @@ import type { AgreementResponse } from "@/services/escrow.types"
 import { useAuthStore } from "@/lib/auth-store"
 import { AlertTriangle } from "lucide-react"
 
-export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreementDetailProps) {
+export function ApproverAgreementDetail({
+  agr,
+  walletAddress,
+  onEscrowChanged,
+}: ApproverAgreementDetailProps) {
   const { openWalletModal } = useStellarWallet()
   const { token } = useAuthStore()
   // Signing-capable wallet: external Kit, or custodial with a signing provider
@@ -62,6 +73,12 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
   const [showDisputeConfirm, setShowDisputeConfirm] = React.useState<number | null>(null)
   const [txStatus, setTxStatus] = React.useState<TxStatus | null>(null)
   const allApproved = localMilestones.every((m) => m.approved === true)
+  const lifecycleState = deriveLifecycleState({
+    status: agr.status,
+    balance: agr.balance,
+    amount: agr.amount,
+    milestones: localMilestones,
+  })
   const allReleased = agr.released
   const someApproved = localMilestones.some((m) => m.approved === true || m.status === "approved")
   const completedMs = localMilestones.filter((m) => m.status === "released").length
@@ -119,6 +136,8 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
     const sendRes = await submitSignedTransaction(signedResult.signedTxXdr, token)
     if (!sendRes.success) throw new Error(sendRes.error || "Error sending transaction")
     setTxStatus("confirmed")
+    // The escrow just changed on chain; the cached read is now stale.
+    onEscrowChanged?.()
     return true
   }
 
@@ -244,7 +263,12 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
         </div>
         <div className="flex items-center gap-4 mt-2 sm:mt-0">
           {(() => {
-            const st = statusConfig[agr.status] || statusConfig.funded
+            // Derived from the escrow itself so it cannot contradict the
+            // step indicator, which reads the balance. `fundSuccess` covers the
+            // moment between a confirmed funding and the re-read landing.
+            const st = statusConfigForState(
+              fundSuccess && lifecycleState === "waiting_for_funding" ? "funded" : lifecycleState,
+            )
             return (
               <span className={cn("rounded-full border px-3 py-1 text-xs font-semibold", st.color)}>
                 {t(st.labelKey) ?? "Unknown"}
@@ -366,7 +390,10 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
                 token: token ?? undefined,
                 setFunding,
                 setError: setFundError,
-                setSuccess: setFundSuccess,
+                setSuccess: (ok: boolean) => {
+                  setFundSuccess(ok)
+                  if (ok) onEscrowChanged?.()
+                },
                 onStatus: setTxStatus,
               })
             }}
