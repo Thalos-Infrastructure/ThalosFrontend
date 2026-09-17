@@ -582,6 +582,12 @@ const translations: Record<Lang, Record<string, string>> = {
     "flow.evidencePlaceholder": "e.g. https://drive.google.com/... or description of deliverable",
     "flow.submit": "Submit",
     "flow.awaitingEvidence": "Awaiting evidence from seller",
+    "flow.evidenceBlocked.no-session":
+      "Sign in with the service provider's wallet to submit evidence",
+    "flow.evidenceBlocked.not-service-provider":
+      "Only the service provider can submit evidence for this milestone",
+    "flow.evidenceBlocked.unresolved-service-provider":
+      "This escrow's service provider could not be resolved yet",
     "flow.evidenceReady": "Evidence submitted - Ready for review",
     "flow.pendingFunding": "Pending Funding",
     "flow.pendingFundingDesc": "Waiting for buyer to fund the escrow.",
@@ -1520,6 +1526,12 @@ const translations: Record<Lang, Record<string, string>> = {
     "flow.evidencePlaceholder": "ej. https://drive.google.com/... o descripcion del entregable",
     "flow.submit": "Enviar",
     "flow.awaitingEvidence": "Esperando evidencia del vendedor",
+    "flow.evidenceBlocked.no-session":
+      "Inicia sesion con la wallet del service provider para enviar evidencia",
+    "flow.evidenceBlocked.not-service-provider":
+      "Solo el service provider puede enviar evidencia de este hito",
+    "flow.evidenceBlocked.unresolved-service-provider":
+      "Todavia no se pudo resolver el service provider de este escrow",
     "flow.evidenceReady": "Evidencia enviada - Lista para revision",
     "flow.pendingFunding": "Pendiente de Fondeo",
     "flow.pendingFundingDesc": "Esperando que el comprador fondee el escrow.",
