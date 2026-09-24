@@ -148,7 +148,8 @@ const endpoints = {
     approve: (type: ServiceType) => `${BASE_URL}/escrow/${type}/approve-milestone`,
     changeMilestoneStatus: (type: ServiceType) =>
       `${BASE_URL}/escrow/${type}/change-milestone-status`,
-    disputeMilestone: `${BASE_URL}/escrow/multi-release/dispute-milestone`,
+    dispute: (type: ServiceType) =>
+      `${BASE_URL}/escrow/${type}/dispute${type === "multi-release" ? "-milestone" : ""}`,
   },
   helper: {
     sendTransaction: `${BASE_URL}/helper/send-transaction`,
@@ -307,9 +308,15 @@ export async function releaseFunds(
   type: ServiceType,
   milestoneIndex?: string,
 ) {
+  const payload = {
+    contractId,
+    releaseSigner,
+    ...(type === "multi-release" && milestoneIndex ? { milestoneIndex } : {}),
+  }
+
   return safeFetch(endpoints.escrow.release(type), {
     method: "POST",
-    body: JSON.stringify({ contractId, releaseSigner, milestoneIndex }),
+    body: JSON.stringify(payload),
   })
 }
 
@@ -351,10 +358,21 @@ export async function sendTransaction(signedXdr: string) {
  * Can only be called by the approver or service provider (not the dispute resolver).
  * Returns an unsigned XDR that needs to be signed and submitted.
  */
-export async function disputeMilestone(contractId: string, milestoneIndex: string, signer: string) {
-  return safeFetch<{ unsignedTransaction: string }>(endpoints.escrow.disputeMilestone, {
+export async function disputeMilestone(
+  contractId: string,
+  milestoneIndex: string | undefined,
+  signer: string,
+  type: ServiceType = "multi-release",
+) {
+  const payload = {
+    contractId,
+    signer,
+    ...(type === "multi-release" && milestoneIndex ? { milestoneIndex } : {}),
+  }
+
+  return safeFetch<{ unsignedTransaction: string }>(endpoints.escrow.dispute(type), {
     method: "POST",
-    body: JSON.stringify({ contractId, milestoneIndex, signer }),
+    body: JSON.stringify(payload),
   })
 }
 

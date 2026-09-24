@@ -247,7 +247,10 @@ export async function disputeMilestone(
           resolvedToken,
         ),
       ),
-    () => originalService.disputeMilestone(contractId, milestoneIndex, signer),
+    () =>
+      type === "multi-release"
+        ? originalService.disputeMilestone(contractId, milestoneIndex, signer)
+        : originalService.disputeMilestone(contractId, milestoneIndex, signer, type),
   )
 }
 
