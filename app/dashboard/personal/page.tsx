@@ -245,7 +245,7 @@ function FormSelect({
   )
 }
 
-/* ── Constants ── */
+/* ─��� Constants ── */
 const shortAddress = (address: string) => `${address.slice(0, 4)}...${address.slice(-4)}`
 
 /** Horizon returns "12.3456789"; the UI shows two decimals, or "—" while unknown. */
@@ -325,27 +325,26 @@ function asAmountString(value: unknown): string {
 function mapNestAgreementToUi(
   agreement: AgreementWithParticipants,
   currentWallet: string | null,
+  escrowIndex: EscrowIndex | null,
 ): Agreement {
   const isMulti = agreement.agreement_type === "multi"
   const payee = agreement.participants?.find((p) => p.role === "payee")?.wallet_address
   const counterparty = agreement.participants?.find(
     (p) => p.wallet_address !== currentWallet,
   )?.wallet_address
-  const isCreator = Boolean(currentWallet && agreement.created_by === currentWallet)
-  const isPayee = Boolean(currentWallet && payee && payee === currentWallet)
-  // Prefer Nest participant role; fall back to creator = buyer.
-  const role: "buyer" | "seller" = isPayee ? "seller" : isCreator ? "buyer" : "seller"
-  const status = NEST_STATUS_TO_UI[agreement.status] ?? agreement.status
-  const { nextAction, blockedReason } = computeNextActionFromNestListing({
-    uiStatus: status,
-    role,
+  const live = reconcileWithEscrow({
+    contractId: agreement.contract_id,
+    nestUiStatus: NEST_STATUS_TO_UI[agreement.status] ?? agreement.status,
+    createdAt: agreement.created_at,
+    walletAddress: currentWallet,
+    index: escrowIndex,
   })
 
   return {
     id: agreement.contract_id || agreement.id,
     nestId: agreement.id,
     title: agreement.title,
-    status,
+    status: live.status,
     type: isMulti ? "Multi Release" : "Single Release",
     counterparty: counterparty
       ? `${counterparty.slice(0, 8)}...`
@@ -354,16 +353,23 @@ function mapNestAgreementToUi(
     amount: asAmountString(agreement.amount),
     currency: agreement.asset || "USDC",
     date: agreement.created_at.split("T")[0],
-    milestones: agreement.milestones.map((m) => ({
+    milestones: agreement.milestones.map((m, idx) => ({
       description: m.description,
       amount: asAmountString(m.amount),
-      status: m.status,
+      status: live.milestoneStatuses?.[idx] ?? m.status,
+      evidence: live.milestoneEvidence?.[idx],
     })),
-    receiver: payee || counterparty || "",
-    serviceProvider: payee || undefined,
-    role,
-    nextAction,
-    blockedReason,
+    receiver: live.receiver || payee || counterparty || "",
+    // On-chain serviceProvider only — TW rejects evidence from any other wallet.
+    serviceProvider: live.serviceProvider,
+    role: live.role,
+    nextAction: live.nextAction,
+    blockedReason: live.blockedReason,
+    balance: live.balance,
+    approver: live.approver,
+    releaseSigner: live.releaseSigner,
+    disputeResolver: live.disputeResolver,
+    released: live.released,
   }
 }
 
@@ -407,10 +413,13 @@ import {
   agreementViewToLegacyListItem,
   mapTwEscrowToAgreementView,
 } from "@/lib/agreements/map-tw-escrow"
+import { formatNextActionLabel } from "@/lib/types/agreement-view"
 import {
-  computeNextActionFromNestListing,
-  formatNextActionLabel,
-} from "@/lib/types/agreement-view"
+  agreementsRefreshInterval,
+  fetchEscrowIndex,
+  reconcileWithEscrow,
+  type EscrowIndex,
+} from "@/lib/agreements/reconcile-nest-escrow"
 
 /* ── Chart Data ── */
 const monthlyData = [
@@ -735,6 +744,7 @@ function SellerMilestoneList({
   const { changeMilestoneStatusAgreement } = require("@/lib/agreementActions")
   const { token } = useAuthStore()
   const githubAgreementId = agr.nestId
+  const [evidenceError, setEvidenceError] = React.useState<string | null>(null)
 
   // Best-effort load of any GitHub PRs already attached to each milestone, so
   // existing evidence renders. Backed by the Nest route (ThalosBackend#157),
@@ -759,14 +769,27 @@ function SellerMilestoneList({
   const handleSubmitEvidence = async (idx: number) => {
     const evidence = evidenceInputs[idx]?.trim()
     if (!evidence) return
+    setEvidenceError(null)
     if (!walletAddress) {
-      alert("Conectá o iniciá sesión con la wallet del service provider para enviar evidencia.")
+      setEvidenceError(
+        "Conectá o iniciá sesión con la wallet del service provider para enviar evidencia.",
+      )
       return
     }
-    if (agr.serviceProvider && agr.serviceProvider !== walletAddress) {
-      alert(
-        `Solo el service provider on-chain puede enviar evidencia (${agr.serviceProvider.slice(0, 8)}…). Esta sesión es ${walletAddress.slice(0, 8)}…`,
+    if (!agr.serviceProvider) {
+      setEvidenceError(
+        "Todavía no pudimos leer los roles del contrato on-chain. Esperá la confirmación e intentá de nuevo.",
       )
+      return
+    }
+    if (agr.serviceProvider.toUpperCase() !== walletAddress.toUpperCase()) {
+      setEvidenceError(
+        `Solo el service provider del contrato puede enviar evidencia (${agr.serviceProvider.slice(0, 8)}…). Esta sesión es ${walletAddress.slice(0, 8)}…`,
+      )
+      return
+    }
+    if (agr.nextAction && agr.nextAction !== "submit_evidence") {
+      setEvidenceError(agr.blockedReason || "Este acuerdo todavía no acepta evidencia.")
       return
     }
     setSubmitting(idx)
@@ -776,13 +799,13 @@ function SellerMilestoneList({
       newEvidence: evidence,
       // Evidence submission marks work done — "released" is the fund-release step.
       newStatus: "completed",
-      serviceProvider: agr.serviceProvider || walletAddress,
+      serviceProvider: agr.serviceProvider,
       serviceType: agr.type === "Multi Release" ? "multi-release" : "single-release",
       walletAddress,
       token,
       openWalletModal,
       setSubmitting: (v: boolean) => v === false && setSubmitting(null),
-      setError: (msg: string | null) => msg && alert(msg),
+      setError: (msg: string | null) => setEvidenceError(msg),
       onSuccess: async () => {
         await onRefresh()
         setSubmittedEvidence((prev) => ({ ...prev, [idx]: evidence }))
@@ -794,8 +817,23 @@ function SellerMilestoneList({
 
   return (
     <>
+      {evidenceError && (
+        <div
+          role="alert"
+          className="flex items-start justify-between gap-3 rounded-xl border border-red-500/25 bg-red-500/5 px-4 py-3 text-sm text-red-300"
+        >
+          <span>{evidenceError}</span>
+          <button
+            type="button"
+            onClick={() => setEvidenceError(null)}
+            className="shrink-0 text-xs text-red-300/70 hover:text-red-200"
+          >
+            Cerrar
+          </button>
+        </div>
+      )}
       {agr.milestones.map((ms, idx) => {
-        const hasEvidence = !!submittedEvidence[idx]
+        const hasEvidence = !!submittedEvidence[idx] || !!ms.evidence
         return (
           <div
             key={`${agr.id}-ms-${idx}`}
@@ -1286,16 +1324,18 @@ function PersonalDashboardPage() {
     async function fetchAgreements() {
       setAgreementsLoading(true)
       setAgreementsError(null)
-      const { agreements: nestAgreements, error } = await getAgreementsByWallet(
-        activeAddress,
-        token ?? undefined,
-      )
+      const [{ agreements: nestAgreements, error }, escrowIndex] = await Promise.all([
+        getAgreementsByWallet(activeAddress, token ?? undefined),
+        fetchEscrowIndex(activeAddress, token ?? undefined),
+      ])
       if (error) {
         setAgreementsError(error)
         setAgreementsLoading(false)
         return
       }
-      const mapped = nestAgreements.map((a) => mapNestAgreementToUi(a, activeAddress))
+      const mapped = nestAgreements.map((a) =>
+        mapNestAgreementToUi(a, activeAddress, escrowIndex),
+      )
       setAgreements(mapped)
       setAgreementsLoading(false)
     }
@@ -1328,14 +1368,19 @@ function PersonalDashboardPage() {
   const refreshAgreements = useCallback(async () => {
     if (!walletAddress) return
     fetchedEscrowsRef.current = null
-    const [result, approverResult] = await Promise.all([
+    const [result, escrowIndex, approverResult] = await Promise.all([
       getAgreementsByWallet(walletAddress, token ?? undefined),
+      fetchEscrowIndex(walletAddress, token ?? undefined),
       import("@/services/escrowMigration").then(({ getEscrowsByRole }) =>
         getEscrowsByRole({ role: "approver", address: walletAddress }, token ?? undefined),
       ),
     ])
     if (!result.error && result.agreements) {
-      setAgreements(result.agreements.map((agreement) => mapNestAgreementToUi(agreement, walletAddress)))
+      setAgreements(
+        result.agreements.map((agreement) =>
+          mapNestAgreementToUi(agreement, walletAddress, escrowIndex),
+        ),
+      )
     }
     if (approverResult.success && Array.isArray(approverResult.data)) {
       setApproverEscrows(
@@ -1345,6 +1390,24 @@ function PersonalDashboardPage() {
       )
     }
   }, [walletAddress, token])
+
+  // Auto-refresh: faster while an agreement is confirming or awaiting funds,
+  // and immediately when the tab regains focus.
+  const refreshDelay = agreementsRefreshInterval(agreements)
+  useEffect(() => {
+    if (!walletAddress) return
+    const interval = window.setInterval(() => {
+      if (document.visibilityState === "visible") void refreshAgreements()
+    }, refreshDelay)
+    const onVisible = () => {
+      if (document.visibilityState === "visible") void refreshAgreements()
+    }
+    document.addEventListener("visibilitychange", onVisible)
+    return () => {
+      window.clearInterval(interval)
+      document.removeEventListener("visibilitychange", onVisible)
+    }
+  }, [walletAddress, refreshAgreements, refreshDelay])
 
   const [showAgreementChat, setShowAgreementChat] = useState<string | null>(null)
   const [showProfileEditor, setShowProfileEditor] = useState(false)

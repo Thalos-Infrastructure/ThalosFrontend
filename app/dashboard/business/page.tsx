@@ -61,10 +61,7 @@ import {
   agreementViewToLegacyListItem,
   mapTwEscrowToAgreementView,
 } from "@/lib/agreements/map-tw-escrow"
-import {
-  computeNextActionFromNestListing,
-  formatNextActionLabel,
-} from "@/lib/types/agreement-view"
+import { formatNextActionLabel } from "@/lib/types/agreement-view"
 import { getKybStatus, startKybSession } from "@/lib/api/kyb"
 import {
   updateOpportunityStatus,
@@ -339,6 +336,12 @@ import type {
   AgreementStatus as NestAgreementStatus,
 } from "@/lib/actions/agreements"
 import type { MilestoneStatus } from "@/lib/types/status"
+import {
+  agreementsRefreshInterval,
+  fetchEscrowIndex,
+  reconcileWithEscrow,
+  type EscrowIndex,
+} from "@/lib/agreements/reconcile-nest-escrow"
 
 const NEST_STATUS_TO_UI: Record<NestAgreementStatus, string> = {
   pending: "pending",
@@ -353,18 +356,20 @@ const NEST_STATUS_TO_UI: Record<NestAgreementStatus, string> = {
 function mapNestAgreementToUi(
   agreement: AgreementWithParticipants,
   workspaceWallet: string | null,
+  escrowIndex: EscrowIndex | null,
 ): Agreement {
   const isMulti = agreement.agreement_type === "multi"
   const counterparty = agreement.participants?.find(
     (p: { wallet_address: string }) => p.wallet_address !== workspaceWallet,
   )?.wallet_address
-  const role: "buyer" | "seller" =
-    workspaceWallet === agreement.created_by ? "seller" : "buyer"
-  const status = NEST_STATUS_TO_UI[agreement.status] ?? agreement.status
-  const { nextAction, blockedReason } = computeNextActionFromNestListing({
-    uiStatus: status,
-    role,
+  const live = reconcileWithEscrow({
+    contractId: agreement.contract_id,
+    nestUiStatus: NEST_STATUS_TO_UI[agreement.status] ?? agreement.status,
+    createdAt: agreement.created_at,
+    walletAddress: workspaceWallet,
+    index: escrowIndex,
   })
+  const { status, nextAction, blockedReason, role } = live
 
   return {
     id: agreement.contract_id || agreement.id,
@@ -377,19 +382,37 @@ function mapNestAgreementToUi(
     currency: agreement.asset || "USDC",
     type: isMulti ? "Multi Release" : "Single Release",
     date: agreement.created_at.split("T")[0],
-    milestones: agreement.milestones.map((m) => ({
+    milestones: agreement.milestones.map((m, idx) => ({
       description: m.description,
       amount: m.amount,
-      status: m.status,
+      status: live.milestoneStatuses?.[idx] ?? m.status,
     })),
-    receiver: counterparty || "",
+    receiver: live.receiver || counterparty || "",
     role,
+    serviceProvider: live.serviceProvider,
     nextAction,
     blockedReason,
+    balance: live.balance,
+    approver: live.approver,
+    releaseSigner: live.releaseSigner,
+    disputeResolver: live.disputeResolver,
+    released: live.released,
   }
 }
 
 const statusConfig: Record<string, { labelKey: string; color: string }> = {
+  pending: {
+    labelKey: "flow.pendingFunding",
+    color: "bg-orange-500/10 text-orange-400 border-orange-500/20",
+  },
+  confirming: {
+    labelKey: "flow.confirming",
+    color: "bg-slate-500/10 text-slate-300 border-slate-500/20 animate-pulse",
+  },
+  disputed: {
+    labelKey: "status.disputed",
+    color: "bg-red-500/10 text-red-400 border-red-500/20",
+  },
   funded: { labelKey: "status.funded", color: "bg-blue-500/10 text-blue-400 border-blue-500/20" },
   in_progress: {
     labelKey: "status.inProgress",
@@ -1016,36 +1039,50 @@ function BusinessDashboardPage() {
     return agreementViewToLegacyListItem(view) as Agreement
   }
 
-  // Fetch agreements from Nest (source of truth) for the current workspace wallet
-  const fetchedEscrowsRef = useRef<string | null>(null)
-  useEffect(() => {
-    if (!currentWorkspaceWallet) return
-    const workspaceWallet: string = currentWorkspaceWallet
-    // Include the token so we re-fetch once auth loads and route through the
-    // backend instead of falling back to the direct Trustless Work service.
-    const fetchKey = `${workspaceWallet}::${token ?? ""}`
-    if (fetchedEscrowsRef.current === fetchKey) return
-    fetchedEscrowsRef.current = fetchKey
-
-    async function fetchAgreements() {
-      setAgreementsLoading(true)
-      setAgreementsError(null)
-      const { agreements: nestAgreements, error } = await getAgreementsByWallet(
-        workspaceWallet,
-        token ?? undefined,
-      )
+  // Agreements from Nest, reconciled with the live TW escrow (status/roles/nextAction).
+  const loadAgreements = useCallback(
+    async (showSpinner: boolean) => {
+      if (!currentWorkspaceWallet) return
+      const workspaceWallet: string = currentWorkspaceWallet
+      if (showSpinner) {
+        setAgreementsLoading(true)
+        setAgreementsError(null)
+      }
+      const [{ agreements: nestAgreements, error }, escrowIndex] = await Promise.all([
+        getAgreementsByWallet(workspaceWallet, token ?? undefined),
+        fetchEscrowIndex(workspaceWallet, token ?? undefined),
+      ])
       if (error) {
-        setAgreementsError(error)
+        if (showSpinner) setAgreementsError(error)
         setAgreementsLoading(false)
         return
       }
-      const mapped = nestAgreements.map((a) => mapNestAgreementToUi(a, workspaceWallet))
-      setAgreements(mapped)
+      setAgreements(
+        nestAgreements.map((a) => mapNestAgreementToUi(a, workspaceWallet, escrowIndex)),
+      )
       setAgreementsLoading(false)
-    }
+    },
+    [currentWorkspaceWallet, token],
+  )
 
-    fetchAgreements()
-  }, [currentWorkspaceWallet, token])
+  useEffect(() => {
+    void loadAgreements(true)
+  }, [loadAgreements])
+
+  // Auto-refresh: faster while an agreement is confirming or awaiting funds.
+  const refreshDelay = agreementsRefreshInterval(agreements)
+  useEffect(() => {
+    if (!currentWorkspaceWallet) return
+    const tick = () => {
+      if (document.visibilityState === "visible") void loadAgreements(false)
+    }
+    const interval = window.setInterval(tick, refreshDelay)
+    document.addEventListener("visibilitychange", tick)
+    return () => {
+      window.clearInterval(interval)
+      document.removeEventListener("visibilitychange", tick)
+    }
+  }, [currentWorkspaceWallet, loadAgreements, refreshDelay])
 
   // Fetch approver escrows (for approver tab)
   useEffect(() => {

@@ -6,6 +6,14 @@ export const statusConfig: Partial<Record<AgreementStatus, { labelKey: string; c
     labelKey: "flow.pendingFunding",
     color: "bg-orange-500/10 text-orange-400 border-orange-500/20",
   },
+  confirming: {
+    labelKey: "flow.confirming",
+    color: "bg-slate-500/10 text-slate-300 border-slate-500/20 animate-pulse",
+  },
+  disputed: {
+    labelKey: "status.disputed",
+    color: "bg-red-500/10 text-red-400 border-red-500/20",
+  },
   funded: { labelKey: "status.funded", color: "bg-blue-500/10 text-blue-400 border-blue-500/20" },
   active: {
     labelKey: "status.inProgress",
