@@ -769,6 +769,8 @@ function ChartTooltip({
    PAGE
    ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ */
 export default function BusinessDashboardPageWithNav() {
+  const { hydrated } = useAuthStore()
+  if (!hydrated) return <ThalosLoader />
   return (
     <Suspense fallback={<ThalosLoader />}>
       <BusinessDashboardPage />
@@ -2266,8 +2268,8 @@ function BusinessDashboardPage() {
                   )}
 
                   {agreementsLoading ? (
-                    <div className="flex items-center justify-center py-16 text-sm text-white/40">
-                      Loading agreements...
+                    <div className="flex items-center justify-center py-16">
+                      <ThalosLoader size="md" />
                     </div>
                   ) : (
                     /* Agreements view, pre-filtered by selected wallet */

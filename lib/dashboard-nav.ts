@@ -6,7 +6,7 @@
  */
 "use client"
 
-import { useCallback, useMemo } from "react"
+import { useCallback, useEffect, useMemo, useRef } from "react"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 
 export type DashboardNav = {
@@ -24,18 +24,24 @@ export function useDashboardNav(defaultSection = "home"): DashboardNav {
   const activeSection = searchParams.get("section") || defaultSection
   const viewingAgreement = searchParams.get("agreementId")
 
+  // router.replace does not update window.location synchronously, so back-to-back
+  // calls in one handler (open agreement, then set section) must build on the
+  // pending query string or the second call drops agreementId.
+  const pendingQsRef = useRef<string | null>(null)
+  const currentQs = searchParams.toString()
+  useEffect(() => {
+    pendingQsRef.current = null
+  }, [currentQs])
+
   const replaceParams = useCallback(
     (mutate: (params: URLSearchParams) => void) => {
-      // Read the live URL: back-to-back calls in one handler (open agreement, then set
-      // section) would otherwise start from the same stale snapshot and drop agreementId.
-      const params = new URLSearchParams(
-        typeof window !== "undefined" ? window.location.search : searchParams.toString(),
-      )
+      const params = new URLSearchParams(pendingQsRef.current ?? currentQs)
       mutate(params)
       const qs = params.toString()
+      pendingQsRef.current = qs
       router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
     },
-    [pathname, router, searchParams],
+    [pathname, router, currentQs],
   )
 
   const setActiveSection = useCallback(

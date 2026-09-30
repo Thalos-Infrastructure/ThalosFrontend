@@ -245,7 +245,7 @@ function FormSelect({
   )
 }
 
-/* ─����� Constants ── */
+/* ─������� Constants ── */
 const shortAddress = (address: string) => `${address.slice(0, 4)}...${address.slice(-4)}`
 
 /** Horizon returns "12.3456789"; the UI shows two decimals, or "—" while unknown. */
@@ -2152,10 +2152,7 @@ function PersonalDashboardPage() {
                       role: "buyer" as const,
                     })),
                   ]}
-                  onAgreementClick={(id) => {
-                    setViewingAgreement(id)
-                    setActiveSection("agreements")
-                  }}
+                  onAgreementClick={(id) => setViewingAgreement(id)}
                   onOpenChat={(id) => setShowAgreementChat(id)}
                   currentUserWallet={walletAddress ?? undefined}
                 />
@@ -2740,46 +2737,31 @@ function PersonalDashboardPage() {
                 </div>
               )}
 
-              {agreementsLoading ? (
-                <div className="flex items-center justify-center py-16 text-sm text-white/40">
-                  Loading agreements...
+              {agreementsLoading && filteredAgreements.length === 0 ? (
+                <div className="flex items-center justify-center py-16">
+                  <ThalosLoader size="md" />
                 </div>
               ) : (
-                /* Agreements view — pre-filtered by selected wallet when active */
-                <AgreementsView
-                  agreements={[
-                    ...filteredAgreements.map((a) => ({
-                      ...a,
-                      updatedAt: a.date,
-                      currency: "USDC",
-                    })),
-                    ...uniqueApproverEscrows.map((e) => ({
-                      id: e.id,
-                      title: e.title,
-                      counterparty:
-                        (e as unknown as { serviceProvider?: string }).serviceProvider?.slice(
-                          0,
-                          8,
-                        ) + "..." || "Unknown",
-                      status: e.status || "pending",
-                      amount:
-                        typeof e.amount === "number"
-                          ? (e.amount as number).toLocaleString()
-                          : e.amount || "0",
-                      currency: "USDC",
-                      type: "Single Release" as const,
-                      updatedAt: e.date,
-                      milestones: e.milestones || [{ status: "pending" }],
-                      role: "buyer" as const,
-                    })),
-                  ]}
-                  onAgreementClick={(id) => {
-                    setViewingAgreement(id)
-                    setActiveSection("agreements")
-                  }}
-                  onOpenChat={(id) => setShowAgreementChat(id)}
-                  currentUserWallet={walletAddress ?? undefined}
-                />
+                <section className="rounded-xl border border-white/10 bg-[#0c1220] p-5">
+                  <AgreementsView
+                    agreements={[
+                      ...filteredAgreements.map((a) => ({
+                        ...a,
+                        updatedAt: a.date,
+                        currency: "USDC" as const,
+                      })),
+                      ...uniqueApproverEscrows.map((e) => ({
+                        ...e,
+                        updatedAt: e.date,
+                        currency: "USDC" as const,
+                        role: "buyer" as const,
+                      })),
+                    ]}
+                    onAgreementClick={(id) => setViewingAgreement(id)}
+                    onOpenChat={(id) => setShowAgreementChat(id)}
+                    currentUserWallet={walletAddress ?? undefined}
+                  />
+                </section>
               )}
             </div>
           )}
@@ -3915,6 +3897,8 @@ function PersonalDashboardPage() {
 }
 
 export default function PersonalDashboardPageWithNav() {
+  const { hydrated } = useAuthStore()
+  if (!hydrated) return <ThalosLoader />
   return (
     <Suspense fallback={<ThalosLoader />}>
       <PersonalDashboardPage />
