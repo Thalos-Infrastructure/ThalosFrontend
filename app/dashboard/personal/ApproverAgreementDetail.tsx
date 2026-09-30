@@ -36,7 +36,8 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { statusConfig } from "./statusConfig"
 import { useLanguage } from "@/lib/i18n"
-import { useHasSigningWallet } from "@/lib/use-current-address"
+import { useHasSigningWallet, useSigningWalletState } from "@/lib/use-current-address"
+import { usePollarWallet } from "@/lib/pollar-wallet"
 import { useStellarWallet } from "@/lib/stellar-wallet"
 import { WalletPrompt } from "@/components/shared/wallet-guard"
 import { fundAndSignEscrow } from "@/lib/agreementActions"
@@ -51,6 +52,9 @@ export function ApproverAgreementDetail({ agr, walletAddress, onRefresh }: Appro
   // Signing-capable wallet: external Kit, or custodial with a signing provider
   // (Accesly #109) — all routed through the unified signer (#110).
   const isExternalWallet = useHasSigningWallet()
+  const walletState = useSigningWalletState()
+  const { resume } = usePollarWallet()
+  const [fundPending, setFundPending] = React.useState(false)
   const [showDetail, setShowDetail] = React.useState(false)
   const [loadingMs, setLoadingMs] = React.useState<number | null>(null)
   const [errorMs, setErrorMs] = React.useState<string | null>(null)
@@ -371,14 +375,24 @@ export function ApproverAgreementDetail({ agr, walletAddress, onRefresh }: Appro
                 walletAddress,
                 serviceType: agr.type === "Multi Release" ? "multi-release" : "single-release",
                 token: token ?? undefined,
+                agreementId: agr.agreement_id,
+                expectedFunder: agr.approver,
                 setFunding,
                 setError: setFundError,
-  setSuccess: async (success) => {
-    setFundSuccess(success)
-    if (success) await onRefresh?.()
-  },
-  onStatus: setTxStatus,
-  })
+                setSuccess: async (success) => {
+                  setFundSuccess(success)
+                  if (success) {
+                    setFundPending(false)
+                    await onRefresh?.()
+                  }
+                },
+                onStatus: setTxStatus,
+                onPendingConfirmation: () => {
+                  setFundPending(true)
+                  setTxStatus(null)
+                  void onRefresh?.()
+                },
+              })
             }}
             disabled={disableFund}
             className="rounded-full bg-blue-500 px-6 text-sm font-semibold text-white hover:bg-blue-600 shadow-[0_4px_16px_rgba(59,130,246,0.25)]"
@@ -387,11 +401,29 @@ export function ApproverAgreementDetail({ agr, walletAddress, onRefresh }: Appro
           </Button>
         </div>
       )}
-      {!isFunded && !allReleased && !isExternalWallet && (
+      {!isFunded && !allReleased && !isExternalWallet && walletState === "verifying" && (
+        <div
+          role="status"
+          className="mt-4 flex items-center gap-2 rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3 text-xs text-white/50"
+        >
+          <span className="h-3 w-3 animate-spin rounded-full border-2 border-white/20 border-t-white/70" aria-hidden />
+          Verificando tu wallet…
+        </div>
+      )}
+      {!isFunded && !allReleased && !isExternalWallet && walletState !== "verifying" && (
         <WalletPrompt
-          message="Connect and verify a wallet to fund this escrow agreement."
-          onConnect={openWalletModal}
+          message={
+            walletState === "expired"
+              ? "Tu sesión de wallet expiró. Reactívala para firmar el fondeo."
+              : "Connect and verify a wallet to fund this escrow agreement."
+          }
+          onConnect={walletState === "expired" ? () => void resume() : openWalletModal}
         />
+      )}
+      {fundPending && !isFunded && (
+        <div role="status" className="text-amber-300/90 text-xs mt-2">
+          Transacción enviada. Esperando confirmación on-chain; el estado se actualizará automáticamente.
+        </div>
       )}
       {fundError && <div className="text-red-400 text-xs mt-2">{fundError}</div>}
       {fundSuccess && (

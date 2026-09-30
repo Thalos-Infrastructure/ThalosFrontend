@@ -48,6 +48,12 @@ export interface FundAndSignEscrowParams {
   setError: (msg: string | null) => void
   setSuccess: (v: boolean) => void
   onStatus?: (status: TxStatus) => void
+  /** Thalos agreement id, used to ask the backend to sync with the chain. */
+  agreementId?: string
+  /** Address Thalos expects to fund (the approver). Mismatch aborts before signing. */
+  expectedFunder?: string
+  /** Submitted, but the chain did not confirm within the polling window. */
+  onPendingConfirmation?: () => void
 }
 
 export interface ChangeMilestoneStatusParams {
@@ -328,6 +334,9 @@ export async function fundAndSignEscrow({
   setError,
   setSuccess,
   onStatus,
+  agreementId,
+  expectedFunder,
+  onPendingConfirmation,
 }: FundAndSignEscrowParams) {
   setFunding(true)
   setError(null)
@@ -335,6 +344,11 @@ export async function fundAndSignEscrow({
   try {
     if (!walletAddress) {
       throw new Error("Wallet address is required to fund escrow")
+    }
+    if (expectedFunder && expectedFunder.toUpperCase() !== walletAddress.toUpperCase()) {
+      throw new Error(
+        `La wallet conectada no es la que debe fondear este acuerdo (esperada ${shortAddress(expectedFunder)}).`,
+      )
     }
     onStatus?.("building")
     // GF-2: route through migration layer — when flag ON, builds unsigned XDR
@@ -356,6 +370,14 @@ export async function fundAndSignEscrow({
       },
       token,
     )
+
+    // Submitted is not funded: only an on-chain-validated sync may flip the
+    // status, so wait for it instead of reporting success on submit.
+    const confirmed = await waitForFundedOnChain(contractId, agreementId, token)
+    if (!confirmed) {
+      onPendingConfirmation?.()
+      return
+    }
     onStatus?.("confirmed")
     setSuccess(true)
   } catch (e: any) {
@@ -364,6 +386,43 @@ export async function fundAndSignEscrow({
   } finally {
     setFunding(false)
   }
+}
+
+const FUNDED_STATUSES = new Set(["funded", "active", "in_progress", "completed", "disputed", "resolved"])
+const CONFIRM_ATTEMPTS = 6
+const CONFIRM_INTERVAL_MS = 3000
+
+function shortAddress(address: string) {
+  return `${address.slice(0, 4)}…${address.slice(-4)}`
+}
+
+async function waitForFundedOnChain(
+  contractId: string,
+  agreementId: string | undefined,
+  token?: string | null,
+): Promise<boolean> {
+  if (!token) return true
+  const { syncAgreementApi, getAgreementByContractIdApi } = await import("@/lib/api/agreements")
+
+  let id = agreementId
+  if (!id) {
+    const lookup = await getAgreementByContractIdApi(contractId, token)
+    id = lookup.success ? lookup.data?.id : undefined
+  }
+  if (!id) return true
+
+  for (let attempt = 0; attempt < CONFIRM_ATTEMPTS; attempt++) {
+    if (attempt > 0) await new Promise((r) => setTimeout(r, CONFIRM_INTERVAL_MS))
+    const res = await syncAgreementApi(id, token)
+    const status = res.success ? res.data?.status : undefined
+    if (status && FUNDED_STATUSES.has(String(status).toLowerCase())) return true
+    if (!res.success || !res.data) {
+      const fresh = await getAgreementByContractIdApi(contractId, token)
+      const freshStatus = fresh.success ? fresh.data?.status : undefined
+      if (freshStatus && FUNDED_STATUSES.has(String(freshStatus).toLowerCase())) return true
+    }
+  }
+  return false
 }
 
 export async function changeMilestoneStatusAgreement({

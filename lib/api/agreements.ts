@@ -358,6 +358,35 @@ export async function getAgreementByContractIdApi(
 }
 
 /**
+ * POST /v1/agreements/:agreementId/sync
+ * Asks the backend to reconcile the agreement against the on-chain escrow
+ * (the backend validates on-chain before moving `pending` → `funded`).
+ */
+export async function syncAgreementApi(
+  agreementId: string,
+  token?: string,
+): Promise<ApiResponse<Agreement | null>> {
+  try {
+    const response = await apiRequest<unknown>(
+      `/agreements/${agreementId}/sync`,
+      { method: "POST", body: JSON.stringify({ validateOnChain: true }) },
+      token,
+    )
+    if (!response.success) return { success: false, error: response.error }
+    const payload = (response.data ?? {}) as Record<string, unknown>
+    if (typeof payload.error === "string" && payload.error) {
+      return { success: false, error: payload.error }
+    }
+    return { success: true, data: (payload.agreement as Agreement | undefined) ?? null }
+  } catch (e) {
+    return {
+      success: false,
+      error: e instanceof Error ? e.message : "Failed to sync agreement",
+    }
+  }
+}
+
+/**
  * Link contract to agreement
  * Backend returns: { success, error } (HTTP 200 even if success=false)
  */
