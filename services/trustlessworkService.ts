@@ -120,15 +120,7 @@ if (typeof window !== "undefined" && !API_KEY) {
   )
 }
 
-const PLATFORM_ADDRESS =
-  process.env.NEXT_PUBLIC_PLATFORM_ADDRESS ??
-  "GBTTKTSBLHGMRY3T65JXT423MHQZXTD26TTHQEY5HNF2KWFFDKKVHVPD"
-
-const DISPUTE_RESOLVER =
-  process.env.NEXT_PUBLIC_DISPUTE_RESOLVER ??
-  "GB6MP3L6UGIDY6O6MXNLSKHLXT2T2TCMPZIZGUTOGYKOLHW7EORWMFCK"
-
-import { TRUSTLINE_USDC } from "@/lib/config"
+import { DISPUTE_RESOLVER, PLATFORM_ADDRESS, TRUSTLINE_USDC } from "@/lib/config"
 
 /* =====================================================
    ENDPOINT BUILDER

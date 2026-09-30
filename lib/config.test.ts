@@ -126,3 +126,32 @@ describe("escrow migration flag configuration", () => {
     expect(config.ESCROW_MIGRATION_FLAGS.fundEscrow).toBe(true)
   })
 })
+
+describe("platform + USDC trustline (Manu PR1)", () => {
+  it("defaults PLATFORM_ADDRESS to the canonical GBMJT address", async () => {
+    const config = await loadConfig({ NEXT_PUBLIC_PLATFORM_ADDRESS: undefined })
+    expect(config.PLATFORM_ADDRESS).toBe(
+      "GBMJTAVJFAKMKLXYXGXACBFGIFS62A7DT46PFHQ3W4RG7CG4HVESSNRY",
+    )
+  })
+
+  it("uses testnet USDC issuer on TESTNET", async () => {
+    const config = await loadConfig({
+      NEXT_PUBLIC_STELLAR_NETWORK: "TESTNET",
+      NEXT_PUBLIC_TRUSTLINE_USDC_ADDRESS: undefined,
+    })
+    expect(config.TRUSTLINE_USDC.address).toBe(
+      "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5",
+    )
+  })
+
+  it("uses mainnet USDC issuer on MAINNET", async () => {
+    const config = await loadConfig({
+      NEXT_PUBLIC_STELLAR_NETWORK: "MAINNET",
+      NEXT_PUBLIC_TRUSTLINE_USDC_ADDRESS: undefined,
+    })
+    expect(config.TRUSTLINE_USDC.address).toBe(
+      "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN",
+    )
+  })
+})

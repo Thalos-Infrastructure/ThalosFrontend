@@ -1,7 +1,7 @@
 "use client"
 
 import { ApproverAgreementDetail } from "./ApproverAgreementDetail"
-import React, { useState, useEffect, useCallback, useId, useRef, useMemo } from "react"
+import React, { useState, useEffect, useCallback, useId, useRef, useMemo, Suspense } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -285,6 +285,14 @@ interface Agreement {
   /** On-chain / Nest payee — must match TW serviceProvider to submit evidence. */
   serviceProvider?: string
   role?: "buyer" | "seller"
+  /** Shared view-model fields (FE provisional until Nest owns them). */
+  nextAction?: string
+  blockedReason?: string | null
+  balance?: string
+  approver?: string
+  releaseSigner?: string
+  disputeResolver?: string
+  released?: boolean
 }
 
 const initialAgreements: Agreement[] = []
@@ -325,12 +333,19 @@ function mapNestAgreementToUi(
   )?.wallet_address
   const isCreator = Boolean(currentWallet && agreement.created_by === currentWallet)
   const isPayee = Boolean(currentWallet && payee && payee === currentWallet)
+  // Prefer Nest participant role; fall back to creator = buyer.
+  const role: "buyer" | "seller" = isPayee ? "seller" : isCreator ? "buyer" : "seller"
+  const status = NEST_STATUS_TO_UI[agreement.status] ?? agreement.status
+  const { nextAction, blockedReason } = computeNextActionFromNestListing({
+    uiStatus: status,
+    role,
+  })
 
   return {
     id: agreement.contract_id || agreement.id,
     nestId: agreement.id,
     title: agreement.title,
-    status: NEST_STATUS_TO_UI[agreement.status] ?? agreement.status,
+    status,
     type: isMulti ? "Multi Release" : "Single Release",
     counterparty: counterparty
       ? `${counterparty.slice(0, 8)}...`
@@ -346,8 +361,9 @@ function mapNestAgreementToUi(
     })),
     receiver: payee || counterparty || "",
     serviceProvider: payee || undefined,
-    // Prefer Nest participant role; fall back to creator = buyer.
-    role: isPayee ? "seller" : isCreator ? "buyer" : "seller",
+    role,
+    nextAction,
+    blockedReason,
   }
 }
 
@@ -379,74 +395,22 @@ interface TrustlessEscrow {
   }>
 }
 
-// Raw Trustless Work payload: camelCase and carrying on-chain flags, so it is
-// not the snake_case `Escrow` from lib/api/escrow.
-function mapEscrowToApproverAgreement(escrow: TrustlessEscrow) {
-  const isMulti = escrow.type === "multi-release"
-  const amount = isMulti
-    ? (escrow.milestones || [])
-        .reduce((sum, m) => sum + (typeof m.amount === "number" ? m.amount : 0), 0)
-        .toString()
-    : escrow.amount
-      ? escrow.amount.toString()
-      : ""
-
-  const milestones = escrow.milestones || []
-  const anyUnapproved = milestones.some((m) => m.approved === false)
-  const allUnapproved = milestones.length > 0 && milestones.every((m) => m.approved === false)
-  const balanceNum = Number(escrow.balance)
-  const amountNum = Number(amount)
-  const hasConfirmedBalance = Number.isFinite(balanceNum) && Number.isFinite(amountNum) && amountNum > 0
-  let status = "pending"
-  if (escrow.flags?.released) {
-    status = "released"
-  } else if (hasConfirmedBalance && balanceNum >= amountNum) {
-    status = "funded"
-  } else if (anyUnapproved && hasConfirmedBalance && balanceNum < amountNum) {
-    status = "pending"
-  }
-
-  return {
-    id: escrow.contractId,
-    title: escrow.title ?? "-",
-    status,
-    type: (isMulti ? "Multi Release" : "Single Release") as Agreement["type"],
-    counterparty: escrow.roles?.serviceProvider
-      ? `${escrow.roles.serviceProvider.slice(0, 8)}...`
-      : "-",
-    amount,
-    currency: "USDC",
-    date: escrow.createdAt?._seconds
-      ? new Date(escrow.createdAt._seconds * 1000).toISOString().split("T")[0]
-      : new Date().toISOString().split("T")[0],
-    milestones: milestones.map((m) => ({
-      approved: m.approved,
-      description: m.description ?? "",
-      amount:
-        typeof m.amount === "number" && m.amount !== undefined
-          ? m.amount.toString()
-          : !isMulti && escrow.amount
-            ? escrow.amount.toString()
-            : "",
-      status: m.flags?.released
-        ? "released"
-        : m.flags?.approved
-          ? "approved"
-          : m.status || "pending",
-      evidence: m.evidence,
-    })),
-    receiver: escrow.roles?.receiver || escrow.roles?.serviceProvider || "-",
-    balance: escrow.balance,
-    serviceProvider: escrow.roles?.serviceProvider || "-",
-    approver: escrow.roles?.approver,
-    releaseSigner: escrow.roles?.releaseSigner,
-    disputeResolver: escrow.roles?.disputeResolver,
-    released: escrow.flags?.released ?? false,
-    role: "buyer" as const,
-  }
+// Raw Trustless Work payload → shared AgreementViewModel → legacy list row.
+function mapEscrowToApproverAgreement(escrow: TrustlessEscrow, walletAddress?: string | null) {
+  const view = mapTwEscrowToAgreementView(escrow, walletAddress)
+  return agreementViewToLegacyListItem(view)
 }
 
 import { statusConfig } from "./statusConfig"
+import { useDashboardNav } from "@/lib/dashboard-nav"
+import {
+  agreementViewToLegacyListItem,
+  mapTwEscrowToAgreementView,
+} from "@/lib/agreements/map-tw-escrow"
+import {
+  computeNextActionFromNestListing,
+  formatNextActionLabel,
+} from "@/lib/types/agreement-view"
 
 /* ── Chart Data ── */
 const monthlyData = [
@@ -965,7 +929,7 @@ function SellerMilestoneList({
 /* ════════════════════════════════════════════════
    PAGE
    ════════════════════════════════════════════════ */
-export default function PersonalDashboardPage() {
+function PersonalDashboardPage() {
   // Prevent duplicate fetches in Strict Mode or double mount
   const fetchedEscrowsRef = React.useRef<string | null>(null)
   const { t } = useLanguage()
@@ -978,7 +942,8 @@ export default function PersonalDashboardPage() {
   const isExternalWallet = useHasSigningWallet()
   const [loading, setLoading] = useState(false)
 
-  const [activeSection, setActiveSection] = useState("home")
+  const { activeSection, viewingAgreement, setActiveSection, setViewingAgreement } =
+    useDashboardNav("home")
 
   // Session wallet (the one Pollar provisioned, or a Kit wallet with no session)
   // with its on-chain USDC balance. Replaces the hardcoded demo wallets.
@@ -1347,7 +1312,11 @@ export default function PersonalDashboardPage() {
         token ?? undefined,
       )
       if (res.success && Array.isArray(res.data)) {
-        setApproverEscrows((res.data as TrustlessEscrow[]).map(mapEscrowToApproverAgreement))
+        setApproverEscrows(
+          (res.data as TrustlessEscrow[]).map((e) =>
+            mapEscrowToApproverAgreement(e, activeAddress),
+          ),
+        )
       } else {
         setApproverEscrows([])
       }
@@ -1369,11 +1338,14 @@ export default function PersonalDashboardPage() {
       setAgreements(result.agreements.map((agreement) => mapNestAgreementToUi(agreement, walletAddress)))
     }
     if (approverResult.success && Array.isArray(approverResult.data)) {
-      setApproverEscrows((approverResult.data as TrustlessEscrow[]).map(mapEscrowToApproverAgreement))
+      setApproverEscrows(
+        (approverResult.data as TrustlessEscrow[]).map((e) =>
+          mapEscrowToApproverAgreement(e, walletAddress),
+        ),
+      )
     }
   }, [walletAddress, token])
 
-  const [viewingAgreement, setViewingAgreement] = useState<string | null>(null)
   const [showAgreementChat, setShowAgreementChat] = useState<string | null>(null)
   const [showProfileEditor, setShowProfileEditor] = useState(false)
 
@@ -2792,6 +2764,18 @@ export default function PersonalDashboardPage() {
                     </button>
                   </div>
 
+                  {agr.nextAction != null && (
+                    <div className="mb-4 rounded-xl border border-[#f0b400]/25 bg-[#f0b400]/5 px-4 py-3 text-sm">
+                      <span className="text-[#f0b400] font-medium">Next: </span>
+                      <span className="text-white/80">
+                        {formatNextActionLabel(agr.nextAction)}
+                      </span>
+                      {agr.blockedReason ? (
+                        <p className="mt-1 text-white/45">{agr.blockedReason}</p>
+                      ) : null}
+                    </div>
+                  )}
+
                   {/* Header */}
                   <div className="mb-6 rounded-2xl border border-white/10 bg-[#0c1220] p-6 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)]">
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -3854,5 +3838,13 @@ export default function PersonalDashboardPage() {
         type="personal"
       />
     </div>
+  )
+}
+
+export default function PersonalDashboardPageWithNav() {
+  return (
+    <Suspense fallback={<ThalosLoader />}>
+      <PersonalDashboardPage />
+    </Suspense>
   )
 }

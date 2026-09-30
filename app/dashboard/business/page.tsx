@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect, useCallback, useId, useRef, useMemo } from "react"
+import React, { useState, useEffect, useCallback, useId, useRef, useMemo, Suspense } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -55,7 +55,16 @@ import {
   AgreementPayload,
   approveMilestone,
 } from "@/services/escrowMigration"
-import { STELLAR_EXPLORER_BASE_URL, SHOW_MOCKED_AGREEMENTS } from "@/lib/config"
+import { STELLAR_EXPLORER_BASE_URL, SHOW_MOCKED_AGREEMENTS, DISPUTE_RESOLVER, PLATFORM_ADDRESS, TRUSTLINE_USDC } from "@/lib/config"
+import { useDashboardNav } from "@/lib/dashboard-nav"
+import {
+  agreementViewToLegacyListItem,
+  mapTwEscrowToAgreementView,
+} from "@/lib/agreements/map-tw-escrow"
+import {
+  computeNextActionFromNestListing,
+  formatNextActionLabel,
+} from "@/lib/types/agreement-view"
 import { getKybStatus, startKybSession } from "@/lib/api/kyb"
 import {
   updateOpportunityStatus,
@@ -256,13 +265,7 @@ function FormSelect({
   )
 }
 
-/* ÔöÇÔöÇ Constants ÔöÇÔöÇ */
-const PLATFORM_ADDRESS = "GBXGQJWVLWOYHFLVTKWV5FGHA3LNYY2JQKM7OAVRWPLXS"
-const DISPUTE_RESOLVER = "GBXGQJWVLWOYHFLVTKWV5FGHA3LNYY2JQKM7OAVDISPUTE"
-const TRUSTLINE_USDC = {
-  symbol: "USDC",
-  address: "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5",
-}
+/* Platform / trustline / dispute resolver: lib/config (PLATFORM_ADDRESS, …) */
 
 const connectedWallets = [
   {
@@ -315,6 +318,14 @@ interface Agreement {
   role?: "buyer" | "seller"
   serviceProvider?: string
   client?: string
+  /** Shared view-model fields (FE provisional until Nest owns them). */
+  nextAction?: string
+  blockedReason?: string | null
+  balance?: string
+  approver?: string
+  releaseSigner?: string
+  disputeResolver?: string
+  released?: boolean
 }
 
 const initialAgreements: Agreement[] = []
@@ -347,6 +358,13 @@ function mapNestAgreementToUi(
   const counterparty = agreement.participants?.find(
     (p: { wallet_address: string }) => p.wallet_address !== workspaceWallet,
   )?.wallet_address
+  const role: "buyer" | "seller" =
+    workspaceWallet === agreement.created_by ? "seller" : "buyer"
+  const status = NEST_STATUS_TO_UI[agreement.status] ?? agreement.status
+  const { nextAction, blockedReason } = computeNextActionFromNestListing({
+    uiStatus: status,
+    role,
+  })
 
   return {
     id: agreement.contract_id || agreement.id,
@@ -354,7 +372,7 @@ function mapNestAgreementToUi(
     counterparty: counterparty
       ? `${counterparty.slice(0, 8)}...`
       : `${agreement.created_by.slice(0, 8)}...`,
-    status: NEST_STATUS_TO_UI[agreement.status] ?? agreement.status,
+    status,
     amount: agreement.amount,
     currency: agreement.asset || "USDC",
     type: isMulti ? "Multi Release" : "Single Release",
@@ -365,7 +383,9 @@ function mapNestAgreementToUi(
       status: m.status,
     })),
     receiver: counterparty || "",
-    role: workspaceWallet === agreement.created_by ? "seller" : "buyer",
+    role,
+    nextAction,
+    blockedReason,
   }
 }
 
@@ -722,7 +742,15 @@ function ChartTooltip({
 /* ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ
    PAGE
    ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ */
-export default function BusinessDashboardPage() {
+export default function BusinessDashboardPageWithNav() {
+  return (
+    <Suspense fallback={<ThalosLoader />}>
+      <BusinessDashboardPage />
+    </Suspense>
+  )
+}
+
+function BusinessDashboardPage() {
   const { t, theme } = useLanguage()
   const isLight = theme === "light"
   const { openWalletModal } = useStellarWallet()
@@ -735,7 +763,8 @@ export default function BusinessDashboardPage() {
   const isExternalWallet = useHasSigningWallet()
   const [loading, setLoading] = useState(false)
 
-  const [activeSection, setActiveSection] = useState("agreements")
+  const { activeSection, viewingAgreement, setActiveSection, setViewingAgreement } =
+    useDashboardNav("agreements")
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [showProfileEditor, setShowProfileEditor] = useState(false)
   const [showAiAssistant, setShowAiAssistant] = useState(false)
@@ -928,7 +957,6 @@ export default function BusinessDashboardPage() {
   const [walletsData, setWalletsData] = useState<WalletWithAgreements[]>([])
   const [agreementsLoading, setAgreementsLoading] = useState(false)
   const [agreementsError, setAgreementsError] = useState<string | null>(null)
-  const [viewingAgreement, setViewingAgreement] = useState<string | null>(null)
   const [showAgreementChat, setShowAgreementChat] = useState<string | null>(null)
   const [disputedMs, setDisputedMs] = useState<Set<string>>(new Set())
   const [showDisputeConfirm, setShowDisputeConfirm] = useState<{
@@ -958,46 +986,34 @@ export default function BusinessDashboardPage() {
     }
   }, [token])
 
-  // Helper to map a TW escrow (approver tab only) to agreement format
+  // Helper to map a TW escrow (approver tab) via the shared view-model.
   const mapEscrowToApproverAgreement = (e: any): Agreement => {
-    const milestones =
-      (e.milestones as Array<{
-        description?: string
-        amount?: number
-        approved?: boolean
-        released?: boolean
-        status?: string
-      }>) || []
-    const isMulti = (e.type as string) === "multi-release" || milestones.length > 1
-    const amount = isMulti
-      ? milestones.reduce((sum, m) => sum + (m.amount || 0), 0).toString()
-      : String(e.amount || "0")
-
-    return {
-      id: (e.contractId as string) || `escrow-${Date.now()}`,
-      title: (e.title as string) || "Escrow Agreement",
-      counterparty:
-        (e.serviceProvider as string) || (e.receiver as string)
-          ? ((e.serviceProvider as string) || (e.receiver as string)).slice(0, 8) + "..."
-          : "-",
-      status: (e.status as string) || "pending",
-      amount,
-      currency: "USDC",
-      type: isMulti ? "Multi Release" : "Single Release",
-      date: (e.createdAt as string) || new Date().toISOString(),
-      milestones: milestones.map((m) => ({
-        description: m.description || "Milestone",
-        amount: String(m.amount || 0),
-        status: m.released
-          ? "released"
-          : m.approved
-            ? "approved"
-            : ("pending" as "pending" | "approved" | "released"),
-      })),
-      receiver: (e.receiver as string) || "-",
-      serviceProvider: (e.serviceProvider as string) || "-",
-      role: currentWorkspaceWallet === e.serviceProvider ? "seller" : "buyer",
-    }
+    const view = mapTwEscrowToAgreementView(
+      {
+        contractId: e.contractId,
+        type: e.type,
+        title: e.title,
+        amount: e.amount,
+        balance: e.balance,
+        flags: e.flags,
+        roles: {
+          approver: e.roles?.approver ?? e.approver,
+          serviceProvider: e.roles?.serviceProvider ?? e.serviceProvider,
+          releaseSigner: e.roles?.releaseSigner ?? e.releaseSigner,
+          disputeResolver: e.roles?.disputeResolver ?? e.disputeResolver,
+          receiver: e.roles?.receiver ?? e.receiver,
+          platformAddress: e.roles?.platformAddress,
+        },
+        milestones: e.milestones,
+        createdAt: e.createdAt?._seconds
+          ? e.createdAt
+          : e.createdAt
+            ? { _seconds: Math.floor(new Date(e.createdAt).getTime() / 1000) }
+            : undefined,
+      },
+      currentWorkspaceWallet,
+    )
+    return agreementViewToLegacyListItem(view) as Agreement
   }
 
   // Fetch agreements from Nest (source of truth) for the current workspace wallet
@@ -2272,6 +2288,18 @@ export default function BusinessDashboardPage() {
                         </svg>
                         Back to Agreements
                       </button>
+
+                      {agr.nextAction != null && (
+                        <div className="mb-4 rounded-xl border border-[#3b82f6]/25 bg-[#3b82f6]/5 px-4 py-3 text-sm">
+                          <span className="text-[#3b82f6] font-medium">Next: </span>
+                          <span className="text-white/80">
+                            {formatNextActionLabel(agr.nextAction)}
+                          </span>
+                          {agr.blockedReason ? (
+                            <p className="mt-1 text-white/45">{agr.blockedReason}</p>
+                          ) : null}
+                        </div>
+                      )}
 
                       <div className="mb-6 rounded-2xl border border-white/10 bg-[#0c1220] p-6 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)]">
                         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">

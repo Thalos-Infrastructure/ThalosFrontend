@@ -71,11 +71,6 @@ export const EMAIL_REPLY_TO = process.env.EMAIL_REPLY_TO || "support@thalosplatf
 // Stellar Explorer — la base por red vive en STELLAR_NETWORKS (más abajo); esta
 // variable solo permite apuntar a otro explorer distinto del predeterminado.
 
-export const TRUSTLINE_USDC = {
-  symbol: "USDC",
-  address: "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5",
-}
-
 // Stellar Network Configuration
 //
 // Fuente única de verdad para la red: todo lo que depende de ella sale de esta tabla
@@ -86,11 +81,14 @@ const STELLAR_NETWORKS = {
     passphrase: "Public Global Stellar Network ; September 2015",
     horizonUrl: "https://horizon.stellar.org",
     explorerBaseUrl: "https://stellar.expert/explorer/public/contract/",
+    /** Circle USDC issuer (G…) — never the escrow contract C-address. */
+    usdcIssuer: "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN",
   },
   TESTNET: {
     passphrase: "Test SDF Network ; September 2015",
     horizonUrl: "https://horizon-testnet.stellar.org",
     explorerBaseUrl: "https://stellar.expert/explorer/testnet/contract/",
+    usdcIssuer: "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5",
   },
 } as const
 
@@ -103,6 +101,23 @@ export const STELLAR_NETWORK: StellarNetwork =
   process.env.NEXT_PUBLIC_STELLAR_NETWORK === "MAINNET" ? "MAINNET" : "TESTNET"
 
 const stellarNetworkConfig = STELLAR_NETWORKS[STELLAR_NETWORK]
+
+/**
+ * Thalos platform fee recipient injected into TW V1 roles.platformAddress.
+ * Override with NEXT_PUBLIC_PLATFORM_ADDRESS. Canonical (Manu / ops): GBMJT…
+ */
+export const PLATFORM_ADDRESS =
+  process.env.NEXT_PUBLIC_PLATFORM_ADDRESS ||
+  "GBMJTAVJFAKMKLXYXGXACBFGIFS62A7DT46PFHQ3W4RG7CG4HVESSNRY"
+
+export const DISPUTE_RESOLVER =
+  process.env.NEXT_PUBLIC_DISPUTE_RESOLVER ||
+  "GB6MP3L6UGIDY6O6MXNLSKHLXT2T2TCMPZIZGUTOGYKOLHW7EORWMFCK"
+
+export const TRUSTLINE_USDC = {
+  symbol: "USDC",
+  address: process.env.NEXT_PUBLIC_TRUSTLINE_USDC_ADDRESS || stellarNetworkConfig.usdcIssuer,
+}
 
 export const STELLAR_NETWORK_PASSPHRASE = stellarNetworkConfig.passphrase
 export const HORIZON_URL = stellarNetworkConfig.horizonUrl
