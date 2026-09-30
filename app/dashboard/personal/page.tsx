@@ -285,6 +285,10 @@ interface Agreement {
   /** On-chain / Nest payee — must match TW serviceProvider to submit evidence. */
   serviceProvider?: string
   role?: "buyer" | "seller"
+  /** Wallet that created the agreement in Thalos (Nest `created_by`). */
+  createdBy?: string
+  /** Wallet expected to fund: TW approver (Thalos rule; TW itself accepts any funder). */
+  payer?: string
   /** Shared view-model fields (FE provisional until Nest owns them). */
   nextAction?: string
   blockedReason?: string | null
@@ -365,6 +369,11 @@ function mapNestAgreementToUi(
     role:
       live.role ??
       roleFromNestParticipants(agreement.participants, agreement.created_by, currentWallet),
+    createdBy: agreement.created_by,
+    payer:
+      live.approver ||
+      agreement.participants?.find((p) => p.role === "payer" || p.role === "approver")
+        ?.wallet_address,
     nextAction: live.nextAction,
     blockedReason: live.blockedReason,
     balance: live.balance,
@@ -1169,13 +1178,13 @@ function PersonalDashboardPage() {
   const [walletFilter, setWalletFilter] = useState<string | null>(null)
   const ITEMS_PER_PAGE = 10
 
-  // Reconciled buyer/seller per agreement, keyed by both contract id and Nest id.
-  const roleByAgreementId = useMemo(() => {
-    const map = new Map<string, "buyer" | "seller">()
+  // Reconciled agreements keyed by both contract id and Nest id, so wallet-grouped
+  // rows (which may carry either id) open the same detail and share the same role.
+  const agreementByAnyId = useMemo(() => {
+    const map = new Map<string, Agreement>()
     for (const a of agreements) {
-      if (!a.role) continue
-      map.set(a.id, a.role)
-      if (a.nestId) map.set(a.nestId, a.role)
+      map.set(a.id, a)
+      if (a.nestId) map.set(a.nestId, a)
     }
     return map
   }, [agreements])
@@ -1204,32 +1213,20 @@ function PersonalDashboardPage() {
     }> = []
 
     if (walletsData && walletsData.length > 0) {
-      if (!walletFilter || walletFilter === "all" || walletFilter === "All") {
-        // Flatten all agreements arrays from walletsData into one combined array
-        list = walletsData.flatMap((w) =>
-          w.agreements.map((a) => ({
-            id: a.id,
-            title: a.title,
-            status: a.status,
-            amount: a.amount,
-            currency: "USDC",
-            type: "Single Release" as const,
-            counterparty: "-",
-            date: a.created_at
-              ? a.created_at.split("T")[0]
-              : new Date().toISOString().split("T")[0],
-            updatedAt: a.created_at,
-            role: (roleByAgreementId.get(a.id) ?? (a.role === "seller" ? "seller" : "buyer")) as "buyer" | "seller",
-            receiver: "-",
-            serviceProvider: "-",
-            milestones: [{ status: a.status }],
-          })),
-        )
-      } else {
-        // Specific wallet selected
-        const targetWallet = walletsData.find((w) => w.wallet_address === walletFilter)
-        list = targetWallet
-          ? targetWallet.agreements.map((a) => ({
+      const selectedWallets =
+        !walletFilter || walletFilter === "all" || walletFilter === "All"
+          ? walletsData
+          : walletsData.filter((w) => w.wallet_address === walletFilter)
+      const seen = new Set<string>()
+      list = selectedWallets.flatMap((w) =>
+        w.agreements.flatMap((a): typeof list => {
+          const full = agreementByAnyId.get(a.id)
+          const key = full?.id ?? a.id
+          if (seen.has(key)) return []
+          seen.add(key)
+          if (full) return [{ ...full, updatedAt: full.date, currency: full.currency || "USDC" }]
+          return [
+            {
               id: a.id,
               title: a.title,
               status: a.status,
@@ -1241,13 +1238,14 @@ function PersonalDashboardPage() {
                 ? a.created_at.split("T")[0]
                 : new Date().toISOString().split("T")[0],
               updatedAt: a.created_at,
-              role: (roleByAgreementId.get(a.id) ?? (a.role === "seller" ? "seller" : "buyer")) as "buyer" | "seller",
+              role: a.role === "seller" ? ("seller" as const) : a.role === "buyer" ? ("buyer" as const) : undefined,
               receiver: "-",
               serviceProvider: "-",
               milestones: [{ status: a.status }],
-            }))
-          : []
-      }
+            },
+          ]
+        }),
+      )
     } else {
       // Fallback when walletsData is not yet loaded / available
       let filtered = [...agreements]
@@ -1301,7 +1299,7 @@ function PersonalDashboardPage() {
     })
 
     return list
-  }, [walletsData, walletFilter, agreements, roleByAgreementId, searchQuery, statusFilter, sortBy])
+  }, [walletsData, walletFilter, agreements, agreementByAnyId, searchQuery, statusFilter, sortBy])
 
   // Approver escrows already listed from Nest would otherwise appear twice.
   const uniqueApproverEscrows = useMemo(() => {
@@ -1890,7 +1888,7 @@ function PersonalDashboardPage() {
     </button>
   </div>
   <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
-              {sidebarItems.filter((item) => item.id !== "agreements").map((item) => {
+              {sidebarItems.map((item) => {
                 const isActive = activeSection === item.id
                 return (
                   <button
@@ -2790,7 +2788,7 @@ function PersonalDashboardPage() {
           {activeSection === "agreements" &&
             viewingAgreement &&
             (() => {
-              const agr = agreements.find((a) => a.id === viewingAgreement) ?? approverEscrows.find((a) => a.id === viewingAgreement)
+              const agr = agreementByAnyId.get(viewingAgreement) ?? approverEscrows.find((a) => a.id === viewingAgreement)
               if (!agr) return null
               const allReleased = agr.milestones.every((m) => m.status === "released")
               const allApproved = agr.milestones.every(

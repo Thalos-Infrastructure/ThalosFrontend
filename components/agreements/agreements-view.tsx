@@ -30,6 +30,10 @@ interface Agreement {
   role?: "buyer" | "seller" // User's role in this agreement
   serviceProvider?: string
   client?: string
+  /** Wallet that created the agreement in Thalos. */
+  createdBy?: string
+  /** Wallet expected to fund (TW approver per Thalos rule). */
+  payer?: string
 }
 
 interface AgreementsViewProps {
@@ -383,6 +387,7 @@ export function AgreementsView({
                           key={agreement.id}
                           agreement={agreement}
                           onClick={() => onAgreementClick(agreement.id)}
+                          currentUserWallet={currentUserWallet}
                           onChat={onOpenChat ? () => onOpenChat(agreement.id) : undefined}
                         />
                       ))}
@@ -432,6 +437,7 @@ export function AgreementsView({
                   key={agreement.id}
                   agreement={agreement}
                   onClick={() => onAgreementClick(agreement.id)}
+                  currentUserWallet={currentUserWallet}
                   onChat={onOpenChat ? () => onOpenChat(agreement.id) : undefined}
                 />
               ))
@@ -477,10 +483,12 @@ function AgreementCard({
   agreement,
   onClick,
   onChat,
+  currentUserWallet,
 }: {
   agreement: Agreement
   onClick: () => void
   onChat?: () => void
+  currentUserWallet?: string
 }) {
   const statusColors: Record<string, { bg: string; text: string }> = {
     pending: { bg: "bg-amber-400/10", text: "text-amber-400" },
@@ -496,7 +504,14 @@ function AgreementCard({
     milestone.status === "released" || milestone.status === "completed",
   ).length ?? 0
   const milestoneCount = agreement.milestones?.length ?? 0
-  const perspective = agreement.role === "seller" ? "I'm Getting Paid" : "I'm Paying"
+  const perspective =
+    agreement.role === "seller" ? "I'm Getting Paid" : agreement.role === "buyer" ? "I'm Paying" : null
+  const me = currentUserWallet?.toUpperCase()
+  const partyLabel = (wallet?: string) =>
+    !wallet ? null : me && wallet.toUpperCase() === me ? "You" : `${wallet.slice(0, 4)}...${wallet.slice(-4)}`
+  const creatorLabel = partyLabel(agreement.createdBy)
+  const funderLabel =
+    partyLabel(agreement.payer) ?? (agreement.role === "buyer" ? "You" : agreement.role === "seller" ? "Counterparty" : null)
   const nextAction = agreement.role === "seller"
     ? agreement.status === "funded" ? "Submit milestone" : "Review agreement"
     : agreement.status === "pending" ? "Fund agreement" : "Review milestone"
@@ -510,9 +525,25 @@ function AgreementCard({
         <div className="min-w-0 flex-1">
   <div className="flex items-center gap-2">
   <p className="text-sm font-medium text-white truncate">{agreement.title}</p>
-  <span className="shrink-0 text-[9px] font-semibold uppercase tracking-wider text-[#f0b400]">{perspective}</span>
+  {perspective && (
+    <span
+      className={cn(
+        "shrink-0 rounded px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider",
+        agreement.role === "buyer" ? "bg-sky-400/10 text-sky-400" : "bg-emerald-400/10 text-emerald-400",
+      )}
+    >
+      {perspective}
+    </span>
+  )}
   </div>
   <p className="text-xs text-white/50 truncate">{agreement.counterparty}</p>
+  {(creatorLabel || funderLabel) && (
+    <p className="text-[10px] text-white/40 truncate">
+      {creatorLabel && <>Created by <span className="text-white/70">{creatorLabel}</span></>}
+      {creatorLabel && funderLabel && " · "}
+      {funderLabel && <>Funded by <span className="text-white/70">{funderLabel}</span></>}
+    </p>
+  )}
   {milestoneCount > 0 && (
     <p className="text-[10px] text-white/40">{completedMilestones} / {milestoneCount} milestones completed</p>
   )}

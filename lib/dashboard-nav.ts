@@ -26,7 +26,11 @@ export function useDashboardNav(defaultSection = "home"): DashboardNav {
 
   const replaceParams = useCallback(
     (mutate: (params: URLSearchParams) => void) => {
-      const params = new URLSearchParams(searchParams.toString())
+      // Read the live URL: back-to-back calls in one handler (open agreement, then set
+      // section) would otherwise start from the same stale snapshot and drop agreementId.
+      const params = new URLSearchParams(
+        typeof window !== "undefined" ? window.location.search : searchParams.toString(),
+      )
       mutate(params)
       const qs = params.toString()
       router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
