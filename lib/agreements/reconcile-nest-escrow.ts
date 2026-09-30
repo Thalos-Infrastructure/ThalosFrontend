@@ -10,6 +10,8 @@ import type { MilestoneStatus } from "@/lib/types/status"
 
 export type EscrowIndex = {
   byContractId: Map<string, TwEscrowRaw>
+  /** Raw escrows where the wallet is approver — reused by the approver tab. */
+  approverEscrows: TwEscrowRaw[]
   /** False when every TW lookup failed — we cannot verify on-chain state. */
   available: boolean
 }
@@ -19,28 +21,56 @@ const LOOKUP_ROLES: EscrowRole[] = ["approver", "service_provider", "receiver"]
 
 /** Minutes after creation during which a missing escrow is treated as "indexing". */
 const CONFIRMING_WINDOW_MS = 30 * 60 * 1000
+/** Share one in-flight/recent TW lookup per wallet across dashboards and polls. */
+const INDEX_CACHE_TTL_MS = 5000
+const indexCache = new Map<string, { at: number; promise: Promise<EscrowIndex> }>()
 
-export async function fetchEscrowIndex(
-  walletAddress: string,
-  token?: string,
-): Promise<EscrowIndex> {
+export function fetchEscrowIndex(walletAddress: string, token?: string): Promise<EscrowIndex> {
+  const key = `${walletAddress}::${token ?? ""}`
+  const cached = indexCache.get(key)
+  if (cached && Date.now() - cached.at < INDEX_CACHE_TTL_MS) return cached.promise
+  const promise = loadEscrowIndex(walletAddress, token)
+  indexCache.set(key, { at: Date.now(), promise })
+  return promise
+}
+
+async function loadEscrowIndex(walletAddress: string, token?: string): Promise<EscrowIndex> {
   const { getEscrowsByRole } = await import("@/services/escrowMigration")
   const results = await Promise.allSettled(
     LOOKUP_ROLES.map((role) => getEscrowsByRole({ role, address: walletAddress }, token)),
   )
 
   const byContractId = new Map<string, TwEscrowRaw>()
+  let approverEscrows: TwEscrowRaw[] = []
   let available = false
-  for (const result of results) {
-    if (result.status !== "fulfilled" || !result.value.success) continue
+  results.forEach((result, i) => {
+    if (result.status !== "fulfilled" || !result.value.success) return
     available = true
     const data = result.value.data
-    if (!Array.isArray(data)) continue
+    if (!Array.isArray(data)) return
+    if (LOOKUP_ROLES[i] === "approver") approverEscrows = data as TwEscrowRaw[]
     for (const escrow of data as TwEscrowRaw[]) {
       if (escrow?.contractId) byContractId.set(escrow.contractId, escrow)
     }
-  }
-  return { byContractId, available }
+  })
+  return { byContractId, approverEscrows, available }
+}
+
+/** Buyer/seller from Nest participants when the escrow is not available yet. */
+export function roleFromNestParticipants(
+  participants: Array<{ wallet_address: string; role: string }> | undefined,
+  createdBy: string | undefined,
+  walletAddress: string | null,
+): "buyer" | "seller" | undefined {
+  if (!walletAddress) return undefined
+  const me = walletAddress.toUpperCase()
+  const mine = (participants ?? [])
+    .filter((p) => p.wallet_address?.toUpperCase() === me)
+    .map((p) => p.role)
+  if (mine.includes("payee")) return "seller"
+  if (mine.includes("payer") || mine.includes("approver")) return "buyer"
+  if (createdBy?.toUpperCase() === me) return "buyer"
+  return undefined
 }
 
 const VIEW_STATUS_TO_UI: Record<string, string> = {
@@ -89,12 +119,7 @@ export function reconcileWithEscrow(input: {
       status,
       nextAction: view.nextAction,
       blockedReason: view.blockedReason,
-      role:
-        view.perspective === "approver"
-          ? "buyer"
-          : view.perspective === "provider"
-            ? "seller"
-            : undefined,
+      role: escrowRoleFor(view.participants, view.perspective, walletAddress),
       serviceProvider: view.participants.serviceProvider,
       approver: view.participants.approver,
       releaseSigner: view.participants.releaseSigner,
@@ -137,12 +162,34 @@ export function reconcileWithEscrow(input: {
   }
 }
 
-/** Poll faster while something is waiting on the network. */
+/**
+ * Receiving side wins: an agreement is "I'm getting paid" when the wallet is the
+ * service provider or receiver and not the payer (approver/release signer).
+ */
+function escrowRoleFor(
+  participants: { approver?: string; serviceProvider?: string; receiver?: string; releaseSigner?: string },
+  perspective: string,
+  walletAddress: string | null,
+): "buyer" | "seller" | undefined {
+  const me = walletAddress?.toUpperCase()
+  if (me) {
+    const is = (addr?: string) => Boolean(addr) && addr!.toUpperCase() === me
+    const pays = is(participants.approver) || is(participants.releaseSigner)
+    const gets = is(participants.serviceProvider) || is(participants.receiver)
+    if (gets && !pays) return "seller"
+    if (pays && !gets) return "buyer"
+  }
+  if (perspective === "approver" || perspective === "releaseSigner") return "buyer"
+  if (perspective === "provider") return "seller"
+  return undefined
+}
+
+/** Poll fast only while an escrow is being indexed; otherwise refresh lazily. */
 export function agreementsRefreshInterval(
   rows: Array<{ status: string; nextAction?: string }>,
 ): number {
-  const waiting = rows.some(
-    (r) => r.status === "confirming" || r.status === "pending" || r.nextAction === "wait_confirmation",
+  const confirming = rows.some(
+    (r) => r.status === "confirming" || r.nextAction === "wait_confirmation",
   )
-  return waiting ? 8000 : 30000
+  return confirming ? 10000 : 60000
 }

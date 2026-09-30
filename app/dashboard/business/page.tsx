@@ -340,6 +340,7 @@ import {
   agreementsRefreshInterval,
   fetchEscrowIndex,
   reconcileWithEscrow,
+  roleFromNestParticipants,
   type EscrowIndex,
 } from "@/lib/agreements/reconcile-nest-escrow"
 
@@ -388,7 +389,9 @@ function mapNestAgreementToUi(
       status: live.milestoneStatuses?.[idx] ?? m.status,
     })),
     receiver: live.receiver || counterparty || "",
-    role,
+    role:
+      role ??
+      roleFromNestParticipants(agreement.participants, agreement.created_by, workspaceWallet),
     serviceProvider: live.serviceProvider,
     nextAction,
     blockedReason,
@@ -1048,19 +1051,32 @@ function BusinessDashboardPage() {
         setAgreementsLoading(true)
         setAgreementsError(null)
       }
-      const [{ agreements: nestAgreements, error }, escrowIndex] = await Promise.all([
-        getAgreementsByWallet(workspaceWallet, token ?? undefined),
-        fetchEscrowIndex(workspaceWallet, token ?? undefined),
-      ])
+      // Show Nest rows as soon as they arrive; reconcile once TW answers.
+      const indexPromise = fetchEscrowIndex(workspaceWallet, token ?? undefined)
+      const { agreements: nestAgreements, error } = await getAgreementsByWallet(
+        workspaceWallet,
+        token ?? undefined,
+      )
       if (error) {
         if (showSpinner) setAgreementsError(error)
         setAgreementsLoading(false)
         return
       }
+      if (showSpinner) {
+        setAgreements(nestAgreements.map((a) => mapNestAgreementToUi(a, workspaceWallet, null)))
+        setAgreementsLoading(false)
+      }
+      const escrowIndex = await indexPromise
       setAgreements(
         nestAgreements.map((a) => mapNestAgreementToUi(a, workspaceWallet, escrowIndex)),
       )
       setAgreementsLoading(false)
+      if (escrowIndex.available) {
+        setApproverEscrows(
+          escrowIndex.approverEscrows.map((e) => mapEscrowToApproverAgreement(e as any)),
+        )
+      }
+      setApproverLoading(false)
     },
     [currentWorkspaceWallet, token],
   )
@@ -1084,29 +1100,7 @@ function BusinessDashboardPage() {
     }
   }, [currentWorkspaceWallet, loadAgreements, refreshDelay])
 
-  // Fetch approver escrows (for approver tab)
-  useEffect(() => {
-    if (!currentWorkspaceWallet) return
-    const workspaceWallet: string = currentWorkspaceWallet
-    async function fetchApproverEscrows() {
-      setApproverLoading(true)
-      try {
-        const { getEscrowsByRole } = await import("@/services/escrowMigration")
-        const res = await getEscrowsByRole(
-          { role: "approver", address: workspaceWallet },
-          token ?? undefined,
-        )
-        if (res.success && Array.isArray(res.data)) {
-          setApproverEscrows(res.data.map((e: any) => mapEscrowToApproverAgreement(e)))
-        }
-      } catch (err) {
-        console.error("Error fetching approver escrows:", err)
-        setApproverEscrows([])
-      }
-      setApproverLoading(false)
-    }
-    fetchApproverEscrows()
-  }, [currentWorkspaceWallet, token])
+  // Approver escrows come from the same TW index loaded with the agreements.
 
   // Fetch team members when activeSection is 'team'
   useEffect(() => {

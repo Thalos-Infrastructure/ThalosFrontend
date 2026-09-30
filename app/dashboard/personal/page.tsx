@@ -245,7 +245,7 @@ function FormSelect({
   )
 }
 
-/* ─��� Constants ── */
+/* ─����� Constants ── */
 const shortAddress = (address: string) => `${address.slice(0, 4)}...${address.slice(-4)}`
 
 /** Horizon returns "12.3456789"; the UI shows two decimals, or "—" while unknown. */
@@ -362,7 +362,9 @@ function mapNestAgreementToUi(
     receiver: live.receiver || payee || counterparty || "",
     // On-chain serviceProvider only — TW rejects evidence from any other wallet.
     serviceProvider: live.serviceProvider,
-    role: live.role,
+    role:
+      live.role ??
+      roleFromNestParticipants(agreement.participants, agreement.created_by, currentWallet),
     nextAction: live.nextAction,
     blockedReason: live.blockedReason,
     balance: live.balance,
@@ -418,6 +420,7 @@ import {
   agreementsRefreshInterval,
   fetchEscrowIndex,
   reconcileWithEscrow,
+  roleFromNestParticipants,
   type EscrowIndex,
 } from "@/lib/agreements/reconcile-nest-escrow"
 
@@ -1166,6 +1169,17 @@ function PersonalDashboardPage() {
   const [walletFilter, setWalletFilter] = useState<string | null>(null)
   const ITEMS_PER_PAGE = 10
 
+  // Reconciled buyer/seller per agreement, keyed by both contract id and Nest id.
+  const roleByAgreementId = useMemo(() => {
+    const map = new Map<string, "buyer" | "seller">()
+    for (const a of agreements) {
+      if (!a.role) continue
+      map.set(a.id, a.role)
+      if (a.nestId) map.set(a.nestId, a.role)
+    }
+    return map
+  }, [agreements])
+
   const filteredAgreements = useMemo(() => {
     // Step A: Resolve the wallet set (flatten all or filter by selectedWalletPubKey)
     let list: Array<{
@@ -1205,7 +1219,7 @@ function PersonalDashboardPage() {
               ? a.created_at.split("T")[0]
               : new Date().toISOString().split("T")[0],
             updatedAt: a.created_at,
-            role: (a.role === "seller" ? "seller" : "buyer") as "buyer" | "seller",
+            role: (roleByAgreementId.get(a.id) ?? (a.role === "seller" ? "seller" : "buyer")) as "buyer" | "seller",
             receiver: "-",
             serviceProvider: "-",
             milestones: [{ status: a.status }],
@@ -1227,7 +1241,7 @@ function PersonalDashboardPage() {
                 ? a.created_at.split("T")[0]
                 : new Date().toISOString().split("T")[0],
               updatedAt: a.created_at,
-              role: (a.role === "seller" ? "seller" : "buyer") as "buyer" | "seller",
+              role: (roleByAgreementId.get(a.id) ?? (a.role === "seller" ? "seller" : "buyer")) as "buyer" | "seller",
               receiver: "-",
               serviceProvider: "-",
               milestones: [{ status: a.status }],
@@ -1287,7 +1301,13 @@ function PersonalDashboardPage() {
     })
 
     return list
-  }, [walletsData, walletFilter, agreements, searchQuery, statusFilter, sortBy])
+  }, [walletsData, walletFilter, agreements, roleByAgreementId, searchQuery, statusFilter, sortBy])
+
+  // Approver escrows already listed from Nest would otherwise appear twice.
+  const uniqueApproverEscrows = useMemo(() => {
+    const listed = new Set(filteredAgreements.map((a) => a.id))
+    return approverEscrows.filter((e) => !listed.has(e.id))
+  }, [approverEscrows, filteredAgreements])
 
   // Pagination
   const totalPages = Math.ceil(filteredAgreements.length / ITEMS_PER_PAGE)
@@ -1323,71 +1343,63 @@ function PersonalDashboardPage() {
 
     async function fetchAgreements() {
       setAgreementsLoading(true)
+      setApproverLoading(true)
       setAgreementsError(null)
-      const [{ agreements: nestAgreements, error }, escrowIndex] = await Promise.all([
-        getAgreementsByWallet(activeAddress, token ?? undefined),
-        fetchEscrowIndex(activeAddress, token ?? undefined),
-      ])
+      // TW lookups are slower than Nest: show Nest rows first, reconcile when TW answers.
+      const indexPromise = fetchEscrowIndex(activeAddress, token ?? undefined)
+      const { agreements: nestAgreements, error } = await getAgreementsByWallet(
+        activeAddress,
+        token ?? undefined,
+      )
       if (error) {
         setAgreementsError(error)
-        setAgreementsLoading(false)
-        return
+      } else {
+        setAgreements(nestAgreements.map((a) => mapNestAgreementToUi(a, activeAddress, null)))
       }
-      const mapped = nestAgreements.map((a) =>
-        mapNestAgreementToUi(a, activeAddress, escrowIndex),
-      )
-      setAgreements(mapped)
       setAgreementsLoading(false)
+
+      const escrowIndex = await indexPromise
+      if (!error) {
+        setAgreements(
+          nestAgreements.map((a) => mapNestAgreementToUi(a, activeAddress, escrowIndex)),
+        )
+      }
+      setApproverEscrows(
+        (escrowIndex.approverEscrows as TrustlessEscrow[]).map((e) =>
+          mapEscrowToApproverAgreement(e, activeAddress),
+        ),
+      )
+      setApproverLoading(false)
     }
 
     fetchAgreements()
-
-    // Fetch escrows where user is approver (for approver tab)
-    async function fetchApproverEscrows() {
-      setApproverLoading(true)
-      // MIGRATION: Using escrowMigration wrapper
-      const { getEscrowsByRole } = await import("@/services/escrowMigration")
-      const res = await getEscrowsByRole(
-        { role: "approver", address: activeAddress },
-        token ?? undefined,
-      )
-      if (res.success && Array.isArray(res.data)) {
-        setApproverEscrows(
-          (res.data as TrustlessEscrow[]).map((e) =>
-            mapEscrowToApproverAgreement(e, activeAddress),
-          ),
-        )
-      } else {
-        setApproverEscrows([])
-      }
-      setApproverLoading(false)
-    }
-    fetchApproverEscrows()
   }, [walletAddress, token])
 
+  const refreshInFlightRef = useRef(false)
   const refreshAgreements = useCallback(async () => {
-    if (!walletAddress) return
-    fetchedEscrowsRef.current = null
-    const [result, escrowIndex, approverResult] = await Promise.all([
-      getAgreementsByWallet(walletAddress, token ?? undefined),
-      fetchEscrowIndex(walletAddress, token ?? undefined),
-      import("@/services/escrowMigration").then(({ getEscrowsByRole }) =>
-        getEscrowsByRole({ role: "approver", address: walletAddress }, token ?? undefined),
-      ),
-    ])
-    if (!result.error && result.agreements) {
-      setAgreements(
-        result.agreements.map((agreement) =>
-          mapNestAgreementToUi(agreement, walletAddress, escrowIndex),
-        ),
-      )
-    }
-    if (approverResult.success && Array.isArray(approverResult.data)) {
-      setApproverEscrows(
-        (approverResult.data as TrustlessEscrow[]).map((e) =>
-          mapEscrowToApproverAgreement(e, walletAddress),
-        ),
-      )
+    if (!walletAddress || refreshInFlightRef.current) return
+    refreshInFlightRef.current = true
+    try {
+      const [result, escrowIndex] = await Promise.all([
+        getAgreementsByWallet(walletAddress, token ?? undefined),
+        fetchEscrowIndex(walletAddress, token ?? undefined),
+      ])
+      if (!result.error && result.agreements) {
+        setAgreements(
+          result.agreements.map((agreement) =>
+            mapNestAgreementToUi(agreement, walletAddress, escrowIndex),
+          ),
+        )
+      }
+      if (escrowIndex.available) {
+        setApproverEscrows(
+          (escrowIndex.approverEscrows as TrustlessEscrow[]).map((e) =>
+            mapEscrowToApproverAgreement(e, walletAddress),
+          ),
+        )
+      }
+    } finally {
+      refreshInFlightRef.current = false
     }
   }, [walletAddress, token])
 
@@ -2135,7 +2147,7 @@ function PersonalDashboardPage() {
                       updatedAt: a.date,
                       currency: "USDC" as const,
                     })),
-                    ...approverEscrows.map((e) => ({
+                    ...uniqueApproverEscrows.map((e) => ({
                       ...e,
                       updatedAt: e.date,
                       currency: "USDC" as const,
@@ -2743,7 +2755,7 @@ function PersonalDashboardPage() {
                       updatedAt: a.date,
                       currency: "USDC",
                     })),
-                    ...approverEscrows.map((e) => ({
+                    ...uniqueApproverEscrows.map((e) => ({
                       id: e.id,
                       title: e.title,
                       counterparty:
