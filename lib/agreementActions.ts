@@ -402,7 +402,9 @@ async function waitForFundedOnChain(
   token?: string | null,
 ): Promise<boolean> {
   if (!token) return true
-  const { syncAgreementApi, getAgreementByContractIdApi } = await import("@/lib/api/agreements")
+  const { syncAgreementApi, getAgreement, getAgreementByContractIdApi } = await import(
+    "@/lib/api/agreements"
+  )
 
   let id = agreementId
   if (!id) {
@@ -413,14 +415,13 @@ async function waitForFundedOnChain(
 
   for (let attempt = 0; attempt < CONFIRM_ATTEMPTS; attempt++) {
     if (attempt > 0) await new Promise((r) => setTimeout(r, CONFIRM_INTERVAL_MS))
-    const res = await syncAgreementApi(id, token)
-    const status = res.success ? res.data?.status : undefined
+    // A failed or partial sync is "pending confirmation", never a funding success:
+    // only the re-fetched agreement status (set by the backend after on-chain
+    // validation) decides.
+    await syncAgreementApi(id, token)
+    const fresh = await getAgreement(id, token)
+    const status = fresh.success ? fresh.data?.status : undefined
     if (status && FUNDED_STATUSES.has(String(status).toLowerCase())) return true
-    if (!res.success || !res.data) {
-      const fresh = await getAgreementByContractIdApi(contractId, token)
-      const freshStatus = fresh.success ? fresh.data?.status : undefined
-      if (freshStatus && FUNDED_STATUSES.has(String(freshStatus).toLowerCase())) return true
-    }
   }
   return false
 }

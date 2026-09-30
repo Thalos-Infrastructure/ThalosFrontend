@@ -357,27 +357,41 @@ export async function getAgreementByContractIdApi(
   }
 }
 
+export interface AgreementSyncResult {
+  synced: boolean
+  direction?: string
+  actions: string[]
+  errors: string[]
+}
+
 /**
  * POST /v1/agreements/:agreementId/sync
- * Asks the backend to reconcile the agreement against the on-chain escrow
- * (the backend validates on-chain before moving `pending` → `funded`).
+ * The backend queries Trustless Work (validateOnChain=true) and only updates
+ * the Thalos status after a valid on-chain response. It returns a SyncResult,
+ * not the agreement — callers must re-fetch GET /agreements/:id afterwards.
  */
 export async function syncAgreementApi(
   agreementId: string,
   token?: string,
-): Promise<ApiResponse<Agreement | null>> {
+): Promise<ApiResponse<AgreementSyncResult>> {
   try {
     const response = await apiRequest<unknown>(
       `/agreements/${agreementId}/sync`,
-      { method: "POST", body: JSON.stringify({ validateOnChain: true }) },
+      { method: "POST" },
       token,
     )
     if (!response.success) return { success: false, error: response.error }
     const payload = (response.data ?? {}) as Record<string, unknown>
-    if (typeof payload.error === "string" && payload.error) {
-      return { success: false, error: payload.error }
+    const result: AgreementSyncResult = {
+      synced: payload.synced === true,
+      direction: typeof payload.direction === "string" ? payload.direction : undefined,
+      actions: Array.isArray(payload.actions) ? (payload.actions as string[]) : [],
+      errors: Array.isArray(payload.errors) ? (payload.errors as string[]) : [],
     }
-    return { success: true, data: (payload.agreement as Agreement | undefined) ?? null }
+    if (typeof payload.error === "string" && payload.error) {
+      result.errors.push(payload.error)
+    }
+    return { success: true, data: result }
   } catch (e) {
     return {
       success: false,
