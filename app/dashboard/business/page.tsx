@@ -330,7 +330,7 @@ const initialAgreements: Agreement[] = []
 // Agreements listing is sourced from Nest (source of truth); TW escrow reads are
 // still used only for the approver tab, which needs live on-chain milestone state
 // to drive the approve/release actions.
-import { getAgreementsByWallet } from "@/lib/actions/agreements"
+import { getAgreementsByWallet } from "@/lib/agreements/fetch-wallet-agreements"
 import type {
   AgreementWithParticipants,
   AgreementStatus as NestAgreementStatus,

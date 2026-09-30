@@ -245,7 +245,7 @@ function FormSelect({
   )
 }
 
-/* ─������� Constants ── */
+/* ─��������� Constants ── */
 const shortAddress = (address: string) => `${address.slice(0, 4)}...${address.slice(-4)}`
 
 /** Horizon returns "12.3456789"; the UI shows two decimals, or "—" while unknown. */
@@ -304,7 +304,7 @@ const initialAgreements: Agreement[] = []
 // Agreements listing is sourced from Nest (source of truth); TW escrow reads are
 // still used only for the approver tab, which needs live on-chain milestone state
 // to drive the approve/release actions.
-import { getAgreementsByWallet } from "@/lib/actions/agreements"
+import { getAgreementsByWallet } from "@/lib/agreements/fetch-wallet-agreements"
 import type {
   AgreementWithParticipants,
   AgreementStatus as NestAgreementStatus,
@@ -1130,7 +1130,8 @@ function PersonalDashboardPage() {
   }, [userId, refreshKycStatus])
 
   useEffect(() => {
-    if (!userId || kycStatus === "verified") return
+    // Only a submitted review can change on its own; other states need user action.
+    if (!userId || kycStatus !== "in_review") return
     const interval = window.setInterval(() => {
       void refreshKycStatus(userId)
     }, 15000)
