@@ -7,7 +7,11 @@ import {
   type AgreementViewModel,
   type EscrowType,
 } from "@/lib/types/agreement-view"
-import { twMilestoneStatus } from "@/lib/types/status"
+import {
+  isMilestoneStatus,
+  twMilestoneStatus,
+  type MilestoneStatus,
+} from "@/lib/types/status"
 
 /** Loose TW escrow shape (indexer / getEscrowsByRole). */
 export type TwEscrowRaw = {
@@ -68,8 +72,11 @@ export function mapTwEscrowToAgreementView(
     const released = Boolean(m.flags?.released)
     const approved = Boolean(m.approved || m.flags?.approved)
     const mapped = m.status ? twMilestoneStatus(m.status) : null
-    const status =
-      released ? "released" : approved ? "approved" : mapped || m.status || "pending"
+    const status: MilestoneStatus = released
+      ? "released"
+      : approved
+        ? "approved"
+        : mapped || (isMilestoneStatus(m.status || "") ? (m.status as MilestoneStatus) : "pending")
     return {
       index,
       description: m.description ?? "",

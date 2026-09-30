@@ -35,7 +35,7 @@ export type AgreementViewMilestone = {
   description: string
   amount: string
   /** Milestone workflow status (pending / approved / released / …). */
-  status: MilestoneStatus | string
+  status: MilestoneStatus
   approved: boolean
   evidence?: string
   released: boolean
@@ -175,7 +175,7 @@ export function computeNextAction(input: NextActionInput): {
     (m) => !m.released && !m.approved && !m.evidence && m.status !== "approved",
   )
   const pendingApproval = milestones.find(
-    (m) => !m.released && !m.approved && Boolean(m.evidence || m.status === "completed"),
+    (m) => !m.released && !m.approved && Boolean(m.evidence),
   )
   const approvedUnreleased = milestones.filter((m) => m.approved && !m.released)
 
