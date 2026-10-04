@@ -419,6 +419,17 @@ function PollarWalletBridge({ children }: { children: React.ReactNode }) {
     }))
   }, [])
 
+  useEffect(() => {
+    console.log("[v0] pollar session state:", {
+      authStep,
+      isAuthenticated: pollar.isAuthenticated,
+      verified: pollar.verified,
+      walletAddress: address,
+      storageDegraded,
+      at: new Date().toISOString(),
+    })
+  }, [authStep, pollar.isAuthenticated, pollar.verified, address, storageDegraded])
+
   const value: PollarWalletContextValue = {
     enabled: true,
     address,
