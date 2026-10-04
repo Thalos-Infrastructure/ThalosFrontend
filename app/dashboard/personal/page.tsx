@@ -245,7 +245,7 @@ function FormSelect({
   )
 }
 
-/* ─����������� Constants ── */
+/* ─������������� Constants ── */
 const shortAddress = (address: string) => `${address.slice(0, 4)}...${address.slice(-4)}`
 
 /** Horizon returns "12.3456789"; the UI shows two decimals, or "—" while unknown. */
@@ -694,11 +694,13 @@ function BuyerFundingAction({
   const [funding, setFunding] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
+  const [pendingConfirmation, setPendingConfirmation] = useState(false)
 
   const handleFund = async () => {
     if (!walletAddress) return setError("Connect your wallet to fund this agreement.")
     setFunding(true)
     setError(null)
+    setPendingConfirmation(false)
     await fundAndSignEscrow({
       contractId: agr.id,
       amount: String(agr.amount),
@@ -709,8 +711,9 @@ function BuyerFundingAction({
       setFunding,
       setError,
       setSuccess,
+      agreementId: agr.nestId,
+      onPendingConfirmation: () => setPendingConfirmation(true),
     })
-    setSuccess(true)
     await onRefresh()
   }
 
@@ -719,6 +722,11 @@ function BuyerFundingAction({
       <p className="text-sm font-semibold text-white">This agreement is awaiting funding</p>
       <p className="mt-1 text-xs text-white/50">Fund it from your connected wallet to start the work.</p>
       {error && <p className="mt-2 text-xs text-rose-400">{error}</p>}
+      {pendingConfirmation && !success && (
+        <p role="status" className="mt-2 text-xs text-sky-300">
+          Transaction submitted. Waiting for the network to confirm the funds — this view refreshes automatically.
+        </p>
+      )}
       {success ? (
         <p className="mt-3 text-sm font-semibold text-emerald-400">Agreement funded successfully.</p>
       ) : (
@@ -2781,7 +2789,17 @@ function PersonalDashboardPage() {
               const effectiveStatus = allReleased ? "released" : agr.status
               const st = statusConfig[effectiveStatus] || statusConfig.funded
               const completedMs = agr.milestones.filter((m) => m.status === "released").length
-              const progressPct = (completedMs / agr.milestones.length) * 100
+              const fundedBalance = Number(agr.balance ?? 0) || 0
+              const isFunded =
+                fundedBalance > 0 ||
+                ["funded", "active", "in_progress", "completed", "disputed", "resolved", "released"].includes(
+                  effectiveStatus,
+                )
+              // Funding is the first step, then one per released milestone.
+              const progressUnits = 1 + agr.milestones.length
+              const progressPct = allReleased
+                ? 100
+                : (((isFunded ? 1 : 0) + completedMs) / progressUnits) * 100
 
               return (
                 <div className="mx-auto max-w-4xl">
@@ -2887,6 +2905,16 @@ function PersonalDashboardPage() {
                         {completedMs}/{agr.milestones.length} milestones
                       </span>
                     </div>
+                    <p className="mt-2 text-xs text-white/45">
+                      {isFunded ? (
+                        <>
+                          <span className="font-semibold text-emerald-400">Funded:</span>{" "}
+                          {fundedBalance.toLocaleString(undefined, { maximumFractionDigits: 2 })} / {agr.amount} USDC
+                        </>
+                      ) : (
+                        <>Awaiting funding: 0 / {agr.amount} USDC</>
+                      )}
+                    </p>
                   </div>
 
                   {/* Release strategy for multi-release */}
@@ -2945,8 +2973,20 @@ function PersonalDashboardPage() {
   t={t}
   onRefresh={refreshAgreements}
   />
-                    ) : (
+                    ) : agr.role === "seller" ? (
                       <WalletPrompt message="Connect and verify a wallet to submit evidence and manage this agreement." />
+                    ) : (
+                      <ul className="flex flex-col gap-2">
+                        {agr.milestones.map((m, idx) => (
+                          <li
+                            key={idx}
+                            className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm"
+                          >
+                            <span className="text-white/80">{m.description}</span>
+                            <span className="text-xs font-semibold capitalize text-white/50">{m.status}</span>
+                          </li>
+                        ))}
+                      </ul>
                     )}
                   </div>
 
