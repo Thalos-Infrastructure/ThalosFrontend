@@ -75,9 +75,22 @@ export function ApproverAgreementDetail({ agr, walletAddress, onRefresh }: Appro
   const allReleased = agr.released
   const someApproved = localMilestones.some((m) => m.approved === true || m.status === "approved")
   const completedMs = localMilestones.filter((m) => m.status === "released").length
-  const progressPct = localMilestones.length > 0 ? (completedMs / localMilestones.length) * 100 : 0
   const confirmedStatus = agr.status.toLowerCase()
   const isFunded = ["funded", "active", "in_progress", "completed", "disputed", "resolved"].includes(confirmedStatus)
+  const totalAmount =
+    agr.milestones.length === 1
+      ? Number(agr.amount) || 0
+      : agr.milestones.reduce((acc, ms) => acc + (Number(ms.amount) || 0), 0)
+  const fundedAmount = Number(agr.balance ?? 0) || 0
+  const approvedPendingMs = localMilestones.filter(
+    (m) => m.status !== "released" && (m.approved === true || m.status === "approved"),
+  ).length
+  // Funding counts as the first step, then each milestone (approved = half, released = full).
+  const progressUnits = 1 + localMilestones.length
+  const progressDone = allReleased
+    ? progressUnits
+    : (isFunded ? 1 : 0) + completedMs + approvedPendingMs * 0.5
+  const progressPct = Math.min(100, (progressDone / progressUnits) * 100)
   const disableFund = funding || isFunded
   const { t } = useLanguage()
 
@@ -297,6 +310,19 @@ export function ApproverAgreementDetail({ agr, walletAddress, onRefresh }: Appro
           </div>
           <span className="text-xs text-white/30">
             {completedMs}/{localMilestones.length}
+          </span>
+        </div>
+      )}
+      {localMilestones.length >= 1 && (
+        <div className="mt-2 flex flex-wrap items-center gap-x-2 text-xs">
+          <span className="text-white/40">Fondeado:</span>
+          <span className={cn("font-semibold", isFunded ? "text-emerald-400" : "text-white/60")}>
+            {"$"}
+            {fundedAmount.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+          </span>
+          <span className="text-white/30">
+            {"/ $"}
+            {totalAmount.toLocaleString(undefined, { maximumFractionDigits: 2 })} USDC
           </span>
         </div>
       )}
