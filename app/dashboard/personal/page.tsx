@@ -245,7 +245,7 @@ function FormSelect({
   )
 }
 
-/* ─��������� Constants ── */
+/* ─����������� Constants ── */
 const shortAddress = (address: string) => `${address.slice(0, 4)}...${address.slice(-4)}`
 
 /** Horizon returns "12.3456789"; the UI shows two decimals, or "—" while unknown. */
@@ -3737,7 +3737,8 @@ function PersonalDashboardPage() {
                                         agreementId ||
                                         `AGR-${Date.now().toString(36).toUpperCase()}`,
                                       title: payload.title,
-                                      status: "funded",
+                                      // Created is not funded: funding is a separate tx.
+                                      status: "pending",
                                       type:
                                         payload.serviceType === "single-release"
                                           ? "Single Release"
@@ -3760,6 +3761,12 @@ function PersonalDashboardPage() {
                                       role: "buyer",
                                     }
                                     setAgreements((prev) => [newAgr, ...prev])
+                                    void import("@/lib/agreements/reconcile-nest-escrow").then(
+                                      ({ invalidateEscrowIndex }) => {
+                                        invalidateEscrowIndex()
+                                        void refreshAgreements()
+                                      },
+                                    )
                                   },
                                 })
                               }}

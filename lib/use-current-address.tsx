@@ -64,7 +64,7 @@ export type SigningWalletState = "ready" | "verifying" | "expired" | "none"
 
 export function useSigningWalletState(): SigningWalletState {
   const { user, token, hydrated } = useAuthStore()
-  const { hasSession, sessionVerified } = usePollarWallet()
+  const { hasSession, sessionVerified, isConnecting } = usePollarWallet()
 
   // AuthProvider starts with user = null and only fills it once /api/auth/me
   // answers. Reporting "none" in that window is what showed "Connect Wallet" on
@@ -73,6 +73,6 @@ export function useSigningWalletState(): SigningWalletState {
   if (!token || !user?.wallet?.publicKey) return "none"
   if (user.wallet.provider === "accesly") return "ready"
   if (hasSession && sessionVerified) return "ready"
-  if (hasSession) return "verifying"
+  if (hasSession || isConnecting) return "verifying"
   return "expired"
 }

@@ -53,7 +53,16 @@ export function ApproverAgreementDetail({ agr, walletAddress, onRefresh }: Appro
   // (Accesly #109) — all routed through the unified signer (#110).
   const isExternalWallet = useHasSigningWallet()
   const walletState = useSigningWalletState()
-  const { resume } = usePollarWallet()
+  const { resume, clearError } = usePollarWallet()
+  // Pollar drops `isAuthenticated` when its wallet briefly reads null (e.g. right
+  // after signing the create tx), while the Thalos session is still valid. Try one
+  // silent resume before showing "wallet disconnected".
+  const autoResumeTriedRef = React.useRef(false)
+  React.useEffect(() => {
+    if (walletState !== "expired" || autoResumeTriedRef.current) return
+    autoResumeTriedRef.current = true
+    void resume().finally(() => clearError())
+  }, [walletState, resume, clearError])
   const [fundPending, setFundPending] = React.useState(false)
   const [showDetail, setShowDetail] = React.useState(false)
   const [loadingMs, setLoadingMs] = React.useState<number | null>(null)
