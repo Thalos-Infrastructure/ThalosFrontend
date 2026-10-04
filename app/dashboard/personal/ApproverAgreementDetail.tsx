@@ -66,6 +66,7 @@ export function ApproverAgreementDetail({ agr, walletAddress, onRefresh }: Appro
   const [disputedMs, setDisputedMs] = React.useState<Set<number>>(new Set())
   const [showDisputeConfirm, setShowDisputeConfirm] = React.useState<number | null>(null)
   const [txStatus, setTxStatus] = React.useState<TxStatus | null>(null)
+  const [chainFundedBalance, setChainFundedBalance] = React.useState(0)
 
   React.useEffect(() => {
     setLocalMilestones(agr.milestones)
@@ -76,12 +77,14 @@ export function ApproverAgreementDetail({ agr, walletAddress, onRefresh }: Appro
   const someApproved = localMilestones.some((m) => m.approved === true || m.status === "approved")
   const completedMs = localMilestones.filter((m) => m.status === "released").length
   const confirmedStatus = agr.status.toLowerCase()
-  const isFunded = ["funded", "active", "in_progress", "completed", "disputed", "resolved"].includes(confirmedStatus)
+  const isFunded =
+    ["funded", "active", "in_progress", "completed", "disputed", "resolved"].includes(confirmedStatus) ||
+    chainFundedBalance > 0
   const totalAmount =
     agr.milestones.length === 1
       ? Number(agr.amount) || 0
       : agr.milestones.reduce((acc, ms) => acc + (Number(ms.amount) || 0), 0)
-  const fundedAmount = Number(agr.balance ?? 0) || 0
+  const fundedAmount = Math.max(Number(agr.balance ?? 0) || 0, chainFundedBalance)
   const approvedPendingMs = localMilestones.filter(
     (m) => m.status !== "released" && (m.approved === true || m.status === "approved"),
   ).length
@@ -413,6 +416,7 @@ export function ApproverAgreementDetail({ agr, walletAddress, onRefresh }: Appro
                   }
                 },
                 onStatus: setTxStatus,
+                onFunded: setChainFundedBalance,
                 onPendingConfirmation: () => {
                   setFundPending(true)
                   setTxStatus(null)

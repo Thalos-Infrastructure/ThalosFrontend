@@ -34,6 +34,11 @@ export function fetchEscrowIndex(walletAddress: string, token?: string): Promise
   return promise
 }
 
+/** Drop cached lookups so the next refresh reads post-transaction chain state. */
+export function invalidateEscrowIndex() {
+  indexCache.clear()
+}
+
 export async function loadEscrowIndex(walletAddress: string, token?: string): Promise<EscrowIndex> {
   const { getEscrowsByRole } = await import("@/services/escrowMigration")
   const results = await Promise.allSettled(

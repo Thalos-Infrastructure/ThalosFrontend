@@ -54,6 +54,8 @@ export interface FundAndSignEscrowParams {
   expectedFunder?: string
   /** Submitted, but the chain did not confirm within the polling window. */
   onPendingConfirmation?: () => void
+  /** On-chain confirmed escrow balance, so the UI can update before the list refetch lands. */
+  onFunded?: (balance: number) => void
 }
 
 export interface ChangeMilestoneStatusParams {
@@ -337,6 +339,7 @@ export async function fundAndSignEscrow({
   agreementId,
   expectedFunder,
   onPendingConfirmation,
+  onFunded,
 }: FundAndSignEscrowParams) {
   setFunding(true)
   setError(null)
@@ -374,10 +377,13 @@ export async function fundAndSignEscrow({
     // Submitted is not funded: only an on-chain-validated sync may flip the
     // status, so wait for it instead of reporting success on submit.
     const confirmed = await waitForFundedOnChain(contractId, agreementId, token, walletAddress)
-    if (!confirmed) {
+    if (!confirmed.funded) {
       onPendingConfirmation?.()
       return
     }
+    const { invalidateEscrowIndex } = await import("@/lib/agreements/reconcile-nest-escrow")
+    invalidateEscrowIndex()
+    onFunded?.(confirmed.balance ?? Number(amount))
     onStatus?.("confirmed")
     setSuccess(true)
   } catch (e: any) {
@@ -389,8 +395,10 @@ export async function fundAndSignEscrow({
 }
 
 const FUNDED_STATUSES = new Set(["funded", "active", "in_progress", "completed", "disputed", "resolved"])
-const CONFIRM_ATTEMPTS = 6
-const CONFIRM_INTERVAL_MS = 3000
+const CONFIRM_ATTEMPTS = 10
+const CONFIRM_INTERVAL_MS = 2000
+
+type FundConfirmation = { funded: boolean; balance?: number }
 
 function shortAddress(address: string) {
   return `${address.slice(0, 4)}…${address.slice(-4)}`
@@ -401,47 +409,60 @@ async function waitForFundedOnChain(
   agreementId: string | undefined,
   token?: string | null,
   walletAddress?: string | null,
-): Promise<boolean> {
-  if (!token) return true
+): Promise<FundConfirmation> {
+  if (!token) return { funded: true }
   const { syncAgreementApi, getAgreement, getAgreementByContractIdApi } = await import(
     "@/lib/api/agreements"
   )
 
   let id = agreementId
   if (!id) {
-    const lookup = await getAgreementByContractIdApi(contractId, token)
-    id = lookup.success ? lookup.data?.id : undefined
+    const lookup = await getAgreementByContractIdApi(contractId, token).catch(() => null)
+    id = lookup?.success ? lookup.data?.id : undefined
   }
-  if (!id) return true
+
+  // Nest's backend sync is kicked off once in the background; it currently fails
+  // with "Could not fetch escrow from Trustless Work", so it must not block the
+  // confirmation loop. The escrow balance on chain is the source of truth.
+  if (id) void syncAgreementApi(id, token).catch(() => null)
 
   for (let attempt = 0; attempt < CONFIRM_ATTEMPTS; attempt++) {
     if (attempt > 0) await new Promise((r) => setTimeout(r, CONFIRM_INTERVAL_MS))
-    // A failed or partial sync is "pending confirmation", never a funding success:
-    // only the re-fetched agreement status (set by the backend after on-chain
-    // validation) decides.
-    await syncAgreementApi(id, token)
-    const fresh = await getAgreement(id, token)
-    const status = fresh.success ? fresh.data?.status : undefined
-    if (status && FUNDED_STATUSES.has(String(status).toLowerCase())) return true
-    // Nest's sync can fail with "Could not fetch escrow from Trustless Work" while
-    // the escrow is already funded; read the chain via TW directly as a fallback.
-    if (walletAddress && (await escrowHasBalance(contractId, walletAddress, token))) return true
+    const [balance, nestFunded] = await Promise.all([
+      walletAddress ? escrowBalance(contractId, walletAddress, token) : Promise.resolve(0),
+      id ? nestReportsFunded(id, token, getAgreement) : Promise.resolve(false),
+    ])
+    if (balance > 0) return { funded: true, balance }
+    if (nestFunded) return { funded: true }
   }
-  return false
+  return { funded: false }
 }
 
-async function escrowHasBalance(
+async function nestReportsFunded(
+  id: string,
+  token: string,
+  getAgreement: (id: string, token: string) => Promise<{ success: boolean; data?: { status?: string } }>,
+): Promise<boolean> {
+  try {
+    const fresh = await getAgreement(id, token)
+    const status = fresh.success ? fresh.data?.status : undefined
+    return Boolean(status && FUNDED_STATUSES.has(String(status).toLowerCase()))
+  } catch {
+    return false
+  }
+}
+
+async function escrowBalance(
   contractId: string,
   walletAddress: string,
   token?: string | null,
-): Promise<boolean> {
+): Promise<number> {
   try {
     const { loadEscrowIndex } = await import("@/lib/agreements/reconcile-nest-escrow")
     const index = await loadEscrowIndex(walletAddress, token ?? undefined)
-    const escrow = index.byContractId.get(contractId)
-    return Number(escrow?.balance ?? 0) > 0
+    return Number(index.byContractId.get(contractId)?.balance ?? 0) || 0
   } catch {
-    return false
+    return 0
   }
 }
 
