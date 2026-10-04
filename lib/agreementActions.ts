@@ -373,7 +373,7 @@ export async function fundAndSignEscrow({
 
     // Submitted is not funded: only an on-chain-validated sync may flip the
     // status, so wait for it instead of reporting success on submit.
-    const confirmed = await waitForFundedOnChain(contractId, agreementId, token)
+    const confirmed = await waitForFundedOnChain(contractId, agreementId, token, walletAddress)
     if (!confirmed) {
       onPendingConfirmation?.()
       return
@@ -400,6 +400,7 @@ async function waitForFundedOnChain(
   contractId: string,
   agreementId: string | undefined,
   token?: string | null,
+  walletAddress?: string | null,
 ): Promise<boolean> {
   if (!token) return true
   const { syncAgreementApi, getAgreement, getAgreementByContractIdApi } = await import(
@@ -422,8 +423,26 @@ async function waitForFundedOnChain(
     const fresh = await getAgreement(id, token)
     const status = fresh.success ? fresh.data?.status : undefined
     if (status && FUNDED_STATUSES.has(String(status).toLowerCase())) return true
+    // Nest's sync can fail with "Could not fetch escrow from Trustless Work" while
+    // the escrow is already funded; read the chain via TW directly as a fallback.
+    if (walletAddress && (await escrowHasBalance(contractId, walletAddress, token))) return true
   }
   return false
+}
+
+async function escrowHasBalance(
+  contractId: string,
+  walletAddress: string,
+  token?: string | null,
+): Promise<boolean> {
+  try {
+    const { loadEscrowIndex } = await import("@/lib/agreements/reconcile-nest-escrow")
+    const index = await loadEscrowIndex(walletAddress, token ?? undefined)
+    const escrow = index.byContractId.get(contractId)
+    return Number(escrow?.balance ?? 0) > 0
+  } catch {
+    return false
+  }
 }
 
 export async function changeMilestoneStatusAgreement({

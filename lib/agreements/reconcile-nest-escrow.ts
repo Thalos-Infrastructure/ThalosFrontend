@@ -34,7 +34,7 @@ export function fetchEscrowIndex(walletAddress: string, token?: string): Promise
   return promise
 }
 
-async function loadEscrowIndex(walletAddress: string, token?: string): Promise<EscrowIndex> {
+export async function loadEscrowIndex(walletAddress: string, token?: string): Promise<EscrowIndex> {
   const { getEscrowsByRole } = await import("@/services/escrowMigration")
   const results = await Promise.allSettled(
     LOOKUP_ROLES.map((role) => getEscrowsByRole({ role, address: walletAddress }, token)),
@@ -191,5 +191,5 @@ export function agreementsRefreshInterval(
   const confirming = rows.some(
     (r) => r.status === "confirming" || r.nextAction === "wait_confirmation",
   )
-  return confirming ? 10000 : 60000
+  return confirming ? 20000 : 60000
 }
