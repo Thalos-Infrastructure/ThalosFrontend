@@ -1,9 +1,8 @@
 "use client"
 
-import React, { useState, useEffect, useCallback, useId, useRef, useMemo } from "react"
+import React, { useState, useEffect, useCallback, useId, useRef, useMemo, Suspense } from "react"
 import { ApproverAgreementDetail } from "../personal/ApproverAgreementDetail"
 import { findApproverEscrow } from "@/lib/helpers/approverEscrow"
-import { AgreementsSkeleton } from "@/components/dashboard/agreements-skeleton"
 import Image from "next/image"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -58,7 +57,19 @@ import {
   AgreementPayload,
   approveMilestone,
 } from "@/services/escrowService"
-import { STELLAR_EXPLORER_BASE_URL, SHOW_MOCKED_AGREEMENTS } from "@/lib/config"
+import {
+  STELLAR_EXPLORER_BASE_URL,
+  SHOW_MOCKED_AGREEMENTS,
+  DISPUTE_RESOLVER,
+  PLATFORM_ADDRESS,
+  TRUSTLINE_USDC,
+} from "@/lib/config"
+import { useDashboardNav } from "@/lib/dashboard-nav"
+import {
+  agreementViewToLegacyListItem,
+  mapTwEscrowToAgreementView,
+} from "@/lib/agreements/map-tw-escrow"
+import { formatNextActionLabel } from "@/lib/types/agreement-view"
 import { getKybStatus, startKybSession } from "@/lib/api/kyb"
 import {
   updateOpportunityStatus,
@@ -264,13 +275,7 @@ function FormSelect({
   )
 }
 
-/* ÔöÇÔöÇ Constants ÔöÇÔöÇ */
-const PLATFORM_ADDRESS = "GBXGQJWVLWOYHFLVTKWV5FGHA3LNYY2JQKM7OAVRWPLXS"
-const DISPUTE_RESOLVER = "GBXGQJWVLWOYHFLVTKWV5FGHA3LNYY2JQKM7OAVDISPUTE"
-const TRUSTLINE_USDC = {
-  symbol: "USDC",
-  address: "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5",
-}
+/* Platform / trustline / dispute resolver: lib/config (PLATFORM_ADDRESS, …) */
 
 const connectedWallets = [
   {
@@ -323,11 +328,13 @@ interface Agreement {
   role?: "buyer" | "seller"
   serviceProvider?: string
   client?: string
-  /** On-chain roles and balance, present only on escrows read by role. */
+  /** Shared view-model fields (FE provisional until Nest owns them). */
+  nextAction?: string
+  blockedReason?: string | null
+  balance?: string
   approver?: string
   releaseSigner?: string
   disputeResolver?: string
-  balance?: string
   fundedBy?: string
   released?: boolean
 }
@@ -337,12 +344,20 @@ const initialAgreements: Agreement[] = []
 // Agreements listing is sourced from Nest (source of truth); TW escrow reads are
 // still used only for the approver tab, which needs live on-chain milestone state
 // to drive the approve/release actions.
-import { getAgreementsByWallet } from "@/lib/actions/agreements"
+import { getAgreementsByWallet } from "@/lib/agreements/fetch-wallet-agreements"
 import type {
   AgreementWithParticipants,
   AgreementStatus as NestAgreementStatus,
 } from "@/lib/actions/agreements"
 import type { MilestoneStatus } from "@/lib/types/status"
+import {
+  agreementsRefreshInterval,
+  fetchEscrowIndex,
+  invalidateEscrowIndex,
+  reconcileWithEscrow,
+  roleFromNestParticipants,
+  type EscrowIndex,
+} from "@/lib/agreements/reconcile-nest-escrow"
 
 const NEST_STATUS_TO_UI: Record<NestAgreementStatus, string> = {
   pending: "pending",
@@ -357,11 +372,20 @@ const NEST_STATUS_TO_UI: Record<NestAgreementStatus, string> = {
 function mapNestAgreementToUi(
   agreement: AgreementWithParticipants,
   workspaceWallet: string | null,
+  escrowIndex: EscrowIndex | null,
 ): Agreement {
   const isMulti = agreement.agreement_type === "multi"
   const counterparty = agreement.participants?.find(
-    (p) => p.wallet_address !== workspaceWallet,
+    (p: { wallet_address: string }) => p.wallet_address !== workspaceWallet,
   )?.wallet_address
+  const live = reconcileWithEscrow({
+    contractId: agreement.contract_id,
+    nestUiStatus: NEST_STATUS_TO_UI[agreement.status] ?? agreement.status,
+    createdAt: agreement.created_at,
+    walletAddress: workspaceWallet,
+    index: escrowIndex,
+  })
+  const { status, nextAction, blockedReason, role } = live
 
   return {
     id: agreement.contract_id || agreement.id,
@@ -369,22 +393,44 @@ function mapNestAgreementToUi(
     counterparty: counterparty
       ? `${counterparty.slice(0, 8)}...`
       : `${agreement.created_by.slice(0, 8)}...`,
-    status: NEST_STATUS_TO_UI[agreement.status] ?? agreement.status,
+    status,
     amount: agreement.amount,
     currency: agreement.asset || "USDC",
     type: isMulti ? "Multi Release" : "Single Release",
     date: agreement.created_at.split("T")[0],
-    milestones: agreement.milestones.map((m) => ({
+    milestones: agreement.milestones.map((m, idx) => ({
       description: m.description,
       amount: m.amount,
-      status: m.status,
+      status: live.milestoneStatuses?.[idx] ?? m.status,
     })),
-    receiver: counterparty || "",
-    role: workspaceWallet === agreement.created_by ? "seller" : "buyer",
+    receiver: live.receiver || counterparty || "",
+    role:
+      role ??
+      roleFromNestParticipants(agreement.participants, agreement.created_by, workspaceWallet),
+    serviceProvider: live.serviceProvider,
+    nextAction,
+    blockedReason,
+    balance: live.balance,
+    approver: live.approver,
+    releaseSigner: live.releaseSigner,
+    disputeResolver: live.disputeResolver,
+    released: live.released,
   }
 }
 
 const statusConfig: Record<string, { labelKey: string; color: string }> = {
+  pending: {
+    labelKey: "flow.pendingFunding",
+    color: "bg-orange-500/10 text-orange-400 border-orange-500/20",
+  },
+  confirming: {
+    labelKey: "flow.confirming",
+    color: "bg-slate-500/10 text-slate-300 border-slate-500/20 animate-pulse",
+  },
+  disputed: {
+    labelKey: "status.disputed",
+    color: "bg-red-500/10 text-red-400 border-red-500/20",
+  },
   funded: { labelKey: "status.funded", color: "bg-blue-500/10 text-blue-400 border-blue-500/20" },
   in_progress: {
     labelKey: "status.inProgress",
@@ -737,7 +783,17 @@ function ChartTooltip({
 /* ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ
    PAGE
    ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ */
-export default function BusinessDashboardPage() {
+export default function BusinessDashboardPageWithNav() {
+  const { hydrated } = useAuthStore()
+  if (!hydrated) return <ThalosLoader />
+  return (
+    <Suspense fallback={<ThalosLoader />}>
+      <BusinessDashboardPage />
+    </Suspense>
+  )
+}
+
+function BusinessDashboardPage() {
   const { t, theme } = useLanguage()
   const isLight = theme === "light"
   const { openWalletModal } = useStellarWallet()
@@ -750,7 +806,8 @@ export default function BusinessDashboardPage() {
   const isExternalWallet = useHasSigningWallet()
   const [loading, setLoading] = useState(false)
 
-  const [activeSection, setActiveSection] = useState("agreements")
+  const { activeSection, viewingAgreement, setActiveSection, setViewingAgreement } =
+    useDashboardNav("agreements")
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [showProfileEditor, setShowProfileEditor] = useState(false)
   const [showAiAssistant, setShowAiAssistant] = useState(false)
@@ -943,7 +1000,6 @@ export default function BusinessDashboardPage() {
   const [walletsData, setWalletsData] = useState<WalletWithAgreements[]>([])
   const [agreementsLoading, setAgreementsLoading] = useState(false)
   const [agreementsError, setAgreementsError] = useState<string | null>(null)
-  const [viewingAgreement, setViewingAgreement] = useState<string | null>(null)
   const [showAgreementChat, setShowAgreementChat] = useState<string | null>(null)
   const [disputedMs, setDisputedMs] = useState<Set<string>>(new Set())
   const [showDisputeConfirm, setShowDisputeConfirm] = useState<{
@@ -952,7 +1008,6 @@ export default function BusinessDashboardPage() {
   } | null>(null)
   const [approverEscrows, setApproverEscrows] = useState<Agreement[]>([])
   const [approverLoading, setApproverLoading] = useState(false)
-  const [escrowRefreshNonce, setEscrowRefreshNonce] = useState(0)
 
   // Fetch wallets with agreements
   useEffect(() => {
@@ -974,113 +1029,106 @@ export default function BusinessDashboardPage() {
     }
   }, [token])
 
-  // Helper to map a TW escrow (approver tab only) to agreement format
+  // Helper to map a TW escrow (approver tab) via the shared view-model.
   const mapEscrowToApproverAgreement = (e: any): Agreement => {
-    const milestones =
-      (e.milestones as Array<{
-        description?: string
-        amount?: number
-        approved?: boolean
-        released?: boolean
-        status?: string
-      }>) || []
-    const isMulti = (e.type as string) === "multi-release" || milestones.length > 1
-    const amount = isMulti
-      ? milestones.reduce((sum, m) => sum + (m.amount || 0), 0).toString()
-      : String(e.amount || "0")
-
-    return {
-      id: (e.contractId as string) || `escrow-${Date.now()}`,
-      title: (e.title as string) || "Escrow Agreement",
-      counterparty: e.roles?.serviceProvider
-        ? (e.roles.serviceProvider as string).slice(0, 8) + "..."
-        : "-",
-      status: (e.status as string) || "pending",
-      amount,
-      currency: "USDC",
-      type: isMulti ? "Multi Release" : "Single Release",
-      date: (e.createdAt as string) || new Date().toISOString(),
-      milestones: milestones.map((m) => ({
-        description: m.description || "Milestone",
-        amount: String(m.amount || 0),
-        status: m.released
-          ? "released"
-          : m.approved
-            ? "approved"
-            : ("pending" as "pending" | "approved" | "released"),
-      })),
-      receiver: (e.roles?.receiver as string) || (e.roles?.serviceProvider as string) || "-",
-      serviceProvider: (e.roles?.serviceProvider as string) || "-",
-      approver: e.roles?.approver as string | undefined,
-      releaseSigner: e.roles?.releaseSigner as string | undefined,
-      disputeResolver: e.roles?.disputeResolver as string | undefined,
-      balance: e.balance as string | undefined,
-      fundedBy: e.fundedBy as string | undefined,
-      released: Boolean(e.flags?.released),
-      role: currentWorkspaceWallet === e.roles?.serviceProvider ? "seller" : "buyer",
-    }
+    const view = mapTwEscrowToAgreementView(
+      {
+        contractId: e.contractId,
+        type: e.type,
+        title: e.title,
+        amount: e.amount,
+        balance: e.balance,
+        flags: e.flags,
+        roles: {
+          approver: e.roles?.approver ?? e.approver,
+          serviceProvider: e.roles?.serviceProvider ?? e.serviceProvider,
+          releaseSigner: e.roles?.releaseSigner ?? e.releaseSigner,
+          disputeResolver: e.roles?.disputeResolver ?? e.disputeResolver,
+          receiver: e.roles?.receiver ?? e.receiver,
+          platformAddress: e.roles?.platformAddress,
+        },
+        milestones: e.milestones,
+        createdAt: e.createdAt?._seconds
+          ? e.createdAt
+          : e.createdAt
+            ? { _seconds: Math.floor(new Date(e.createdAt).getTime() / 1000) }
+            : undefined,
+      },
+      currentWorkspaceWallet,
+    )
+    return agreementViewToLegacyListItem(view) as Agreement
   }
 
-  // Fetch agreements from Nest (source of truth) for the current workspace wallet
-  const fetchedEscrowsRef = useRef<string | null>(null)
-  useEffect(() => {
-    if (!currentWorkspaceWallet) return
-    const workspaceWallet: string = currentWorkspaceWallet
-    // Include the token so we re-fetch once auth loads. The escrow reads are
-    // public, so this only upgrades an anonymous read to an authenticated one.
-    const fetchKey = `${workspaceWallet}::${token ?? ""}::${escrowRefreshNonce}`
-    if (fetchedEscrowsRef.current === fetchKey) return
-    fetchedEscrowsRef.current = fetchKey
-
-    async function fetchAgreements() {
-      setAgreementsLoading(true)
-      setAgreementsError(null)
+  // Agreements from Nest, reconciled with the live TW escrow (status/roles/nextAction).
+  const loadAgreements = useCallback(
+    async (showSpinner: boolean) => {
+      if (!currentWorkspaceWallet) return
+      const workspaceWallet: string = currentWorkspaceWallet
+      if (showSpinner) {
+        setAgreementsLoading(true)
+        setAgreementsError(null)
+      }
+      // Show Nest rows as soon as they arrive; reconcile once TW answers.
+      const indexPromise = fetchEscrowIndex(workspaceWallet, token ?? undefined)
       const { agreements: nestAgreements, error } = await getAgreementsByWallet(
         workspaceWallet,
         token ?? undefined,
       )
       if (error) {
-        setAgreementsError(error)
+        if (showSpinner) setAgreementsError(error)
         setAgreementsLoading(false)
         return
       }
-      const mapped = nestAgreements.map((a) => mapNestAgreementToUi(a, workspaceWallet))
-      setAgreements(mapped)
+      if (showSpinner) {
+        setAgreements(nestAgreements.map((a) => mapNestAgreementToUi(a, workspaceWallet, null)))
+        setAgreementsLoading(false)
+      }
+      const escrowIndex = await indexPromise
+      setAgreements(
+        nestAgreements.map((a) => mapNestAgreementToUi(a, workspaceWallet, escrowIndex)),
+      )
       setAgreementsLoading(false)
-    }
-
-    fetchAgreements()
-  }, [currentWorkspaceWallet, token, escrowRefreshNonce])
-
-  // Fetch approver escrows (for approver tab)
-  useEffect(() => {
-    if (!currentWorkspaceWallet) return
-    const workspaceWallet: string = currentWorkspaceWallet
-    async function fetchApproverEscrows() {
-      setApproverLoading(true)
-      try {
-        const { getEscrowsByRole } = await import("@/services/escrowService")
-        const res = await getEscrowsByRole(
-          { role: "approver", address: workspaceWallet },
-          token ?? undefined,
+      if (escrowIndex.available) {
+        setApproverEscrows(
+          escrowIndex.approverEscrows.map((e) => mapEscrowToApproverAgreement(e as any)),
         )
-        if (res.success && Array.isArray(res.data)) {
-          setApproverEscrows(res.data.map((e: any) => mapEscrowToApproverAgreement(e)))
-        }
-      } catch (err) {
-        console.error("Error fetching approver escrows:", err)
-        setApproverEscrows([])
       }
       setApproverLoading(false)
+    },
+    [currentWorkspaceWallet, token],
+  )
+
+  useEffect(() => {
+    void loadAgreements(true)
+  }, [loadAgreements])
+
+  // Auto-refresh: faster while an agreement is confirming or awaiting funds.
+  const refreshDelay = agreementsRefreshInterval(agreements)
+  useEffect(() => {
+    if (!currentWorkspaceWallet) return
+    const tick = () => {
+      if (document.visibilityState === "visible") void loadAgreements(false)
     }
-    fetchApproverEscrows()
-  }, [currentWorkspaceWallet, token, escrowRefreshNonce])
+    const interval = window.setInterval(tick, refreshDelay)
+    document.addEventListener("visibilitychange", tick)
+    return () => {
+      window.clearInterval(interval)
+      document.removeEventListener("visibilitychange", tick)
+    }
+  }, [currentWorkspaceWallet, loadAgreements, refreshDelay])
+
+  // Approver escrows come from the same TW index loaded with the agreements.
 
   /**
    * Re-read agreements and escrows. Funding, approving, releasing and disputing
    * all change on-chain state the cached read cannot know about.
    */
-  const refreshEscrows = useCallback(() => setEscrowRefreshNonce((n) => n + 1), [])
+  const refreshEscrows = useCallback(() => {
+    // The escrow index is cached for a few seconds; drop it so the re-read sees
+    // the transaction that just landed.
+    invalidateEscrowIndex()
+    return loadAgreements(false)
+  }, [loadAgreements])
 
   // Fetch team members when activeSection is 'team'
   useEffect(() => {
@@ -2057,10 +2105,30 @@ export default function BusinessDashboardPage() {
 
                     <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
                       {[
-                        { l: t("dashPage.active"), v: "12" },
-                        { l: t("dashPage.totalVolume"), v: "$2.4M" },
-                        { l: t("dashPage.yieldEarned"), v: "$24K" },
-                        { l: t("dashPage.completed"), v: "48" },
+                        {
+                          l: t("dashPage.active"),
+                          v: String(
+                            agreements.filter((a) =>
+                              ["funded", "in_progress", "active"].includes(a.status),
+                            ).length,
+                          ),
+                        },
+                        {
+                          l: t("dashPage.totalVolume"),
+                          v: `${agreements.reduce((sum, a) => sum + (Number.parseFloat(String(a.amount).replace(/,/g, "")) || 0), 0).toLocaleString()} USDC`,
+                        },
+                        {
+                          l: t("dashPage.yieldEarned"),
+                          v: `${agreements.filter((a) => a.status === "released" || a.status === "completed").length} released`,
+                        },
+                        {
+                          l: t("dashPage.completed"),
+                          v: String(
+                            agreements.filter(
+                              (a) => a.status === "released" || a.status === "completed",
+                            ).length,
+                          ),
+                        },
                       ].map((s) => (
                         <div
                           key={s.l}
@@ -2245,15 +2313,18 @@ export default function BusinessDashboardPage() {
                     </div>
                   )}
 
-                  {/* Both reads gate the list: the on-chain escrows used to
-                      arrive into a list already on screen. */}
-                  {agreementsLoading || approverLoading ? (
-                    <AgreementsSkeleton />
+                  {agreementsLoading ? (
+                    <div className="flex items-center justify-center py-16">
+                      <ThalosLoader size="md" />
+                    </div>
                   ) : (
                     /* Agreements view, pre-filtered by selected wallet */
                     <AgreementsView
                       agreements={filteredAgreements}
-                      onAgreementClick={(id) => setViewingAgreement(id)}
+                      onAgreementClick={(id) => {
+                        setViewingAgreement(id)
+                        setActiveSection("agreements")
+                      }}
                       onOpenChat={(id) => setShowAgreementChat(id)}
                       currentUserWallet={walletAddress || undefined}
                     />
@@ -2333,6 +2404,18 @@ export default function BusinessDashboardPage() {
                         </svg>
                         Back to Agreements
                       </button>
+
+                      {agr.nextAction != null && (
+                        <div className="mb-4 rounded-xl border border-[#3b82f6]/25 bg-[#3b82f6]/5 px-4 py-3 text-sm">
+                          <span className="text-[#3b82f6] font-medium">Next: </span>
+                          <span className="text-white/80">
+                            {formatNextActionLabel(agr.nextAction)}
+                          </span>
+                          {agr.blockedReason ? (
+                            <p className="mt-1 text-white/45">{agr.blockedReason}</p>
+                          ) : null}
+                        </div>
+                      )}
 
                       <div className="mb-6 rounded-2xl border border-white/10 bg-[#0c1220] p-6 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)]">
                         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -3994,7 +4077,9 @@ export default function BusinessDashboardPage() {
                 agreementId={showAgreementChat}
                 currentUserWallet={walletAddress || ""}
                 counterpartyWallet={
-                  agreements.find((a) => a.id === showAgreementChat)?.receiver || ""
+                  agreements.find((a) => a.id === showAgreementChat)?.receiver ||
+                  approverEscrows.find((a) => a.id === showAgreementChat)?.receiver ||
+                  ""
                 }
                 token={token}
                 defaultOpen={true}

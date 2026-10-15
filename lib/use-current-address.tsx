@@ -51,3 +51,28 @@ export function useHasSigningWallet(): boolean {
   // that is Pollar's own guidance for sensitive actions.
   return hasSession && sessionVerified
 }
+
+/**
+ * Why signing is (un)available, so the UI does not show "wallet disconnected"
+ * while Pollar is still confirming a session restored from storage:
+ * - `ready`: can sign now
+ * - `verifying`: session restored, server confirmation in flight
+ * - `expired`: Thalos session alive but the Pollar session is gone — resume it
+ * - `none`: nobody signed in with a wallet
+ */
+export type SigningWalletState = "ready" | "verifying" | "expired" | "none"
+
+export function useSigningWalletState(): SigningWalletState {
+  const { user, token, hydrated } = useAuthStore()
+  const { hasSession, sessionVerified, isConnecting } = usePollarWallet()
+
+  // AuthProvider starts with user = null and only fills it once /api/auth/me
+  // answers. Reporting "none" in that window is what showed "Connect Wallet" on
+  // the agreement detail to users whose custodial session was perfectly fine.
+  if (!hydrated) return "verifying"
+  if (!token || !user?.wallet?.publicKey) return "none"
+  if (user.wallet.provider === "accesly") return "ready"
+  if (hasSession && sessionVerified) return "ready"
+  if (hasSession || isConnecting) return "verifying"
+  return "expired"
+}

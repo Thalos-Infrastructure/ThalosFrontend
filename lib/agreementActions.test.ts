@@ -13,10 +13,21 @@ const mocks = vi.hoisted(() => ({
     submitSignedTransaction: vi.fn(),
   },
   signEscrowOperation: vi.fn(),
+  escrowIndex: {
+    loadEscrowIndex: vi.fn(),
+    invalidateEscrowIndex: vi.fn(),
+  },
+  agreementsApi: {
+    getAgreementByContractIdApi: vi.fn(),
+    syncAgreementApi: vi.fn(),
+    getAgreement: vi.fn(),
+  },
 }))
 
 vi.mock("@/services/escrowService", () => mocks.escrowService)
 vi.mock("@/lib/api/escrow", () => mocks.api)
+vi.mock("@/lib/agreements/reconcile-nest-escrow", () => mocks.escrowIndex)
+vi.mock("@/lib/api/agreements", () => mocks.agreementsApi)
 vi.mock("@/lib/signing", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/signing")>()
   return { ...actual, signEscrowOperation: mocks.signEscrowOperation }
@@ -46,6 +57,13 @@ beforeEach(() => {
   vi.clearAllMocks()
   mocks.signEscrowOperation.mockResolvedValue({ signedTxXdr: "AAAA_SIGNED" })
   mocks.api.submitSignedTransaction.mockResolvedValue({ success: true, data: {} })
+  // After submitting, funding waits until the escrow shows a balance on chain.
+  mocks.agreementsApi.getAgreementByContractIdApi.mockResolvedValue({ success: false })
+  mocks.escrowIndex.loadEscrowIndex.mockResolvedValue({
+    byContractId: new Map([["C1", { contractId: "C1", balance: 100 }]]),
+    approverEscrows: [],
+    available: true,
+  })
 })
 
 describe("fundAndSignEscrow", () => {
@@ -79,6 +97,43 @@ describe("fundAndSignEscrow", () => {
     expect(mocks.api.submitSignedTransaction).toHaveBeenCalledWith("AAAA_SIGNED", TOKEN)
     expect(h.lastError()).toBeNull()
     expect(h.statuses).toContain("confirmed")
+  })
+
+  it("reports pending, not funded, when the chain never shows the balance", async () => {
+    vi.useFakeTimers()
+    try {
+      mocks.escrowService.fundEscrow.mockResolvedValue({ success: true, data: UNSIGNED })
+      mocks.escrowIndex.loadEscrowIndex.mockResolvedValue({
+        byContractId: new Map(),
+        approverEscrows: [],
+        available: true,
+      })
+      const h = harness()
+      const setSuccess = vi.fn()
+      const onPendingConfirmation = vi.fn()
+
+      const run = fundAndSignEscrow({
+        contractId: "C1",
+        amount: "100",
+        walletAddress: WALLET,
+        serviceType: "single-release",
+        token: TOKEN,
+        openWalletModal: vi.fn(),
+        setFunding: vi.fn(),
+        setError: h.setError,
+        setSuccess,
+        onStatus: h.onStatus as never,
+        onPendingConfirmation,
+      })
+      await vi.runAllTimersAsync()
+      await run
+
+      expect(onPendingConfirmation).toHaveBeenCalledOnce()
+      expect(setSuccess).not.toHaveBeenCalledWith(true)
+      expect(h.statuses).not.toContain("confirmed")
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
   it("never asks for a signature when the build failed", async () => {
