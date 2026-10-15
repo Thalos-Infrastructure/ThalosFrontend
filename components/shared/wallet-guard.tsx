@@ -17,9 +17,16 @@ interface WalletGuardProps {
 export function WalletGuard({ children, message, className }: WalletGuardProps) {
   // "Can this wallet sign?", not "is it external?". Those were the same thing
   // when the Kit was the only wallet; since #110 they are not.
-  if (useHasSigningWallet()) {
+  const canSign = useHasSigningWallet()
+  const { hydrated } = useAuthStore()
+
+  if (canSign) {
     return <>{children}</>
   }
+
+  // The session is still being restored; prompting now would ask an already
+  // signed-in user to connect a wallet they have.
+  if (!hydrated) return null
 
   return <WalletPrompt message={message} className={className} />
 }
@@ -110,7 +117,10 @@ export function WalletPrompt({
   const { openWalletModal } = useStellarWallet()
   const signOut = useSignOut()
   const sessionLapsed = useSessionLapsed()
+  const { hydrated } = useAuthStore()
   const handleConnect = onConnect || (() => openWalletModal())
+
+  if (!hydrated) return null
 
   // Branching here rather than in WalletGuard because the dashboards render
   // WalletPrompt directly; putting it in the guard would have fixed one of the

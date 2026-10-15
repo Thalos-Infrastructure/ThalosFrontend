@@ -11,7 +11,7 @@ export async function revalidateAgreement(
   if (result.success && result.data) {
     return {
       ok: true,
-      agreement: { ...result.data, lastSyncedAt: new Date().toISOString(), syncError: null },
+      agreement: result.data,
     }
   }
 

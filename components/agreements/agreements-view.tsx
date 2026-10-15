@@ -30,6 +30,10 @@ interface Agreement {
   role?: "buyer" | "seller" // User's role in this agreement
   serviceProvider?: string
   client?: string
+  /** Wallet that created the agreement in Thalos. */
+  createdBy?: string
+  /** Wallet expected to fund (TW approver per Thalos rule). */
+  payer?: string
 }
 
 interface AgreementsViewProps {
@@ -40,7 +44,7 @@ interface AgreementsViewProps {
   className?: string
 }
 
-type ViewMode = "buyer" | "seller"
+type ViewMode = "all" | "buyer" | "seller"
 type TabType = "pending" | "active" | "completed"
 type PendingGroup = "approval" | "funding" | "review" | "dispute"
 
@@ -53,7 +57,7 @@ export function AgreementsView({
   currentUserWallet,
   className,
 }: AgreementsViewProps) {
-  const [viewMode, setViewMode] = useState<ViewMode>("buyer")
+  const [viewMode, setViewMode] = useState<ViewMode>("all")
   const [activeTab, setActiveTab] = useState<TabType>("pending")
   const [searchQuery, setSearchQuery] = useState("")
   const [expandedGroups, setExpandedGroups] = useState<PendingGroup[]>([
@@ -66,9 +70,8 @@ export function AgreementsView({
   // Filter by view mode (buyer/seller)
   const filteredByRole = useMemo(() => {
     return agreements.filter((a) => {
-      // If role is specified, use it directly
+      if (viewMode === "all") return true
       if (a.role) return a.role === viewMode
-      // Otherwise, infer from type or default to showing all
       return true
     })
   }, [agreements, viewMode])
@@ -90,17 +93,18 @@ export function AgreementsView({
 
       if (status === "completed" || status === "released" || allMilestonesReleased) {
         completed.push(agreement)
+      } else if (status === "in_progress" || status === "active") {
+        active.push(agreement)
       } else if (
         status === "pending" ||
+        status === "awaiting_funding" ||
         status === "funded" ||
         status === "dispute" ||
+        status === "disputed" ||
         hasPendingMilestones
       ) {
         // Pending = needs action from someone
         pending.push(agreement)
-      } else if (status === "in_progress") {
-        // Active = work is being done
-        active.push(agreement)
       } else {
         // Default to pending if unclear
         pending.push(agreement)
@@ -241,6 +245,17 @@ export function AgreementsView({
       <div className="flex items-center justify-between">
         <div className="flex gap-1 rounded-lg bg-white/5 p-1">
           <button
+            onClick={() => setViewMode("all")}
+            className={cn(
+              "flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors",
+              viewMode === "all"
+                ? "bg-[#f0b400] text-[#0c1220]"
+                : "text-white/60 hover:text-white hover:bg-white/5",
+            )}
+          >
+            All
+          </button>
+          <button
             onClick={() => setViewMode("buyer")}
             className={cn(
               "flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors",
@@ -250,7 +265,7 @@ export function AgreementsView({
             )}
           >
             <ShoppingCart className="h-4 w-4" />
-            As Buyer
+            As I&apos;m Paying
           </button>
           <button
             onClick={() => setViewMode("seller")}
@@ -262,7 +277,7 @@ export function AgreementsView({
             )}
           >
             <Store className="h-4 w-4" />
-            As Seller
+            As I&apos;m Getting Paid
           </button>
         </div>
 
@@ -372,6 +387,7 @@ export function AgreementsView({
                           key={agreement.id}
                           agreement={agreement}
                           onClick={() => onAgreementClick(agreement.id)}
+                          currentUserWallet={currentUserWallet}
                           onChat={onOpenChat ? () => onOpenChat(agreement.id) : undefined}
                         />
                       ))}
@@ -421,6 +437,7 @@ export function AgreementsView({
                   key={agreement.id}
                   agreement={agreement}
                   onClick={() => onAgreementClick(agreement.id)}
+                  currentUserWallet={currentUserWallet}
                   onChat={onOpenChat ? () => onOpenChat(agreement.id) : undefined}
                 />
               ))
@@ -466,10 +483,12 @@ function AgreementCard({
   agreement,
   onClick,
   onChat,
+  currentUserWallet,
 }: {
   agreement: Agreement
   onClick: () => void
   onChat?: () => void
+  currentUserWallet?: string
 }) {
   const statusColors: Record<string, { bg: string; text: string }> = {
     pending: { bg: "bg-amber-400/10", text: "text-amber-400" },
@@ -481,6 +500,36 @@ function AgreementCard({
   }
 
   const colors = statusColors[agreement.status.toLowerCase()] || statusColors.pending
+  const completedMilestones =
+    agreement.milestones?.filter(
+      (milestone) => milestone.status === "released" || milestone.status === "completed",
+    ).length ?? 0
+  const milestoneCount = agreement.milestones?.length ?? 0
+  const perspective =
+    agreement.role === "seller"
+      ? "I'm Getting Paid"
+      : agreement.role === "buyer"
+        ? "I'm Paying"
+        : null
+  const me = currentUserWallet?.toUpperCase()
+  const partyLabel = (wallet?: string) =>
+    !wallet
+      ? null
+      : me && wallet.toUpperCase() === me
+        ? "You"
+        : `${wallet.slice(0, 4)}...${wallet.slice(-4)}`
+  const creatorLabel = partyLabel(agreement.createdBy)
+  const funderLabel =
+    partyLabel(agreement.payer) ??
+    (agreement.role === "buyer" ? "You" : agreement.role === "seller" ? "Counterparty" : null)
+  const nextAction =
+    agreement.role === "seller"
+      ? agreement.status === "funded"
+        ? "Submit milestone"
+        : "Review agreement"
+      : agreement.status === "pending"
+        ? "Fund agreement"
+        : "Review milestone"
 
   return (
     <div className="flex w-full items-center justify-between px-4 py-3 hover:bg-white/5 transition-colors group">
@@ -489,8 +538,42 @@ function AgreementCard({
           <FileText className="h-5 w-5 text-white/40" />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium text-white truncate">{agreement.title}</p>
+          <div className="flex items-center gap-2">
+            <p className="text-sm font-medium text-white truncate">{agreement.title}</p>
+            {perspective && (
+              <span
+                className={cn(
+                  "shrink-0 rounded px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider",
+                  agreement.role === "buyer"
+                    ? "bg-sky-400/10 text-sky-400"
+                    : "bg-emerald-400/10 text-emerald-400",
+                )}
+              >
+                {perspective}
+              </span>
+            )}
+          </div>
           <p className="text-xs text-white/50 truncate">{agreement.counterparty}</p>
+          {(creatorLabel || funderLabel) && (
+            <p className="text-[10px] text-white/40 truncate">
+              {creatorLabel && (
+                <>
+                  Created by <span className="text-white/70">{creatorLabel}</span>
+                </>
+              )}
+              {creatorLabel && funderLabel && " · "}
+              {funderLabel && (
+                <>
+                  Funded by <span className="text-white/70">{funderLabel}</span>
+                </>
+              )}
+            </p>
+          )}
+          {milestoneCount > 0 && (
+            <p className="text-[10px] text-white/40">
+              {completedMilestones} / {milestoneCount} milestones completed
+            </p>
+          )}
         </div>
       </button>
       <div className="flex items-center gap-3 shrink-0 ml-4">
@@ -507,6 +590,10 @@ function AgreementCard({
             <MessageCircle className="h-4 w-4" />
           </button>
         )}
+        <div className="hidden text-right md:block">
+          <p className="text-[10px] text-white/40">Next action</p>
+          <p className="text-xs font-medium text-white/70">{nextAction}</p>
+        </div>
         <span
           className={cn(
             "rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider",

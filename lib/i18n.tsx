@@ -591,6 +591,8 @@ const translations: Record<Lang, Record<string, string>> = {
     "flow.evidenceReady": "Evidence submitted - Ready for review",
     "flow.pendingFunding": "Pending Funding",
     "flow.pendingFundingDesc": "Waiting for buyer to fund the escrow.",
+    "flow.confirming": "Confirming on-chain",
+    "status.disputed": "Disputed",
     "flow.fundEscrow": "Fund Escrow",
     "flow.funding": "Funding...",
     "flow.funded": "Funded",
@@ -687,7 +689,6 @@ const translations: Record<Lang, Record<string, string>> = {
 
     // Status labels
     "status.funded": "Funded",
-    "status.disputed": "Disputed",
     "flow.statusPendingConfirmation": "Status pending confirmation",
     "status.inProgress": "In Progress",
     "status.awaitingApproval": "Awaiting Approval",
@@ -1537,6 +1538,8 @@ const translations: Record<Lang, Record<string, string>> = {
     "flow.evidenceReady": "Evidencia enviada - Lista para revision",
     "flow.pendingFunding": "Pendiente de Fondeo",
     "flow.pendingFundingDesc": "Esperando que el comprador fondee el escrow.",
+    "flow.confirming": "Confirmando en la red",
+    "status.disputed": "En disputa",
     "flow.fundEscrow": "Fondear Escrow",
     "flow.funding": "Fondeando...",
     "flow.funded": "Fondeado",
@@ -1633,7 +1636,6 @@ const translations: Record<Lang, Record<string, string>> = {
 
     // Status labels
     "status.funded": "Fondos Depositados",
-    "status.disputed": "En Disputa",
     "flow.statusPendingConfirmation": "Estado pendiente de confirmacion",
     "status.inProgress": "En Progreso",
     "status.awaitingApproval": "Esperando Aprobacion",

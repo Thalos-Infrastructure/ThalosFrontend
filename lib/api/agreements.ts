@@ -364,6 +364,49 @@ export async function getAgreementByContractIdApi(
   }
 }
 
+export interface AgreementSyncResult {
+  synced: boolean
+  direction?: string
+  actions: string[]
+  errors: string[]
+}
+
+/**
+ * POST /v1/agreements/:agreementId/sync
+ * The backend queries Trustless Work (validateOnChain=true) and only updates
+ * the Thalos status after a valid on-chain response. It returns a SyncResult,
+ * not the agreement — callers must re-fetch GET /agreements/:id afterwards.
+ */
+export async function syncAgreementApi(
+  agreementId: string,
+  token?: string,
+): Promise<ApiResponse<AgreementSyncResult>> {
+  try {
+    const response = await apiRequest<unknown>(
+      `/agreements/${agreementId}/sync`,
+      { method: "POST" },
+      token,
+    )
+    if (!response.success) return { success: false, error: response.error }
+    const payload = (response.data ?? {}) as Record<string, unknown>
+    const result: AgreementSyncResult = {
+      synced: payload.synced === true,
+      direction: typeof payload.direction === "string" ? payload.direction : undefined,
+      actions: Array.isArray(payload.actions) ? (payload.actions as string[]) : [],
+      errors: Array.isArray(payload.errors) ? (payload.errors as string[]) : [],
+    }
+    if (typeof payload.error === "string" && payload.error) {
+      result.errors.push(payload.error)
+    }
+    return { success: true, data: result }
+  } catch (e) {
+    return {
+      success: false,
+      error: e instanceof Error ? e.message : "Failed to sync agreement",
+    }
+  }
+}
+
 /**
  * Link contract to agreement
  * Backend returns: { success, error } (HTTP 200 even if success=false)
