@@ -1022,11 +1022,6 @@ function PersonalDashboardPage() {
   const [copiedAddress, setCopiedAddress] = useState<string | null>(null)
 
   useEffect(() => {
-    const savedPinned = window.localStorage.getItem("thalos-sidebar-pinned")
-    if (savedPinned !== null) setSidebarPinned(savedPinned === "true")
-  }, [])
-
-  useEffect(() => {
     setUsdcBalance(null)
     if (!walletAddress || !token) return
     let cancelled = false
@@ -1081,6 +1076,11 @@ function PersonalDashboardPage() {
   const [userProfile, setUserProfile] = useState<Profile | null>(null)
   const [showEditProfile, setShowEditProfile] = useState(false)
   const [showAiAssistant, setShowAiAssistant] = useState(false)
+
+  useEffect(() => {
+    const savedPinned = window.localStorage.getItem("thalos-sidebar-pinned")
+    if (savedPinned !== null) setSidebarPinned(savedPinned === "true")
+  }, [])
 
   // Fetch wallets with agreements
   useEffect(() => {
