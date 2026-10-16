@@ -131,3 +131,50 @@ describe("mapTwEscrowToAgreementView", () => {
     expect(view.participants.approver).toBe(APPROVER)
   })
 })
+
+describe("mapTwEscrowToAgreementView — evidence is not a release", () => {
+  // Testnet CA6DQZ…AG3F as Trustless Work returned it on 2026-10-16: evidence
+  // submitted, never funded, never released.
+  const unfundedWithEvidence = {
+    contractId: "CA6DQZDLRYWF2M5QMQV744BWVSX3LM72M54R5XDZDWJ7WF32TS2SAG3F",
+    type: "single-release",
+    amount: 15,
+    balance: 0,
+    flags: { disputed: false, released: false, resolved: false },
+    roles: { approver: APPROVER, serviceProvider: PROVIDER, releaseSigner: APPROVER },
+    milestones: [
+      { description: "Full delivery", status: "completed", evidence: "ok", approved: false },
+    ],
+  }
+
+  it("keeps the milestone pending and the escrow unfunded", () => {
+    const view = mapTwEscrowToAgreementView(unfundedWithEvidence, PROVIDER)
+    expect(view.milestones[0].status).toBe("pending")
+    expect(view.milestones[0].released).toBe(false)
+    expect(view.escrowStatus).toBe("pending")
+    expect(view.released).toBe(false)
+  })
+
+  it("never offers evidence to the provider before funding", () => {
+    const fresh = {
+      ...unfundedWithEvidence,
+      milestones: [{ description: "Full delivery", status: "pending", approved: false }],
+    }
+    expect(mapTwEscrowToAgreementView(fresh, PROVIDER).nextAction).not.toBe("submit_evidence")
+  })
+
+  it("marks single-release milestones released from the escrow flag", () => {
+    const view = mapTwEscrowToAgreementView(
+      {
+        ...unfundedWithEvidence,
+        balance: 0,
+        flags: { disputed: false, released: true, resolved: false },
+        milestones: [
+          { description: "Full delivery", status: "completed", evidence: "ok", approved: true },
+        ],
+      },
+      PROVIDER,
+    )
+    expect(view.milestones[0].status).toBe("released")
+  })
+})
