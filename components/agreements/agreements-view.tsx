@@ -1,5 +1,6 @@
 "use client"
 
+import { allMilestonesReleased } from "@/lib/types/status"
 import { useState, useMemo } from "react"
 import { cn } from "@/lib/utils"
 import {
@@ -86,12 +87,12 @@ export function AgreementsView({
       const status = agreement.status.toLowerCase()
 
       // Check milestone statuses for more accurate categorization
-      const allMilestonesReleased = agreement.milestones?.every((m) => m.status === "released")
+      const everyMilestoneReleased = allMilestonesReleased(agreement.milestones)
       const hasPendingMilestones = agreement.milestones?.some(
         (m) => m.status === "pending" || m.status === "approved",
       )
 
-      if (status === "completed" || status === "released" || allMilestonesReleased) {
+      if (status === "completed" || status === "released" || everyMilestoneReleased) {
         completed.push(agreement)
       } else if (status === "in_progress" || status === "active") {
         active.push(agreement)

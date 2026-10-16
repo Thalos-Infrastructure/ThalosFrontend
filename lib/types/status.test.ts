@@ -2,6 +2,7 @@ import { describe, it, expect, vi, afterEach } from "vitest"
 import {
   MILESTONE_STATUSES,
   twMilestoneStatus,
+  allMilestonesReleased,
   nestMilestoneStatus,
   isMilestoneStatus,
   milestoneStatusLabel,
@@ -51,7 +52,8 @@ describe("twMilestoneStatus", () => {
     expect(twMilestoneStatus("rejected")).toBe("rejected")
   })
   it("maps legacy completed to released", () => {
-    expect(twMilestoneStatus("completed")).toBe("released")
+    // "completed" is the evidence text, not a release
+    expect(twMilestoneStatus("completed")).toBe("pending")
   })
   it("maps in-progress to pending", () => {
     expect(twMilestoneStatus("in-progress")).toBe("pending")
@@ -95,7 +97,7 @@ describe("nestMilestoneStatus", () => {
     expect(nestMilestoneStatus("rejected")).toBe("rejected")
   })
   it("maps legacy completed to released", () => {
-    expect(nestMilestoneStatus("completed")).toBe("released")
+    expect(nestMilestoneStatus("completed")).toBe("pending")
   })
   it("handles mixed case", () => {
     expect(nestMilestoneStatus("Approved")).toBe("approved")
@@ -240,7 +242,7 @@ describe("safeMapStatus", () => {
   it("returns mapped value for valid input", () => {
     expect(safeMapStatus("pending", twMilestoneStatus, "pending")).toBe("pending")
     expect(safeMapStatus("released", twMilestoneStatus, "pending")).toBe("released")
-    expect(safeMapStatus("completed", twMilestoneStatus, "pending")).toBe("released")
+    expect(safeMapStatus("completed", twMilestoneStatus, "approved")).toBe("pending")
   })
   it("returns fallback when mapper returns null", () => {
     expect(safeMapStatus("unknown", twMilestoneStatus, "approved")).toBe("approved")
@@ -253,5 +255,16 @@ describe("safeMapStatus", () => {
   })
   it("returns fallback for empty string input", () => {
     expect(safeMapStatus("", twMilestoneStatus, "released")).toBe("released")
+  })
+})
+
+describe("allMilestonesReleased", () => {
+  it("is false for an agreement with no milestones", () => {
+    expect(allMilestonesReleased([])).toBe(false)
+    expect(allMilestonesReleased(undefined)).toBe(false)
+  })
+  it("is true only when every milestone is released", () => {
+    expect(allMilestonesReleased([{ status: "released" }, { status: "released" }])).toBe(true)
+    expect(allMilestonesReleased([{ status: "released" }, { status: "pending" }])).toBe(false)
   })
 })

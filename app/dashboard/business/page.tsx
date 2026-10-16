@@ -349,7 +349,7 @@ import type {
   AgreementWithParticipants,
   AgreementStatus as NestAgreementStatus,
 } from "@/lib/actions/agreements"
-import type { MilestoneStatus } from "@/lib/types/status"
+import { allMilestonesReleased, type MilestoneStatus } from "@/lib/types/status"
 import {
   agreementsRefreshInterval,
   fetchEscrowIndex,
@@ -1530,9 +1530,7 @@ function BusinessDashboardPage() {
     if (statusFilter !== "all") {
       list = list.filter((a) => {
         const allReleased =
-          a.milestones &&
-          a.milestones.length > 0 &&
-          a.milestones.every((m) => m.status === "released")
+          a.milestones && a.milestones.length > 0 && allMilestonesReleased(a.milestones)
         const actualStatus = allReleased ? "released" : a.status
         return actualStatus === statusFilter
       })
@@ -1555,7 +1553,7 @@ function BusinessDashboardPage() {
   const statusCounts = useMemo(() => {
     const counts = { all: agreements.length, funded: 0, in_progress: 0, released: 0 }
     agreements.forEach((agr) => {
-      const allReleased = agr.milestones.every((m) => m.status === "released")
+      const allReleased = allMilestonesReleased(agr.milestones)
       const s = allReleased ? "released" : agr.status
       if (s in counts) counts[s as keyof typeof counts]++
     })
@@ -2231,7 +2229,7 @@ function BusinessDashboardPage() {
                       </div>
                       <div className="flex flex-col gap-3">
                         {agreements.slice(0, 4).map((agr) => {
-                          const allReleased = agr.milestones.every((m) => m.status === "released")
+                          const allReleased = allMilestonesReleased(agr.milestones)
                           const effectiveStatus = allReleased ? "released" : agr.status
                           const st = statusConfig[effectiveStatus] || statusConfig.funded
                           return (
@@ -2376,7 +2374,7 @@ function BusinessDashboardPage() {
 
                   const agr = agreements.find((a) => a.id === viewingAgreement)
                   if (!agr) return null
-                  const allReleased = agr.milestones.every((m) => m.status === "released")
+                  const allReleased = allMilestonesReleased(agr.milestones)
                   const allApproved = agr.milestones.every(
                     (m) => m.status === "approved" || m.status === "released",
                   )

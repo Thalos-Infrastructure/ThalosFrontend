@@ -65,7 +65,10 @@ export function mapTwEscrowToAgreementView(
   const balanceNum = Number(escrow.balance || 0)
 
   const milestones: AgreementViewMilestone[] = milestonesRaw.map((m, index) => {
-    const released = Boolean(m.flags?.released)
+    // Release is a flag, never the status text. A single-release escrow flags the
+    // escrow, not each milestone.
+    const released =
+      Boolean(m.flags?.released) || (type === "single-release" && Boolean(escrow.flags?.released))
     const approved = Boolean(m.approved || m.flags?.approved)
     const mapped = m.status ? twMilestoneStatus(m.status) : null
     const status: MilestoneStatus = released

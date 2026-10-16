@@ -57,7 +57,7 @@ import { getKycStatus, startKycSession } from "@/lib/api/kyc"
 import { MilestonePrPicker } from "@/components/github/milestone-pr-picker"
 import { AttachedPullRequests } from "@/components/github/attached-prs"
 import { getAttachedPrs, type GithubPullRequest } from "@/lib/api/github"
-import type { MilestoneStatus } from "@/lib/types/status"
+import { allMilestonesReleased, type MilestoneStatus } from "@/lib/types/status"
 import {
   isKycVerified,
   canStartKycSession,
@@ -813,7 +813,9 @@ function SellerMilestoneList({
       setEvidenceError(t(`flow.evidenceBlocked.${evidencePermission.reason}`))
       return
     }
-    if (agr.nextAction && agr.nextAction !== "submit_evidence") {
+    // Strict: a missing nextAction is not permission. The contract accepts
+    // evidence on an unfunded escrow, so this (and the backend) must refuse it.
+    if (agr.nextAction !== "submit_evidence") {
       setEvidenceError(agr.blockedReason || "Este acuerdo todavía no acepta evidencia.")
       return
     }
@@ -859,6 +861,8 @@ function SellerMilestoneList({
       )}
       {agr.milestones.map((ms, idx) => {
         const hasEvidence = !!submittedEvidence[idx] || !!ms.evidence
+        // nextAction already folds in funding, role and pending evidence.
+        const canSubmitNow = evidencePermission.allowed && agr.nextAction === "submit_evidence"
         return (
           <div
             key={`${agr.id}-ms-${idx}`}
@@ -910,7 +914,7 @@ function SellerMilestoneList({
                   {"$"}
                   {ms.amount} <span className="text-xs font-normal text-white/35">USDC</span>
                 </p>
-                {ms.status === "pending" && !hasEvidence && evidencePermission.allowed && (
+                {ms.status === "pending" && !hasEvidence && canSubmitNow && (
                   <Button
                     size="sm"
                     onClick={() => setExpandedMs(expandedMs === idx ? null : idx)}
@@ -924,6 +928,14 @@ function SellerMilestoneList({
                     {t(`flow.evidenceBlocked.${evidencePermission.reason}`)}
                   </span>
                 )}
+                {ms.status === "pending" &&
+                  !hasEvidence &&
+                  evidencePermission.allowed &&
+                  !canSubmitNow && (
+                    <span className="max-w-[16rem] text-right text-xs text-white/35">
+                      {agr.blockedReason || "Este acuerdo todavía no acepta evidencia."}
+                    </span>
+                  )}
                 {hasEvidence && ms.status !== "released" && (
                   <span className="rounded-full bg-cyan-500/15 px-3 py-1 text-xs font-semibold text-cyan-400 border border-cyan-500/20">
                     {t("flow.evidenceSubmitted")}
@@ -932,48 +944,45 @@ function SellerMilestoneList({
               </div>
             </div>
             {/* Evidence input form (expanded) */}
-            {expandedMs === idx &&
-              ms.status === "pending" &&
-              !hasEvidence &&
-              evidencePermission.allowed && (
-                <div className="mt-4 rounded-xl border border-white/[0.06] bg-[#0a0a0c]/50 p-4">
-                  <label className="mb-2 block text-xs font-medium uppercase tracking-wider text-white/40">
-                    {t("flow.evidenceLink")}
-                  </label>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={evidenceInputs[idx] || ""}
-                      onChange={(e) =>
-                        setEvidenceInputs((prev) => ({ ...prev, [idx]: e.target.value }))
-                      }
-                      placeholder={t("flow.evidencePlaceholder")}
-                      className="h-10 flex-1 rounded-lg border border-white/15 bg-[#0a0a0c]/50 px-3 text-sm text-white placeholder:text-white/25 focus:border-cyan-500/50 focus:outline-none focus:ring-1 focus:ring-cyan-500/20 transition-all"
-                    />
-                    <Button
-                      size="sm"
-                      onClick={() => handleSubmitEvidence(idx)}
-                      disabled={!evidenceInputs[idx]?.trim() || submitting === idx}
-                      className="rounded-lg bg-cyan-500 px-4 text-xs font-semibold text-white hover:bg-cyan-600 disabled:opacity-30"
-                    >
-                      {submitting === idx ? "..." : t("flow.submit")}
-                    </Button>
-                  </div>
-                  {/* GitHub-backed evidence: verified merged PRs scoped to the project repo (#128) */}
-                  {githubAgreementId ? (
-                    <div className="mt-3 border-t border-white/[0.06] pt-3">
-                      <MilestonePrPicker
-                        agreementId={githubAgreementId}
-                        milestoneIndex={idx}
-                        walletAddress={walletAddress ?? undefined}
-                        token={token ?? undefined}
-                        attached={attachedPrs[idx] ?? []}
-                        onAttached={(prs) => setAttachedPrs((prev) => ({ ...prev, [idx]: prs }))}
-                      />
-                    </div>
-                  ) : null}
+            {expandedMs === idx && ms.status === "pending" && !hasEvidence && canSubmitNow && (
+              <div className="mt-4 rounded-xl border border-white/[0.06] bg-[#0a0a0c]/50 p-4">
+                <label className="mb-2 block text-xs font-medium uppercase tracking-wider text-white/40">
+                  {t("flow.evidenceLink")}
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={evidenceInputs[idx] || ""}
+                    onChange={(e) =>
+                      setEvidenceInputs((prev) => ({ ...prev, [idx]: e.target.value }))
+                    }
+                    placeholder={t("flow.evidencePlaceholder")}
+                    className="h-10 flex-1 rounded-lg border border-white/15 bg-[#0a0a0c]/50 px-3 text-sm text-white placeholder:text-white/25 focus:border-cyan-500/50 focus:outline-none focus:ring-1 focus:ring-cyan-500/20 transition-all"
+                  />
+                  <Button
+                    size="sm"
+                    onClick={() => handleSubmitEvidence(idx)}
+                    disabled={!evidenceInputs[idx]?.trim() || submitting === idx}
+                    className="rounded-lg bg-cyan-500 px-4 text-xs font-semibold text-white hover:bg-cyan-600 disabled:opacity-30"
+                  >
+                    {submitting === idx ? "..." : t("flow.submit")}
+                  </Button>
                 </div>
-              )}
+                {/* GitHub-backed evidence: verified merged PRs scoped to the project repo (#128) */}
+                {githubAgreementId ? (
+                  <div className="mt-3 border-t border-white/[0.06] pt-3">
+                    <MilestonePrPicker
+                      agreementId={githubAgreementId}
+                      milestoneIndex={idx}
+                      walletAddress={walletAddress ?? undefined}
+                      token={token ?? undefined}
+                      attached={attachedPrs[idx] ?? []}
+                      onAttached={(prs) => setAttachedPrs((prev) => ({ ...prev, [idx]: prs }))}
+                    />
+                  </div>
+                ) : null}
+              </div>
+            )}
             {/* Show submitted evidence */}
             {(hasEvidence || (ms.status === "released" && ms.evidence)) && (
               <div className="mt-3 rounded-lg border border-cyan-500/10 bg-cyan-500/5 px-3 py-2">
@@ -1306,9 +1315,7 @@ function PersonalDashboardPage() {
     if (statusFilter !== "all") {
       list = list.filter((a) => {
         const allReleased =
-          a.milestones &&
-          a.milestones.length > 0 &&
-          a.milestones.every((m) => m.status === "released")
+          a.milestones && a.milestones.length > 0 && allMilestonesReleased(a.milestones)
         const actualStatus = allReleased ? "released" : a.status
         return actualStatus === statusFilter
       })
@@ -1349,7 +1356,7 @@ function PersonalDashboardPage() {
   const statusCounts = useMemo(() => {
     const counts = { all: agreements.length, funded: 0, in_progress: 0, released: 0 }
     agreements.forEach((agr) => {
-      const allReleased = agr.milestones.every((m) => m.status === "released")
+      const allReleased = allMilestonesReleased(agr.milestones)
       const s = allReleased ? "released" : agr.status
       if (s in counts) counts[s as keyof typeof counts]++
     })
@@ -2705,7 +2712,7 @@ function PersonalDashboardPage() {
                 </div>
                 <div className="flex flex-col gap-3">
                   {agreements.slice(0, 3).map((agr) => {
-                    const allReleased = agr.milestones.every((m) => m.status === "released")
+                    const allReleased = allMilestonesReleased(agr.milestones)
                     const effectiveStatus = allReleased ? "released" : agr.status
                     const st = statusConfig[effectiveStatus] || statusConfig.funded
                     return (
@@ -2822,7 +2829,7 @@ function PersonalDashboardPage() {
                 agreementByAnyId.get(viewingAgreement) ??
                 approverEscrows.find((a) => a.id === viewingAgreement)
               if (!agr) return null
-              const allReleased = agr.milestones.every((m) => m.status === "released")
+              const allReleased = allMilestonesReleased(agr.milestones)
               const allApproved = agr.milestones.every(
                 (m) => m.status === "approved" || m.status === "released",
               )

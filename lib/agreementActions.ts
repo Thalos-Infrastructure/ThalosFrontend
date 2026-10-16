@@ -517,6 +517,10 @@ export async function changeMilestoneStatusAgreement({
       token,
     )
     onStatus?.("confirmed")
+    // The escrow index is cached for a few seconds; without this the re-read
+    // after evidence returns the pre-evidence escrow and the button comes back.
+    const { invalidateEscrowIndex } = await import("@/lib/agreements/reconcile-nest-escrow")
+    invalidateEscrowIndex()
     onSuccess?.()
   } catch (e: any) {
     onStatus?.("error")
