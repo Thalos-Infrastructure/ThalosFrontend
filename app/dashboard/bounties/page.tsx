@@ -173,6 +173,11 @@ function FormInput({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
+        // A numeric field has nothing the browser's saved addresses or emails
+        // can usefully fill, and offering them drops a suggestion list over the
+        // rest of the form. `inputMode` also gets a phone keypad on mobile.
+        autoComplete={type === "number" ? "off" : undefined}
+        inputMode={type === "number" ? "decimal" : undefined}
         className="h-12 w-full rounded-xl border border-border/40 bg-card/30 px-4 text-sm text-foreground placeholder:text-muted-foreground/40 focus:border-[#f0b400]/50 focus:outline-none focus:ring-2 focus:ring-[#f0b400]/15 transition-all duration-200"
       />
     </div>

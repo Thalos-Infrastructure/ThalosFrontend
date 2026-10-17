@@ -35,7 +35,9 @@ ThalosBackend (`/v1`) which relays to Trustless Work. Runs at http://localhost:3
 `SUPABASE_SERVICE_ROLE_KEY`, `JWT_SECRET` (HS256; **must match ThalosBackend**),
 `SUPABASE_JWT_SECRET` (only for Supabase-Auth token verification), `THALOS_INTERNAL_SECRET`
 (must match backend), `NEXT_PUBLIC_API_URL` (default `http://localhost:3001/v1`),
-`RESEND_API_KEY`, `NEXT_PUBLIC_STELLAR_NETWORK` (TESTNET). Most `NEXT_PUBLIC_*` have working
+`RESEND_API_KEY`, `NEXT_PUBLIC_STELLAR_NETWORK` (TESTNET). There is no
+`NEXT_PUBLIC_TRUSTLESSWORK_API_KEY` any more — the Trustless Work key lives only in
+ThalosBackend. Most `NEXT_PUBLIC_*` have working
 defaults in `lib/config.ts`. There is **no `.env.example`** despite the README linking one.
 
 `NEXT_PUBLIC_*` values are inlined at build time — changing one needs a dev-server restart,
@@ -124,25 +126,25 @@ clear Thalos's own modals).
 URL `API_URL`, Bearer token passed **explicitly** (callers read `token` from `useAuthStore`);
 the header is simply omitted when there is no token.
 
-`services/escrowMigration.ts` is a migration wrapper with per-operation flags
-configured by `NEXT_PUBLIC_ESCROW_MIGRATION_*_USE_NEST`. See
-`docs/escrow-migration.md` for the full list, defaults, and telemetry schema:
+`services/escrowService.ts` is the **only** entry point for escrow operations, and every
+one of them goes through the Nest backend, which relays to Trustless Work with a
+server-side API key. See `docs/escrow.md` for the route table and telemetry schema.
 
-- **Reads** (`getEscrowsBySigner`, `getEscrowsByRole`) → backend by default, **token
-  optional**. The backend exposes them as `@Public()`, so a freshly connected wallet
-  lists its agreements with no signature. Setting a read flag to `false` explicitly
-  selects the direct Trustless Work path; failures never auto-fallback between paths.
+- **Reads** (`getEscrowsBySigner`, `getEscrowsByRole`) → token optional. The backend
+  exposes them as `@Public()`, so a freshly connected wallet lists its agreements with
+  no signature prompt.
 - **Writes** (create, fund, approve, changeMilestoneStatus, release, dispute,
-  sendTransaction) → default to
-  `false`, so they call `services/trustlessworkService.ts`, which hits
-  `dev.api.trustlesswork.com` **straight from the browser**. Enable each Nest path
-  independently during rollout.
+  sendTransaction) → require the app JWT. With no session they return
+  `{ success: false }` without calling the backend; there is no unauthenticated path
+  that moves funds.
 
-> ⚠️ `services/trustlessworkService.ts` carries a **hardcoded Trustless Work API key** as a
-> fallback for `NEXT_PUBLIC_TRUSTLESSWORK_API_KEY`. It is committed to a public repo and
-> shipped in the browser bundle. Rotate it, and migrate each write to the backend relay
-> (`ThalosBackend/src/internal-trustless/`) — that relay exists precisely so the key stays
-> server-side. Do not add new direct-to-TW calls.
+> The browser used to call `dev.api.trustlesswork.com` directly, selected per operation
+> by `NEXT_PUBLIC_ESCROW_MIGRATION_*` flags that defaulted **every write** to that path.
+> It shipped the API key in the client bundle and had no retry, rate limiting or place
+> to enforce authorization. Removed in September 2026, along with
+> `services/trustlessworkService.ts` and the flags. **Do not add a direct-to-Trustless-Work
+> call.** If a route is missing, add it in `ThalosBackend/src/internal-trustless/` and
+> call it from `lib/api/escrow.ts`.
 
 ## Gotchas
 

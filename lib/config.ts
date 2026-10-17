@@ -5,61 +5,6 @@ export const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://www.thalospla
 export const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/v1"
 export const APP_NAME = "Thalos"
 
-/**
- * Escrow migration routing.
- *
- * `true` sends the operation through the Nest backend; `false` keeps the
- * direct Trustless Work path. These are deliberately explicit references to
- * `NEXT_PUBLIC_*` variables so Next can inline them in client bundles.
- *
- * Defaults preserve the pre-cutover behavior: reads use Nest and writes use
- * Trustless Work. Invalid values also fall back safely instead of enabling a
- * route accidentally.
- */
-function migrationFlag(value: string | undefined, fallback: boolean): boolean {
-  if (value === "true") return true
-  if (value === "false") return false
-  return fallback
-}
-
-export const ESCROW_MIGRATION_FLAGS = Object.freeze({
-  getEscrowsBySigner: migrationFlag(
-    process.env.NEXT_PUBLIC_ESCROW_MIGRATION_GET_ESCROWS_BY_SIGNER_USE_NEST,
-    true,
-  ),
-  getEscrowsByRole: migrationFlag(
-    process.env.NEXT_PUBLIC_ESCROW_MIGRATION_GET_ESCROWS_BY_ROLE_USE_NEST,
-    true,
-  ),
-  createAgreement: migrationFlag(
-    process.env.NEXT_PUBLIC_ESCROW_MIGRATION_CREATE_AGREEMENT_USE_NEST,
-    false,
-  ),
-  fundEscrow: migrationFlag(process.env.NEXT_PUBLIC_ESCROW_MIGRATION_FUND_ESCROW_USE_NEST, false),
-  approveMilestone: migrationFlag(
-    process.env.NEXT_PUBLIC_ESCROW_MIGRATION_APPROVE_MILESTONE_USE_NEST,
-    false,
-  ),
-  changeMilestoneStatus: migrationFlag(
-    process.env.NEXT_PUBLIC_ESCROW_MIGRATION_CHANGE_MILESTONE_STATUS_USE_NEST,
-    false,
-  ),
-  releaseFunds: migrationFlag(
-    process.env.NEXT_PUBLIC_ESCROW_MIGRATION_RELEASE_FUNDS_USE_NEST,
-    false,
-  ),
-  disputeMilestone: migrationFlag(
-    process.env.NEXT_PUBLIC_ESCROW_MIGRATION_DISPUTE_MILESTONE_USE_NEST,
-    false,
-  ),
-  sendTransaction: migrationFlag(
-    process.env.NEXT_PUBLIC_ESCROW_MIGRATION_SEND_TRANSACTION_USE_NEST,
-    false,
-  ),
-})
-
-export type EscrowMigrationOperation = keyof typeof ESCROW_MIGRATION_FLAGS
-
 // Mock/demo agreement toggle — when OFF (default), only real on-chain agreements
 // are shown on the dashboards.
 export const SHOW_MOCKED_AGREEMENTS = process.env.NEXT_PUBLIC_SHOW_MOCKED_AGREEMENTS === "true"
@@ -71,11 +16,6 @@ export const EMAIL_REPLY_TO = process.env.EMAIL_REPLY_TO || "support@thalosplatf
 // Stellar Explorer — la base por red vive en STELLAR_NETWORKS (más abajo); esta
 // variable solo permite apuntar a otro explorer distinto del predeterminado.
 
-export const TRUSTLINE_USDC = {
-  symbol: "USDC",
-  address: "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5",
-}
-
 // Stellar Network Configuration
 //
 // Fuente única de verdad para la red: todo lo que depende de ella sale de esta tabla
@@ -86,11 +26,14 @@ const STELLAR_NETWORKS = {
     passphrase: "Public Global Stellar Network ; September 2015",
     horizonUrl: "https://horizon.stellar.org",
     explorerBaseUrl: "https://stellar.expert/explorer/public/contract/",
+    /** Circle USDC issuer (G…) — never the escrow contract C-address. */
+    usdcIssuer: "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN",
   },
   TESTNET: {
     passphrase: "Test SDF Network ; September 2015",
     horizonUrl: "https://horizon-testnet.stellar.org",
     explorerBaseUrl: "https://stellar.expert/explorer/testnet/contract/",
+    usdcIssuer: "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5",
   },
 } as const
 
@@ -103,6 +46,23 @@ export const STELLAR_NETWORK: StellarNetwork =
   process.env.NEXT_PUBLIC_STELLAR_NETWORK === "MAINNET" ? "MAINNET" : "TESTNET"
 
 const stellarNetworkConfig = STELLAR_NETWORKS[STELLAR_NETWORK]
+
+/**
+ * Thalos platform fee recipient injected into TW V1 roles.platformAddress.
+ * Override with NEXT_PUBLIC_PLATFORM_ADDRESS. Canonical (Manu / ops): GBMJT…
+ */
+export const PLATFORM_ADDRESS =
+  process.env.NEXT_PUBLIC_PLATFORM_ADDRESS ||
+  "GBMJTAVJFAKMKLXYXGXACBFGIFS62A7DT46PFHQ3W4RG7CG4HVESSNRY"
+
+export const DISPUTE_RESOLVER =
+  process.env.NEXT_PUBLIC_DISPUTE_RESOLVER ||
+  "GB6MP3L6UGIDY6O6MXNLSKHLXT2T2TCMPZIZGUTOGYKOLHW7EORWMFCK"
+
+export const TRUSTLINE_USDC = {
+  symbol: "USDC",
+  address: process.env.NEXT_PUBLIC_TRUSTLINE_USDC_ADDRESS || stellarNetworkConfig.usdcIssuer,
+}
 
 export const STELLAR_NETWORK_PASSPHRASE = stellarNetworkConfig.passphrase
 export const HORIZON_URL = stellarNetworkConfig.horizonUrl

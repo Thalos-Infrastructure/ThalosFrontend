@@ -1,7 +1,7 @@
 "use client"
 
-import { ApproverAgreementDetail } from "./ApproverAgreementDetail"
-import React, { useState, useEffect, useCallback, useId, useRef, useMemo } from "react"
+import { canSubmitEvidence } from "@/lib/helpers/evidencePermission"
+import React, { useState, useEffect, useCallback, useId, useRef, useMemo, Suspense } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -14,7 +14,8 @@ import { useSignOut } from "@/lib/use-sign-out"
 import { WalletGuard, WalletPrompt } from "@/components/shared/wallet-guard"
 import { useAuthStore } from "@/lib/auth-store"
 import { WalletAddress } from "@/components/ui/wallet-address"
-import { AlertTriangle } from "lucide-react"
+import { AlertTriangle, RefreshCw, Pin, PanelLeftOpen } from "lucide-react"
+import { fundAndSignEscrow } from "@/lib/agreementActions"
 import { Footer } from "@/components/footer"
 import { RampsSection } from "@/components/ramps/ramps-section"
 import { InlineOnramp } from "@/components/ramps/inline-onramp"
@@ -45,12 +46,7 @@ import {
   AreaChart,
   Area,
 } from "recharts"
-import {
-  createAgreement,
-  sendTransaction,
-  AgreementPayload,
-  approveMilestone,
-} from "@/services/escrowMigration"
+import { createAgreement, sendTransaction, AgreementPayload } from "@/services/escrowService"
 import {
   STELLAR_EXPLORER_BASE_URL,
   STELLAR_EXPLORER_ACCOUNT_BASE_URL,
@@ -61,7 +57,7 @@ import { getKycStatus, startKycSession } from "@/lib/api/kyc"
 import { MilestonePrPicker } from "@/components/github/milestone-pr-picker"
 import { AttachedPullRequests } from "@/components/github/attached-prs"
 import { getAttachedPrs, type GithubPullRequest } from "@/lib/api/github"
-import type { MilestoneStatus } from "@/lib/types/status"
+import { allMilestonesReleased, type MilestoneStatus } from "@/lib/types/status"
 import {
   isKycVerified,
   canStartKycSession,
@@ -155,6 +151,11 @@ function FormInput({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         disabled={disabled}
+        // A numeric field has nothing the browser's saved addresses or emails
+        // can usefully fill, and offering them drops a suggestion list over the
+        // rest of the form. `inputMode` also gets a phone keypad on mobile.
+        autoComplete={type === "number" ? "off" : undefined}
+        inputMode={type === "number" ? "decimal" : undefined}
         className={cn(
           "h-12 w-full rounded-xl border border-border/40 bg-card/30 px-4 text-sm text-foreground placeholder:text-muted-foreground/40 focus:border-[#f0b400]/50 focus:outline-none focus:ring-2 focus:ring-[#f0b400]/15 transition-all duration-200",
           disabled && "opacity-50 cursor-not-allowed",
@@ -244,7 +245,7 @@ function FormSelect({
   )
 }
 
-/* ── Constants ── */
+/* ─������������� Constants ── */
 const shortAddress = (address: string) => `${address.slice(0, 4)}...${address.slice(-4)}`
 
 /** Horizon returns "12.3456789"; the UI shows two decimals, or "—" while unknown. */
@@ -284,6 +285,18 @@ interface Agreement {
   /** On-chain / Nest payee — must match TW serviceProvider to submit evidence. */
   serviceProvider?: string
   role?: "buyer" | "seller"
+  /** Wallet that created the agreement in Thalos (Nest `created_by`). */
+  createdBy?: string
+  /** Wallet expected to fund: TW approver (Thalos rule; TW itself accepts any funder). */
+  payer?: string
+  /** Shared view-model fields (FE provisional until Nest owns them). */
+  nextAction?: string
+  blockedReason?: string | null
+  balance?: string
+  approver?: string
+  releaseSigner?: string
+  disputeResolver?: string
+  released?: boolean
 }
 
 const initialAgreements: Agreement[] = []
@@ -291,7 +304,7 @@ const initialAgreements: Agreement[] = []
 // Agreements listing is sourced from Nest (source of truth); TW escrow reads are
 // still used only for the approver tab, which needs live on-chain milestone state
 // to drive the approve/release actions.
-import { getAgreementsByWallet } from "@/lib/actions/agreements"
+import { getAgreementsByWallet } from "@/lib/agreements/fetch-wallet-agreements"
 import type {
   AgreementWithParticipants,
   AgreementStatus as NestAgreementStatus,
@@ -302,7 +315,7 @@ const NEST_STATUS_TO_UI: Record<NestAgreementStatus, string> = {
   funded: "funded",
   active: "in_progress",
   completed: "released",
-  disputed: "awaiting",
+  disputed: "disputed",
   resolved: "released",
   cancelled: "cancelled",
 }
@@ -316,20 +329,26 @@ function asAmountString(value: unknown): string {
 function mapNestAgreementToUi(
   agreement: AgreementWithParticipants,
   currentWallet: string | null,
+  escrowIndex: EscrowIndex | null,
 ): Agreement {
   const isMulti = agreement.agreement_type === "multi"
   const payee = agreement.participants?.find((p) => p.role === "payee")?.wallet_address
   const counterparty = agreement.participants?.find(
     (p) => p.wallet_address !== currentWallet,
   )?.wallet_address
-  const isCreator = Boolean(currentWallet && agreement.created_by === currentWallet)
-  const isPayee = Boolean(currentWallet && payee && payee === currentWallet)
+  const live = reconcileWithEscrow({
+    contractId: agreement.contract_id,
+    nestUiStatus: NEST_STATUS_TO_UI[agreement.status] ?? agreement.status,
+    createdAt: agreement.created_at,
+    walletAddress: currentWallet,
+    index: escrowIndex,
+  })
 
   return {
     id: agreement.contract_id || agreement.id,
     nestId: agreement.id,
     title: agreement.title,
-    status: NEST_STATUS_TO_UI[agreement.status] ?? agreement.status,
+    status: live.status,
     type: isMulti ? "Multi Release" : "Single Release",
     counterparty: counterparty
       ? `${counterparty.slice(0, 8)}...`
@@ -338,15 +357,30 @@ function mapNestAgreementToUi(
     amount: asAmountString(agreement.amount),
     currency: agreement.asset || "USDC",
     date: agreement.created_at.split("T")[0],
-    milestones: agreement.milestones.map((m) => ({
+    milestones: agreement.milestones.map((m, idx) => ({
       description: m.description,
       amount: asAmountString(m.amount),
-      status: m.status,
+      status: live.milestoneStatuses?.[idx] ?? m.status,
+      evidence: live.milestoneEvidence?.[idx],
     })),
-    receiver: payee || counterparty || "",
-    serviceProvider: payee || undefined,
-    // Prefer Nest participant role; fall back to creator = buyer.
-    role: isPayee ? "seller" : isCreator ? "buyer" : "seller",
+    receiver: live.receiver || payee || counterparty || "",
+    // On-chain serviceProvider only — TW rejects evidence from any other wallet.
+    serviceProvider: live.serviceProvider,
+    role:
+      live.role ??
+      roleFromNestParticipants(agreement.participants, agreement.created_by, currentWallet),
+    createdBy: agreement.created_by,
+    payer:
+      live.approver ||
+      agreement.participants?.find((p) => p.role === "payer" || p.role === "approver")
+        ?.wallet_address,
+    nextAction: live.nextAction,
+    blockedReason: live.blockedReason,
+    balance: live.balance,
+    approver: live.approver,
+    releaseSigner: live.releaseSigner,
+    disputeResolver: live.disputeResolver,
+    released: live.released,
   }
 }
 
@@ -378,73 +412,26 @@ interface TrustlessEscrow {
   }>
 }
 
-// Raw Trustless Work payload: camelCase and carrying on-chain flags, so it is
-// not the snake_case `Escrow` from lib/api/escrow.
-function mapEscrowToApproverAgreement(escrow: TrustlessEscrow) {
-  const isMulti = escrow.type === "multi-release"
-  const amount = isMulti
-    ? (escrow.milestones || [])
-        .reduce((sum, m) => sum + (typeof m.amount === "number" ? m.amount : 0), 0)
-        .toString()
-    : escrow.amount
-      ? escrow.amount.toString()
-      : ""
-
-  const milestones = escrow.milestones || []
-  const anyUnapproved = milestones.some((m) => m.approved === false)
-  const allUnapproved = milestones.length > 0 && milestones.every((m) => m.approved === false)
-  const balanceNum = Number(escrow.balance)
-  const amountNum = Number(amount)
-  let status = "funded"
-  if (escrow.flags?.released) {
-    status = "released"
-  } else if (anyUnapproved && balanceNum < amountNum) {
-    status = "pending"
-  } else if (allUnapproved && balanceNum >= amountNum) {
-    status = "funded"
-  }
-
-  return {
-    id: escrow.contractId,
-    title: escrow.title ?? "-",
-    status,
-    type: (isMulti ? "Multi Release" : "Single Release") as Agreement["type"],
-    counterparty: escrow.roles?.serviceProvider
-      ? `${escrow.roles.serviceProvider.slice(0, 8)}...`
-      : "-",
-    amount,
-    currency: "USDC",
-    date: escrow.createdAt?._seconds
-      ? new Date(escrow.createdAt._seconds * 1000).toISOString().split("T")[0]
-      : new Date().toISOString().split("T")[0],
-    milestones: milestones.map((m) => ({
-      approved: m.approved,
-      description: m.description ?? "",
-      amount:
-        typeof m.amount === "number" && m.amount !== undefined
-          ? m.amount.toString()
-          : !isMulti && escrow.amount
-            ? escrow.amount.toString()
-            : "",
-      status: m.flags?.released
-        ? "released"
-        : m.flags?.approved
-          ? "approved"
-          : m.status || "pending",
-      evidence: m.evidence,
-    })),
-    receiver: escrow.roles?.receiver || escrow.roles?.serviceProvider || "-",
-    balance: escrow.balance,
-    serviceProvider: escrow.roles?.serviceProvider || "-",
-    approver: escrow.roles?.approver,
-    releaseSigner: escrow.roles?.releaseSigner,
-    disputeResolver: escrow.roles?.disputeResolver,
-    released: escrow.flags?.released ?? false,
-    role: "buyer" as const,
-  }
+// Raw Trustless Work payload → shared AgreementViewModel → legacy list row.
+function mapEscrowToApproverAgreement(escrow: TrustlessEscrow, walletAddress?: string | null) {
+  const view = mapTwEscrowToAgreementView(escrow, walletAddress)
+  return agreementViewToLegacyListItem(view)
 }
 
 import { statusConfig } from "./statusConfig"
+import { useDashboardNav } from "@/lib/dashboard-nav"
+import {
+  agreementViewToLegacyListItem,
+  mapTwEscrowToAgreementView,
+} from "@/lib/agreements/map-tw-escrow"
+import { formatNextActionLabel } from "@/lib/types/agreement-view"
+import {
+  agreementsRefreshInterval,
+  fetchEscrowIndex,
+  reconcileWithEscrow,
+  roleFromNestParticipants,
+  type EscrowIndex,
+} from "@/lib/agreements/reconcile-nest-escrow"
 
 /* ── Chart Data ── */
 const monthlyData = [
@@ -694,20 +681,90 @@ const moreSidebarItems = [
   },
 ]
 
+function BuyerFundingAction({
+  agr,
+  onRefresh,
+}: {
+  agr: Agreement
+  onRefresh: () => Promise<void>
+}) {
+  const { openWalletModal } = useStellarWallet()
+  const walletAddress = useCurrentAddress()
+  const { token } = useAuthStore()
+  const [funding, setFunding] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState(false)
+  const [pendingConfirmation, setPendingConfirmation] = useState(false)
+
+  const handleFund = async () => {
+    if (!walletAddress) return setError("Connect your wallet to fund this agreement.")
+    setFunding(true)
+    setError(null)
+    setPendingConfirmation(false)
+    await fundAndSignEscrow({
+      contractId: agr.id,
+      amount: String(agr.amount),
+      serviceType: agr.type === "Multi Release" ? "multi-release" : "single-release",
+      walletAddress,
+      token,
+      openWalletModal,
+      setFunding,
+      setError,
+      setSuccess,
+      agreementId: agr.nestId,
+      onPendingConfirmation: () => setPendingConfirmation(true),
+    })
+    await onRefresh()
+  }
+
+  return (
+    <div className="rounded-xl border border-sky-400/20 bg-sky-400/5 p-4">
+      <p className="text-sm font-semibold text-white">This agreement is awaiting funding</p>
+      <p className="mt-1 text-xs text-white/50">
+        Fund it from your connected wallet to start the work.
+      </p>
+      {error && <p className="mt-2 text-xs text-rose-400">{error}</p>}
+      {pendingConfirmation && !success && (
+        <p role="status" className="mt-2 text-xs text-sky-300">
+          Transaction submitted. Waiting for the network to confirm the funds — this view refreshes
+          automatically.
+        </p>
+      )}
+      {success ? (
+        <p className="mt-3 text-sm font-semibold text-emerald-400">
+          Agreement funded successfully.
+        </p>
+      ) : (
+        <Button
+          onClick={handleFund}
+          disabled={funding}
+          className="mt-3 bg-[#f0b400] text-[#0c1220] hover:bg-[#e5ab00]"
+        >
+          {funding ? "Funding..." : "Fund Agreement"}
+        </Button>
+      )}
+    </div>
+  )
+}
+
 /* ── Seller Evidence Submission Component ── */
 function SellerMilestoneList({
   agr,
-  agreements,
-  setAgreements,
   t,
+  onRefresh,
 }: {
   agr: Agreement
-  agreements: Agreement[]
-  setAgreements: React.Dispatch<React.SetStateAction<Agreement[]>>
   t: (k: string) => string
+  onRefresh: () => Promise<void>
 }) {
   const [evidenceInputs, setEvidenceInputs] = React.useState<Record<number, string>>({})
-  const [submittedEvidence, setSubmittedEvidence] = React.useState<Record<number, string>>({})
+  const [submittedEvidence, setSubmittedEvidence] = React.useState<Record<number, string>>(() =>
+    Object.fromEntries(
+      agr.milestones
+        .map((milestone, index) => [index, milestone.evidence || ""])
+        .filter(([, evidence]) => evidence),
+    ),
+  )
   const [submitting, setSubmitting] = React.useState<number | null>(null)
   const [expandedMs, setExpandedMs] = React.useState<number | null>(null)
   const [attachedPrs, setAttachedPrs] = React.useState<Record<number, GithubPullRequest[]>>({})
@@ -719,6 +776,14 @@ function SellerMilestoneList({
   const { changeMilestoneStatusAgreement } = require("@/lib/agreementActions")
   const { token } = useAuthStore()
   const githubAgreementId = agr.nestId
+  // Only the escrow's service provider may submit evidence; the backend rejects
+  // anyone else. Decide before rendering the button, not after the user has
+  // typed evidence and been asked to sign.
+  const evidencePermission = canSubmitEvidence({
+    serviceProvider: agr.serviceProvider,
+    walletAddress,
+  })
+  const [evidenceError, setEvidenceError] = React.useState<string | null>(null)
 
   // Best-effort load of any GitHub PRs already attached to each milestone, so
   // existing evidence renders. Backed by the Nest route (ThalosBackend#157),
@@ -743,14 +808,15 @@ function SellerMilestoneList({
   const handleSubmitEvidence = async (idx: number) => {
     const evidence = evidenceInputs[idx]?.trim()
     if (!evidence) return
-    if (!walletAddress) {
-      alert("Conectá o iniciá sesión con la wallet del service provider para enviar evidencia.")
+    setEvidenceError(null)
+    if (!evidencePermission.allowed) {
+      setEvidenceError(t(`flow.evidenceBlocked.${evidencePermission.reason}`))
       return
     }
-    if (agr.serviceProvider && agr.serviceProvider !== walletAddress) {
-      alert(
-        `Solo el service provider on-chain puede enviar evidencia (${agr.serviceProvider.slice(0, 8)}…). Esta sesión es ${walletAddress.slice(0, 8)}…`,
-      )
+    // Strict: a missing nextAction is not permission. The contract accepts
+    // evidence on an unfunded escrow, so this (and the backend) must refuse it.
+    if (agr.nextAction !== "submit_evidence") {
+      setEvidenceError(agr.blockedReason || "Este acuerdo todavía no acepta evidencia.")
       return
     }
     setSubmitting(idx)
@@ -760,30 +826,17 @@ function SellerMilestoneList({
       newEvidence: evidence,
       // Evidence submission marks work done — "released" is the fund-release step.
       newStatus: "completed",
-      serviceProvider: agr.serviceProvider || walletAddress,
+      serviceProvider: evidencePermission.serviceProvider,
       serviceType: agr.type === "Multi Release" ? "multi-release" : "single-release",
       walletAddress,
       token,
       openWalletModal,
       setSubmitting: (v: boolean) => v === false && setSubmitting(null),
-      setError: (msg: string | null) => msg && alert(msg),
-      onSuccess: () => {
+      setError: (msg: string | null) => setEvidenceError(msg),
+      onSuccess: async () => {
+        await onRefresh()
         setSubmittedEvidence((prev) => ({ ...prev, [idx]: evidence }))
         setEvidenceInputs((prev) => ({ ...prev, [idx]: "" }))
-        setAgreements((prev) =>
-          prev.map((a) =>
-            a.id === agr.id
-              ? {
-                  ...a,
-                  milestones: a.milestones.map((m, i) =>
-                    i === idx && m.status === "pending"
-                      ? { ...m, status: "approved" as const, evidence }
-                      : m,
-                  ),
-                }
-              : a,
-          ),
-        )
         setExpandedMs(null)
       },
     })
@@ -791,8 +844,25 @@ function SellerMilestoneList({
 
   return (
     <>
+      {evidenceError && (
+        <div
+          role="alert"
+          className="flex items-start justify-between gap-3 rounded-xl border border-red-500/25 bg-red-500/5 px-4 py-3 text-sm text-red-300"
+        >
+          <span>{evidenceError}</span>
+          <button
+            type="button"
+            onClick={() => setEvidenceError(null)}
+            className="shrink-0 text-xs text-red-300/70 hover:text-red-200"
+          >
+            Cerrar
+          </button>
+        </div>
+      )}
       {agr.milestones.map((ms, idx) => {
-        const hasEvidence = !!submittedEvidence[idx]
+        const hasEvidence = !!submittedEvidence[idx] || !!ms.evidence
+        // nextAction already folds in funding, role and pending evidence.
+        const canSubmitNow = evidencePermission.allowed && agr.nextAction === "submit_evidence"
         return (
           <div
             key={`${agr.id}-ms-${idx}`}
@@ -844,7 +914,7 @@ function SellerMilestoneList({
                   {"$"}
                   {ms.amount} <span className="text-xs font-normal text-white/35">USDC</span>
                 </p>
-                {ms.status === "pending" && !hasEvidence && (
+                {ms.status === "pending" && !hasEvidence && canSubmitNow && (
                   <Button
                     size="sm"
                     onClick={() => setExpandedMs(expandedMs === idx ? null : idx)}
@@ -853,6 +923,19 @@ function SellerMilestoneList({
                     {t("flow.submitEvidence")}
                   </Button>
                 )}
+                {ms.status === "pending" && !hasEvidence && !evidencePermission.allowed && (
+                  <span className="max-w-[16rem] text-right text-xs text-white/35">
+                    {t(`flow.evidenceBlocked.${evidencePermission.reason}`)}
+                  </span>
+                )}
+                {ms.status === "pending" &&
+                  !hasEvidence &&
+                  evidencePermission.allowed &&
+                  !canSubmitNow && (
+                    <span className="max-w-[16rem] text-right text-xs text-white/35">
+                      {agr.blockedReason || "Este acuerdo todavía no acepta evidencia."}
+                    </span>
+                  )}
                 {hasEvidence && ms.status !== "released" && (
                   <span className="rounded-full bg-cyan-500/15 px-3 py-1 text-xs font-semibold text-cyan-400 border border-cyan-500/20">
                     {t("flow.evidenceSubmitted")}
@@ -861,7 +944,7 @@ function SellerMilestoneList({
               </div>
             </div>
             {/* Evidence input form (expanded) */}
-            {expandedMs === idx && ms.status === "pending" && !hasEvidence && (
+            {expandedMs === idx && ms.status === "pending" && !hasEvidence && canSubmitNow && (
               <div className="mt-4 rounded-xl border border-white/[0.06] bg-[#0a0a0c]/50 p-4">
                 <label className="mb-2 block text-xs font-medium uppercase tracking-wider text-white/40">
                   {t("flow.evidenceLink")}
@@ -926,7 +1009,7 @@ function SellerMilestoneList({
 /* ════════════════════════════════════════════════
    PAGE
    ════════════════════════════════════════════════ */
-export default function PersonalDashboardPage() {
+function PersonalDashboardPage() {
   // Prevent duplicate fetches in Strict Mode or double mount
   const fetchedEscrowsRef = React.useRef<string | null>(null)
   const { t } = useLanguage()
@@ -939,7 +1022,8 @@ export default function PersonalDashboardPage() {
   const isExternalWallet = useHasSigningWallet()
   const [loading, setLoading] = useState(false)
 
-  const [activeSection, setActiveSection] = useState("home")
+  const { activeSection, viewingAgreement, setActiveSection, setViewingAgreement } =
+    useDashboardNav("home")
 
   // Session wallet (the one Pollar provisioned, or a Kit wallet with no session)
   // with its on-chain USDC balance. Replaces the hardcoded demo wallets.
@@ -989,6 +1073,8 @@ export default function PersonalDashboardPage() {
     }
   }
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [sidebarPinned, setSidebarPinned] = useState(true)
+  const [sidebarHovered, setSidebarHovered] = useState(false)
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
   const [agreements, setAgreements] = useState<Agreement[]>(initialAgreements)
   const [agreementsLoading, setAgreementsLoading] = useState(false)
@@ -999,6 +1085,11 @@ export default function PersonalDashboardPage() {
   const [userProfile, setUserProfile] = useState<Profile | null>(null)
   const [showEditProfile, setShowEditProfile] = useState(false)
   const [showAiAssistant, setShowAiAssistant] = useState(false)
+
+  useEffect(() => {
+    const savedPinned = window.localStorage.getItem("thalos-sidebar-pinned")
+    if (savedPinned !== null) setSidebarPinned(savedPinned === "true")
+  }, [])
 
   // Fetch wallets with agreements
   useEffect(() => {
@@ -1069,7 +1160,8 @@ export default function PersonalDashboardPage() {
   }, [userId, refreshKycStatus])
 
   useEffect(() => {
-    if (!userId || kycStatus === "verified") return
+    // Only a submitted review can change on its own; other states need user action.
+    if (!userId || kycStatus !== "in_review") return
     const interval = window.setInterval(() => {
       void refreshKycStatus(userId)
     }, 15000)
@@ -1117,6 +1209,17 @@ export default function PersonalDashboardPage() {
   const [walletFilter, setWalletFilter] = useState<string | null>(null)
   const ITEMS_PER_PAGE = 10
 
+  // Reconciled agreements keyed by both contract id and Nest id, so wallet-grouped
+  // rows (which may carry either id) open the same detail and share the same role.
+  const agreementByAnyId = useMemo(() => {
+    const map = new Map<string, Agreement>()
+    for (const a of agreements) {
+      map.set(a.id, a)
+      if (a.nestId) map.set(a.nestId, a)
+    }
+    return map
+  }, [agreements])
+
   const filteredAgreements = useMemo(() => {
     // Step A: Resolve the wallet set (flatten all or filter by selectedWalletPubKey)
     let list: Array<{
@@ -1141,32 +1244,20 @@ export default function PersonalDashboardPage() {
     }> = []
 
     if (walletsData && walletsData.length > 0) {
-      if (!walletFilter || walletFilter === "all" || walletFilter === "All") {
-        // Flatten all agreements arrays from walletsData into one combined array
-        list = walletsData.flatMap((w) =>
-          w.agreements.map((a) => ({
-            id: a.id,
-            title: a.title,
-            status: a.status,
-            amount: a.amount,
-            currency: "USDC",
-            type: "Single Release" as const,
-            counterparty: "-",
-            date: a.created_at
-              ? a.created_at.split("T")[0]
-              : new Date().toISOString().split("T")[0],
-            updatedAt: a.created_at,
-            role: (a.role === "seller" ? "seller" : "buyer") as "buyer" | "seller",
-            receiver: "-",
-            serviceProvider: "-",
-            milestones: [{ status: a.status }],
-          })),
-        )
-      } else {
-        // Specific wallet selected
-        const targetWallet = walletsData.find((w) => w.wallet_address === walletFilter)
-        list = targetWallet
-          ? targetWallet.agreements.map((a) => ({
+      const selectedWallets =
+        !walletFilter || walletFilter === "all" || walletFilter === "All"
+          ? walletsData
+          : walletsData.filter((w) => w.wallet_address === walletFilter)
+      const seen = new Set<string>()
+      list = selectedWallets.flatMap((w) =>
+        w.agreements.flatMap((a): typeof list => {
+          const full = agreementByAnyId.get(a.id)
+          const key = full?.id ?? a.id
+          if (seen.has(key)) return []
+          seen.add(key)
+          if (full) return [{ ...full, updatedAt: full.date, currency: full.currency || "USDC" }]
+          return [
+            {
               id: a.id,
               title: a.title,
               status: a.status,
@@ -1178,13 +1269,19 @@ export default function PersonalDashboardPage() {
                 ? a.created_at.split("T")[0]
                 : new Date().toISOString().split("T")[0],
               updatedAt: a.created_at,
-              role: (a.role === "seller" ? "seller" : "buyer") as "buyer" | "seller",
+              role:
+                a.role === "seller"
+                  ? ("seller" as const)
+                  : a.role === "buyer"
+                    ? ("buyer" as const)
+                    : undefined,
               receiver: "-",
               serviceProvider: "-",
               milestones: [{ status: a.status }],
-            }))
-          : []
-      }
+            },
+          ]
+        }),
+      )
     } else {
       // Fallback when walletsData is not yet loaded / available
       let filtered = [...agreements]
@@ -1218,9 +1315,7 @@ export default function PersonalDashboardPage() {
     if (statusFilter !== "all") {
       list = list.filter((a) => {
         const allReleased =
-          a.milestones &&
-          a.milestones.length > 0 &&
-          a.milestones.every((m) => m.status === "released")
+          a.milestones && a.milestones.length > 0 && allMilestonesReleased(a.milestones)
         const actualStatus = allReleased ? "released" : a.status
         return actualStatus === statusFilter
       })
@@ -1238,7 +1333,13 @@ export default function PersonalDashboardPage() {
     })
 
     return list
-  }, [walletsData, walletFilter, agreements, searchQuery, statusFilter, sortBy])
+  }, [walletsData, walletFilter, agreements, agreementByAnyId, searchQuery, statusFilter, sortBy])
+
+  // Approver escrows already listed from Nest would otherwise appear twice.
+  const uniqueApproverEscrows = useMemo(() => {
+    const listed = new Set(filteredAgreements.map((a) => a.id))
+    return approverEscrows.filter((e) => !listed.has(e.id))
+  }, [approverEscrows, filteredAgreements])
 
   // Pagination
   const totalPages = Math.ceil(filteredAgreements.length / ITEMS_PER_PAGE)
@@ -1255,7 +1356,7 @@ export default function PersonalDashboardPage() {
   const statusCounts = useMemo(() => {
     const counts = { all: agreements.length, funded: 0, in_progress: 0, released: 0 }
     agreements.forEach((agr) => {
-      const allReleased = agr.milestones.every((m) => m.status === "released")
+      const allReleased = allMilestonesReleased(agr.milestones)
       const s = allReleased ? "released" : agr.status
       if (s in counts) counts[s as keyof typeof counts]++
     })
@@ -1266,108 +1367,94 @@ export default function PersonalDashboardPage() {
     if (!walletAddress) return
     const activeAddress: string = walletAddress
     // Only fetch if we haven't already for this address + token combination.
-    // Including the token means we re-fetch once auth loads, so we route through
-    // the backend instead of falling back to the direct Trustless Work service.
+    // Including the token means we re-fetch once auth loads. The escrow reads
+    // are public, so this only upgrades an anonymous read to an authenticated one.
     const fetchKey = `${activeAddress}::${token ?? ""}`
     if (fetchedEscrowsRef.current === fetchKey) return
     fetchedEscrowsRef.current = fetchKey
 
     async function fetchAgreements() {
       setAgreementsLoading(true)
+      setApproverLoading(true)
       setAgreementsError(null)
+      // TW lookups are slower than Nest: show Nest rows first, reconcile when TW answers.
+      const indexPromise = fetchEscrowIndex(activeAddress, token ?? undefined)
       const { agreements: nestAgreements, error } = await getAgreementsByWallet(
         activeAddress,
         token ?? undefined,
       )
       if (error) {
         setAgreementsError(error)
-        setAgreementsLoading(false)
-        return
+      } else {
+        setAgreements(nestAgreements.map((a) => mapNestAgreementToUi(a, activeAddress, null)))
       }
-      const mapped = nestAgreements.map((a) => mapNestAgreementToUi(a, activeAddress))
-      setAgreements(mapped)
       setAgreementsLoading(false)
+
+      const escrowIndex = await indexPromise
+      if (!error) {
+        setAgreements(
+          nestAgreements.map((a) => mapNestAgreementToUi(a, activeAddress, escrowIndex)),
+        )
+      }
+      setApproverEscrows(
+        (escrowIndex.approverEscrows as TrustlessEscrow[]).map((e) =>
+          mapEscrowToApproverAgreement(e, activeAddress),
+        ),
+      )
+      setApproverLoading(false)
     }
 
     fetchAgreements()
-
-    // Fetch escrows where user is approver (for approver tab)
-    async function fetchApproverEscrows() {
-      setApproverLoading(true)
-      // MIGRATION: Using escrowMigration wrapper
-      const { getEscrowsByRole } = await import("@/services/escrowMigration")
-      const res = await getEscrowsByRole(
-        { role: "approver", address: activeAddress },
-        token ?? undefined,
-      )
-      if (res.success && Array.isArray(res.data)) {
-        setApproverEscrows((res.data as TrustlessEscrow[]).map(mapEscrowToApproverAgreement))
-      } else {
-        setApproverEscrows([])
-      }
-      setApproverLoading(false)
-    }
-    fetchApproverEscrows()
   }, [walletAddress, token])
-  const [viewingAgreement, setViewingAgreement] = useState<string | null>(null)
+
+  const refreshInFlightRef = useRef(false)
+  const refreshAgreements = useCallback(async () => {
+    if (!walletAddress || refreshInFlightRef.current) return
+    refreshInFlightRef.current = true
+    try {
+      const [result, escrowIndex] = await Promise.all([
+        getAgreementsByWallet(walletAddress, token ?? undefined),
+        fetchEscrowIndex(walletAddress, token ?? undefined),
+      ])
+      if (!result.error && result.agreements) {
+        setAgreements(
+          result.agreements.map((agreement) =>
+            mapNestAgreementToUi(agreement, walletAddress, escrowIndex),
+          ),
+        )
+      }
+      if (escrowIndex.available) {
+        setApproverEscrows(
+          (escrowIndex.approverEscrows as TrustlessEscrow[]).map((e) =>
+            mapEscrowToApproverAgreement(e, walletAddress),
+          ),
+        )
+      }
+    } finally {
+      refreshInFlightRef.current = false
+    }
+  }, [walletAddress, token])
+
+  // Auto-refresh: faster while an agreement is confirming or awaiting funds,
+  // and immediately when the tab regains focus.
+  const refreshDelay = agreementsRefreshInterval(agreements)
+  useEffect(() => {
+    if (!walletAddress) return
+    const interval = window.setInterval(() => {
+      if (document.visibilityState === "visible") void refreshAgreements()
+    }, refreshDelay)
+    const onVisible = () => {
+      if (document.visibilityState === "visible") void refreshAgreements()
+    }
+    document.addEventListener("visibilitychange", onVisible)
+    return () => {
+      window.clearInterval(interval)
+      document.removeEventListener("visibilitychange", onVisible)
+    }
+  }, [walletAddress, refreshAgreements, refreshDelay])
+
   const [showAgreementChat, setShowAgreementChat] = useState<string | null>(null)
   const [showProfileEditor, setShowProfileEditor] = useState(false)
-
-  const approveMilestone = (agrId: string, msIdx: number) => {
-    setAgreements((prev) =>
-      prev.map((a) =>
-        a.id === agrId
-          ? {
-              ...a,
-              milestones: a.milestones.map((m, i) =>
-                i === msIdx && m.status === "pending" ? { ...m, status: "approved" as const } : m,
-              ),
-            }
-          : a,
-      ),
-    )
-  }
-  const releaseMilestone = (agrId: string, msIdx: number) => {
-    setAgreements((prev) =>
-      prev.map((a) =>
-        a.id === agrId
-          ? {
-              ...a,
-              milestones: a.milestones.map((m, i) =>
-                i === msIdx && m.status === "approved" ? { ...m, status: "released" as const } : m,
-              ),
-            }
-          : a,
-      ),
-    )
-  }
-  const releaseAllApproved = (agrId: string) => {
-    setAgreements((prev) =>
-      prev.map((a) =>
-        a.id === agrId
-          ? {
-              ...a,
-              milestones: a.milestones.map((m) =>
-                m.status === "approved" ? { ...m, status: "released" as const } : m,
-              ),
-            }
-          : a,
-      ),
-    )
-  }
-  const approveAndReleaseAll = (agrId: string) => {
-    setAgreements((prev) =>
-      prev.map((a) =>
-        a.id === agrId
-          ? {
-              ...a,
-              status: "released",
-              milestones: a.milestones.map((m) => ({ ...m, status: "released" as const })),
-            }
-          : a,
-      ),
-    )
-  }
 
   /* ── Wizard State ── */
   const [step, setStep] = useState(0)
@@ -1654,7 +1741,7 @@ export default function PersonalDashboardPage() {
                   onClick={() => setProfileMenuOpen(false)}
                 >
                   <button
-                    onClick={() => setActiveSection("dashboard")}
+                    onClick={() => setActiveSection("home")}
                     className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-white/70 hover:bg-white/8 hover:text-white transition-colors"
                   >
                     <svg
@@ -1735,13 +1822,38 @@ export default function PersonalDashboardPage() {
 
       <div className="relative z-10 flex min-h-[calc(100vh-80px)]">
         {/* Modern Sidebar */}
+        {!sidebarPinned && !sidebarHovered && (
+          <button
+            type="button"
+            onMouseEnter={() => setSidebarHovered(true)}
+            onFocus={() => setSidebarHovered(true)}
+            onClick={() => setSidebarPinned(true)}
+            className="fixed left-0 top-1/2 z-40 flex -translate-y-1/2 items-center rounded-r-xl border border-l-0 border-white/10 bg-[#0c1220]/95 px-2 py-3 text-white/50 shadow-lg backdrop-blur-md transition-all hover:px-3 hover:text-[#f0b400]"
+            aria-label="Show sidebar"
+            title="Show sidebar"
+          >
+            <PanelLeftOpen className="size-4" />
+          </button>
+        )}
         <aside
           className={cn(
-            "fixed inset-y-20 left-0 z-30 w-64 transition-transform duration-300 lg:sticky lg:top-20 lg:translate-x-0 lg:h-[calc(100vh-80px)]",
+            "fixed inset-y-20 left-0 z-30 overflow-visible transition-[width,transform] duration-300 lg:sticky lg:top-20 lg:translate-x-0 lg:h-[calc(100vh-80px)]",
+            sidebarPinned || sidebarHovered ? "w-64" : "w-0",
             sidebarOpen ? "translate-x-0" : "-translate-x-full",
           )}
         >
-          <div className="h-full flex flex-col bg-[#0a0d14]/95 backdrop-blur-xl border-r border-white/[0.06]">
+          <div
+            onMouseEnter={() => setSidebarHovered(true)}
+            onMouseLeave={() => setSidebarHovered(false)}
+            onFocus={() => setSidebarHovered(true)}
+            onBlur={() => {
+              if (!sidebarPinned) setSidebarHovered(false)
+            }}
+            className={cn(
+              "absolute left-0 top-0 flex h-full flex-col overflow-hidden bg-[#0a0d14]/98 backdrop-blur-xl border-r border-white/[0.06] shadow-[12px_0_30px_rgba(0,0,0,0.2)] transition-[width,opacity] duration-200",
+              sidebarPinned || sidebarHovered ? "w-64 opacity-100" : "w-0 opacity-0",
+            )}
+          >
             {/* User Profile Section - Clickable to edit */}
             <div className="p-4 border-b border-white/[0.06]">
               <button
@@ -1787,6 +1899,28 @@ export default function PersonalDashboardPage() {
             </div>
 
             {/* Main Navigation */}
+            <div className="flex items-center justify-end px-3 pt-3">
+              <button
+                type="button"
+                onClick={() => {
+                  const next = !sidebarPinned
+                  setSidebarPinned(next)
+                  setSidebarHovered(false)
+                  window.localStorage.setItem("thalos-sidebar-pinned", String(next))
+                }}
+                className={cn(
+                  "group flex size-9 items-center justify-center rounded-xl border transition-all",
+                  sidebarPinned
+                    ? "border-[#f0b400]/30 bg-[#f0b400]/10 text-[#f0b400] shadow-[0_0_16px_rgba(240,180,0,0.08)]"
+                    : "border-white/10 bg-white/[0.04] text-white/50 hover:border-white/20 hover:bg-white/[0.08] hover:text-white",
+                )}
+                aria-label={sidebarPinned ? "Unpin and auto-hide sidebar" : "Pin sidebar open"}
+                title={sidebarPinned ? "Unpin and auto-hide sidebar" : "Pin sidebar open"}
+              >
+                <Pin className={cn("size-4 transition-transform", sidebarPinned && "-rotate-45")} />
+                <span className="sr-only">{sidebarPinned ? "Unpin sidebar" : "Pin sidebar"}</span>
+              </button>
+            </div>
             <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
               {sidebarItems.map((item) => {
                 const isActive = activeSection === item.id
@@ -1965,6 +2099,21 @@ export default function PersonalDashboardPage() {
             <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 space-y-5 mt-6">
               {/* Compact Balance Row */}
               <div className="flex items-center justify-between rounded-xl border border-white/10 bg-[#0c1220] p-4">
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      fetchedEscrowsRef.current = null
+                      await refreshAgreements()
+                      setActiveSection("home")
+                    }}
+                    className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-white/70 transition-colors hover:bg-white/10 hover:text-white"
+                    aria-label="Refresh dashboard"
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                    Refresh
+                  </button>
+                </div>
                 <div className="flex items-center gap-6">
                   <div>
                     <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">
@@ -2006,8 +2155,46 @@ export default function PersonalDashboardPage() {
                 </div>
               </div>
 
-              {/* Quick Actions - Simplified (4 main actions) */}
-              <div className="grid grid-cols-4 gap-3">
+              {/* Agreements are the primary dashboard workspace. Navigation remains in the sidebar. */}
+              <section className="rounded-xl border border-white/10 bg-[#0c1220] p-5">
+                <div className="mb-4 flex items-center justify-between">
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">
+                      Your workspace
+                    </p>
+                    <h2 className="mt-1 text-lg font-semibold text-white">Agreements</h2>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setActiveSection("create")
+                      resetWizard()
+                    }}
+                    className="rounded-lg bg-[#f0b400] px-4 py-2 text-sm font-semibold text-[#0c1220] transition-colors hover:bg-[#e5ab00]"
+                  >
+                    + {t("dashPage.newAgreement")}
+                  </button>
+                </div>
+                <AgreementsView
+                  agreements={[
+                    ...filteredAgreements.map((a) => ({
+                      ...a,
+                      updatedAt: a.date,
+                      currency: "USDC" as const,
+                    })),
+                    ...uniqueApproverEscrows.map((e) => ({
+                      ...e,
+                      updatedAt: e.date,
+                      currency: "USDC" as const,
+                      role: "buyer" as const,
+                    })),
+                  ]}
+                  onAgreementClick={(id) => setViewingAgreement(id)}
+                  onOpenChat={(id) => setShowAgreementChat(id)}
+                  currentUserWallet={walletAddress ?? undefined}
+                />
+              </section>
+              {/* Legacy quick actions removed: these destinations belong in the sidebar. */}
+              <div className="hidden grid grid-cols-4 gap-3">
                 <button
                   onClick={() => {
                     setActiveSection("create")
@@ -2116,58 +2303,60 @@ export default function PersonalDashboardPage() {
                 </button>
               </div>
 
-              {/* Pending Actions */}
-              <div className="rounded-xl border border-white/10 bg-[#0c1220] p-5">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm font-bold text-white">Pending Actions</h3>
-                  <button
-                    onClick={() => setActiveSection("agreements")}
-                    className="text-xs text-[#f0b400] hover:underline"
-                  >
-                    View all
-                  </button>
-                </div>
-                {agreements.filter((a) => a.status === "pending" || a.status === "funded")
-                  .length === 0 ? (
-                  <p className="text-sm text-white/50 text-center py-6">No pending actions</p>
-                ) : (
-                  <div className="space-y-2">
-                    {agreements
-                      .filter((a) => a.status === "pending" || a.status === "funded")
-                      .slice(0, 4)
-                      .map((a) => (
-                        <button
-                          key={a.id}
-                          onClick={() => {
-                            setViewingAgreement(a.id)
-                            setActiveSection("agreements")
-                          }}
-                          className="flex w-full items-center justify-between rounded-lg border border-white/6 bg-white/5 p-3 hover:bg-white/8 transition-colors"
-                        >
-                          <div className="flex items-center gap-3">
-                            <div
-                              className={cn(
-                                "h-2 w-2 rounded-full",
-                                a.status === "funded" ? "bg-[#f0b400]" : "bg-sky-400",
-                              )}
-                            />
-                            <div className="text-left">
-                              <p className="text-sm font-medium text-white">{a.title}</p>
-                              <p className="text-xs text-white/50">{a.counterparty}</p>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-sm font-semibold text-white">
-                              {a.amount} {a.currency}
-                            </p>
-                            <p className="text-[10px] uppercase tracking-wider text-white/40">
-                              {a.status === "funded" ? "Awaiting Approval" : "Awaiting Funding"}
-                            </p>
-                          </div>
-                        </button>
-                      ))}
+              <div className="hidden">
+                {/* Pending Actions */}
+                <div className="rounded-xl border border-white/10 bg-[#0c1220] p-5">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-sm font-bold text-white">Pending Actions</h3>
+                    <button
+                      onClick={() => setActiveSection("agreements")}
+                      className="text-xs text-[#f0b400] hover:underline"
+                    >
+                      View all
+                    </button>
                   </div>
-                )}
+                  {agreements.filter((a) => a.status === "pending" || a.status === "funded")
+                    .length === 0 ? (
+                    <p className="text-sm text-white/50 text-center py-6">No pending actions</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {agreements
+                        .filter((a) => a.status === "pending" || a.status === "funded")
+                        .slice(0, 4)
+                        .map((a) => (
+                          <button
+                            key={a.id}
+                            onClick={() => {
+                              setViewingAgreement(a.id)
+                              setActiveSection("agreements")
+                            }}
+                            className="flex w-full items-center justify-between rounded-lg border border-white/6 bg-white/5 p-3 hover:bg-white/8 transition-colors"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div
+                                className={cn(
+                                  "h-2 w-2 rounded-full",
+                                  a.status === "funded" ? "bg-[#f0b400]" : "bg-sky-400",
+                                )}
+                              />
+                              <div className="text-left">
+                                <p className="text-sm font-medium text-white">{a.title}</p>
+                                <p className="text-xs text-white/50">{a.counterparty}</p>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-sm font-semibold text-white">
+                                {a.amount} {a.currency}
+                              </p>
+                              <p className="text-[10px] uppercase tracking-wider text-white/40">
+                                {a.status === "funded" ? "Awaiting Approval" : "Awaiting Funding"}
+                              </p>
+                            </div>
+                          </button>
+                        ))}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           )}
@@ -2385,10 +2574,29 @@ export default function PersonalDashboardPage() {
               {/* Stats row */}
               <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
                 {[
-                  { l: t("dashPage.active"), v: "3" },
-                  { l: t("dashPage.totalVolume"), v: "$4,500" },
-                  { l: t("dashPage.yieldEarned"), v: "$32.50" },
-                  { l: t("dashPage.completed"), v: "1" },
+                  {
+                    l: t("dashPage.active"),
+                    v: String(
+                      agreements.filter((a) =>
+                        ["funded", "in_progress", "active"].includes(a.status),
+                      ).length,
+                    ),
+                  },
+                  {
+                    l: t("dashPage.totalVolume"),
+                    v: `${agreements.reduce((sum, a) => sum + (Number.parseFloat(String(a.amount).replace(/,/g, "")) || 0), 0).toLocaleString()} USDC`,
+                  },
+                  {
+                    l: t("dashPage.yieldEarned"),
+                    v: `${agreements.filter((a) => a.status === "released" || a.status === "completed").length} released`,
+                  },
+                  {
+                    l: t("dashPage.completed"),
+                    v: String(
+                      agreements.filter((a) => a.status === "released" || a.status === "completed")
+                        .length,
+                    ),
+                  },
                 ].map((s) => (
                   <div
                     key={s.l}
@@ -2504,7 +2712,7 @@ export default function PersonalDashboardPage() {
                 </div>
                 <div className="flex flex-col gap-3">
                   {agreements.slice(0, 3).map((agr) => {
-                    const allReleased = agr.milestones.every((m) => m.status === "released")
+                    const allReleased = allMilestonesReleased(agr.milestones)
                     const effectiveStatus = allReleased ? "released" : agr.status
                     const st = statusConfig[effectiveStatus] || statusConfig.funded
                     return (
@@ -2584,43 +2792,31 @@ export default function PersonalDashboardPage() {
                 </div>
               )}
 
-              {agreementsLoading ? (
-                <div className="flex items-center justify-center py-16 text-sm text-white/40">
-                  Loading agreements...
+              {agreementsLoading && filteredAgreements.length === 0 ? (
+                <div className="flex items-center justify-center py-16">
+                  <ThalosLoader size="md" />
                 </div>
               ) : (
-                /* Agreements view — pre-filtered by selected wallet when active */
-                <AgreementsView
-                  agreements={[
-                    ...filteredAgreements.map((a) => ({
-                      ...a,
-                      updatedAt: a.date,
-                      currency: "USDC",
-                    })),
-                    ...approverEscrows.map((e) => ({
-                      id: e.id,
-                      title: e.title,
-                      counterparty:
-                        (e as unknown as { serviceProvider?: string }).serviceProvider?.slice(
-                          0,
-                          8,
-                        ) + "..." || "Unknown",
-                      status: e.status || "pending",
-                      amount:
-                        typeof e.amount === "number"
-                          ? (e.amount as number).toLocaleString()
-                          : e.amount || "0",
-                      currency: "USDC",
-                      type: "Single Release" as const,
-                      updatedAt: e.date,
-                      milestones: e.milestones || [{ status: "pending" }],
-                      role: "buyer" as const,
-                    })),
-                  ]}
-                  onAgreementClick={(id) => setViewingAgreement(id)}
-                  onOpenChat={(id) => setShowAgreementChat(id)}
-                  currentUserWallet={walletAddress ?? undefined}
-                />
+                <section className="rounded-xl border border-white/10 bg-[#0c1220] p-5">
+                  <AgreementsView
+                    agreements={[
+                      ...filteredAgreements.map((a) => ({
+                        ...a,
+                        updatedAt: a.date,
+                        currency: "USDC" as const,
+                      })),
+                      ...uniqueApproverEscrows.map((e) => ({
+                        ...e,
+                        updatedAt: e.date,
+                        currency: "USDC" as const,
+                        role: "buyer" as const,
+                      })),
+                    ]}
+                    onAgreementClick={(id) => setViewingAgreement(id)}
+                    onOpenChat={(id) => setShowAgreementChat(id)}
+                    currentUserWallet={walletAddress ?? undefined}
+                  />
+                </section>
               )}
             </div>
           )}
@@ -2629,9 +2825,11 @@ export default function PersonalDashboardPage() {
           {activeSection === "agreements" &&
             viewingAgreement &&
             (() => {
-              const agr = agreements.find((a) => a.id === viewingAgreement)
+              const agr =
+                agreementByAnyId.get(viewingAgreement) ??
+                approverEscrows.find((a) => a.id === viewingAgreement)
               if (!agr) return null
-              const allReleased = agr.milestones.every((m) => m.status === "released")
+              const allReleased = allMilestonesReleased(agr.milestones)
               const allApproved = agr.milestones.every(
                 (m) => m.status === "approved" || m.status === "released",
               )
@@ -2639,7 +2837,23 @@ export default function PersonalDashboardPage() {
               const effectiveStatus = allReleased ? "released" : agr.status
               const st = statusConfig[effectiveStatus] || statusConfig.funded
               const completedMs = agr.milestones.filter((m) => m.status === "released").length
-              const progressPct = (completedMs / agr.milestones.length) * 100
+              const fundedBalance = Number(agr.balance ?? 0) || 0
+              const isFunded =
+                fundedBalance > 0 ||
+                [
+                  "funded",
+                  "active",
+                  "in_progress",
+                  "completed",
+                  "disputed",
+                  "resolved",
+                  "released",
+                ].includes(effectiveStatus)
+              // Funding is the first step, then one per released milestone.
+              const progressUnits = 1 + agr.milestones.length
+              const progressPct = allReleased
+                ? 100
+                : (((isFunded ? 1 : 0) + completedMs) / progressUnits) * 100
 
               return (
                 <div className="mx-auto max-w-4xl">
@@ -2677,6 +2891,16 @@ export default function PersonalDashboardPage() {
                       Chat
                     </button>
                   </div>
+
+                  {agr.nextAction != null && (
+                    <div className="mb-4 rounded-xl border border-[#f0b400]/25 bg-[#f0b400]/5 px-4 py-3 text-sm">
+                      <span className="text-[#f0b400] font-medium">Next: </span>
+                      <span className="text-white/80">{formatNextActionLabel(agr.nextAction)}</span>
+                      {agr.blockedReason ? (
+                        <p className="mt-1 text-white/45">{agr.blockedReason}</p>
+                      ) : null}
+                    </div>
+                  )}
 
                   {/* Header */}
                   <div className="mb-6 rounded-2xl border border-white/10 bg-[#0c1220] p-6 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)]">
@@ -2733,6 +2957,17 @@ export default function PersonalDashboardPage() {
                         {completedMs}/{agr.milestones.length} milestones
                       </span>
                     </div>
+                    <p className="mt-2 text-xs text-white/45">
+                      {isFunded ? (
+                        <>
+                          <span className="font-semibold text-emerald-400">Funded:</span>{" "}
+                          {fundedBalance.toLocaleString(undefined, { maximumFractionDigits: 2 })} /{" "}
+                          {agr.amount} USDC
+                        </>
+                      ) : (
+                        <>Awaiting funding: 0 / {agr.amount} USDC</>
+                      )}
+                    </p>
                   </div>
 
                   {/* Release strategy for multi-release */}
@@ -2762,35 +2997,56 @@ export default function PersonalDashboardPage() {
                     </div>
                   )}
 
-                  {/* Seller role badge */}
-                  <div className="mb-4 rounded-xl border border-[#f0b400]/15 bg-[#f0b400]/5 px-4 py-2.5 flex items-center gap-2">
-                    <svg
-                      width="14"
-                      height="14"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="#f0b400"
-                      strokeWidth="1.5"
-                    >
-                      <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
-                      <circle cx="12" cy="7" r="4" />
-                    </svg>
-                    <p className="text-xs text-[#f0b400]/80 font-semibold">
-                      {t("flow.sellerView")} {" - "} {t("flow.evidenceDesc")}
-                    </p>
-                  </div>
+                  {/* Role-specific agreement actions */}
+                  {agr.role === "buyer" && ["pending", "awaiting_funding"].includes(agr.status) ? (
+                    <BuyerFundingAction agr={agr} onRefresh={refreshAgreements} />
+                  ) : null}
+
+                  {agr.role === "seller" &&
+                    !["pending", "awaiting_funding"].includes(agr.status) && (
+                      <div className="mb-4 flex items-center gap-2 rounded-xl border border-[#f0b400]/15 bg-[#f0b400]/5 px-4 py-2.5">
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="#f0b400"
+                          strokeWidth="1.5"
+                          aria-hidden="true"
+                        >
+                          <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
+                          <circle cx="12" cy="7" r="4" />
+                        </svg>
+                        <p className="text-xs font-semibold text-[#f0b400]/80">
+                          {t("flow.sellerView")} {" - "} {t("flow.evidenceDesc")}
+                        </p>
+                      </div>
+                    )}
 
                   {/* Milestones */}
                   <div className="flex flex-col gap-3 mb-6">
-                    {isExternalWallet ? (
-                      <SellerMilestoneList
-                        agr={agr}
-                        agreements={agreements}
-                        setAgreements={setAgreements}
-                        t={t}
-                      />
-                    ) : (
+                    {["pending", "awaiting_funding"].includes(agr.status) ? (
+                      <div className="rounded-xl border border-sky-400/20 bg-sky-400/5 p-4 text-sm text-sky-200">
+                        Funding is required before evidence can be submitted.
+                      </div>
+                    ) : agr.role === "seller" && isExternalWallet ? (
+                      <SellerMilestoneList agr={agr} t={t} onRefresh={refreshAgreements} />
+                    ) : agr.role === "seller" ? (
                       <WalletPrompt message="Connect and verify a wallet to submit evidence and manage this agreement." />
+                    ) : (
+                      <ul className="flex flex-col gap-2">
+                        {agr.milestones.map((m, idx) => (
+                          <li
+                            key={idx}
+                            className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm"
+                          >
+                            <span className="text-white/80">{m.description}</span>
+                            <span className="text-xs font-semibold capitalize text-white/50">
+                              {m.status}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
                     )}
                   </div>
 
@@ -3410,6 +3666,8 @@ export default function PersonalDashboardPage() {
                                     onChange={(e) => updateMilestone(i, "amount", e.target.value)}
                                     placeholder={t("wizard.amount")}
                                     type="number"
+                                    autoComplete="off"
+                                    inputMode="decimal"
                                     className="w-28 rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-2 text-sm text-white placeholder:text-white/15 focus:border-[#f0b400]/40 focus:outline-none"
                                   />
                                   {milestones.length > 1 && (
@@ -3564,9 +3822,8 @@ export default function PersonalDashboardPage() {
                                   return
                                 }
                                 const payload = generateAgreementPayload()
-                                const { createAndSignAgreement } = await import(
-                                  "@/lib/agreementActions"
-                                )
+                                const { createAndSignAgreement } =
+                                  await import("@/lib/agreementActions")
                                 await createAndSignAgreement({
                                   payload,
                                   token,
@@ -3581,7 +3838,8 @@ export default function PersonalDashboardPage() {
                                         agreementId ||
                                         `AGR-${Date.now().toString(36).toUpperCase()}`,
                                       title: payload.title,
-                                      status: "funded",
+                                      // Created is not funded: funding is a separate tx.
+                                      status: "pending",
                                       type:
                                         payload.serviceType === "single-release"
                                           ? "Single Release"
@@ -3604,6 +3862,12 @@ export default function PersonalDashboardPage() {
                                       role: "buyer",
                                     }
                                     setAgreements((prev) => [newAgr, ...prev])
+                                    void import("@/lib/agreements/reconcile-nest-escrow").then(
+                                      ({ invalidateEscrowIndex }) => {
+                                        invalidateEscrowIndex()
+                                        void refreshAgreements()
+                                      },
+                                    )
                                   },
                                 })
                               }}
@@ -3738,5 +4002,15 @@ export default function PersonalDashboardPage() {
         type="personal"
       />
     </div>
+  )
+}
+
+export default function PersonalDashboardPageWithNav() {
+  const { hydrated } = useAuthStore()
+  if (!hydrated) return <ThalosLoader />
+  return (
+    <Suspense fallback={<ThalosLoader />}>
+      <PersonalDashboardPage />
+    </Suspense>
   )
 }

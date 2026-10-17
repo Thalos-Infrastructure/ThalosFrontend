@@ -15,6 +15,63 @@ type AuthState = {
 
 const AuthContext = createContext<AuthState | null>(null)
 
+const IDLE_TIMEOUT_MS = 30 * 60 * 1000
+const ACTIVITY_KEY = "auth_last_activity"
+const ACTIVITY_WRITE_THROTTLE_MS = 15 * 1000
+const ACTIVITY_EVENTS = ["pointerdown", "keydown", "scroll", "touchstart", "mousemove"] as const
+
+/**
+ * Signs the user out after 30 minutes without interaction. Last activity lives in
+ * localStorage so every open tab shares one clock (activity in one tab keeps the
+ * others alive, and a sign-out propagates on the next check).
+ */
+function useIdleLogout(active: boolean, logout: () => void) {
+  useEffect(() => {
+    if (!active || typeof window === "undefined") return
+
+    const readLast = () => Number(localStorage.getItem(ACTIVITY_KEY)) || Date.now()
+    let lastWrite = 0
+    const markActivity = () => {
+      const now = Date.now()
+      if (now - lastWrite < ACTIVITY_WRITE_THROTTLE_MS) return
+      lastWrite = now
+      localStorage.setItem(ACTIVITY_KEY, String(now))
+    }
+
+    const expire = () => {
+      localStorage.removeItem(ACTIVITY_KEY)
+      logout()
+      window.location.assign("/?session=expired")
+    }
+
+    const check = () => {
+      if (!localStorage.getItem("auth_token")) {
+        expire()
+        return
+      }
+      if (Date.now() - readLast() >= IDLE_TIMEOUT_MS) expire()
+    }
+
+    // A session restored after a long absence expires immediately instead of lingering.
+    if (localStorage.getItem(ACTIVITY_KEY) && Date.now() - readLast() >= IDLE_TIMEOUT_MS) {
+      expire()
+      return
+    }
+    markActivity()
+
+    ACTIVITY_EVENTS.forEach((e) => window.addEventListener(e, markActivity, { passive: true }))
+    const onVisible = () => document.visibilityState === "visible" && check()
+    document.addEventListener("visibilitychange", onVisible)
+    const interval = window.setInterval(check, 60 * 1000)
+
+    return () => {
+      ACTIVITY_EVENTS.forEach((e) => window.removeEventListener(e, markActivity))
+      document.removeEventListener("visibilitychange", onVisible)
+      window.clearInterval(interval)
+    }
+  }, [active, logout])
+}
+
 export function useAuthStore(): AuthState {
   const context = useContext(AuthContext)
   if (!context) {
@@ -110,6 +167,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setHydrated(true)
       })
   }, [login, logout])
+
+  useIdleLogout(Boolean(token), logout)
 
   return (
     <AuthContext.Provider value={{ user, token, hydrated, login, logout }}>

@@ -1,0 +1,158 @@
+[
+  {
+    "contractId": "CBU2OU4A5PBNS54WCCFRMQBOCIXE2NUJNPTACQMYXWG3H7YEHHGQ42CQ",
+    "contractBaseId": "CDHBR6AFWLSLZGAQSXGYRBUEMZHV4AYHH7EAXVOU5VKOV3P5LSERR37D",
+    "signer": "GBGFO27QDO4XMLMSZBTV55B4BGVHEZXYIOICZB5U43RQLTBSIZWHIEZH",
+    "type": "single-release",
+    "engagementId": "THALOS-v2-SINGLERELEASE-MUVE5MQL",
+    "title": "Freelancer Service Agreement test 05-10-26",
+    "description": "Describe the scope of work, deliverables, and timeline for this freelancer engagement.",
+    "amount": 15,
+    "platformFee": 0.7,
+    "roles": {
+      "approver": "GBGFO27QDO4XMLMSZBTV55B4BGVHEZXYIOICZB5U43RQLTBSIZWHIEZH",
+      "serviceProvider": "GAVQBYRJHPMP4IC4GS7LAASA5DKYYX7WPH5KSNMSYRNO7S6LG53LLLB5",
+      "platformAddress": "GBTTKTSBLHGMRY3T65JXT423MHQZXTD26TTHQEY5HNF2KWFFDKKVHVPD",
+      "releaseSigner": "GBGFO27QDO4XMLMSZBTV55B4BGVHEZXYIOICZB5U43RQLTBSIZWHIEZH",
+      "disputeResolver": "GB6MP3L6UGIDY6O6MXNLSKHLXT2T2TCMPZIZGUTOGYKOLHW7EORWMFCK",
+      "receiver": "GAVQBYRJHPMP4IC4GS7LAASA5DKYYX7WPH5KSNMSYRNO7S6LG53LLLB5"
+    },
+    "flags": {
+      "disputed": false,
+      "released": false,
+      "resolved": false
+    },
+    "trustline": {
+      "address": "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5",
+      "contractId": "CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA",
+      "symbol": "USDC"
+    },
+    "milestones": [
+      {
+        "description": "Full delivery",
+        "status": "pending",
+        "evidence": "",
+        "approved": false
+      }
+    ],
+    "isActive": true,
+    "createdAt": {
+      "_seconds": 1791213323,
+      "_nanoseconds": 152000000
+    },
+    "updatedAt": {
+      "_seconds": 1791213323,
+      "_nanoseconds": 152000000
+    },
+    "balance": 15,
+    "inconsistencies": {
+      "inconsistencyFound": false,
+      "message": "No inconsistencies were found in this escrow.",
+      "differences": []
+    }
+  },
+  {
+    "contractId": "CB27EW2UPEFOKIW7O75NAUKULPW4CCMOH6ETEA6OH4ODEDAB7XUG5QVM",
+    "contractBaseId": "CDHBR6AFWLSLZGAQSXGYRBUEMZHV4AYHH7EAXVOU5VKOV3P5LSERR37D",
+    "signer": "GBYFFMDO7H5QDC3KZFXEP5OL5NZRGRFMF232JHPVWDHTRMY2DUKIBNDI",
+    "type": "single-release",
+    "engagementId": "THALOS-v2-SINGLERELEASE-MUPQZAJK",
+    "title": "Freelancer S 1/10/26 13:26",
+    "description": "Freelancer S 1/10/26 13:26",
+    "amount": 3.5,
+    "platformFee": 0.7,
+    "roles": {
+      "approver": "GBYFFMDO7H5QDC3KZFXEP5OL5NZRGRFMF232JHPVWDHTRMY2DUKIBNDI",
+      "serviceProvider": "GBGFO27QDO4XMLMSZBTV55B4BGVHEZXYIOICZB5U43RQLTBSIZWHIEZH",
+      "platformAddress": "GBTTKTSBLHGMRY3T65JXT423MHQZXTD26TTHQEY5HNF2KWFFDKKVHVPD",
+      "releaseSigner": "GBYFFMDO7H5QDC3KZFXEP5OL5NZRGRFMF232JHPVWDHTRMY2DUKIBNDI",
+      "disputeResolver": "GB6MP3L6UGIDY6O6MXNLSKHLXT2T2TCMPZIZGUTOGYKOLHW7EORWMFCK",
+      "receiver": "GBGFO27QDO4XMLMSZBTV55B4BGVHEZXYIOICZB5U43RQLTBSIZWHIEZH"
+    },
+    "flags": {
+      "disputed": false,
+      "released": false,
+      "resolved": false
+    },
+    "trustline": {
+      "address": "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5",
+      "contractId": "CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA",
+      "symbol": "USDC"
+    },
+    "milestones": [
+      {
+        "description": "Full delivery",
+        "status": "pending",
+        "evidence": "",
+        "approved": false
+      }
+    ],
+    "isActive": true,
+    "createdAt": {
+      "_seconds": 1790872063,
+      "_nanoseconds": 364000000
+    },
+    "updatedAt": {
+      "_seconds": 1790872063,
+      "_nanoseconds": 364000000
+    },
+    "balance": 0,
+    "inconsistencies": {
+      "inconsistencyFound": false,
+      "message": "No inconsistencies were found in this escrow.",
+      "differences": []
+    }
+  },
+  {
+    "contractId": "CCTS73QIPDSMN4V2TPSYXJLJEH3NHJTSZGZXQ3OQ4U74XGDT6KYAKHUH",
+    "contractBaseId": "CAZZOSFFNQQSDOLPPGN5BDITMNSLZITXW4S7V5ISM5EAB2THBD7F2AHR",
+    "signer": "GAVQBYRJHPMP4IC4GS7LAASA5DKYYX7WPH5KSNMSYRNO7S6LG53LLLB5",
+    "type": "multi-release",
+    "engagementId": "THALOS-v2-MULTIRELEASE-MULOLYLY",
+    "title": "test 28/9",
+    "description": "test 28/9",
+    "milestones": [
+      {
+        "description": "Full delivery",
+        "amount": 10,
+        "status": "pending",
+        "evidence": "",
+        "flags": {
+          "disputed": false,
+          "released": false,
+          "resolved": false,
+          "approved": false
+        },
+        "receiver": "GAVQBYRJHPMP4IC4GS7LAASA5DKYYX7WPH5KSNMSYRNO7S6LG53LLLB5"
+      }
+    ],
+    "platformFee": 0.7,
+    "roles": {
+      "approver": "GAVQBYRJHPMP4IC4GS7LAASA5DKYYX7WPH5KSNMSYRNO7S6LG53LLLB5",
+      "serviceProvider": "GBGFO27QDO4XMLMSZBTV55B4BGVHEZXYIOICZB5U43RQLTBSIZWHIEZH",
+      "platformAddress": "GBTTKTSBLHGMRY3T65JXT423MHQZXTD26TTHQEY5HNF2KWFFDKKVHVPD",
+      "releaseSigner": "GAVQBYRJHPMP4IC4GS7LAASA5DKYYX7WPH5KSNMSYRNO7S6LG53LLLB5",
+      "disputeResolver": "GB6MP3L6UGIDY6O6MXNLSKHLXT2T2TCMPZIZGUTOGYKOLHW7EORWMFCK"
+    },
+    "trustline": {
+      "address": "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5",
+      "contractId": "CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA",
+      "symbol": "USDC"
+    },
+    "isActive": true,
+    "createdAt": {
+      "_seconds": 1790626218,
+      "_nanoseconds": 714000000
+    },
+    "updatedAt": {
+      "_seconds": 1790626218,
+      "_nanoseconds": 714000000
+    },
+    "balance": 0,
+    "inconsistencies": {
+      "inconsistencyFound": false,
+      "message": "No inconsistencies were found in this escrow.",
+      "differences": []
+    }
+  }
+]

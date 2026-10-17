@@ -183,7 +183,7 @@ export async function buildDisputeMilestone(
 }
 
 // ============================================================================
-// NEW ENDPOINTS - Migration from trustlessworkService
+// Build endpoints: the backend returns an unsigned XDR for the wallet to sign.
 // ============================================================================
 
 // Get escrows where user is a signer.

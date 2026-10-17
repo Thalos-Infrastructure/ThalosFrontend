@@ -18,6 +18,8 @@ type Agreement = {
   milestones: Milestone[]
   receiver: string
   balance?: string
+  /** Set by Trustless Work once anyone funds the escrow. */
+  fundedBy?: string
   serviceProvider?: string
   approver?: string
   releaseSigner?: string
@@ -28,28 +30,52 @@ type Agreement = {
 interface ApproverAgreementDetailProps {
   agr: Agreement
   walletAddress: string
+  /**
+   * Re-read the escrow after it changes on chain. Funding changes the balance,
+   * and nothing else re-fetches: the list effect is keyed on wallet + token,
+   * neither of which changes when funds move.
+   */
+  onEscrowChanged?: () => void | Promise<void>
 }
 
 import React from "react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { statusConfig } from "./statusConfig"
+import { statusConfigForState } from "./statusConfig"
+import { deriveLifecycleState } from "@/lib/permissions/agreementState"
 import { useLanguage } from "@/lib/i18n"
-import { useHasSigningWallet } from "@/lib/use-current-address"
+import { useHasSigningWallet, useSigningWalletState } from "@/lib/use-current-address"
+import { usePollarWallet } from "@/lib/pollar-wallet"
 import { useStellarWallet } from "@/lib/stellar-wallet"
 import { WalletPrompt } from "@/components/shared/wallet-guard"
 import { fundAndSignEscrow } from "@/lib/agreementActions"
 import { signEscrowOperation, type EscrowOperation, type TxStatus } from "@/lib/signing"
-import type { AgreementResponse } from "@/services/trustlessworkService"
+import type { AgreementResponse } from "@/services/escrow.types"
 import { useAuthStore } from "@/lib/auth-store"
 import { AlertTriangle } from "lucide-react"
 
-export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreementDetailProps) {
+export function ApproverAgreementDetail({
+  agr,
+  walletAddress,
+  onEscrowChanged,
+}: ApproverAgreementDetailProps) {
   const { openWalletModal } = useStellarWallet()
   const { token } = useAuthStore()
   // Signing-capable wallet: external Kit, or custodial with a signing provider
   // (Accesly #109) — all routed through the unified signer (#110).
   const isExternalWallet = useHasSigningWallet()
+  const walletState = useSigningWalletState()
+  const { resume, clearError } = usePollarWallet()
+  // Pollar drops `isAuthenticated` when its wallet briefly reads null (e.g. right
+  // after signing the create tx), while the Thalos session is still valid. Try one
+  // silent resume before showing "wallet disconnected".
+  const autoResumeTriedRef = React.useRef(false)
+  React.useEffect(() => {
+    if (walletState !== "expired" || autoResumeTriedRef.current) return
+    autoResumeTriedRef.current = true
+    void resume().finally(() => clearError())
+  }, [walletState, resume, clearError])
+  const [fundPending, setFundPending] = React.useState(false)
   const [showDetail, setShowDetail] = React.useState(false)
   const [loadingMs, setLoadingMs] = React.useState<number | null>(null)
   const [errorMs, setErrorMs] = React.useState<string | null>(null)
@@ -61,14 +87,46 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
   const [disputedMs, setDisputedMs] = React.useState<Set<number>>(new Set())
   const [showDisputeConfirm, setShowDisputeConfirm] = React.useState<number | null>(null)
   const [txStatus, setTxStatus] = React.useState<TxStatus | null>(null)
+  const [chainFundedBalance, setChainFundedBalance] = React.useState(0)
+
+  React.useEffect(() => {
+    setLocalMilestones(agr.milestones)
+  }, [agr.milestones])
+
   const allApproved = localMilestones.every((m) => m.approved === true)
+  const lifecycleState = deriveLifecycleState({
+    status: agr.status,
+    balance: agr.balance,
+    amount: agr.amount,
+    fundedBy: agr.fundedBy,
+    milestones: localMilestones,
+  })
   const allReleased = agr.released
   const someApproved = localMilestones.some((m) => m.approved === true || m.status === "approved")
   const completedMs = localMilestones.filter((m) => m.status === "released").length
-  const progressPct = localMilestones.length > 0 ? (completedMs / localMilestones.length) * 100 : 0
-  const amountNum = Number(agr.amount)
-  const balanceNum = Number(agr.balance)
-  const isFunded = fundSuccess || balanceNum >= amountNum
+  // Derived, not compared: `balance` is optional on Trustless Work's list
+  // responses, and `Number(undefined) >= amount` is false, so a funded escrow
+  // with no balance kept offering the Fund button on every reload. The badge
+  // already read the derived state, which is why the two disagreed on screen.
+  // A disputed escrow was necessarily funded first.
+  const isFunded =
+    fundSuccess ||
+    chainFundedBalance > 0 ||
+    ["funded", "in_progress", "completed", "disputed"].includes(lifecycleState)
+  const totalAmount =
+    agr.milestones.length === 1
+      ? Number(agr.amount) || 0
+      : agr.milestones.reduce((acc, ms) => acc + (Number(ms.amount) || 0), 0)
+  const fundedAmount = Math.max(Number(agr.balance ?? 0) || 0, chainFundedBalance)
+  const approvedPendingMs = localMilestones.filter(
+    (m) => m.status !== "released" && (m.approved === true || m.status === "approved"),
+  ).length
+  // Funding counts as the first step, then each milestone (approved = half, released = full).
+  const progressUnits = 1 + localMilestones.length
+  const progressDone = allReleased
+    ? progressUnits
+    : (isFunded ? 1 : 0) + completedMs + approvedPendingMs * 0.5
+  const progressPct = Math.min(100, (progressDone / progressUnits) * 100)
   const disableFund = funding || isFunded
   const { t } = useLanguage()
 
@@ -111,16 +169,12 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
       onStatus: setTxStatus,
     })
     setTxStatus("submitting")
-    // GF-2: when token is available, submit through the Nest backend
-    // (keeps API key server-side and maintains auth audit trail).
-    let sendRes
-    if (token) {
-      const { submitSignedTransaction } = await import("@/lib/api/escrow")
-      sendRes = await submitSignedTransaction(signedResult.signedTxXdr, token)
-    } else {
-      const { sendTransaction } = await import("@/services/trustlessworkService")
-      sendRes = await sendTransaction(signedResult.signedTxXdr)
-    }
+    // Submission goes through the Nest backend, which keeps the Trustless Work
+    // API key server-side. There is no unauthenticated path: a session is
+    // required to move funds.
+    if (!token) throw new Error("Sign in to submit this transaction")
+    const { submitSignedTransaction } = await import("@/lib/api/escrow")
+    const sendRes = await submitSignedTransaction(signedResult.signedTxXdr, token)
     if (!sendRes.success) throw new Error(sendRes.error || "Error sending transaction")
     setTxStatus("confirmed")
     return true
@@ -131,7 +185,7 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
     setErrorMs(null)
     setTxStatus("building")
     try {
-      const { disputeMilestone } = await import("@/services/escrowMigration")
+      const { disputeMilestone } = await import("@/services/escrowService")
       const { openDispute } = await import("@/lib/actions/disputes")
 
       const escrowType = agr.type === "Multi Release" ? "multi-release" : "single-release"
@@ -156,6 +210,7 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
         })
       }
       setDisputedMs((prev) => new Set(prev).add(idx))
+      await onEscrowChanged?.()
       setShowDisputeConfirm(null)
     } catch (e: any) {
       setTxStatus("error")
@@ -170,7 +225,7 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
     setErrorMs(null)
     setTxStatus("building")
     try {
-      const { approveMilestone } = await import("@/services/escrowMigration")
+      const { approveMilestone } = await import("@/services/escrowService")
       const res = await approveMilestone(
         agr.id,
         idx.toString(),
@@ -179,9 +234,7 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
         token ?? undefined,
       )
       await signAndSubmit("approveMilestone", res, "Error approving milestone")
-      setLocalMilestones((ms) =>
-        ms.map((m, i) => (i === idx ? { ...m, status: "approved" as const, approved: true } : m)),
-      )
+      await onEscrowChanged?.()
     } catch (e: any) {
       setTxStatus("error")
       setErrorMs(e.message || "Unknown error")
@@ -195,11 +248,11 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
     setErrorMs(null)
     setTxStatus("building")
     try {
-      const { releaseFunds } = await import("@/services/escrowMigration")
+      const { releaseFunds } = await import("@/services/escrowService")
       const type = agr.type === "Multi Release" ? "multi-release" : "single-release"
       const res = await releaseFunds(agr.id, walletAddress, type, undefined, token ?? undefined)
       await signAndSubmit("releaseFunds", res, "Error releasing funds")
-      setLocalMilestones((ms) => ms.map((m) => ({ ...m, status: "released" as const })))
+      await onEscrowChanged?.()
     } catch (e: any) {
       setTxStatus("error")
       setErrorMs(e.message || "Unknown error")
@@ -248,7 +301,12 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
         </div>
         <div className="flex items-center gap-4 mt-2 sm:mt-0">
           {(() => {
-            const st = statusConfig[agr.status] || statusConfig.funded
+            // Derived from the escrow itself so it cannot contradict the
+            // step indicator, which reads the balance. `fundSuccess` covers the
+            // moment between a confirmed funding and the re-read landing.
+            const st = statusConfigForState(
+              fundSuccess && lifecycleState === "waiting_for_funding" ? "funded" : lifecycleState,
+            )
             return (
               <span className={cn("rounded-full border px-3 py-1 text-xs font-semibold", st.color)}>
                 {t(st.labelKey) ?? "Unknown"}
@@ -290,6 +348,19 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
           </div>
           <span className="text-xs text-white/30">
             {completedMs}/{localMilestones.length}
+          </span>
+        </div>
+      )}
+      {localMilestones.length >= 1 && (
+        <div className="mt-2 flex flex-wrap items-center gap-x-2 text-xs">
+          <span className="text-white/40">Fondeado:</span>
+          <span className={cn("font-semibold", isFunded ? "text-emerald-400" : "text-white/60")}>
+            {"$"}
+            {fundedAmount.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+          </span>
+          <span className="text-white/30">
+            {"/ $"}
+            {totalAmount.toLocaleString(undefined, { maximumFractionDigits: 2 })} USDC
           </span>
         </div>
       )}
@@ -368,10 +439,24 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
                 walletAddress,
                 serviceType: agr.type === "Multi Release" ? "multi-release" : "single-release",
                 token: token ?? undefined,
+                agreementId: agr.agreement_id,
+                expectedFunder: agr.approver,
                 setFunding,
                 setError: setFundError,
-                setSuccess: setFundSuccess,
+                setSuccess: async (success: boolean) => {
+                  setFundSuccess(success)
+                  if (success) {
+                    setFundPending(false)
+                    await onEscrowChanged?.()
+                  }
+                },
                 onStatus: setTxStatus,
+                onFunded: setChainFundedBalance,
+                onPendingConfirmation: () => {
+                  setFundPending(true)
+                  setTxStatus(null)
+                  void onEscrowChanged?.()
+                },
               })
             }}
             disabled={disableFund}
@@ -381,11 +466,33 @@ export function ApproverAgreementDetail({ agr, walletAddress }: ApproverAgreemen
           </Button>
         </div>
       )}
-      {!isFunded && !allReleased && !isExternalWallet && (
+      {!isFunded && !allReleased && !isExternalWallet && walletState === "verifying" && (
+        <div
+          role="status"
+          className="mt-4 flex items-center gap-2 rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3 text-xs text-white/50"
+        >
+          <span
+            className="h-3 w-3 animate-spin rounded-full border-2 border-white/20 border-t-white/70"
+            aria-hidden
+          />
+          Verificando tu wallet…
+        </div>
+      )}
+      {!isFunded && !allReleased && !isExternalWallet && walletState !== "verifying" && (
         <WalletPrompt
-          message="Connect and verify a wallet to fund this escrow agreement."
-          onConnect={openWalletModal}
+          message={
+            walletState === "expired"
+              ? "Tu sesión de wallet expiró. Reactívala para firmar el fondeo."
+              : "Connect and verify a wallet to fund this escrow agreement."
+          }
+          onConnect={walletState === "expired" ? () => void resume() : openWalletModal}
         />
+      )}
+      {fundPending && !isFunded && (
+        <div role="status" className="text-amber-300/90 text-xs mt-2">
+          Transacción enviada. Esperando confirmación on-chain; el estado se actualizará
+          automáticamente.
+        </div>
       )}
       {fundError && <div className="text-red-400 text-xs mt-2">{fundError}</div>}
       {fundSuccess && (

@@ -1,10 +1,15 @@
 import type { AgreementStatus } from "@/lib/types/status"
+import type { EscrowLifecycleState } from "@/lib/permissions/escrowActions"
 
 export const statusConfig: Partial<Record<AgreementStatus, { labelKey: string; color: string }>> &
   Record<string, { labelKey: string; color: string }> = {
   pending: {
     labelKey: "flow.pendingFunding",
     color: "bg-orange-500/10 text-orange-400 border-orange-500/20",
+  },
+  confirming: {
+    labelKey: "flow.confirming",
+    color: "bg-slate-500/10 text-slate-300 border-slate-500/20 animate-pulse",
   },
   funded: { labelKey: "status.funded", color: "bg-blue-500/10 text-blue-400 border-blue-500/20" },
   active: {
@@ -31,4 +36,32 @@ export const statusConfig: Partial<Record<AgreementStatus, { labelKey: string; c
     labelKey: "status.released",
     color: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
   },
+  disputed: {
+    labelKey: "status.disputed",
+    color: "bg-red-500/10 text-red-400 border-red-500/20",
+  },
+  unknown: {
+    labelKey: "flow.statusPendingConfirmation",
+    color: "bg-white/5 text-white/40 border-white/10",
+  },
+}
+
+/**
+ * Badge for a state derived from the escrow itself.
+ *
+ * The plain `statusConfig[agr.status]` lookup reads a string captured when the
+ * list was fetched, so after funding it kept showing "Pending Funding" while
+ * the step indicator — which reads the balance — already said funded. Deriving
+ * the badge from the same data keeps the two from disagreeing.
+ */
+export function statusConfigForState(state: EscrowLifecycleState) {
+  const key: Record<EscrowLifecycleState, string> = {
+    waiting_for_funding: "pending",
+    funded: "funded",
+    in_progress: "in_progress",
+    disputed: "disputed",
+    completed: "released",
+    unknown: "unknown",
+  }
+  return statusConfig[key[state]] ?? statusConfig.funded
 }

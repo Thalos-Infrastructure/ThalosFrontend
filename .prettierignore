@@ -4,3 +4,7 @@ dist
 coverage
 pnpm-lock.yaml
 public
+
+# Vendored third-party skill: kept byte-for-byte upstream so refreshes are a
+# clean re-copy. Formatting it would make every future diff spurious.
+.claude/skills/trustless-work-dev

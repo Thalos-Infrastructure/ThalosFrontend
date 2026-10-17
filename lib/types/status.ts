@@ -31,15 +31,20 @@ export type AgreementStatus =
 
 /**
  * Map a Trustless Work (TW) milestone status string to the canonical
- * MilestoneStatus.  Handles legacy "completed" -> "released" and
- * hyphenated / non-standard values.
+ * MilestoneStatus.  Handles hyphenated / non-standard values.
+ *
+ * TW's milestone status is free text the service provider sets with the
+ * evidence; Thalos sends "completed", meaning "work delivered". It is NOT a
+ * release: release and approval are TW flags, read in map-tw-escrow. Mapping
+ * "completed" to "released" showed unfunded escrows as paid out.
  *
  * Returns null for unknown statuses and logs a console warning so bad data
  * does not silently degrade to "pending".
  */
 export function twMilestoneStatus(raw: string): MilestoneStatus | null {
   const v = raw.toLowerCase().trim()
-  if (v === "released" || v === "completed") return "released"
+  if (v === "released") return "released"
+  if (v === "completed") return "pending"
   if (v === "approved") return "approved"
   if (v === "rejected") return "rejected"
   if (v === "pending" || v === "in-progress" || v === "in_progress") return "pending"
@@ -49,19 +54,31 @@ export function twMilestoneStatus(raw: string): MilestoneStatus | null {
 
 /**
  * Map a NestJS-backend milestone status string to the canonical
- * MilestoneStatus.  Handles legacy "completed" -> "released" and
- * capitalized variants.
+ * MilestoneStatus.  Handles capitalized variants. A legacy "completed" is the
+ * TW evidence text (see twMilestoneStatus), so it maps to "pending".
  *
  * Returns null for unknown statuses and logs a console warning.
  */
 export function nestMilestoneStatus(raw: string): MilestoneStatus | null {
   const v = raw.toLowerCase().trim()
-  if (v === "released" || v === "completed") return "released"
+  if (v === "released") return "released"
+  if (v === "completed") return "pending"
   if (v === "approved") return "approved"
   if (v === "rejected") return "rejected"
   if (v === "pending") return "pending"
   console.warn(`[status] nestMilestoneStatus: unknown status "${raw}"`)
   return null
+}
+
+/**
+ * True when every milestone is released. An agreement with no milestones is
+ * not "all released": `[].every(...)` is true, which filed such agreements
+ * under Completed.
+ */
+export function allMilestonesReleased(
+  milestones: ReadonlyArray<{ status: string }> | null | undefined,
+): boolean {
+  return Boolean(milestones?.length) && milestones!.every((m) => m.status === "released")
 }
 
 /**
