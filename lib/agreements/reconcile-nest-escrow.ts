@@ -101,6 +101,8 @@ export type ReconciledAgreementState = {
   /** Live milestone statuses from the escrow (same order as Nest). */
   milestoneStatuses?: MilestoneStatus[]
   milestoneEvidence?: (string | undefined)[]
+  /** Which milestones are delivered and waiting on the approver. */
+  milestoneDelivered?: boolean[]
   /** True when the escrow exists in Nest but TW has not indexed it yet. */
   confirming: boolean
 }
@@ -134,6 +136,7 @@ export function reconcileWithEscrow(input: {
       released: view.released,
       milestoneStatuses: view.milestones.map((m) => m.status),
       milestoneEvidence: view.milestones.map((m) => m.evidence),
+      milestoneDelivered: view.milestones.map((m) => m.delivered),
       confirming: false,
     }
   }

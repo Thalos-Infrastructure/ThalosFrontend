@@ -37,6 +37,15 @@ export type AgreementViewMilestone = {
   /** Milestone workflow status (pending / approved / released / …). */
   status: MilestoneStatus
   approved: boolean
+  /**
+   * The service provider submitted the work and it is waiting to be approved.
+   *
+   * The canonical `status` cannot say this: Trustless Work writes "completed"
+   * there, which maps to `pending` because it is not a release — so delivered
+   * work and untouched work arrive indistinguishable, and the approver is shown
+   * "Pending" for something already sitting in front of them.
+   */
+  delivered: boolean
   evidence?: string
   released: boolean
   disputed?: boolean
