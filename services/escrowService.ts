@@ -187,6 +187,45 @@ export async function disputeMilestone(
   )
 }
 
+/**
+ * Build the XDR that settles a dispute.
+ *
+ * Takes percentages and leaves the arithmetic to the backend, which reads the
+ * escrow's live balance. Only the escrow's `disputeResolver` can sign the
+ * result, and that is enforced on-chain.
+ */
+export async function resolveDispute(
+  params: {
+    contractId: string
+    type: ServiceType
+    disputeResolver: string
+    allocations: escrowApi.BackendAllocation[]
+    milestoneIndex?: string
+  },
+  token?: string,
+): Promise<AgreementResponse<{ unsignedTransaction: string }>> {
+  return write("resolveDispute", token, (resolvedToken) =>
+    escrowApi.buildResolveDispute(
+      {
+        contractId: params.contractId,
+        type: params.type,
+        disputeResolver: params.disputeResolver,
+        allocations: params.allocations,
+        ...(params.milestoneIndex !== undefined ? { milestoneIndex: params.milestoneIndex } : {}),
+      },
+      resolvedToken,
+    ),
+  )
+}
+
+/** Reads are public: a resolver can see the escrow before signing in. */
+export async function getEscrowByContractId(
+  contractId: string,
+  token?: string,
+): Promise<AgreementResponse<escrowApi.EscrowSnapshot>> {
+  return run("getEscrowByContractId", () => escrowApi.getEscrowByContractId(contractId, token))
+}
+
 export async function sendTransaction(
   signedXdr: string,
   token?: string,

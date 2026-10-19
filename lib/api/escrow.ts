@@ -124,6 +124,28 @@ export interface BackendDisputeMilestoneDto {
   signer: string
 }
 
+/**
+ * One party's share of a disputed escrow, as a percentage.
+ *
+ * Percentages, not amounts: only the backend knows the escrow's live balance,
+ * and a browser converting its own reading of it would send a split that no
+ * longer matches by the time Trustless Work checks the sum.
+ */
+export interface BackendAllocation {
+  address: string
+  /** 0-100. The set must total 100. */
+  percentage: number
+}
+
+export interface BackendResolveDisputeDto {
+  contractId: string
+  type: EscrowServiceType
+  /** Required for multi-release: which milestone is being resolved. */
+  milestoneIndex?: string
+  disputeResolver: string
+  allocations: BackendAllocation[]
+}
+
 type UnsignedTransaction = { unsignedTransaction: string }
 
 // The operation names and DTOs below mirror ThalosBackend's EscrowsController.
@@ -182,6 +204,17 @@ export async function buildDisputeMilestone(
   )
 }
 
+export async function buildResolveDispute(
+  dto: BackendResolveDisputeDto,
+  token: string,
+): Promise<ApiResponse<UnsignedTransaction>> {
+  return apiRequest<UnsignedTransaction>(
+    "/escrows/resolve-dispute",
+    { method: "POST", body: JSON.stringify(dto) },
+    token,
+  )
+}
+
 // ============================================================================
 // Build endpoints: the backend returns an unsigned XDR for the wallet to sign.
 // ============================================================================
@@ -200,7 +233,7 @@ export async function getEscrowsBySigner(
 // Get escrows by role with filters
 export interface GetEscrowsByRoleParams {
   address: string
-  role?: "sender" | "receiver" | "approver" | "service_provider"
+  role?: "sender" | "receiver" | "approver" | "service_provider" | "dispute_resolver"
   status?: string
   type?: "single-release" | "multi-release"
 }
@@ -217,6 +250,51 @@ export async function getEscrowsByRole(
 
   return apiRequest<Escrow[]>(
     `/escrows/by-role?${queryParams.toString()}`,
+    { method: "GET" },
+    token,
+  )
+}
+
+/**
+ * One escrow, read through the backend and already parsed into a stable shape.
+ *
+ * `balance` is what the contract holds right now, which is what a dispute
+ * resolution splits; `amount` is only what was agreed. The two differ whenever
+ * an escrow was partly funded or partly released, and showing the second while
+ * distributing the first is how a resolver ends up approving a split they did
+ * not mean.
+ */
+export interface EscrowSnapshot {
+  contractId: string
+  type: EscrowServiceType
+  amount: number
+  balance: number
+  roles: {
+    approver?: string
+    serviceProvider?: string
+    releaseSigner?: string
+    disputeResolver?: string
+    receiver?: string
+    platformAddress?: string
+  }
+  flags: { disputed: boolean; released: boolean; resolved: boolean }
+  milestones: Array<{
+    description?: string
+    status?: string
+    amount?: number
+    approved?: boolean
+    flags?: { disputed?: boolean; released?: boolean; resolved?: boolean; approved?: boolean }
+  }>
+  trustline?: { address?: string; symbol?: string }
+}
+
+/** Public for the same reason as the other two reads: escrows are public on-chain. */
+export async function getEscrowByContractId(
+  contractId: string,
+  token?: string,
+): Promise<ApiResponse<EscrowSnapshot>> {
+  return apiRequest<EscrowSnapshot>(
+    `/escrows/by-contract-id?contractId=${encodeURIComponent(contractId)}`,
     { method: "GET" },
     token,
   )
