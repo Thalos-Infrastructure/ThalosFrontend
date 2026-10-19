@@ -13,7 +13,12 @@ import { dashboardPathFor } from "@/lib/dashboard-path"
 import { getOpenDisputes, assignResolver, type DisputeWithAgreement } from "@/lib/api/disputes"
 import { getEscrowByContractId } from "@/services/escrowService"
 import type { EscrowSnapshot } from "@/lib/api/escrow"
-import { resolveDisputeOnChain, type TrustlineProblem } from "@/lib/disputes/resolveDispute"
+import {
+  resolveDisputeOnChain,
+  distributableFor,
+  isMilestoneOf,
+  type TrustlineProblem,
+} from "@/lib/disputes/resolveDispute"
 import type { TxStatus } from "@/lib/signing"
 
 /* ── Icons ── */
@@ -145,6 +150,17 @@ export default function DisputesPage() {
 
   // Resolution form state
   const [payerPercentage, setPayerPercentage] = useState(50)
+  /**
+   * Which milestone the resolver picked, tied to the escrow it was picked for.
+   *
+   * Keyed by contract for the same reason the escrow read is: a choice made on
+   * one dispute must not carry over to the next one and settle a milestone
+   * nobody looked at.
+   */
+  const [milestoneChoice, setMilestoneChoice] = useState<{
+    contractId: string
+    index: string
+  } | null>(null)
   const [resolutionNotes, setResolutionNotes] = useState("")
   const [resolveError, setResolveError] = useState<string | null>(null)
   const [resolveSuccess, setResolveSuccess] = useState(false)
@@ -194,9 +210,28 @@ export default function DisputesPage() {
    */
   const isEscrowResolver = sameAddress(escrow?.roles.disputeResolver, address)
 
-  // What the resolution actually distributes. The agreement's `amount` is what
-  // was agreed, which is a different number on a partly funded escrow.
-  const distributable = escrow?.balance ?? 0
+  const isMultiRelease = escrow?.type === "multi-release"
+
+  // The milestone actually in dispute, preselected: only one normally is, and
+  // making the resolver find it again invites settling the wrong one. An
+  // explicit choice for this escrow wins over it.
+  const disputedIndex = isMultiRelease
+    ? escrow.milestones.findIndex((m) => m.flags?.disputed === true)
+    : -1
+  const chosenIndex =
+    milestoneChoice && milestoneChoice.contractId === escrow?.contractId
+      ? milestoneChoice.index
+      : undefined
+  const milestoneIndex = isMultiRelease
+    ? (chosenIndex ?? (disputedIndex >= 0 ? String(disputedIndex) : undefined))
+    : undefined
+  const needsMilestone = isMultiRelease && !isMilestoneOf(escrow, milestoneIndex)
+
+  // What the resolution actually distributes: the whole balance on
+  // single-release, the chosen milestone's amount on multi-release. The
+  // agreement's `amount` is only what was agreed, which is a different number
+  // on a partly funded escrow.
+  const distributable = escrow ? distributableFor(escrow, milestoneIndex) : 0
   const payerAmount = (distributable * payerPercentage) / 100
   const payeeAmount = distributable - payerAmount
 
@@ -298,6 +333,7 @@ export default function DisputesPage() {
       resolutionNotes,
       walletAddress: address,
       token,
+      ...(isMultiRelease ? { milestoneIndex } : {}),
       onStatus: setTxStatus,
     })
 
@@ -321,6 +357,7 @@ export default function DisputesPage() {
         setResolveSuccess(false)
         setPayerPercentage(50)
         setResolutionNotes("")
+        setMilestoneChoice(null)
         setTxStatus(null)
       }, 2500)
     }
@@ -605,6 +642,65 @@ export default function DisputesPage() {
                   selectedDispute.status !== "resolved" &&
                   selectedDispute.status !== "cancelled" && (
                     <>
+                      {isMultiRelease && (
+                        <div className="mb-6">
+                          <p className="mb-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                            Milestone to settle
+                          </p>
+                          <div className="space-y-2">
+                            {escrow.milestones.map((milestone, index) => {
+                              const disputed = milestone.flags?.disputed === true
+                              const settled =
+                                milestone.flags?.released === true ||
+                                milestone.flags?.resolved === true
+                              return (
+                                <button
+                                  key={index}
+                                  type="button"
+                                  disabled={settled}
+                                  onClick={() =>
+                                    setMilestoneChoice({
+                                      contractId: escrow.contractId,
+                                      index: String(index),
+                                    })
+                                  }
+                                  className={cn(
+                                    "flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left text-sm transition-all",
+                                    settled
+                                      ? "cursor-not-allowed border-border/30 bg-background/30 opacity-50"
+                                      : milestoneIndex === String(index)
+                                        ? "border-purple-500/50 bg-purple-500/10"
+                                        : "border-border/40 bg-background/50 hover:border-border/70",
+                                  )}
+                                >
+                                  <span className="text-foreground">
+                                    {index + 1}. {milestone.description || "Milestone"}
+                                  </span>
+                                  <span className="flex items-center gap-2">
+                                    {disputed && (
+                                      <span className="rounded-full bg-red-500/15 px-2 py-0.5 text-xs font-medium text-red-400">
+                                        In dispute
+                                      </span>
+                                    )}
+                                    {settled && (
+                                      <span className="text-xs text-muted-foreground">Settled</span>
+                                    )}
+                                    <span className="font-medium text-muted-foreground">
+                                      {milestone.amount ?? 0} {escrow.trustline?.symbol ?? "USDC"}
+                                    </span>
+                                  </span>
+                                </button>
+                              )
+                            })}
+                          </div>
+                          {needsMilestone && (
+                            <p className="mt-2 text-xs text-amber-400">
+                              Choose the milestone this resolution settles.
+                            </p>
+                          )}
+                        </div>
+                      )}
+
                       <div className="mb-6">
                         <p className="mb-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">
                           Fund Distribution
@@ -669,7 +765,9 @@ export default function DisputesPage() {
                           resolveSuccess ||
                           !escrow ||
                           !isEscrowResolver ||
-                          isLoadingEscrow
+                          isLoadingEscrow ||
+                          needsMilestone ||
+                          distributable <= 0
                         }
                         className={cn(
                           "w-full",

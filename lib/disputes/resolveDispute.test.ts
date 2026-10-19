@@ -22,7 +22,13 @@ vi.mock("@/lib/api/disputes", () => ({
 }))
 
 // A static import is fine here: `vi.mock` calls are hoisted above it.
-import { resolveDisputeOnChain, allocationsFor, readTrustlineProblems } from "./resolveDispute"
+import {
+  resolveDisputeOnChain,
+  allocationsFor,
+  readTrustlineProblems,
+  distributableFor,
+  isMilestoneOf,
+} from "./resolveDispute"
 
 const APPROVER = "GAPPROVER00000000000000000000000000000000000000000000000"
 const PROVIDER = "GPROVIDER00000000000000000000000000000000000000000000000"
@@ -116,8 +122,16 @@ describe("resolveDisputeOnChain — the order the steps happen in", () => {
   })
 
   it("names the milestone on a multi-release escrow", async () => {
+    // The index must name a milestone the escrow actually has — see
+    // "multi-release settles one milestone" below.
     await resolveDisputeOnChain(
-      params({ escrow: escrow({ type: "multi-release" }), milestoneIndex: "2" }),
+      params({
+        escrow: escrow({
+          type: "multi-release",
+          milestones: [{ amount: 1 }, { amount: 2 }, { amount: 3 }],
+        }),
+        milestoneIndex: "2",
+      }),
     )
 
     expect(buildResolveDispute).toHaveBeenCalledWith(
@@ -298,5 +312,87 @@ describe("readTrustlineProblems", () => {
     })
 
     expect(problems).toEqual([{ address: PROVIDER, reason: "missing" }])
+  })
+})
+
+describe("multi-release settles one milestone", () => {
+  const multi = (overrides: Partial<EscrowSnapshot> = {}): EscrowSnapshot =>
+    escrow({
+      type: "multi-release",
+      balance: 50,
+      milestones: [
+        { description: "Design", amount: 10 },
+        { description: "Build", amount: 30, flags: { disputed: true } },
+      ],
+      ...overrides,
+    })
+
+  it("refuses to settle without a milestone instead of defaulting to the first", async () => {
+    // A default would distribute the funds of a milestone nobody disputed.
+    const result = await resolveDisputeOnChain(params({ escrow: multi() }))
+
+    expect(result.success).toBe(false)
+    expect(result.failure?.message).toMatch(/Choose which milestone/)
+    expect(buildResolveDispute).not.toHaveBeenCalled()
+  })
+
+  it("refuses a milestone the escrow does not have", async () => {
+    for (const milestoneIndex of ["2", "-1", "one", ""]) {
+      const result = await resolveDisputeOnChain(params({ escrow: multi(), milestoneIndex }))
+      expect(result.success).toBe(false)
+      expect(buildResolveDispute).not.toHaveBeenCalled()
+    }
+  })
+
+  it("sends the chosen milestone", async () => {
+    await resolveDisputeOnChain(params({ escrow: multi(), milestoneIndex: "1" }))
+
+    expect(buildResolveDispute).toHaveBeenCalledWith(
+      expect.objectContaining({ type: "multi-release", milestoneIndex: "1" }),
+      "jwt",
+    )
+  })
+})
+
+describe("distributableFor", () => {
+  const multi = (balance: number): EscrowSnapshot =>
+    escrow({
+      type: "multi-release",
+      balance,
+      milestones: [{ amount: 10 }, { amount: 30 }],
+    })
+
+  it("splits the whole balance on single-release", () => {
+    expect(distributableFor(escrow({ balance: 15 }))).toBe(15)
+  })
+
+  it("splits the milestone amount on multi-release, not the balance", () => {
+    // The escrow holds 50 across both milestones; settling one must not reach
+    // the funds reserved for the other.
+    expect(distributableFor(multi(50), "1")).toBe(30)
+  })
+
+  it("never promises more than the contract holds", () => {
+    expect(distributableFor(multi(4), "1")).toBe(4)
+  })
+
+  it("is zero while no milestone is chosen, so the form shows nothing to split", () => {
+    expect(distributableFor(multi(50))).toBe(0)
+    expect(distributableFor(multi(50), "7")).toBe(0)
+  })
+})
+
+describe("isMilestoneOf", () => {
+  const two = escrow({ type: "multi-release", milestones: [{ amount: 1 }, { amount: 2 }] })
+
+  it("accepts the indexes the escrow has", () => {
+    expect(isMilestoneOf(two, "0")).toBe(true)
+    expect(isMilestoneOf(two, "1")).toBe(true)
+  })
+
+  it("rejects anything else", () => {
+    for (const index of [undefined, "", " ", "2", "-1", "1.5", "one"]) {
+      expect(isMilestoneOf(two, index)).toBe(false)
+    }
   })
 })

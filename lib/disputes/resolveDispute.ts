@@ -43,7 +43,10 @@ export interface ResolveDisputeParams {
   resolutionNotes?: string
   walletAddress: string | null
   token: string | null
-  /** Multi-release only: which milestone is being settled. */
+  /**
+   * Multi-release only: which milestone is being settled. Required there — a
+   * default would quietly settle milestone 0 and move the wrong money.
+   */
   milestoneIndex?: string
   onStatus?: (status: TxStatus) => void
   /** How long to wait for the chain to report it settled. Defaults below. */
@@ -89,6 +92,30 @@ export function readTrustlineProblems(errorBody: unknown): TrustlineProblem[] | 
     .filter((problem) => problem.address !== "")
 
   return problems.length > 0 ? problems : undefined
+}
+
+/** True when `index` names a milestone this escrow actually has. */
+export function isMilestoneOf(escrow: EscrowSnapshot, index?: string): boolean {
+  if (index === undefined || index.trim() === "") return false
+  const parsed = Number(index)
+  return Number.isInteger(parsed) && parsed >= 0 && parsed < escrow.milestones.length
+}
+
+/**
+ * What a resolution of this escrow distributes.
+ *
+ * single-release splits the whole balance; multi-release splits one milestone,
+ * capped by what the contract actually holds. This mirrors `resolutionTotal` on
+ * the backend, which is the number that will really be split — showing the
+ * balance for a multi-release milestone would promise funds reserved for the
+ * other milestones.
+ */
+export function distributableFor(escrow: EscrowSnapshot, milestoneIndex?: string): number {
+  if (escrow.type === "single-release") return escrow.balance
+  if (!isMilestoneOf(escrow, milestoneIndex)) return 0
+
+  const amount = escrow.milestones[Number(milestoneIndex)]?.amount ?? 0
+  return escrow.balance > 0 ? Math.min(amount, escrow.balance) : amount
 }
 
 /**
@@ -175,6 +202,17 @@ export async function resolveDisputeOnChain({
     return { success: false, failure: { message: (error as Error).message } }
   }
 
+  // Multi-release settles one milestone. Falling back to the first one would
+  // distribute the funds of a milestone nobody disputed, so refuse instead.
+  if (escrow.type === "multi-release" && !isMilestoneOf(escrow, milestoneIndex)) {
+    return {
+      success: false,
+      failure: {
+        message: "Choose which milestone this resolution settles before continuing.",
+      },
+    }
+  }
+
   onStatus?.("building")
   const built = await buildResolveDispute(
     {
@@ -182,7 +220,7 @@ export async function resolveDisputeOnChain({
       type: escrow.type,
       disputeResolver: walletAddress,
       allocations,
-      ...(escrow.type === "multi-release" ? { milestoneIndex: milestoneIndex ?? "0" } : {}),
+      ...(escrow.type === "multi-release" ? { milestoneIndex: milestoneIndex as string } : {}),
     },
     token,
   )
