@@ -21,6 +21,7 @@ import { signEscrowOperation, type EscrowOperation, type TxStatus } from "@/lib/
 import type { AgreementResponse } from "@/services/escrow.types"
 import type { MilestoneStatus } from "@/lib/types/status"
 import { AlertTriangle } from "lucide-react"
+import { reportMilestoneToNest } from "@/lib/agreements/reportMilestoneToNest"
 
 export type ApproverMilestone = {
   description: string
@@ -140,7 +141,19 @@ export function ApproverMilestoneSection({
         escrowType,
         token ?? undefined,
       )
-      await signAndSubmit("approveMilestone", res, "Error approving milestone")
+      const submitted = await signAndSubmit("approveMilestone", res, "Error approving milestone")
+      // Only now: the record follows the chain, and this is what makes Thalos
+      // emit the event the email notifications hang off.
+      if (submitted) {
+        await reportMilestoneToNest({
+          step: "approved",
+          agreementId: agr.agreement_id,
+          contractId: agr.id,
+          milestoneIndex: idx,
+          actorWallet: walletAddress,
+          token,
+        })
+      }
       await onEscrowChanged?.()
     } catch (e) {
       setTxStatus("error")
@@ -202,7 +215,22 @@ export function ApproverMilestoneSection({
         undefined,
         token ?? undefined,
       )
-      await signAndSubmit("releaseFunds", res, "Error releasing funds")
+      const submitted = await signAndSubmit("releaseFunds", res, "Error releasing funds")
+      if (submitted) {
+        // Single-release pays every milestone at once, so each one is recorded.
+        await Promise.all(
+          milestones.map((_, index) =>
+            reportMilestoneToNest({
+              step: "released",
+              agreementId: agr.agreement_id,
+              contractId: agr.id,
+              milestoneIndex: index,
+              actorWallet: walletAddress,
+              token,
+            }),
+          ),
+        )
+      }
       await onEscrowChanged?.()
     } catch (e) {
       setTxStatus("error")

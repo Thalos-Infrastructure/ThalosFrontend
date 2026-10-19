@@ -2,6 +2,7 @@
 
 import { canSubmitEvidence } from "@/lib/helpers/evidencePermission"
 import { ApproverMilestoneSection } from "./ApproverMilestoneSection"
+import { EmailMissingBanner } from "@/components/profile/email-missing-banner"
 import React, { useState, useEffect, useCallback, useId, useRef, useMemo, Suspense } from "react"
 import Image from "next/image"
 import Link from "next/link"
@@ -831,6 +832,7 @@ function SellerMilestoneList({
     setSubmitting(idx)
     await changeMilestoneStatusAgreement({
       contractId: agr.id,
+      agreementId: agr.nestId,
       milestoneIndex: String(idx),
       newEvidence: evidence,
       // Evidence submission marks work done — "released" is the fund-release step.
@@ -2764,6 +2766,7 @@ function PersonalDashboardPage() {
           {/* ══════ AGREEMENTS ══════ */}
           {activeSection === "agreements" && !viewingAgreement && (
             <div className="mx-auto max-w-4xl animate-in fade-in slide-in-from-bottom-2 duration-300">
+              <EmailMissingBanner className="mb-4" />
               {/* Header */}
               <div className="mb-6 flex flex-wrap items-center justify-between gap-2">
                 <h1 className="text-2xl font-semibold text-white">{t("dashPage.myAgreements")}</h1>
