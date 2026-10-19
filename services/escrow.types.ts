@@ -30,6 +30,13 @@ export interface AgreementResponse<T = unknown> {
   success: boolean
   data?: T
   error?: string
+  /**
+   * The backend's error body, when it sent one. `error` is the sentence to
+   * show; this is the structure behind it (e.g. `code: "TRUSTLINE_MISSING"`
+   * plus the addresses at fault), for the cases where the UI has to name who
+   * must act.
+   */
+  errorBody?: unknown
 }
 
 /* ---------------- Escrow Types ---------------- */

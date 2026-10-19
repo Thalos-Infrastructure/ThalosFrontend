@@ -10,12 +10,11 @@ import { useLanguage } from "@/lib/i18n"
 import { useStellarWallet } from "@/lib/stellar-wallet"
 import { useAuthStore } from "@/lib/auth-store"
 import { dashboardPathFor } from "@/lib/dashboard-path"
-import {
-  getOpenDisputes,
-  assignResolver,
-  resolveDispute,
-  type DisputeWithAgreement,
-} from "@/lib/api/disputes"
+import { getOpenDisputes, assignResolver, type DisputeWithAgreement } from "@/lib/api/disputes"
+import { getEscrowByContractId } from "@/services/escrowService"
+import type { EscrowSnapshot } from "@/lib/api/escrow"
+import { resolveDisputeOnChain, type TrustlineProblem } from "@/lib/disputes/resolveDispute"
+import type { TxStatus } from "@/lib/signing"
 
 /* ── Icons ── */
 const Icons = {
@@ -123,6 +122,15 @@ const statusLabels: Record<string, string> = {
   cancelled: "Cancelled",
 }
 
+/** What the button says while a resolution is in flight. */
+const TX_STATUS_LABELS: Record<TxStatus, string> = {
+  building: "Preparing the transaction…",
+  signing: "Waiting for your signature…",
+  submitting: "Sending to the network…",
+  confirmed: "Confirmed",
+  error: "Failed",
+}
+
 export default function DisputesPage() {
   const { t } = useLanguage()
   const router = useRouter()
@@ -141,7 +149,56 @@ export default function DisputesPage() {
   const [resolveError, setResolveError] = useState<string | null>(null)
   const [resolveSuccess, setResolveSuccess] = useState(false)
 
+  /**
+   * The live escrow behind the selected dispute. The split is computed from
+   * what the contract holds, so without it there is nothing to resolve.
+   *
+   * Stored with the contract it was read for, and used only when the two match:
+   * otherwise picking a second dispute shows the first escrow's balance until
+   * the new read lands, and the resolver reads a split of the wrong number.
+   */
+  const [escrowRead, setEscrowRead] = useState<{
+    contractId: string
+    loading: boolean
+    escrow: EscrowSnapshot | null
+    error: string | null
+  } | null>(null)
+  const [txStatus, setTxStatus] = useState<TxStatus | null>(null)
+  const [trustlineProblems, setTrustlineProblems] = useState<TrustlineProblem[] | null>(null)
+  const [pendingConfirmation, setPendingConfirmation] = useState(false)
+
+  // Who may open this screen. Who may actually settle a given dispute is a
+  // different question, answered on-chain — see `isEscrowResolver` below.
   const canResolve = profile?.role === "dispute_resolver" || profile?.role === "admin"
+
+  const sameAddress = (a?: string | null, b?: string | null) =>
+    Boolean(a && b && a.toUpperCase() === b.toUpperCase())
+
+  // An agreement with no contract has nothing to settle, and that is a fact
+  // about the selected dispute, not a result to fetch and store.
+  const selectedContractId = selectedDispute?.agreement?.contract_id ?? null
+  const currentRead = escrowRead?.contractId === selectedContractId ? escrowRead : null
+  const escrow = currentRead?.escrow ?? null
+  // Still loading whenever there is a contract whose read has not landed yet.
+  const isLoadingEscrow = currentRead?.loading ?? Boolean(selectedContractId)
+  const escrowProblem =
+    selectedDispute && !selectedContractId
+      ? "This agreement has no escrow on-chain, so it cannot be settled here."
+      : (currentRead?.error ?? null)
+
+  /**
+   * Only the escrow's own `disputeResolver` can sign the resolution; the
+   * contract refuses everyone else. The app role is what opens this page, and
+   * the two can disagree — an admin used to reach the form, fill in a split and
+   * fail at the wallet with nothing explaining why.
+   */
+  const isEscrowResolver = sameAddress(escrow?.roles.disputeResolver, address)
+
+  // What the resolution actually distributes. The agreement's `amount` is what
+  // was agreed, which is a different number on a partly funded escrow.
+  const distributable = escrow?.balance ?? 0
+  const payerAmount = (distributable * payerPercentage) / 100
+  const payeeAmount = distributable - payerAmount
 
   useEffect(() => {
     if (!address) {
@@ -171,6 +228,36 @@ export default function DisputesPage() {
     loadDisputes()
   }, [address, router, token])
 
+  // Read the escrow whenever a dispute is selected: balance, role addresses
+  // and type all come from the chain, not from our database.
+  useEffect(() => {
+    const contractId = selectedDispute?.agreement?.contract_id
+    if (!contractId) return
+
+    let cancelled = false
+
+    const load = async () => {
+      setEscrowRead({ contractId, loading: true, escrow: null, error: null })
+      const result = await getEscrowByContractId(contractId, token ?? undefined)
+      if (cancelled) return
+
+      setEscrowRead({
+        contractId,
+        loading: false,
+        escrow: result.success ? (result.data ?? null) : null,
+        error: result.success
+          ? null
+          : (result.error ?? "Could not read this escrow from the chain."),
+      })
+    }
+
+    void load()
+
+    return () => {
+      cancelled = true
+    }
+  }, [selectedDispute, token])
+
   const handleAssignToMe = async (dispute: DisputeWithAgreement) => {
     if (!address || !canResolve || !token) return
 
@@ -191,28 +278,40 @@ export default function DisputesPage() {
   }
 
   const handleResolve = async () => {
-    if (!selectedDispute || !address || !canResolve || !token) return
+    if (!selectedDispute || !address || !token || !escrow) return
 
     setIsResolving(true)
     setResolveError(null)
     setResolveSuccess(false)
+    setTrustlineProblems(null)
+    setPendingConfirmation(false)
+    setTxStatus(null)
 
-    const result = await resolveDispute(
-      selectedDispute.id,
-      {
-        resolved_by: address,
-        payer_percentage: payerPercentage,
-        payee_percentage: 100 - payerPercentage,
-        resolution_notes: resolutionNotes,
-      },
+    // Settles on-chain first and records it afterwards. The button used to
+    // write `resolved` to the database and show a tick while the escrow stayed
+    // disputed and the funds stayed locked.
+    const result = await resolveDisputeOnChain({
+      disputeId: selectedDispute.id,
+      contractId: escrow.contractId,
+      escrow,
+      payerPercentage,
+      resolutionNotes,
+      walletAddress: address,
       token,
-    )
+      onStatus: setTxStatus,
+    })
 
-    if (!result.success) {
-      setResolveError(result.error || "Failed to resolve dispute")
+    if (result.pendingConfirmation) {
+      setPendingConfirmation(true)
+    } else if (!result.success) {
+      setResolveError(result.failure?.message ?? "Failed to resolve dispute")
+      setTrustlineProblems(result.failure?.trustlineProblems ?? null)
     } else {
+      // Succeeded on-chain. `failure` here means only that Thalos could not
+      // write the record, which must not read as "the funds did not move".
       setResolveSuccess(true)
-      // Refresh disputes
+      if (result.failure) setResolveError(result.failure.message)
+
       const refreshResult = await getOpenDisputes(token)
       if (refreshResult.success) {
         setDisputes(refreshResult.data || [])
@@ -222,7 +321,8 @@ export default function DisputesPage() {
         setResolveSuccess(false)
         setPayerPercentage(50)
         setResolutionNotes("")
-      }, 2000)
+        setTxStatus(null)
+      }, 2500)
     }
 
     setIsResolving(false)
@@ -414,9 +514,22 @@ export default function DisputesPage() {
                   <h3 className="font-medium text-foreground">
                     {selectedDispute.agreement?.title}
                   </h3>
+                  {/* What the contract holds, which is what a resolution splits.
+                      The agreed amount is shown next to it only when it differs,
+                      so a partly funded escrow cannot read as the full one. */}
                   <p className="mt-1 text-2xl font-bold text-[#f0b400]">
-                    {selectedDispute.agreement?.amount} USDC
+                    {isLoadingEscrow
+                      ? "…"
+                      : `${distributable} ${escrow?.trustline?.symbol ?? "USDC"}`}
+                    <span className="ml-2 text-xs font-normal uppercase tracking-wider text-muted-foreground">
+                      in escrow
+                    </span>
                   </p>
+                  {escrow && escrow.amount !== escrow.balance && (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Agreed: {escrow.amount} {escrow.trustline?.symbol ?? "USDC"}
+                    </p>
+                  )}
                 </div>
 
                 {/* Dispute Details */}
@@ -468,6 +581,25 @@ export default function DisputesPage() {
                   </Button>
                 )}
 
+                {escrowProblem && (
+                  <div className="mb-6 rounded-xl border border-red-500/30 bg-red-500/10 p-4">
+                    <p className="text-sm text-red-400">{escrowProblem}</p>
+                  </div>
+                )}
+
+                {/* The escrow names its own resolver, and nobody else can sign. */}
+                {escrow && !isEscrowResolver && (
+                  <div className="mb-6 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4">
+                    <p className="text-sm text-amber-400">
+                      Only the dispute resolver of this escrow can settle it
+                      {escrow.roles.disputeResolver
+                        ? ` (${truncateAddress(escrow.roles.disputeResolver)})`
+                        : ""}
+                      . Connect that wallet to continue.
+                    </p>
+                  </div>
+                )}
+
                 {/* Resolution Form */}
                 {(selectedDispute.resolver_wallet === address || profile?.role === "admin") &&
                   selectedDispute.status !== "resolved" &&
@@ -498,14 +630,7 @@ export default function DisputesPage() {
                             </p>
                             <p className="text-2xl font-bold text-blue-400">{payerPercentage}%</p>
                             <p className="text-sm text-muted-foreground mt-1">
-                              {(
-                                ((Number(
-                                  String(selectedDispute.agreement?.amount ?? "0").replace(",", ""),
-                                ) || 0) *
-                                  payerPercentage) /
-                                100
-                              ).toFixed(2)}{" "}
-                              USDC
+                              {payerAmount.toFixed(2)} {escrow?.trustline?.symbol ?? "USDC"}
                             </p>
                           </div>
                           <div className="rounded-xl bg-green-500/10 border border-green-500/30 p-4 text-center">
@@ -516,14 +641,7 @@ export default function DisputesPage() {
                               {100 - payerPercentage}%
                             </p>
                             <p className="text-sm text-muted-foreground mt-1">
-                              {(
-                                ((Number(
-                                  String(selectedDispute.agreement?.amount ?? "0").replace(",", ""),
-                                ) || 0) *
-                                  (100 - payerPercentage)) /
-                                100
-                              ).toFixed(2)}{" "}
-                              USDC
+                              {payeeAmount.toFixed(2)} {escrow?.trustline?.symbol ?? "USDC"}
                             </p>
                           </div>
                         </div>
@@ -546,7 +664,13 @@ export default function DisputesPage() {
                       {/* Resolve Button */}
                       <Button
                         onClick={handleResolve}
-                        disabled={isResolving || resolveSuccess}
+                        disabled={
+                          isResolving ||
+                          resolveSuccess ||
+                          !escrow ||
+                          !isEscrowResolver ||
+                          isLoadingEscrow
+                        }
                         className={cn(
                           "w-full",
                           resolveSuccess
@@ -557,19 +681,53 @@ export default function DisputesPage() {
                         {isResolving ? (
                           <>
                             <span className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></span>
-                            Resolving...
+                            {TX_STATUS_LABELS[txStatus ?? "building"]}
                           </>
                         ) : resolveSuccess ? (
                           <>
                             {Icons.check}
-                            <span className="ml-2">Resolved Successfully</span>
+                            <span className="ml-2">Funds distributed on-chain</span>
                           </>
                         ) : (
                           "Resolve Dispute"
                         )}
                       </Button>
 
-                      {resolveError && (
+                      {/* Named, not just reported: the resolver cannot add
+                          someone else's trustline, so the party who has to act
+                          must be identifiable. */}
+                      {trustlineProblems && (
+                        <div className="mt-3 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-left">
+                          <p className="text-sm font-medium text-red-400">
+                            This resolution cannot be sent yet
+                          </p>
+                          <ul className="mt-2 space-y-1">
+                            {trustlineProblems.map((problem) => (
+                              <li key={problem.address} className="text-sm text-red-300/90">
+                                <span className="font-mono">
+                                  {truncateAddress(problem.address)}
+                                </span>{" "}
+                                {problem.reason === "no-account"
+                                  ? "has no account on the network yet."
+                                  : `cannot receive ${escrow?.trustline?.symbol ?? "USDC"} yet.`}
+                              </li>
+                            ))}
+                          </ul>
+                          <p className="mt-2 text-xs text-red-300/70">
+                            Only the owner of each address can fix this, by adding the trustline in
+                            their own wallet. Ask them to do it, then try again.
+                          </p>
+                        </div>
+                      )}
+
+                      {pendingConfirmation && (
+                        <p className="mt-3 text-sm text-amber-400 text-center">
+                          Submitted, but the network has not confirmed it yet. Check the escrow in a
+                          moment before trying again — it may already be settled.
+                        </p>
+                      )}
+
+                      {resolveError && !trustlineProblems && (
                         <p className="mt-3 text-sm text-red-400 text-center">{resolveError}</p>
                       )}
                     </>
