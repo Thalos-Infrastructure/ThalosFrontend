@@ -28,6 +28,7 @@ import {
   type BusinessMember,
 } from "@/lib/actions/business-roles"
 import { ProfileEditor } from "@/components/profile/profile-editor"
+import { EmailMissingBanner } from "@/components/profile/email-missing-banner"
 import { AgreementsView } from "@/components/agreements/agreements-view"
 import { ContactSelector } from "@/components/agreements/contact-selector"
 import { AgreementChat } from "@/components/agreements/agreement-chat"
@@ -2272,6 +2273,7 @@ function BusinessDashboardPage() {
               {/* ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ AGREEMENTS ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ */}
               {activeSection === "agreements" && !isActiveSectionKybGated && !viewingAgreement && (
                 <div className="mx-auto max-w-4xl animate-in fade-in slide-in-from-bottom-2 duration-300">
+                  <EmailMissingBanner className="mb-4" />
                   {/* Header */}
                   <div className="mb-6 flex flex-wrap items-center justify-between gap-2">
                     <h1 className="text-2xl font-semibold text-white">
