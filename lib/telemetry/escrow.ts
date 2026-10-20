@@ -7,6 +7,8 @@ export type EscrowOperation =
   | "changeMilestoneStatus"
   | "releaseFunds"
   | "disputeMilestone"
+  | "resolveDispute"
+  | "getEscrowByContractId"
   | "sendTransaction"
 
 export type EscrowOutcome = "success" | "failure"

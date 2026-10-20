@@ -6,6 +6,15 @@ export interface ApiResponse<T> {
   error?: string
   /** HTTP status code when a response was received (undefined on a network error). */
   status?: number
+  /**
+   * The parsed error body, when the request failed.
+   *
+   * `error` is flattened to one sentence for display; some backend refusals
+   * carry a machine-readable shape alongside it (`code`, and for a missing
+   * trustline the addresses at fault) that the UI needs in order to say who
+   * has to act, not just what went wrong.
+   */
+  errorBody?: unknown
 }
 
 function getErrorMessage(data: unknown): string | undefined {
@@ -62,6 +71,7 @@ export async function apiRequest<T>(
         success: false,
         error: getErrorMessage(data) ?? "Request failed",
         status: response.status,
+        errorBody: data,
       }
     }
 

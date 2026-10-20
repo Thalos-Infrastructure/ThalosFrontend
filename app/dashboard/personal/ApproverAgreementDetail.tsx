@@ -5,6 +5,9 @@ type Milestone = {
   amount: string
   status: MilestoneStatus
   approved?: boolean
+  /** Delivered and waiting on the approver — see `AgreementViewMilestone`. */
+  delivered?: boolean
+  evidence?: string
 }
 type Agreement = {
   id: string
@@ -53,6 +56,7 @@ import { signEscrowOperation, type EscrowOperation, type TxStatus } from "@/lib/
 import type { AgreementResponse } from "@/services/escrow.types"
 import { useAuthStore } from "@/lib/auth-store"
 import { AlertTriangle } from "lucide-react"
+import { ApproverMilestoneSection } from "./ApproverMilestoneSection"
 
 export function ApproverAgreementDetail({
   agr,
@@ -79,7 +83,9 @@ export function ApproverAgreementDetail({
   const [showDetail, setShowDetail] = React.useState(false)
   const [loadingMs, setLoadingMs] = React.useState<number | null>(null)
   const [errorMs, setErrorMs] = React.useState<string | null>(null)
-  const [localMilestones, setLocalMilestones] = React.useState<Milestone[]>(agr.milestones)
+  // `agr.milestones` directly: this used to be mirrored into state and synced
+  // by an effect, which only ever copied the prop and cost an extra render.
+  const localMilestones = agr.milestones
   const [funding, setFunding] = React.useState(false)
   const [fundSuccess, setFundSuccess] = React.useState(false)
   const [fundError, setFundError] = React.useState<string | null>(null)
@@ -88,10 +94,6 @@ export function ApproverAgreementDetail({
   const [showDisputeConfirm, setShowDisputeConfirm] = React.useState<number | null>(null)
   const [txStatus, setTxStatus] = React.useState<TxStatus | null>(null)
   const [chainFundedBalance, setChainFundedBalance] = React.useState(0)
-
-  React.useEffect(() => {
-    setLocalMilestones(agr.milestones)
-  }, [agr.milestones])
 
   const allApproved = localMilestones.every((m) => m.approved === true)
   const lifecycleState = deriveLifecycleState({
@@ -565,173 +567,24 @@ export function ApproverAgreementDetail({
       {/* Expanded detail: milestones */}
       {showDetail && (
         <div className="mt-4">
-          <div className="flex flex-col gap-3">
-            {localMilestones.map((ms, idx) => (
-              <div
-                key={idx}
-                className={cn(
-                  "rounded-xl border p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3",
-                  ms.status === "released"
-                    ? "border-emerald-500/20 bg-emerald-500/5"
-                    : ms.status === "approved" || ms.approved
-                      ? "border-[#f0b400]/20 bg-[#f0b400]/5"
-                      : "border-white/[0.06] bg-[#0a0a0c]/70",
-                )}
-              >
-                <div className="flex items-center gap-3">
-                  <span
-                    className={cn(
-                      "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold",
-                      ms.status === "released"
-                        ? "bg-emerald-500/20 text-emerald-400"
-                        : ms.status === "approved" || ms.approved
-                          ? "bg-[#f0b400]/20 text-[#f0b400]"
-                          : "bg-white/10 text-white/40",
-                    )}
-                  >
-                    {idx + 1}
-                  </span>
-                  <div>
-                    <p className="text-sm font-semibold text-white">{ms.description}</p>
-                    <p
-                      className={cn(
-                        "text-xs font-medium mt-0.5",
-                        ms.status === "released"
-                          ? "text-emerald-400"
-                          : ms.status === "approved" || ms.approved
-                            ? "text-[#f0b400]"
-                            : "text-white/30",
-                      )}
-                    >
-                      {ms.status === "released"
-                        ? t("flow.released")
-                        : ms.status === "approved" || ms.approved
-                          ? t("flow.evidenceReady")
-                          : isFunded
-                            ? t("flow.awaitingEvidence")
-                            : t("flow.pendingFundingDesc")}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <p className="text-lg font-bold text-white">
-                    {"$"}
-                    {localMilestones.length === 1 && idx === 0 ? agr.amount : ms.amount}{" "}
-                    <span className="text-xs font-normal text-white/35">USDC</span>
-                  </p>
-
-                  {/* Dispute button - appears when evidence is submitted but not yet released */}
-                  {/* Dispute button - show for funded escrows on any milestone that is not released and not already disputed */}
-                  {isFunded &&
-                    ms.status !== "released" &&
-                    !disputedMs.has(idx) &&
-                    isExternalWallet && (
-                      <Button
-                        size="sm"
-                        onClick={() => setShowDisputeConfirm(idx)}
-                        disabled={disputingMs === idx}
-                        className="rounded-full bg-red-500/10 text-xs font-semibold text-red-400 hover:bg-red-500/20 border border-red-500/20"
-                      >
-                        <AlertTriangle className="h-3 w-3 mr-1" />
-                        {disputingMs === idx ? "..." : t("dispute.raiseDispute")}
-                      </Button>
-                    )}
-
-                  {/* Disputed badge */}
-                  {disputedMs.has(idx) && (
-                    <span className="rounded-full bg-red-500/15 px-3 py-1 text-xs font-semibold text-red-400 border border-red-500/20 flex items-center gap-1">
-                      <AlertTriangle className="h-3 w-3" />
-                      {t("dispute.inDispute")}
-                    </span>
-                  )}
-
-                  {isFunded &&
-                    (ms.status === "pending" || ms.status === "released") &&
-                    !allReleased &&
-                    ms.approved === false &&
-                    !disputedMs.has(idx) &&
-                    isExternalWallet && (
-                      <Button
-                        size="sm"
-                        onClick={() => handleApprove(idx)}
-                        disabled={loadingMs === idx}
-                        className="rounded-full bg-[#f0b400]/15 text-xs font-semibold text-[#f0b400] hover:bg-[#f0b400]/25 border border-[#f0b400]/20"
-                      >
-                        {loadingMs === idx ? t("flow.approving") : t("flow.approveMs")}
-                      </Button>
-                    )}
-                  {ms.status === "released" && (
-                    <span className="rounded-full bg-emerald-500/15 px-3 py-1 text-xs font-semibold text-emerald-400 border border-emerald-500/20">
-                      {t("flow.released")}
-                    </span>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-          {errorMs && <div className="text-red-400 text-xs mt-2">{errorMs}</div>}
-
-          {/* Dispute confirmation modal */}
-          {showDisputeConfirm !== null && (
-            <div
-              className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
-              onClick={() => setShowDisputeConfirm(null)}
-            >
-              <div
-                className="w-full max-w-md rounded-2xl border border-red-500/20 bg-[#0c0c0e] p-6 shadow-[0_16px_48px_rgba(0,0,0,0.6)]"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-500/10">
-                    <AlertTriangle className="h-6 w-6 text-red-400" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold text-white">{t("dispute.raiseDispute")}</h3>
-                    <p className="text-xs text-white/40">{t("dispute.disputeDesc")}</p>
-                  </div>
-                </div>
-                <div className="rounded-xl border border-red-500/10 bg-red-500/5 p-4 mb-4">
-                  <p className="text-sm text-white/70">{t("dispute.confirmDispute")}</p>
-                  <p className="text-xs text-white/40 mt-2">{t("dispute.disputeWarning")}</p>
-                </div>
-                <div className="flex gap-3 justify-end">
-                  <Button
-                    variant="outline"
-                    onClick={() => setShowDisputeConfirm(null)}
-                    className="rounded-full border-white/10 text-white/60 hover:bg-white/5"
-                  >
-                    {t("dispute.cancel")}
-                  </Button>
-                  <Button
-                    onClick={() => handleDispute(showDisputeConfirm)}
-                    disabled={disputingMs === showDisputeConfirm}
-                    className="rounded-full bg-red-500 text-white hover:bg-red-600 shadow-[0_4px_16px_rgba(239,68,68,0.25)]"
-                  >
-                    {disputingMs === showDisputeConfirm ? "..." : t("dispute.confirm")}
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Release button */}
-          {allApproved && !agr.released && !allReleased && isExternalWallet && (
-            <div className="mt-4 rounded-xl border border-emerald-500/15 bg-emerald-500/5 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <div>
-                <p className="text-sm font-semibold text-emerald-400">{t("flow.releaseAll")}</p>
-                <p className="text-xs text-white/35 mt-0.5">
-                  All milestones are approved. Release funds to the seller.
-                </p>
-              </div>
-              <Button
-                onClick={() => handleReleaseAll()}
-                disabled={loadingMs === -1}
-                className="rounded-full bg-emerald-500 px-6 text-sm font-semibold text-white hover:bg-emerald-600 shadow-[0_4px_16px_rgba(16,185,129,0.25)]"
-              >
-                {loadingMs === -1 ? t("flow.releasing") : t("flow.releaseAll")}
-              </Button>
-            </div>
-          )}
+          <ApproverMilestoneSection
+            agr={{
+              id: agr.id,
+              type: agr.type,
+              amount: agr.amount,
+              milestones: localMilestones,
+              released: agr.released,
+              serviceProvider: agr.serviceProvider,
+              approver: agr.approver,
+              releaseSigner: agr.releaseSigner,
+              disputeResolver: agr.disputeResolver,
+              agreement_id: agr.agreement_id,
+            }}
+            walletAddress={walletAddress}
+            isFunded={isFunded}
+            allReleased={allReleased}
+            onEscrowChanged={onEscrowChanged}
+          />
 
           {/* All released success */}
           {allReleased && (

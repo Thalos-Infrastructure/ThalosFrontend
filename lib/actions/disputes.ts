@@ -157,6 +157,14 @@ export async function assignDisputeResolver(
 
 /**
  * Resolve a dispute with fund distribution percentages
+ *
+ * @deprecated Records a resolution without settling it. Nothing calls this, and
+ * nothing should: it marks the dispute resolved in Supabase while the escrow
+ * stays disputed on-chain and the funds stay locked — the exact contradiction
+ * `lib/disputes/resolveDispute.ts` exists to remove. Settle through
+ * `resolveDisputeOnChain`, which writes the record only after the chain
+ * confirms the distribution.
+ *
  * @param input Resolve dispute input
  * @param token JWT token for updating agreement status
  */

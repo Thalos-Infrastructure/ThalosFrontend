@@ -45,6 +45,7 @@ describe("apiRequest", () => {
       success: false,
       error: "Agreement not found",
       status: 404,
+      errorBody: { message: "Agreement not found" },
     })
   })
 
@@ -83,6 +84,37 @@ describe("apiRequest", () => {
       success: false,
       error: "wallet is required; amount must be positive",
       status: 400,
+      errorBody: {
+        success: false,
+        error: {
+          code: "VALIDATION_ERROR",
+          details: ["wallet is required", { message: "amount must be positive" }],
+        },
+      },
+    })
+  })
+
+  it("keeps the error body, so a caller can read the structure behind the sentence", async () => {
+    // Some refusals carry a machine-readable shape the UI needs — a missing
+    // trustline names the addresses at fault, and only their owners can fix it.
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          message: "One recipient cannot receive USDC yet.",
+          code: "TRUSTLINE_MISSING",
+          problems: [{ address: "GPAYEE", reason: "missing" }],
+        }),
+        { status: 400 },
+      ),
+    )
+    vi.stubGlobal("fetch", fetchMock)
+
+    const result = await apiRequest("/escrows/resolve-dispute", { method: "POST" })
+
+    expect(result.error).toBe("One recipient cannot receive USDC yet.")
+    expect(result.errorBody).toMatchObject({
+      code: "TRUSTLINE_MISSING",
+      problems: [{ address: "GPAYEE", reason: "missing" }],
     })
   })
 

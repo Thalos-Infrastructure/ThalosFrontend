@@ -76,6 +76,15 @@ export function mapTwEscrowToAgreementView(
       : approved
         ? "approved"
         : mapped || (isMilestoneStatus(m.status || "") ? (m.status as MilestoneStatus) : "pending")
+
+    // "completed" is what the service provider writes with the evidence, and it
+    // means delivered — never released. It collapses into `pending` above, so
+    // keep the distinction here or the approver cannot tell that there is
+    // anything to review. Case matters: real escrows carry both "completed" and
+    // "Completed".
+    const deliveredText = (m.status ?? "").trim().toLowerCase() === "completed"
+    const delivered = !released && !approved && (deliveredText || Boolean(m.evidence?.trim()))
+
     return {
       index,
       description: m.description ?? "",
@@ -87,6 +96,7 @@ export function mapTwEscrowToAgreementView(
             : "",
       status,
       approved,
+      delivered,
       evidence: m.evidence,
       released,
       disputed: Boolean(m.flags?.disputed),
@@ -161,6 +171,7 @@ export function agreementViewToLegacyListItem(view: AgreementViewModel) {
     date: view.date,
     milestones: view.milestones.map((m) => ({
       approved: m.approved,
+      delivered: m.delivered,
       description: m.description,
       amount: m.amount,
       status: m.status,

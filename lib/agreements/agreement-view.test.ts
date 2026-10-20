@@ -29,6 +29,7 @@ describe("computeNextAction", () => {
           amount: "100",
           status: "pending",
           approved: false,
+          delivered: false,
           released: false,
         },
       ],
@@ -71,6 +72,7 @@ describe("computeNextAction", () => {
           amount: "100",
           status: "pending",
           approved: false,
+          delivered: false,
           released: false,
         },
       ],
@@ -176,5 +178,105 @@ describe("mapTwEscrowToAgreementView — evidence is not a release", () => {
       PROVIDER,
     )
     expect(view.milestones[0].status).toBe("released")
+  })
+})
+
+describe("mapTwEscrowToAgreementView — delivered work is not pending work", () => {
+  /**
+   * Testnet CBHXR4…OSEP as Trustless Work returned it on 2026-10-19: funded in
+   * full, evidence submitted, nothing approved. The approver was shown
+   * "Pending" for it and offered no action at all.
+   */
+  const deliveredAndFunded = {
+    contractId: "CBHXR4EDASQZJI3KLA6U5VRKU43U62FKHFF4WV4TKSCDNH5ZXU7WOSEP",
+    type: "single-release",
+    title: "Kalcha test 18/10",
+    amount: 100,
+    balance: 100,
+    flags: { disputed: false, released: false, resolved: false },
+    roles: { approver: APPROVER, serviceProvider: PROVIDER, releaseSigner: APPROVER },
+    milestones: [
+      { description: "Full delivery", status: "completed", evidence: "ok", approved: false },
+    ],
+  }
+
+  it("marks the milestone delivered while its canonical status stays pending", () => {
+    // Both are true and neither replaces the other: "completed" is not a
+    // release, but it is not "nothing happened" either.
+    const view = mapTwEscrowToAgreementView(deliveredAndFunded, APPROVER)
+
+    expect(view.milestones[0].delivered).toBe(true)
+    expect(view.milestones[0].status).toBe("pending")
+    expect(view.milestones[0].evidence).toBe("ok")
+  })
+
+  it("reads a capitalised status too", () => {
+    // A real escrow carries "Completed"; a case-sensitive check would show the
+    // approver nothing to review.
+    const view = mapTwEscrowToAgreementView(
+      {
+        ...deliveredAndFunded,
+        milestones: [{ description: "delivery 1", status: "Completed", evidence: "evidence 1" }],
+      },
+      APPROVER,
+    )
+
+    expect(view.milestones[0].delivered).toBe(true)
+  })
+
+  it("treats evidence on its own as delivered", () => {
+    const view = mapTwEscrowToAgreementView(
+      {
+        ...deliveredAndFunded,
+        milestones: [{ description: "Full delivery", status: "pending", evidence: "ok" }],
+      },
+      APPROVER,
+    )
+
+    expect(view.milestones[0].delivered).toBe(true)
+  })
+
+  it("is not delivered when nothing was submitted", () => {
+    const view = mapTwEscrowToAgreementView(
+      {
+        ...deliveredAndFunded,
+        milestones: [{ description: "Full delivery", status: "pending", evidence: "" }],
+      },
+      APPROVER,
+    )
+
+    expect(view.milestones[0].delivered).toBe(false)
+  })
+
+  it("stops being delivered once it is approved or released", () => {
+    // Delivered means "waiting on the approver", so it ends when they act.
+    const approved = mapTwEscrowToAgreementView(
+      {
+        ...deliveredAndFunded,
+        milestones: [
+          { description: "Full delivery", status: "completed", evidence: "ok", approved: true },
+        ],
+      },
+      APPROVER,
+    )
+    expect(approved.milestones[0].delivered).toBe(false)
+
+    const released = mapTwEscrowToAgreementView(
+      {
+        ...deliveredAndFunded,
+        flags: { disputed: false, released: true, resolved: false },
+        milestones: [
+          { description: "Full delivery", status: "completed", evidence: "ok", approved: true },
+        ],
+      },
+      APPROVER,
+    )
+    expect(released.milestones[0].delivered).toBe(false)
+  })
+
+  it("tells the approver the next step is to approve it", () => {
+    expect(mapTwEscrowToAgreementView(deliveredAndFunded, APPROVER).nextAction).toBe(
+      "approve_milestone",
+    )
   })
 })

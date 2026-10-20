@@ -1,6 +1,8 @@
 "use client"
 
 import { canSubmitEvidence } from "@/lib/helpers/evidencePermission"
+import { ApproverMilestoneSection } from "./ApproverMilestoneSection"
+import { EmailMissingBanner } from "@/components/profile/email-missing-banner"
 import React, { useState, useEffect, useCallback, useId, useRef, useMemo, Suspense } from "react"
 import Image from "next/image"
 import Link from "next/link"
@@ -266,6 +268,10 @@ interface Milestone {
   description: string
   amount: string
   status: MilestoneStatus
+  /** Approved on-chain. Absent on rows that never reached the escrow. */
+  approved?: boolean
+  /** Delivered and waiting on the approver — see `AgreementViewMilestone`. */
+  delivered?: boolean
   evidence?: string
 }
 interface Agreement {
@@ -361,6 +367,10 @@ function mapNestAgreementToUi(
       description: m.description,
       amount: asAmountString(m.amount),
       status: live.milestoneStatuses?.[idx] ?? m.status,
+      approved: (live.milestoneStatuses?.[idx] ?? m.status) === "approved",
+      // The chain is the only source for this: Nest's row still says pending
+      // while the escrow already holds the evidence.
+      delivered: live.milestoneDelivered?.[idx] ?? false,
       evidence: live.milestoneEvidence?.[idx],
     })),
     receiver: live.receiver || payee || counterparty || "",
@@ -822,6 +832,7 @@ function SellerMilestoneList({
     setSubmitting(idx)
     await changeMilestoneStatusAgreement({
       contractId: agr.id,
+      agreementId: agr.nestId,
       milestoneIndex: String(idx),
       newEvidence: evidence,
       // Evidence submission marks work done — "released" is the fund-release step.
@@ -2755,6 +2766,7 @@ function PersonalDashboardPage() {
           {/* ══════ AGREEMENTS ══════ */}
           {activeSection === "agreements" && !viewingAgreement && (
             <div className="mx-auto max-w-4xl animate-in fade-in slide-in-from-bottom-2 duration-300">
+              <EmailMissingBanner className="mb-4" />
               {/* Header */}
               <div className="mb-6 flex flex-wrap items-center justify-between gap-2">
                 <h1 className="text-2xl font-semibold text-white">{t("dashPage.myAgreements")}</h1>
@@ -3033,20 +3045,31 @@ function PersonalDashboardPage() {
                       <SellerMilestoneList agr={agr} t={t} onRefresh={refreshAgreements} />
                     ) : agr.role === "seller" ? (
                       <WalletPrompt message="Connect and verify a wallet to submit evidence and manage this agreement." />
+                    ) : isExternalWallet ? (
+                      // The approver's side. This used to be a read-only list:
+                      // the evidence was never shown and there was no way to
+                      // approve, dispute or release, so a buyer who funded here
+                      // could not finish the agreement at all.
+                      <ApproverMilestoneSection
+                        agr={{
+                          id: agr.id,
+                          type: agr.type,
+                          amount: agr.amount,
+                          milestones: agr.milestones,
+                          released: agr.released,
+                          serviceProvider: agr.serviceProvider,
+                          approver: agr.approver,
+                          releaseSigner: agr.releaseSigner,
+                          disputeResolver: agr.disputeResolver,
+                          agreement_id: agr.nestId,
+                        }}
+                        walletAddress={walletAddress ?? ""}
+                        isFunded={isFunded}
+                        allReleased={allReleased}
+                        onEscrowChanged={refreshAgreements}
+                      />
                     ) : (
-                      <ul className="flex flex-col gap-2">
-                        {agr.milestones.map((m, idx) => (
-                          <li
-                            key={idx}
-                            className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm"
-                          >
-                            <span className="text-white/80">{m.description}</span>
-                            <span className="text-xs font-semibold capitalize text-white/50">
-                              {m.status}
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
+                      <WalletPrompt message="Connect and verify a wallet to review the evidence and approve this agreement." />
                     )}
                   </div>
 

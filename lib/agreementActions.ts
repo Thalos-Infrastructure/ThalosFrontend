@@ -60,6 +60,8 @@ export interface FundAndSignEscrowParams {
 
 export interface ChangeMilestoneStatusParams {
   contractId: string
+  /** Thalos agreement id, so the evidence can be recorded and notified. */
+  agreementId?: string
   milestoneIndex: string
   newEvidence: string
   newStatus: string
@@ -477,6 +479,7 @@ async function escrowBalance(
 
 export async function changeMilestoneStatusAgreement({
   contractId,
+  agreementId,
   milestoneIndex,
   newEvidence,
   newStatus,
@@ -517,6 +520,21 @@ export async function changeMilestoneStatusAgreement({
       token,
     )
     onStatus?.("confirmed")
+
+    // The evidence is on the escrow; now tell Thalos, which is what emits the
+    // event the approver's email notification hangs off. Non-fatal: the
+    // evidence is already on-chain either way.
+    const { reportMilestoneToNest } = await import("@/lib/agreements/reportMilestoneToNest")
+    await reportMilestoneToNest({
+      step: "evidence",
+      agreementId,
+      contractId,
+      milestoneIndex: Number(milestoneIndex),
+      actorWallet: serviceProvider,
+      evidence: newEvidence,
+      token,
+    })
+
     // The escrow index is cached for a few seconds; without this the re-read
     // after evidence returns the pre-evidence escrow and the button comes back.
     const { invalidateEscrowIndex } = await import("@/lib/agreements/reconcile-nest-escrow")
