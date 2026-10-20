@@ -35,7 +35,9 @@ ThalosBackend (`/v1`) which relays to Trustless Work. Runs at http://localhost:3
 `SUPABASE_SERVICE_ROLE_KEY`, `JWT_SECRET` (HS256; **must match ThalosBackend**),
 `SUPABASE_JWT_SECRET` (only for Supabase-Auth token verification), `THALOS_INTERNAL_SECRET`
 (must match backend), `NEXT_PUBLIC_API_URL` (default `http://localhost:3001/v1`),
-`RESEND_API_KEY`, `NEXT_PUBLIC_STELLAR_NETWORK` (TESTNET). There is no
+`NEXT_PUBLIC_STELLAR_NETWORK` (TESTNET). There is no `RESEND_API_KEY` here either —
+email notifications are sent by ThalosBackend, which owns the templates and the
+recipients. There is no
 `NEXT_PUBLIC_TRUSTLESSWORK_API_KEY` any more — the Trustless Work key lives only in
 ThalosBackend. Most `NEXT_PUBLIC_*` have working
 defaults in `lib/config.ts`. There is **no `.env.example`** despite the README linking one.

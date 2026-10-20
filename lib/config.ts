@@ -9,10 +9,6 @@ export const APP_NAME = "Thalos"
 // are shown on the dashboards.
 export const SHOW_MOCKED_AGREEMENTS = process.env.NEXT_PUBLIC_SHOW_MOCKED_AGREEMENTS === "true"
 
-// Email Configuration (Resend)
-export const EMAIL_FROM = process.env.EMAIL_FROM || "Thalos <notifications@thalosplatform.xyz>"
-export const EMAIL_REPLY_TO = process.env.EMAIL_REPLY_TO || "support@thalosplatform.xyz"
-
 // Stellar Explorer — la base por red vive en STELLAR_NETWORKS (más abajo); esta
 // variable solo permite apuntar a otro explorer distinto del predeterminado.
 
