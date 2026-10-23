@@ -188,6 +188,8 @@ const translations: Record<Lang, Record<string, string>> = {
     "signin.emailChange": "Use a different address",
     "signin.pickWallet": "Choose your wallet",
     "signin.noWalletsAvailable": "No Stellar wallets detected in this browser.",
+    "signin.signatureIsFree":
+      "You'll sign a message to prove the wallet is yours. Nothing is sent to the network, so the fee your wallet shows is not charged.",
     "signin.back": "Back",
     "signin.admin": "Admin",
     "signin.secured": "Secured by Thalos",
@@ -1129,6 +1131,8 @@ const translations: Record<Lang, Record<string, string>> = {
     "signin.emailChange": "Usar otra dirección",
     "signin.pickWallet": "Elige tu billetera",
     "signin.noWalletsAvailable": "No se detectaron billeteras Stellar en este navegador.",
+    "signin.signatureIsFree":
+      "Vas a firmar un mensaje para demostrar que la billetera es tuya. No se envía nada a la red, así que la comisión que muestre tu billetera no se cobra.",
     "signin.back": "Volver",
     "signin.admin": "Admin",
     "signin.secured": "Protegido por Thalos",
