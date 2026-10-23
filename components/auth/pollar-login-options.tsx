@@ -213,6 +213,16 @@ export function PollarLoginOptions({
           </form>
         )}
 
+        {/* The wallet's own confirmation dialog shows a network fee for the
+            challenge it is asked to sign. That challenge is never submitted, so
+            nothing is charged — but the dialog is the wallet's UI and we cannot
+            change it, so say it here, before it appears. */}
+        {walletOptions.length > 0 && (
+          <p className="text-center text-[11px] leading-relaxed text-white/35">
+            {t("signin.signatureIsFree")}
+          </p>
+        )}
+
         {error && (
           <p className="text-xs text-red-400/90 text-center" role="alert">
             {error}
