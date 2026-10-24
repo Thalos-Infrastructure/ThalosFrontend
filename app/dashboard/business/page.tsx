@@ -15,6 +15,7 @@ import { Footer } from "@/components/footer"
 import { useStellarWallet } from "@/lib/stellar-wallet"
 import { useCurrentAddress, useHasSigningWallet } from "@/lib/use-current-address"
 import { useSignOut } from "@/lib/use-sign-out"
+import { useRequireAuth } from "@/lib/use-require-auth"
 import { WalletGuard, WalletPrompt } from "@/components/shared/wallet-guard"
 import { useAuthStore } from "@/lib/auth-store"
 import { WalletAddress } from "@/components/ui/wallet-address"
@@ -785,8 +786,12 @@ function ChartTooltip({
    PAGE
    ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ */
 export default function BusinessDashboardPageWithNav() {
-  const { hydrated } = useAuthStore()
-  if (!hydrated) return <ThalosLoader />
+  // Signing out clears the session, but nothing stopped the browser from going
+  // straight back to this URL afterwards: the page rendered its whole shell and
+  // the sign-out looked broken. Waits for hydration so a plain reload does not
+  // bounce a signed-in user.
+  const { ready } = useRequireAuth()
+  if (!ready) return <ThalosLoader />
   return (
     <Suspense fallback={<ThalosLoader />}>
       <BusinessDashboardPage />
