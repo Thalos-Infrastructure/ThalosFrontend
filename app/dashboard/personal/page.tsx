@@ -20,6 +20,7 @@ import { AlertTriangle, RefreshCw, Pin, PanelLeftOpen } from "lucide-react"
 import { fundAndSignEscrow } from "@/lib/agreementActions"
 import { Footer } from "@/components/footer"
 import { RampsSection } from "@/components/ramps/ramps-section"
+import { GetUsdcPanel } from "@/components/ramps/get-usdc-panel"
 import { InlineOnramp } from "@/components/ramps/inline-onramp"
 import { DashboardHeader, MobileNav, YieldSection, ContactsSection } from "@/components/dashboard"
 import { getProfileByWallet, updateProfile, type Profile } from "@/lib/actions/profile"
@@ -694,9 +695,15 @@ const moreSidebarItems = [
 function BuyerFundingAction({
   agr,
   onRefresh,
+  usdcBalance,
+  onBalanceChanged,
 }: {
   agr: Agreement
   onRefresh: () => Promise<void>
+  /** Wallet USDC, loaded by the dashboard. Null while unknown. */
+  usdcBalance: string | null
+  /** Re-read the balance after an on-ramp delivers funds. */
+  onBalanceChanged?: () => void | Promise<void>
 }) {
   const { openWalletModal } = useStellarWallet()
   const walletAddress = useCurrentAddress()
@@ -728,31 +735,43 @@ function BuyerFundingAction({
   }
 
   return (
-    <div className="rounded-xl border border-sky-400/20 bg-sky-400/5 p-4">
-      <p className="text-sm font-semibold text-white">This agreement is awaiting funding</p>
-      <p className="mt-1 text-xs text-white/50">
-        Fund it from your connected wallet to start the work.
-      </p>
-      {error && <p className="mt-2 text-xs text-rose-400">{error}</p>}
-      {pendingConfirmation && !success && (
-        <p role="status" className="mt-2 text-xs text-sky-300">
-          Transaction submitted. Waiting for the network to confirm the funds — this view refreshes
-          automatically.
+    <div className="space-y-3">
+      {/* Shown whether or not the balance covers the amount: someone arriving
+          with an empty wallet had no way forward from here, and the only hint
+          that funding would fail was the failure itself. */}
+      <GetUsdcPanel
+        agreementId={agr.nestId ?? agr.id}
+        amountUsdc={String(agr.amount)}
+        balanceUsdc={usdcBalance}
+        onFunded={onBalanceChanged}
+      />
+
+      <div className="rounded-xl border border-sky-400/20 bg-sky-400/5 p-4">
+        <p className="text-sm font-semibold text-white">This agreement is awaiting funding</p>
+        <p className="mt-1 text-xs text-white/50">
+          Fund it from your connected wallet to start the work.
         </p>
-      )}
-      {success ? (
-        <p className="mt-3 text-sm font-semibold text-emerald-400">
-          Agreement funded successfully.
-        </p>
-      ) : (
-        <Button
-          onClick={handleFund}
-          disabled={funding}
-          className="mt-3 bg-[#f0b400] text-[#0c1220] hover:bg-[#e5ab00]"
-        >
-          {funding ? "Funding..." : "Fund Agreement"}
-        </Button>
-      )}
+        {error && <p className="mt-2 text-xs text-rose-400">{error}</p>}
+        {pendingConfirmation && !success && (
+          <p role="status" className="mt-2 text-xs text-sky-300">
+            Transaction submitted. Waiting for the network to confirm the funds — this view
+            refreshes automatically.
+          </p>
+        )}
+        {success ? (
+          <p className="mt-3 text-sm font-semibold text-emerald-400">
+            Agreement funded successfully.
+          </p>
+        ) : (
+          <Button
+            onClick={handleFund}
+            disabled={funding}
+            className="mt-3 bg-[#f0b400] text-[#0c1220] hover:bg-[#e5ab00]"
+          >
+            {funding ? "Funding..." : "Fund Agreement"}
+          </Button>
+        )}
+      </div>
     </div>
   )
 }
@@ -1039,6 +1058,9 @@ function PersonalDashboardPage() {
   // Session wallet (the one Pollar provisioned, or a Kit wallet with no session)
   // with its on-chain USDC balance. Replaces the hardcoded demo wallets.
   const [usdcBalance, setUsdcBalance] = useState<string | null>(null)
+  // Bumped to force a re-read, e.g. after an on-ramp delivers USDC. Clearing
+  // the balance alone would not re-run the effect below.
+  const [balanceNonce, setBalanceNonce] = useState(0)
   const [copiedAddress, setCopiedAddress] = useState<string | null>(null)
 
   useEffect(() => {
@@ -1055,7 +1077,7 @@ function PersonalDashboardPage() {
     }
     // `activeSection` is a deliberate dependency: coming back to a section that
     // shows the balance (e.g. after a deposit in Ramps) re-reads it from chain.
-  }, [walletAddress, token, activeSection])
+  }, [walletAddress, token, activeSection, balanceNonce])
 
   const usdcDisplay = formatUsdc(usdcBalance)
 
@@ -3011,7 +3033,12 @@ function PersonalDashboardPage() {
 
                   {/* Role-specific agreement actions */}
                   {agr.role === "buyer" && ["pending", "awaiting_funding"].includes(agr.status) ? (
-                    <BuyerFundingAction agr={agr} onRefresh={refreshAgreements} />
+                    <BuyerFundingAction
+                      agr={agr}
+                      onRefresh={refreshAgreements}
+                      usdcBalance={usdcBalance}
+                      onBalanceChanged={() => setBalanceNonce((n) => n + 1)}
+                    />
                   ) : null}
 
                   {agr.role === "seller" &&
