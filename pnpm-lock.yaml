@@ -23,6 +23,9 @@ importers:
       '@hookform/resolvers':
         specifier: ^3.10.0
         version: 3.10.0(react-hook-form@7.84.0(react@19.2.0))
+      '@lendara/widget':
+        specifier: ^0.1.0
+        version: 0.1.0
       '@pollar/core':
         specifier: 0.11.3
         version: 0.11.3
@@ -705,6 +708,9 @@ packages:
 
   '@ledgerhq/logs@6.17.0':
     resolution: {integrity: sha512-yra33g5q/AU7+PwAws+GaVpQGUuxnDREjVBnviJjcaJLVKuLzI4pnj8Bd3nY3fypM5k1yZEYKEXfUuGFUjP2+w==}
+
+  '@lendara/widget@0.1.0':
+    resolution: {integrity: sha512-WBMB8j3rgDIk3s9PLi0dnCT3dkPLS6Ap/8f5ssilvTnZ1yR6VlYDpP3aeYDQEcFjpsfBBKSSl37LU9DMEo0tvg==}
 
   '@lit-labs/ssr-dom-shim@1.6.0':
     resolution: {integrity: sha512-VHb0ALPMTlgKjM6yIxxoQNnpKyUKLD04VzeQdsiXkMqkvYlAHxq9glGLmgbb889/1GsohSOAjvQYoiBppXFqrQ==}
@@ -6787,6 +6793,8 @@ snapshots:
       events: 3.3.0
 
   '@ledgerhq/logs@6.17.0': {}
+
+  '@lendara/widget@0.1.0': {}
 
   '@lit-labs/ssr-dom-shim@1.6.0': {}
 

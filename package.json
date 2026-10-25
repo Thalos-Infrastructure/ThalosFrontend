@@ -25,6 +25,7 @@
     "@accesly/react": "^2.18.0",
     "@creit.tech/stellar-wallets-kit": "^2.5.0",
     "@hookform/resolvers": "^3.10.0",
+    "@lendara/widget": "^0.1.0",
     "@pollar/core": "0.11.3",
     "@pollar/react": "0.11.3",
     "@pollar/stellar-wallets-kit-adapter": "0.11.2",

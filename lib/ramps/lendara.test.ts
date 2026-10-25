@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { shortfall, LENDARA_AVAILABLE, startLendaraOnramp } from "./lendara"
+import { shortfall, LENDARA_AVAILABLE } from "./lendara"
 
 describe("shortfall", () => {
   it("says how much more is needed", () => {
@@ -32,15 +32,8 @@ describe("shortfall", () => {
   })
 })
 
-describe("startLendaraOnramp", () => {
-  it("refuses while the backend endpoint does not exist", async () => {
-    // The UI ships before the session endpoint; it must say so rather than
-    // open a widget that cannot work.
-    expect(LENDARA_AVAILABLE).toBe(false)
-
-    const result = await startLendaraOnramp({ agreementId: "a1", amountUsdc: "100" })
-
-    expect(result.success).toBe(false)
-    expect(result).toHaveProperty("error")
+describe("LENDARA_AVAILABLE", () => {
+  it("is on now that the backend endpoints exist", () => {
+    expect(LENDARA_AVAILABLE).toBe(true)
   })
 })
