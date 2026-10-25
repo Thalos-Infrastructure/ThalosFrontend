@@ -188,7 +188,7 @@ export function ApproverAgreementDetail({
     setTxStatus("building")
     try {
       const { disputeMilestone } = await import("@/services/escrowService")
-      const { openDispute } = await import("@/lib/actions/disputes")
+      const { openDispute } = await import("@/lib/api/disputes")
 
       const escrowType = agr.type === "Multi Release" ? "multi-release" : "single-release"
       const res = await disputeMilestone(
@@ -200,16 +200,15 @@ export function ApproverAgreementDetail({
       )
       const submitted = await signAndSubmit("dispute", res, "Error raising dispute")
 
-      // Register dispute in Supabase only after the on-chain dispute actually
-      // went through — a build response without XDR must not create a DB-only
-      // dispute.
-      if (submitted && agr.agreement_id) {
-        await openDispute({
-          agreement_id: agr.agreement_id,
-          opened_by: walletAddress,
-          reason: `Dispute raised on milestone ${idx + 1}`,
-          evidence_urls: [],
-        })
+      if (submitted && agr.agreement_id && token) {
+        await openDispute(
+          {
+            agreement_id: agr.agreement_id,
+            opened_by: walletAddress,
+            reason: `Dispute raised on milestone ${idx + 1}`,
+          },
+          token,
+        )
       }
       setDisputedMs((prev) => new Set(prev).add(idx))
       await onEscrowChanged?.()

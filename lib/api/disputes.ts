@@ -225,6 +225,31 @@ export async function getDispute(
   }
 }
 
+/** GET /v1/disputes/:id including the latest settlement proposal, if any. */
+export async function getDisputeDetail(
+  disputeId: string,
+  token: string,
+): Promise<ApiResponse<{ dispute: DisputeWithAgreement; proposal: DisputeProposal | null }>> {
+  try {
+    const response = await apiRequest<unknown>(`/disputes/${disputeId}`, { method: "GET" }, token)
+    if (!response.success) return { success: false, error: response.error }
+    const payload = response.data as Record<string, unknown>
+    if (payload.error) return { success: false, error: payload.error as string }
+    return {
+      success: true,
+      data: {
+        dispute: payload.dispute as DisputeWithAgreement,
+        proposal: (payload.proposal as DisputeProposal | null) ?? null,
+      },
+    }
+  } catch (e) {
+    return {
+      success: false,
+      error: e instanceof Error ? e.message : "Failed to fetch dispute",
+    }
+  }
+}
+
 /**
  * Assign resolver to dispute
  * Backend returns: { success, error }
