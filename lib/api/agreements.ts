@@ -487,6 +487,8 @@ export async function getAgreementByIdWithParticipants(
 
 import type { AttachedFile } from "./files"
 
+export type AgreementMessageKind = "user" | "system" | "event"
+
 export interface AgreementMessage {
   id: string
   agreement_id: string
@@ -494,6 +496,10 @@ export interface AgreementMessage {
   message: string
   created_at: string
   read_at: string | null
+  /** user = participant text; system = Thalos notice; event = agreement lifecycle. */
+  kind?: AgreementMessageKind
+  event_type?: string | null
+  metadata?: Record<string, unknown>
   /** Resolved by the backend. Empty for a plain-text message. */
   attachments?: AttachedFile[]
 }
