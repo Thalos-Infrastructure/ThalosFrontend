@@ -316,6 +316,8 @@ interface Milestone {
 }
 interface Agreement {
   id: string
+  /** Thalos `agreements.id` (UUID). `id` above is the contract id once deployed. */
+  nestId?: string
   title: string
   counterparty: string
   status: string
@@ -390,6 +392,7 @@ function mapNestAgreementToUi(
 
   return {
     id: agreement.contract_id || agreement.id,
+    nestId: agreement.id,
     title: agreement.title,
     counterparty: counterparty
       ? `${counterparty.slice(0, 8)}...`
@@ -4073,18 +4076,37 @@ function BusinessDashboardPage() {
             </div>
             {/* Chat Content */}
             <div className="flex-1 overflow-hidden">
-              <AgreementChat
-                agreementId={showAgreementChat}
-                currentUserWallet={walletAddress || ""}
-                counterpartyWallet={
-                  agreements.find((a) => a.id === showAgreementChat)?.receiver ||
-                  approverEscrows.find((a) => a.id === showAgreementChat)?.receiver ||
-                  ""
+              {/* Keyed by the Thalos agreement id, not the contract id the rest
+                  of the dashboard uses: sending the contract id made every
+                  request 404 with "Agreement not found". Escrows read straight
+                  from Trustless Work have no Thalos row at all, so they have no
+                  chat, and that is said rather than left to fail. */}
+              {(() => {
+                const chatAgreement = agreements.find((a) => a.id === showAgreementChat)
+                if (!chatAgreement?.nestId) {
+                  return (
+                    <div className="flex h-full items-center justify-center p-6 text-center">
+                      <p className="text-sm text-white/40">
+                        This agreement is not registered in Thalos, so it has no chat.
+                      </p>
+                    </div>
+                  )
                 }
-                token={token}
-                defaultOpen={true}
-                embedded={true}
-              />
+                return (
+                  <AgreementChat
+                    agreementId={chatAgreement.nestId}
+                    currentUserWallet={walletAddress || ""}
+                    counterpartyWallet={
+                      chatAgreement.receiver ||
+                      approverEscrows.find((a) => a.id === showAgreementChat)?.receiver ||
+                      ""
+                    }
+                    token={token}
+                    defaultOpen={true}
+                    embedded={true}
+                  />
+                )
+              })()}
             </div>
           </div>
         </div>

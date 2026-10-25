@@ -3967,16 +3967,34 @@ function PersonalDashboardPage() {
             </div>
             {/* Chat Content */}
             <div className="flex-1 overflow-hidden">
-              <AgreementChat
-                agreementId={showAgreementChat}
-                currentUserWallet={walletAddress || ""}
-                counterpartyWallet={
-                  agreements.find((a) => a.id === showAgreementChat)?.receiver || ""
+              {/* The chat is keyed by the Thalos agreement id, while the
+                  dashboards key everything by contract id once the escrow is
+                  deployed. Passing the contract id made every request 404 with
+                  "Agreement not found", which reads like the chat is broken
+                  rather than like the wrong id was sent. An agreement that was
+                  never persisted in Thalos has no id to use, and says so. */}
+              {(() => {
+                const chatAgreement = agreements.find((a) => a.id === showAgreementChat)
+                if (!chatAgreement?.nestId) {
+                  return (
+                    <div className="flex h-full items-center justify-center p-6 text-center">
+                      <p className="text-sm text-white/40">
+                        This agreement is not registered in Thalos, so it has no chat.
+                      </p>
+                    </div>
+                  )
                 }
-                token={token}
-                defaultOpen={true}
-                embedded={true}
-              />
+                return (
+                  <AgreementChat
+                    agreementId={chatAgreement.nestId}
+                    currentUserWallet={walletAddress || ""}
+                    counterpartyWallet={chatAgreement.receiver || ""}
+                    token={token}
+                    defaultOpen={true}
+                    embedded={true}
+                  />
+                )
+              })()}
             </div>
           </div>
         </div>
