@@ -3969,11 +3969,7 @@ function PersonalDashboardPage() {
         <div className="fixed bottom-6 right-6 z-50 w-96 h-[500px] bg-[#0c1220] rounded-2xl border border-white/10 shadow-[0_16px_64px_rgba(0,0,0,0.5)] overflow-hidden animate-in slide-in-from-bottom-4 duration-300">
           <div className="flex h-full flex-col">
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-white/10 px-4 py-3 bg-[#0a0d14]">
-              <div className="flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-                <h3 className="text-sm font-semibold text-white">Agreement Chat</h3>
-              </div>
+            <div className="flex items-center justify-end border-b border-white/10 bg-[#0a0d14] px-2 py-1">
               <div className="flex items-center gap-1">
                 <button
                   onClick={() => setShowAgreementChat(null)}
@@ -4017,9 +4013,17 @@ function PersonalDashboardPage() {
                     agreementId={chatAgreement.nestId}
                     currentUserWallet={walletAddress || ""}
                     counterpartyWallet={chatAgreement.receiver || ""}
+                    counterpartyName={chatAgreement.counterparty || chatAgreement.receiver}
+                    agreementTitle={chatAgreement.title}
                     token={token}
                     defaultOpen={true}
                     embedded={true}
+                    escrowDisputed={chatAgreement.status === "disputed"}
+                    onOpenSimpleDispute={() => {
+                      setShowAgreementChat(null)
+                      setActiveSection("agreements")
+                      setViewingAgreement(chatAgreement.id)
+                    }}
                   />
                 )
               })()}
