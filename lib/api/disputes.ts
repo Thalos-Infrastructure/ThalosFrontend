@@ -38,6 +38,21 @@ export interface DisputeResolution {
   created_at: string
 }
 
+export type DisputeProposalStatus = "pending" | "accepted" | "rejected" | "superseded"
+
+export interface DisputeProposal {
+  id: string
+  dispute_id: string
+  proposed_by: string
+  payer_percentage: number
+  payee_percentage: number
+  notes: string
+  status: DisputeProposalStatus
+  responded_by: string | null
+  created_at: string
+  updated_at: string
+}
+
 /**
  * Open a new dispute
  * Backend returns: { dispute, error }
@@ -331,6 +346,88 @@ export async function cancelDispute(
     return {
       success: false,
       error: e instanceof Error ? e.message : "Failed to cancel dispute",
+    }
+  }
+}
+
+/**
+ * Propose a split. Nest records it; wallets still have to sign resolve_dispute.
+ * POST /v1/disputes/:id/proposals
+ */
+export async function proposeSettlement(
+  disputeId: string,
+  data: {
+    proposed_by: string
+    payer_percentage: number
+    payee_percentage: number
+    notes?: string
+  },
+  token: string,
+): Promise<ApiResponse<DisputeProposal>> {
+  try {
+    const response = await apiRequest<unknown>(
+      `/disputes/${disputeId}/proposals`,
+      { method: "POST", body: JSON.stringify(data) },
+      token,
+    )
+    if (!response.success) return { success: false, error: response.error }
+    const payload = response.data as Record<string, unknown>
+    if (payload.error) return { success: false, error: payload.error as string }
+    return { success: true, data: payload.proposal as DisputeProposal }
+  } catch (e) {
+    return {
+      success: false,
+      error: e instanceof Error ? e.message : "Failed to propose settlement",
+    }
+  }
+}
+
+/** POST /v1/disputes/:id/proposals/:proposalId/accept */
+export async function acceptProposal(
+  disputeId: string,
+  proposalId: string,
+  actorWallet: string,
+  token: string,
+): Promise<ApiResponse<DisputeProposal>> {
+  try {
+    const response = await apiRequest<unknown>(
+      `/disputes/${disputeId}/proposals/${proposalId}/accept`,
+      { method: "POST", body: JSON.stringify({ actor_wallet: actorWallet }) },
+      token,
+    )
+    if (!response.success) return { success: false, error: response.error }
+    const payload = response.data as Record<string, unknown>
+    if (payload.error) return { success: false, error: payload.error as string }
+    return { success: true, data: payload.proposal as DisputeProposal }
+  } catch (e) {
+    return {
+      success: false,
+      error: e instanceof Error ? e.message : "Failed to accept proposal",
+    }
+  }
+}
+
+/** POST /v1/disputes/:id/proposals/:proposalId/reject */
+export async function rejectProposal(
+  disputeId: string,
+  proposalId: string,
+  actorWallet: string,
+  token: string,
+): Promise<ApiResponse<DisputeProposal>> {
+  try {
+    const response = await apiRequest<unknown>(
+      `/disputes/${disputeId}/proposals/${proposalId}/reject`,
+      { method: "POST", body: JSON.stringify({ actor_wallet: actorWallet }) },
+      token,
+    )
+    if (!response.success) return { success: false, error: response.error }
+    const payload = response.data as Record<string, unknown>
+    if (payload.error) return { success: false, error: payload.error as string }
+    return { success: true, data: payload.proposal as DisputeProposal }
+  } catch (e) {
+    return {
+      success: false,
+      error: e instanceof Error ? e.message : "Failed to reject proposal",
     }
   }
 }
