@@ -485,6 +485,8 @@ export async function getAgreementByIdWithParticipants(
 
 // ── Agreement Chat (messages via Nest + JWT) ──────────────────────────
 
+import type { AttachedFile } from "./files"
+
 export interface AgreementMessage {
   id: string
   agreement_id: string
@@ -492,6 +494,8 @@ export interface AgreementMessage {
   message: string
   created_at: string
   read_at: string | null
+  /** Resolved by the backend. Empty for a plain-text message. */
+  attachments?: AttachedFile[]
 }
 
 /**
@@ -539,13 +543,19 @@ export async function sendAgreementMessageApi(
   message: string,
   senderWallet: string,
   token?: string,
+  /** Ids from `uploadFileApi`. The message may be empty when these are present. */
+  attachmentIds: string[] = [],
 ): Promise<ApiResponse<AgreementMessage>> {
   try {
     const response = await apiRequest<unknown>(
       `/agreements/${agreementId}/messages`,
       {
         method: "POST",
-        body: JSON.stringify({ message: message.trim(), sender_wallet: senderWallet }),
+        body: JSON.stringify({
+          message: message.trim(),
+          sender_wallet: senderWallet,
+          ...(attachmentIds.length > 0 ? { attachment_ids: attachmentIds } : {}),
+        }),
       },
       token,
     )
