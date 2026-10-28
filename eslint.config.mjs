@@ -38,4 +38,4 @@ export default [
       "@next/next/no-assign-module-variable": "off",
     },
   },
-]
+];

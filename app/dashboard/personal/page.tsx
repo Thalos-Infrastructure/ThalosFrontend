@@ -1235,9 +1235,9 @@ function PersonalDashboardPage() {
 
   /* ── Agreements filter/sort state ── */
   const [searchQuery, setSearchQuery] = useState("")
-  const [statusFilter, setStatusFilter] = useState<"all" | "funded" | "in_progress" | "released">(
-    "all",
-  )
+  const [statusFilter, setStatusFilter] = useState<
+    "all" | "funded" | "in_progress" | "released" | "disputed"
+  >("all")
   const [sortBy, setSortBy] = useState<"date" | "amount" | "title">("date")
   const [currentPage, setCurrentPage] = useState(1)
   const [walletFilter, setWalletFilter] = useState<string | null>(null)
@@ -1348,6 +1348,15 @@ function PersonalDashboardPage() {
     // Step C: Apply statusFilter filtering
     if (statusFilter !== "all") {
       list = list.filter((a) => {
+        const isDisputed =
+          a.status === "disputed" ||
+          a.status === "dispute" ||
+          Boolean(
+            a.milestones?.some(
+              (m) => m.status === "disputed" || m.status === "dispute",
+            ),
+          )
+        if (statusFilter === "disputed") return isDisputed
         const allReleased =
           a.milestones && a.milestones.length > 0 && allMilestonesReleased(a.milestones)
         const actualStatus = allReleased ? "released" : a.status
@@ -1388,11 +1397,23 @@ function PersonalDashboardPage() {
   }, [statusFilter, searchQuery, sortBy, walletFilter])
 
   const statusCounts = useMemo(() => {
-    const counts = { all: agreements.length, funded: 0, in_progress: 0, released: 0 }
+    const counts = { all: agreements.length, funded: 0, in_progress: 0, released: 0, disputed: 0 }
     agreements.forEach((agr) => {
-      const allReleased = allMilestonesReleased(agr.milestones)
-      const s = allReleased ? "released" : agr.status
-      if (s in counts) counts[s as keyof typeof counts]++
+      const isDisputed =
+        agr.status === "disputed" ||
+        agr.status === "dispute" ||
+        Boolean(
+          agr.milestones?.some(
+            (m) => m.status === "disputed" || m.status === "dispute",
+          ),
+        )
+      if (isDisputed) {
+        counts.disputed++
+      } else {
+        const allReleased = allMilestonesReleased(agr.milestones)
+        const s = allReleased ? "released" : agr.status
+        if (s in counts) counts[s as keyof typeof counts]++
+      }
     })
     return counts
   }, [agreements])
