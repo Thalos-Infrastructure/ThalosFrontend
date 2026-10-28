@@ -481,6 +481,11 @@ const translations: Record<Lang, Record<string, string>> = {
     "dispute.confirm": "Confirm Dispute",
     "dispute.inDispute": "In Dispute",
     "dispute.awaitingResolution": "Awaiting resolution by dispute resolver",
+    "dispute.raisedNotification": "Dispute has been raised. The dispute resolver has been notified.",
+    "agreements.tabDisputed": "In Dispute",
+    "agreements.tabDisputedDesc": "Requires resolution",
+    "agreements.emptyDisputed": "No disputed agreements",
+    "agreements.emptyDisputedDesc": "Agreements with open disputes requiring resolution will appear here",
 
     "theme.light": "Light",
     "theme.dark": "Dark",
@@ -1365,6 +1370,11 @@ const translations: Record<Lang, Record<string, string>> = {
     "dispute.confirm": "Confirmar Disputa",
     "dispute.inDispute": "En Disputa",
     "dispute.awaitingResolution": "Esperando resolucion del mediador",
+    "dispute.raisedNotification": "Se ha presentado una disputa. El mediador ha sido notificado.",
+    "agreements.tabDisputed": "En Disputa",
+    "agreements.tabDisputedDesc": "Requiere resolución",
+    "agreements.emptyDisputed": "Sin acuerdos en disputa",
+    "agreements.emptyDisputedDesc": "Los acuerdos con disputas abiertas que requieren resolución aparecerán aquí",
 
     // Wizard steps & labels
     "wizard.howPayment": "Como debe funcionar el pago?",

@@ -6,6 +6,7 @@ import { LanguageProvider } from "@/lib/i18n"
 import { StellarWalletProvider } from "@/lib/stellar-wallet"
 import { PollarWalletProvider } from "@/lib/pollar-wallet"
 import { AuthProvider } from "@/lib/auth-provider"
+import { Toaster } from "@/components/ui/sonner"
 // Unmounted while Accesly's infra is disabled (see below) — keep the import
 // commented alongside the JSX so restoring it is a two-line uncomment.
 // import { ThalosAcceslyProvider } from '@/lib/accesly/accesly-provider'
@@ -67,7 +68,10 @@ export default function RootLayout({
                 import above to restore. */}
             {/* <ThalosAcceslyProvider> */}
             <StellarWalletProvider>
-              <PollarWalletProvider>{children}</PollarWalletProvider>
+              <PollarWalletProvider>
+                {children}
+                <Toaster position="top-right" richColors />
+              </PollarWalletProvider>
             </StellarWalletProvider>
             {/* </ThalosAcceslyProvider> */}
           </AuthProvider>
