@@ -47,6 +47,7 @@ import { cn } from "@/lib/utils"
 import { statusConfigForState } from "./statusConfig"
 import { deriveLifecycleState } from "@/lib/permissions/agreementState"
 import { useLanguage } from "@/lib/i18n"
+import { toast } from "sonner"
 import { useHasSigningWallet, useSigningWalletState } from "@/lib/use-current-address"
 import { usePollarWallet } from "@/lib/pollar-wallet"
 import { useStellarWallet } from "@/lib/stellar-wallet"
@@ -214,6 +215,10 @@ export function ApproverAgreementDetail({
       setDisputedMs((prev) => new Set(prev).add(idx))
       await onEscrowChanged?.()
       setShowDisputeConfirm(null)
+      toast.error(
+        t("dispute.raisedNotification") ||
+          "Dispute has been raised for this agreement. Dispute resolver notified.",
+      )
     } catch (e: any) {
       setTxStatus("error")
       setErrorMs(e.message || "Unknown error")

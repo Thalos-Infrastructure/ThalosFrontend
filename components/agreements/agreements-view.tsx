@@ -46,7 +46,7 @@ interface AgreementsViewProps {
 }
 
 type ViewMode = "all" | "buyer" | "seller"
-type TabType = "pending" | "active" | "completed"
+type TabType = "pending" | "active" | "completed" | "disputed"
 type PendingGroup = "approval" | "funding" | "review" | "dispute"
 
 const ITEMS_PER_PAGE = 10
@@ -65,6 +65,7 @@ export function AgreementsView({
     "approval",
     "funding",
     "review",
+    "dispute",
   ])
   const [currentPage, setCurrentPage] = useState(1)
 
@@ -82,9 +83,18 @@ export function AgreementsView({
     const pending: Agreement[] = []
     const active: Agreement[] = []
     const completed: Agreement[] = []
+    const disputed: Agreement[] = []
 
     filteredByRole.forEach((agreement) => {
       const status = agreement.status.toLowerCase()
+      const isDisputed =
+        status === "dispute" ||
+        status === "disputed" ||
+        Boolean(
+          agreement.milestones?.some(
+            (m) => m.status === "disputed" || m.status === "dispute",
+          ),
+        )
 
       // Check milestone statuses for more accurate categorization
       const everyMilestoneReleased = allMilestonesReleased(agreement.milestones)
@@ -92,7 +102,11 @@ export function AgreementsView({
         (m) => m.status === "pending" || m.status === "approved",
       )
 
-      if (status === "completed" || status === "released" || everyMilestoneReleased) {
+      if (isDisputed) {
+        disputed.push(agreement)
+        // Also keep in pending so it appears in the pending grouped view under dispute
+        pending.push(agreement)
+      } else if (status === "completed" || status === "released" || everyMilestoneReleased) {
         completed.push(agreement)
       } else if (status === "in_progress" || status === "active") {
         active.push(agreement)
@@ -100,8 +114,6 @@ export function AgreementsView({
         status === "pending" ||
         status === "awaiting_funding" ||
         status === "funded" ||
-        status === "dispute" ||
-        status === "disputed" ||
         hasPendingMilestones
       ) {
         // Pending = needs action from someone
@@ -112,7 +124,7 @@ export function AgreementsView({
       }
     })
 
-    return { pending, active, completed }
+    return { pending, active, completed, disputed }
   }, [filteredByRole])
 
   // Group pending agreements by what action is needed
@@ -126,10 +138,18 @@ export function AgreementsView({
 
     categorized.pending.forEach((agreement) => {
       const status = agreement.status.toLowerCase()
+      const isDisputed =
+        status === "dispute" ||
+        status === "disputed" ||
+        Boolean(
+          agreement.milestones?.some(
+            (m) => m.status === "disputed" || m.status === "dispute",
+          ),
+        )
       const hasApprovedMilestones = agreement.milestones?.some((m) => m.status === "approved")
       const hasPendingMilestones = agreement.milestones?.some((m) => m.status === "pending")
 
-      if (status === "dispute") {
+      if (isDisputed) {
         groups.dispute.push(agreement)
       } else if (status === "funded" || hasApprovedMilestones) {
         // Funded or has approved milestones = waiting for approval to release
@@ -189,6 +209,13 @@ export function AgreementsView({
       description: "Finished",
       count: categorized.completed.length,
       icon: CheckCircle,
+    },
+    {
+      id: "disputed" as TabType,
+      label: "In Dispute",
+      description: "Requires resolution",
+      count: categorized.disputed.length,
+      icon: AlertTriangle,
     },
   ]
 
@@ -418,18 +445,28 @@ export function AgreementsView({
           )}
         </div>
       ) : (
-        /* Active / Completed - List View with Pagination */
+        /* Active / Completed / Disputed - List View with Pagination */
         <div className="space-y-3">
           <div className="rounded-xl border border-white/10 bg-gradient-to-br from-[#0c1220] to-[#0a0e18] divide-y divide-white/6 shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
             {paginatedAgreements.length === 0 ? (
               <EmptyState
                 message={
-                  activeTab === "active" ? "No active agreements" : "No completed agreements"
+                  activeTab === "active"
+                    ? "No active agreements"
+                    : activeTab === "completed"
+                      ? "No completed agreements"
+                      : activeTab === "disputed"
+                        ? "No disputed agreements"
+                        : "No agreements found"
                 }
                 description={
                   activeTab === "active"
                     ? "Agreements with work in progress will appear here"
-                    : "Completed agreements will appear here"
+                    : activeTab === "completed"
+                      ? "Completed agreements will appear here"
+                      : activeTab === "disputed"
+                        ? "Agreements with open disputes requiring resolution will appear here"
+                        : "Agreements will appear here"
                 }
               />
             ) : (
@@ -498,6 +535,7 @@ function AgreementCard({
     completed: { bg: "bg-emerald-400/10", text: "text-emerald-400" },
     released: { bg: "bg-emerald-400/10", text: "text-emerald-400" },
     dispute: { bg: "bg-rose-400/10", text: "text-rose-400" },
+    disputed: { bg: "bg-rose-400/10", text: "text-rose-400" },
   }
 
   const colors = statusColors[agreement.status.toLowerCase()] || statusColors.pending
@@ -523,8 +561,17 @@ function AgreementCard({
   const funderLabel =
     partyLabel(agreement.payer) ??
     (agreement.role === "buyer" ? "You" : agreement.role === "seller" ? "Counterparty" : null)
-  const nextAction =
-    agreement.role === "seller"
+  const isDisputed =
+    agreement.status.toLowerCase() === "dispute" ||
+    agreement.status.toLowerCase() === "disputed" ||
+    Boolean(
+      agreement.milestones?.some(
+        (m) => m.status === "disputed" || m.status === "dispute",
+      ),
+    )
+  const nextAction = isDisputed
+    ? "Awaiting resolution"
+    : agreement.role === "seller"
       ? agreement.status === "funded"
         ? "Submit milestone"
         : "Review agreement"
