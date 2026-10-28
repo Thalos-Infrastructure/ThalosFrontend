@@ -115,6 +115,12 @@ const statusConfig: Record<
     color: "text-rose-400",
     bgColor: "bg-rose-400/10",
   },
+  dispute: {
+    icon: <AlertCircle className="h-3 w-3" />,
+    label: "Dispute",
+    color: "text-rose-400",
+    bgColor: "bg-rose-400/10",
+  },
   resolved: {
     icon: <CheckCircle className="h-3 w-3" />,
     label: "Resolved",
@@ -139,7 +145,7 @@ export function AgreementsList({
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedType, setSelectedType] = useState<string | null>(null)
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(
-    new Set(["active", "funded", "pending"]),
+    new Set(["active", "funded", "pending", "dispute", "disputed"]),
   )
   const [copiedId, setCopiedId] = useState<string | null>(null)
 
@@ -164,7 +170,10 @@ export function AgreementsList({
     }
 
     filtered.forEach((a) => {
-      if (groups[a.status]) {
+      const s = a.status === "disputed" ? "dispute" : a.status
+      if (groups[s]) {
+        groups[s].push(a)
+      } else if (groups[a.status]) {
         groups[a.status].push(a)
       }
     })
