@@ -82,7 +82,6 @@ export async function openDispute(
         agreement_id: input.agreement_id,
         opened_by: input.opened_by,
         reason: input.reason,
-        evidence_urls: input.evidence_urls || [],
         status: "open",
       })
       .select()

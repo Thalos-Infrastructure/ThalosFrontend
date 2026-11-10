@@ -169,7 +169,7 @@ export function ApproverMilestoneSection({
     setTxStatus("building")
     try {
       const { disputeMilestone } = await import("@/services/escrowService")
-      const { openDispute } = await import("@/lib/actions/disputes")
+      const { openDispute } = await import("@/lib/api/disputes")
 
       const res = await disputeMilestone(
         agr.id,
@@ -180,16 +180,17 @@ export function ApproverMilestoneSection({
       )
       const submitted = await signAndSubmit("dispute", res, "Error raising dispute")
 
-      // Register the dispute in Supabase only after the on-chain one went
-      // through: a build response without an XDR must not create a DB-only
-      // dispute.
-      if (submitted && agr.agreement_id) {
-        await openDispute({
-          agreement_id: agr.agreement_id,
-          opened_by: walletAddress,
-          reason: `Dispute raised on milestone ${idx + 1}`,
-          evidence_urls: [],
-        })
+      // Nest row only after the on-chain dispute actually went through. Do not
+      // write evidence_urls: that column is not on the live disputes table.
+      if (submitted && agr.agreement_id && token) {
+        await openDispute(
+          {
+            agreement_id: agr.agreement_id,
+            opened_by: walletAddress,
+            reason: `Dispute raised on milestone ${idx + 1}`,
+          },
+          token,
+        )
       }
       setDisputedMs((prev) => new Set(prev).add(idx))
       await onEscrowChanged?.()

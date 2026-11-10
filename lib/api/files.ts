@@ -16,6 +16,8 @@ export interface AttachedFile {
   name: string
   contentType: string
   sizeBytes: number
+  /** SHA-256 of the bytes at upload. Null on files stored before hashing. */
+  sha256?: string | null
 }
 
 /** Kept in step with the backend's `files.constants.ts`. */

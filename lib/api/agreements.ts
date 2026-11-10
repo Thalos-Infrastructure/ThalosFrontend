@@ -487,6 +487,8 @@ export async function getAgreementByIdWithParticipants(
 
 import type { AttachedFile } from "./files"
 
+export type AgreementMessageKind = "user" | "system" | "event"
+
 export interface AgreementMessage {
   id: string
   agreement_id: string
@@ -494,6 +496,10 @@ export interface AgreementMessage {
   message: string
   created_at: string
   read_at: string | null
+  /** user = participant text; system = Thalos notice; event = agreement lifecycle. */
+  kind?: AgreementMessageKind
+  event_type?: string | null
+  metadata?: Record<string, unknown>
   /** Resolved by the backend. Empty for a plain-text message. */
   attachments?: AttachedFile[]
 }
@@ -505,7 +511,7 @@ export interface AgreementMessage {
 export async function getAgreementMessagesApi(
   agreementId: string,
   token?: string,
-): Promise<ApiResponse<AgreementMessage[]>> {
+): Promise<ApiResponse<AgreementMessage[]> & { unreadCount?: number }> {
   try {
     const response = await apiRequest<unknown>(
       `/agreements/${agreementId}/messages`,
@@ -525,11 +531,38 @@ export async function getAgreementMessagesApi(
       return { success: false, error }
     }
 
-    return { success: true, data: messages }
+    return {
+      success: true,
+      data: messages,
+      unreadCount: Number(payload.unread_count ?? 0),
+    }
   } catch (e) {
     return {
       success: false,
       error: e instanceof Error ? e.message : "Failed to fetch messages",
+    }
+  }
+}
+
+/** POST /v1/agreements/:agreementId/messages/read — only while the thread is open. */
+export async function markAgreementMessagesReadApi(
+  agreementId: string,
+  token?: string,
+): Promise<ApiResponse<{ marked: number }>> {
+  try {
+    const response = await apiRequest<unknown>(
+      `/agreements/${agreementId}/messages/read`,
+      { method: "POST" },
+      token,
+    )
+    if (!response.success) return { success: false, error: response.error }
+    const payload = response.data as Record<string, unknown>
+    if (payload.error) return { success: false, error: payload.error as string }
+    return { success: true, data: { marked: Number(payload.marked ?? 0) } }
+  } catch (e) {
+    return {
+      success: false,
+      error: e instanceof Error ? e.message : "Failed to mark messages read",
     }
   }
 }

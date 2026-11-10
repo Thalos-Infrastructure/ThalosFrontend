@@ -1,16 +1,18 @@
 "use client"
 
-import { useState, useEffect, useRef, useMemo } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
 import {
   getAgreementMessagesApi,
+  markAgreementMessagesReadApi,
   sendAgreementMessageApi,
   type AgreementMessage,
 } from "@/lib/api/agreements"
-import { Send, MessageCircle, AlertTriangle, Paperclip, X, Loader2 } from "lucide-react"
+import { Send, MessageCircle, Paperclip, X, Loader2 } from "lucide-react"
 import { MessageAttachments } from "./message-attachments"
+import { ChatDisputePanel } from "./chat-dispute-panel"
 import {
   uploadFileApi,
   isAllowedFile,
@@ -26,11 +28,17 @@ interface AgreementChatProps {
   currentUserWallet: string
   counterpartyWallet: string
   counterpartyName?: string
+  /** Shown in the header so the thread is not an anonymous "Agreement Chat". */
+  agreementTitle?: string
   /** App JWT from useAuthStore — required for Nest endpoints. */
   token?: string | null
   className?: string
   defaultOpen?: boolean
   embedded?: boolean // When true, removes the header and shows full height
+  /** Simple dispute: parent runs the existing Trustless Work open-dispute flow. */
+  onOpenSimpleDispute?: () => void
+  /** Escrow already disputed on-chain — show the split UI even with no Nest row yet. */
+  escrowDisputed?: boolean
 }
 
 export function AgreementChat({
@@ -38,10 +46,13 @@ export function AgreementChat({
   currentUserWallet,
   counterpartyWallet,
   counterpartyName,
+  agreementTitle,
   token,
   className,
   defaultOpen = false,
   embedded = false,
+  onOpenSimpleDispute,
+  escrowDisputed = false,
 }: AgreementChatProps) {
   const [messages, setMessages] = useState<AgreementMessage[]>([])
   const [newMessage, setNewMessage] = useState("")
@@ -49,6 +60,7 @@ export function AgreementChat({
   const [sending, setSending] = useState(false)
   const [isOpen, setIsOpen] = useState(defaultOpen)
   const [chatError, setChatError] = useState<string | null>(null)
+  const [unreadCount, setUnreadCount] = useState(0)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const pollInterval = useRef<NodeJS.Timeout | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -58,15 +70,23 @@ export function AgreementChat({
   const [pending, setPending] = useState<AttachedFile[]>([])
   const [uploading, setUploading] = useState(false)
 
-  async function loadMessages() {
-    setLoading(true)
+  async function loadMessages(opts?: { markRead?: boolean }) {
     setChatError(null)
-    const { data, error } = await getAgreementMessagesApi(agreementId, token ?? undefined)
+    if (opts?.markRead && token) {
+      await markAgreementMessagesReadApi(agreementId, token)
+    }
+    const {
+      data,
+      error,
+      unreadCount: unread,
+    } = await getAgreementMessagesApi(agreementId, token ?? undefined)
     if (error) {
       setChatError(error)
       setMessages([])
+      setUnreadCount(unread ?? 0)
     } else {
       setMessages(data || [])
+      setUnreadCount(opts?.markRead ? 0 : (unread ?? 0))
     }
     setLoading(false)
   }
@@ -77,14 +97,20 @@ export function AgreementChat({
 
   useEffect(() => {
     if (isOpen) {
-      loadMessages()
-      // Poll for new messages every 5 seconds when chat is open
-      pollInterval.current = setInterval(loadMessages, 5000)
+      setLoading(true)
+      void loadMessages({ markRead: true })
+      // Poll while the thread is open. Read is stamped only on this path, not
+      // on a background peek, so the other party still sees an unread until
+      // they actually open the chat.
+      pollInterval.current = setInterval(() => void loadMessages({ markRead: true }), 5000)
+    } else if (!embedded) {
+      void loadMessages()
+      pollInterval.current = setInterval(() => void loadMessages(), 15000)
     }
     return () => {
       if (pollInterval.current) clearInterval(pollInterval.current)
     }
-  }, [isOpen, agreementId])
+  }, [isOpen, agreementId, token, embedded])
 
   useEffect(() => {
     scrollToBottom()
@@ -256,60 +282,105 @@ export function AgreementChat({
   }
 
   function isOwnMessage(message: AgreementMessage) {
-    return message.sender_wallet.toLowerCase() === currentUserWallet.toLowerCase()
+    return (message.sender_wallet ?? "").toLowerCase() === currentUserWallet.toLowerCase()
+  }
+
+  function isLifecycle(message: AgreementMessage) {
+    return message.kind === "event" || message.kind === "system"
+  }
+
+  const heading = agreementTitle || counterpartyName || "Agreement chat"
+
+  function renderThread() {
+    if (loading && messages.length === 0) {
+      return (
+        <div className="flex h-full items-center justify-center">
+          <p className="text-sm text-white/40">Loading messages...</p>
+        </div>
+      )
+    }
+    if (messages.length === 0) {
+      return (
+        <div className="flex h-full flex-col items-center justify-center py-12 text-center">
+          <MessageCircle className="mb-3 h-12 w-12 text-white/10" />
+          <p className="text-sm text-white/40">
+            {escrowDisputed ? "No chat history yet" : "No messages yet"}
+          </p>
+          <p className="mt-1 text-xs text-white/30">
+            {escrowDisputed
+              ? "Lifecycle events only appear from this point on. Use Dispute above to propose a split."
+              : `Start the conversation with ${counterpartyName || "your counterparty"}`}
+          </p>
+        </div>
+      )
+    }
+    return messages.map((msg) => {
+      if (isLifecycle(msg)) {
+        return (
+          <div key={msg.id} className="flex justify-center px-2">
+            <p className="max-w-[90%] rounded-full bg-white/5 px-3 py-1 text-center text-[11px] text-white/50">
+              {msg.message}
+              <span className="ml-2 text-white/25">{formatTime(msg.created_at)}</span>
+            </p>
+          </div>
+        )
+      }
+      const isOwn = isOwnMessage(msg)
+      return (
+        <div
+          key={msg.id}
+          className={cn("flex max-w-[85%] flex-col", isOwn ? "ml-auto items-end" : "items-start")}
+        >
+          <div
+            className={cn(
+              "rounded-2xl px-4 py-2.5",
+              isOwn ? "bg-[#f0b400] text-[#0c1220]" : "bg-white/10 text-white",
+            )}
+          >
+            {msg.message && <p className="text-sm">{msg.message}</p>}
+            <MessageAttachments
+              attachments={msg.attachments ?? []}
+              token={token}
+              isOwn={isOwn}
+              className={msg.message ? "mt-2" : undefined}
+            />
+          </div>
+          <span className="mt-1 px-1 text-[10px] text-white/30">{formatTime(msg.created_at)}</span>
+        </div>
+      )
+    })
+  }
+
+  function renderToolbar() {
+    return (
+      <ChatDisputePanel
+        agreementId={agreementId}
+        currentUserWallet={currentUserWallet}
+        token={token}
+        escrowDisputed={escrowDisputed}
+        onOpenSimpleDispute={onOpenSimpleDispute}
+        onChanged={() => void loadMessages({ markRead: true })}
+      >
+        <div className="min-w-0">
+          <p className="truncate text-sm font-medium text-white" title={heading}>
+            {heading}
+          </p>
+          {agreementTitle && counterpartyName && (
+            <p className="truncate text-[11px] text-white/40">{counterpartyName}</p>
+          )}
+        </div>
+      </ChatDisputePanel>
+    )
   }
 
   // Embedded mode - always open, no toggle button
   if (embedded) {
     return (
-      <div className={cn("flex flex-col h-full", className)}>
-        {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-3">
-          {loading && messages.length === 0 ? (
-            <div className="flex items-center justify-center h-full">
-              <p className="text-sm text-white/40">Loading messages...</p>
-            </div>
-          ) : messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-center py-12">
-              <MessageCircle className="h-12 w-12 text-white/10 mb-3" />
-              <p className="text-sm text-white/40">No messages yet</p>
-              <p className="text-xs text-white/30 mt-1">
-                Start the conversation with {counterpartyName || "your counterparty"}
-              </p>
-            </div>
-          ) : (
-            messages.map((msg) => {
-              const isOwn = isOwnMessage(msg)
-              return (
-                <div
-                  key={msg.id}
-                  className={cn(
-                    "flex flex-col max-w-[85%]",
-                    isOwn ? "ml-auto items-end" : "items-start",
-                  )}
-                >
-                  <div
-                    className={cn(
-                      "rounded-2xl px-4 py-2.5",
-                      isOwn ? "bg-[#f0b400] text-[#0c1220]" : "bg-white/10 text-white",
-                    )}
-                  >
-                    {msg.message && <p className="text-sm">{msg.message}</p>}
-                    <MessageAttachments
-                      attachments={msg.attachments ?? []}
-                      token={token}
-                      isOwn={isOwn}
-                      className={msg.message ? "mt-2" : undefined}
-                    />
-                  </div>
-                  <span className="text-[10px] text-white/30 mt-1 px-1">
-                    {formatTime(msg.created_at)}
-                  </span>
-                </div>
-              )
-            })
-          )}
-          {chatError && <div className="text-xs text-red-400 text-center py-2">{chatError}</div>}
+      <div className={cn("flex h-full flex-col", className)}>
+        {renderToolbar()}
+        <div className="flex-1 space-y-3 overflow-y-auto p-4">
+          {renderThread()}
+          {chatError && <div className="py-2 text-center text-xs text-red-400">{chatError}</div>}
           <div ref={messagesEndRef} />
         </div>
 
@@ -356,9 +427,9 @@ export function AgreementChat({
       >
         <MessageCircle className="h-4 w-4" />
         Chat
-        {messages.length > 0 && (
+        {unreadCount > 0 && (
           <span className="ml-1 rounded-full bg-[#f0b400]/20 px-1.5 py-0.5 text-[10px] font-bold text-[#f0b400]">
-            {messages.length}
+            {unreadCount}
           </span>
         )}
       </button>
@@ -369,66 +440,18 @@ export function AgreementChat({
     <div
       className={cn("rounded-xl border border-white/10 bg-[#0c1220] overflow-hidden", className)}
     >
-      {/* Header */}
-      <div className="flex items-center justify-between border-b border-white/6 px-4 py-3">
-        <div className="flex items-center gap-2">
-          <MessageCircle className="h-4 w-4 text-[#f0b400]" />
-          <span className="text-sm font-medium text-white">Agreement Chat</span>
-        </div>
-        <button
-          onClick={() => setIsOpen(false)}
-          className="text-xs text-white/50 hover:text-white transition-colors"
-        >
-          Minimize
-        </button>
-      </div>
+      {renderToolbar()}
+      <button
+        type="button"
+        onClick={() => setIsOpen(false)}
+        className="px-4 py-1 text-left text-[11px] text-white/40 hover:text-white"
+      >
+        Minimize
+      </button>
 
-      {/* Messages */}
-      <div className="h-64 overflow-y-auto p-4 space-y-3">
-        {loading && messages.length === 0 ? (
-          <div className="flex items-center justify-center h-full">
-            <p className="text-sm text-white/40">Loading messages...</p>
-          </div>
-        ) : messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center">
-            <MessageCircle className="h-8 w-8 text-white/20 mb-2" />
-            <p className="text-sm text-white/40">No messages yet</p>
-            <p className="text-xs text-white/30">
-              Start the conversation with {counterpartyName || "your counterparty"}
-            </p>
-          </div>
-        ) : (
-          messages.map((msg) => {
-            const isOwn = isOwnMessage(msg)
-            return (
-              <div
-                key={msg.id}
-                className={cn(
-                  "flex flex-col max-w-[80%]",
-                  isOwn ? "ml-auto items-end" : "items-start",
-                )}
-              >
-                <div
-                  className={cn(
-                    "rounded-xl px-3 py-2",
-                    isOwn ? "bg-[#f0b400]/20 text-white" : "bg-white/10 text-white",
-                  )}
-                >
-                  {msg.message && <p className="text-sm">{msg.message}</p>}
-                  <MessageAttachments
-                    attachments={msg.attachments ?? []}
-                    token={token}
-                    className={msg.message ? "mt-2" : undefined}
-                  />
-                </div>
-                <span className="text-[10px] text-white/30 mt-1 px-1">
-                  {formatTime(msg.created_at)}
-                </span>
-              </div>
-            )
-          })
-        )}
-        {chatError && <div className="text-xs text-red-400 text-center py-2">{chatError}</div>}
+      <div className="h-64 space-y-3 overflow-y-auto p-4">
+        {renderThread()}
+        {chatError && <div className="py-2 text-center text-xs text-red-400">{chatError}</div>}
         <div ref={messagesEndRef} />
       </div>
 
