@@ -15,6 +15,7 @@ import React from "react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useLanguage } from "@/lib/i18n"
+import { toast } from "sonner"
 import { useHasSigningWallet } from "@/lib/use-current-address"
 import { useAuthStore } from "@/lib/auth-store"
 import { signEscrowOperation, type EscrowOperation, type TxStatus } from "@/lib/signing"
@@ -194,6 +195,10 @@ export function ApproverMilestoneSection({
       setDisputedMs((prev) => new Set(prev).add(idx))
       await onEscrowChanged?.()
       setShowDisputeConfirm(null)
+      toast.error(
+        t("dispute.raisedNotification") ||
+          "Dispute has been raised for this agreement. Dispute resolver notified.",
+      )
     } catch (e) {
       setTxStatus("error")
       setErrorMs(e instanceof Error ? e.message : "Unknown error")
