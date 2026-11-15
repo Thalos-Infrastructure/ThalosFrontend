@@ -97,7 +97,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // in localStorage but Nest sees none — banner + 403. Best-effort custodial
       // link (no message signing; Pollar can't) once auth_user is on disk.
       const addr = newUser.wallet?.publicKey
-      if (addr && newUser.wallet?.provider !== "accesly") {
+      if (addr) {
         void import("@/lib/link-external-wallet")
           .then(({ linkExternalWalletWithProof }) =>
             linkExternalWalletWithProof(addr, newToken, "custodial"),
@@ -142,8 +142,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!normalized) throw new Error("Invalid user payload")
         // /me falls back to provider "embedded" while the wallet_provider
         // migration is pending. If this session already knows a more specific
-        // provider for the SAME wallet (e.g. "accesly"), keep it — signing is
-        // dispatched by provider (#110), so losing it would break signing.
+        // provider for the SAME wallet, keep it — signing is dispatched by
+        // provider (#110), so losing it would break signing.
         try {
           const stored = normalizeAuthUser(JSON.parse(localStorage.getItem("auth_user") || "null"))
           if (

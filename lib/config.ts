@@ -106,7 +106,6 @@ export const POLLAR_ENABLED = POLLAR_PUBLISHABLE_KEY !== ""
 // our own modal — Pollar's login modal is never opened.
 //
 // Passkey is absent on purpose. Pollar's passkey path yields a `smart`
-// C-address, which Trustless Work escrows cannot use as a party; that flow is
-// #109 (Accesly), which bridges the smart account to a real G-address first.
+// C-address, which Trustless Work V1 escrows cannot use as a party.
 export const POLLAR_LOGIN_PROVIDERS = ["google", "github", "email"] as const
 export type PollarLoginProvider = (typeof POLLAR_LOGIN_PROVIDERS)[number]

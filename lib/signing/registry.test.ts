@@ -66,13 +66,8 @@ describe("resolveSigner", () => {
 
   it("signs with the session's wallet even when another is connected on the side", () => {
     globalThis.sessionStorage.setItem(STELLAR_WALLET_KEY, KIT_ADDRESS)
-    setAuthWallet("accesly")
-    expect(resolveSigner().id).toBe("accesly")
-  })
-
-  it("resolves the accesly provider for the accesly auth wallet", () => {
-    setAuthWallet("accesly")
-    expect(resolveSigner(AUTH_ADDRESS).id).toBe("accesly")
+    setAuthWallet("embedded")
+    expect(resolveSigner().id).toBe("social")
   })
 
   it("resolves the social provider for the embedded auth wallet", () => {

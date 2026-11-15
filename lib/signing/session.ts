@@ -15,7 +15,7 @@ const AUTH_USER_KEY = "auth_user"
 /** sessionStorage key holding the externally connected Kit wallet address. */
 export const STELLAR_WALLET_KEY = "thalos_stellar_address"
 
-/** Wallet attached to the logged-in JWT user (embedded/social or Accesly), if any. */
+/** Wallet attached to the logged-in JWT user (embedded/social), if any. */
 export function getStoredAuthWallet(): AuthWallet | null {
   if (typeof window === "undefined") return null
   try {

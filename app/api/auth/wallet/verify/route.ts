@@ -112,7 +112,7 @@ export async function POST(req: Request) {
     // unique per wallet so it never collides with real email accounts.
     const email = `${address.toLowerCase()}@wallet.thalos`
     // wallet_provider persists the login method so /me can echo it back
-    // (accesly/#109, pollar/#108…). Retry without it while the migration
+    // (pollar/#108…). Retry without it while the migration
     // hasn't run yet.
     let inserted = null
     const withProvider = await supabase

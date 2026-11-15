@@ -82,10 +82,10 @@ describe("wallet-auth contract", () => {
         token: "jwt",
       })
       const fetchSpy = vi.spyOn(globalThis, "fetch")
-      await verifyWalletLogin("G...", "ch", "sig", "accesly")
+      await verifyWalletLogin("G...", "ch", "sig", "pollar")
       const init = fetchSpy.mock.calls[0][1] as RequestInit
       const body = JSON.parse(init.body as string)
-      expect(body.provider).toBe("accesly")
+      expect(body.provider).toBe("pollar")
     })
   })
 })

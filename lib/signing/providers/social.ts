@@ -30,7 +30,7 @@ const NO_MESSAGE_SIGNING_MESSAGE =
 
 function embeddedWallet() {
   const wallet = getStoredAuthWallet()
-  return wallet && wallet.provider !== "accesly" ? wallet : null
+  return wallet ?? null
 }
 
 export const socialSigner: WalletSigner = {

@@ -162,10 +162,6 @@ server-side API key. See `docs/escrow.md` for the route table and telemetry sche
 - **No emails?** Agreements created from the dashboard go straight to Trustless Work and are
   never POSTed to `/v1/agreements`, so the backend emits no event and sends nothing. See the
   notifications section of `ThalosBackend/CLAUDE.md`.
-- **Accesly `/app-config` CORS error in the console** is harmless — the unregistered app id
-  `thalos-local` gets a 403 on preflight and the SDK falls back to testnet defaults. Never set
-  `NEXT_PUBLIC_ACCESLY_APP_ID` to a placeholder: a set-but-unregistered id makes the provider
-  run a bootstrap fetch, fail, and render its error fallback **in place of the whole app**.
 - `next dev` holds `.next/dev/lock`; kill stray node on :3000 and delete the lock before restart.
 - This machine's C: drive fills up easily; the npm cache and `.next`/node_modules are common
   culprits — deleting `~/AppData/Local/npm-cache/_cacache` and `.next` reclaims the most. A

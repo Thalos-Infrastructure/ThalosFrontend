@@ -5,7 +5,6 @@
  * method. Calls dispatch to the provider that owns the active wallet:
  *   - providers/kit.ts     → external wallets via Stellar Wallets Kit
  *   - providers/social.ts  → embedded custodial wallet (social/email, #108)
- *   - providers/accesly.ts → Accesly passkey smart account (#109)
  *
  * Usage:
  *   import { signTransaction, signEscrowOperation } from '@/lib/signing'

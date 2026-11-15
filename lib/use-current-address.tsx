@@ -42,11 +42,7 @@ export function useHasSigningWallet(): boolean {
 
   if (!token || !user?.wallet?.publicKey) return false
 
-  // Accesly signs with the key it reconstructs from the passkey, so it does not
-  // go through Pollar at all.
-  if (user.wallet.provider === "accesly") return true
-
-  // Everything else signs through `PollarClient.signTx`. `sessionVerified`
+  // Signing goes through `PollarClient.signTx`. `sessionVerified`
   // because a session restored optimistically from storage cannot sign yet —
   // that is Pollar's own guidance for sensitive actions.
   return hasSession && sessionVerified
@@ -71,7 +67,6 @@ export function useSigningWalletState(): SigningWalletState {
   // the agreement detail to users whose custodial session was perfectly fine.
   if (!hydrated) return "verifying"
   if (!token || !user?.wallet?.publicKey) return "none"
-  if (user.wallet.provider === "accesly") return "ready"
   if (hasSession && sessionVerified) return "ready"
   if (hasSession || isConnecting) return "verifying"
   return "expired"

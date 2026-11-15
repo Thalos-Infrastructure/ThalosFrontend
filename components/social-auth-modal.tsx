@@ -1,11 +1,8 @@
 "use client"
 
 import React, { useState } from "react"
-import { Button } from "@/components/ui/button"
 import { useLanguage } from "@/lib/i18n"
 import { useRouter } from "next/navigation"
-// Commented with the render below while Accesly is unmounted (see layout.tsx).
-// import { AcceslyAuthModal } from "@/components/accesly-auth-modal";
 import { PollarLoginOptions } from "@/components/auth/pollar-login-options"
 import { dashboardPathFor } from "@/lib/dashboard-path"
 import Image from "next/image"
@@ -24,7 +21,6 @@ export function SocialAuthModal({ open, onClose }: SocialAuthModalProps) {
   const { t } = useLanguage()
   const router = useRouter()
   const [accountType, setAccountType] = useState<"personal" | "enterprise">("personal")
-  const [showAccesly, setShowAccesly] = useState(false)
 
   if (!open) return null
 
@@ -146,33 +142,9 @@ export function SocialAuthModal({ open, onClose }: SocialAuthModalProps) {
                 <div className="h-px flex-1 bg-white/10" />
               </div>
             }
-          >
-            {/* Accesly (#109) is hidden, not removed: the passkey login is a
-                separate auth system and its own PR owns it. Restore by
-                uncommenting — the modal below and its state stay wired.
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setShowAccesly(true)}
-              className="h-11 w-full gap-3 rounded-xl border-[#f0b400]/25 bg-transparent text-sm font-medium text-white hover:bg-[#f0b400]/5 hover:border-[#f0b400]/40"
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f0b400" strokeWidth="1.5">
-                <path d="M12 1a5 5 0 0 0-5 5v4h10V6a5 5 0 0 0-5-5z" />
-                <rect x="4" y="10" width="16" height="12" rx="2" />
-                <circle cx="12" cy="16" r="1.5" fill="#f0b400" />
-              </svg>
-              Continue with Accesly (Passkey)
-            </Button>
-            */}
-          </PollarLoginOptions>
+          />
         </div>
       </div>
-
-      {/* Accesly passkey login (#109). Unmounted along with the layout's
-          ThalosAcceslyProvider: it calls useAccesly(), which throws without
-          the provider even while closed. Uncomment together with the provider.
-      <AcceslyAuthModal open={showAccesly} onClose={() => setShowAccesly(false)} />
-      */}
     </div>
   )
 }

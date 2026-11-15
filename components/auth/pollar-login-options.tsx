@@ -10,8 +10,8 @@
  *
  * Shared because there are two front doors — the navbar modal and the bottom-bar
  * panel — that used to carry copy-pasted button blocks and had already drifted
- * apart. Passkey is NOT here: Accesly is its own auth system, so the caller
- * renders that button itself (see components/accesly-auth-modal.tsx).
+ * apart. Passkey is not offered: Pollar's passkey path yields a C-address
+ * that Trustless Work V1 cannot use as an escrow party.
  */
 
 import React, { useState } from "react"

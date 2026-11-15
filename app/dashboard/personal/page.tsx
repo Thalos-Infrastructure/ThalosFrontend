@@ -1049,7 +1049,7 @@ function PersonalDashboardPage() {
   const signOut = useSignOut()
   const { user: socialUser, token } = useAuthStore()
   // A signing-capable wallet: external Kit wallet, or a custodial wallet whose
-  // provider signs through the unified signer (Accesly #109; social with #108).
+  // provider signs through the unified signer (#108).
   const isExternalWallet = useHasSigningWallet()
   const [loading, setLoading] = useState(false)
 
