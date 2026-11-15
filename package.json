@@ -21,8 +21,6 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@accesly/core": "^1.28.0",
-    "@accesly/react": "^2.18.0",
     "@creit.tech/stellar-wallets-kit": "^2.5.0",
     "@hookform/resolvers": "^3.10.0",
     "@lendara/widget": "^0.1.0",

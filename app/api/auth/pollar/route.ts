@@ -166,10 +166,8 @@ export async function POST(req: Request) {
   }
 
   // Pollar reports the custody directly, so trust it rather than sniffing the
-  // address shape. `smart` is the passkey C-address: Trustless Work cannot use a
-  // Soroban contract address as an escrow party, so a session backed by one
-  // could log in and then fail on every escrow. Passkey users go through #109
-  // (Accesly), which bridges the smart account to a real G-address first.
+  // address shape. `smart` is a passkey C-address: Trustless Work V1 cannot use
+  // a Soroban contract address as an escrow party, so refuse that custody.
   const custody = asString(verified.wallet?.type)
   if (!custody || !SUPPORTED_CUSTODY.has(custody)) {
     console.warn(`auth/pollar: unsupported wallet custody "${custody}"`)
@@ -177,7 +175,7 @@ export async function POST(req: Request) {
       {
         error:
           custody === "smart"
-            ? "Para entrar con passkey usa Accesly"
+            ? "Passkey todavía no está soportado: Trustless Work no acepta direcciones C como parte del escrow"
             : "Este método de login todavía no está soportado",
         code: "UNSUPPORTED_WALLET",
       },

@@ -13,7 +13,7 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Invalid token" }, { status: 401 })
   }
   const supabase = createServiceClient()
-  // wallet_provider distinguishes login methods (accesly/#109, pollar/#108…).
+  // wallet_provider distinguishes login methods (pollar/#108…).
   // Fall back to a provider-less select while the migration hasn't run yet.
   let row: {
     id: string

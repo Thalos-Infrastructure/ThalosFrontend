@@ -66,7 +66,7 @@ export function ApproverAgreementDetail({
   const { openWalletModal } = useStellarWallet()
   const { token } = useAuthStore()
   // Signing-capable wallet: external Kit, or custodial with a signing provider
-  // (Accesly #109) — all routed through the unified signer (#110).
+  // — all routed through the unified signer (#110).
   const isExternalWallet = useHasSigningWallet()
   const walletState = useSigningWalletState()
   const { resume, clearError } = usePollarWallet()

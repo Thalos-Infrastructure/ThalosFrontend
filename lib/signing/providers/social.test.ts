@@ -49,12 +49,6 @@ describe("socialSigner session resolution", () => {
     expect(socialSigner.ownsAddress(OTHER_ADDRESS)).toBe(false)
   })
 
-  it("ignores an Accesly wallet, which belongs to its own provider (#109)", () => {
-    setAuthWallet("accesly")
-    expect(socialSigner.isActive()).toBe(false)
-    expect(socialSigner.ownsAddress(ADDRESS)).toBe(false)
-  })
-
   it("is inactive with no logged-in user", () => {
     expect(socialSigner.isActive()).toBe(false)
   })

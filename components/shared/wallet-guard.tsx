@@ -41,10 +41,7 @@ function useSessionLapsed(): boolean {
   const { user, token } = useAuthStore()
 
   return (
-    !hasSession &&
-    Boolean(token) &&
-    Boolean(user?.wallet?.publicKey) &&
-    user?.wallet?.provider !== "accesly"
+    !hasSession && Boolean(token) && Boolean(user?.wallet?.publicKey)
   )
 }
 

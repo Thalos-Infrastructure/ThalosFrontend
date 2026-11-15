@@ -4,10 +4,9 @@
  * A WalletSigner is one login method capable of signing Stellar transactions:
  *  - "kit"     → external wallet via Stellar Wallets Kit (Freighter, xBull, LOBSTR…)
  *  - "social"  → custodial/embedded wallet from social or email login (#108)
- *  - "accesly" → Accesly passkey smart account (#109)
  */
 
-export type SignerProviderId = "kit" | "social" | "accesly"
+export type SignerProviderId = "kit" | "social"
 
 export interface SignedTransaction {
   signedTxXdr: string

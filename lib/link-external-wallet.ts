@@ -26,7 +26,6 @@ export async function linkExternalWalletWithProof(
   const authWallet = getStoredAuthWallet()
   const isSessionEmbedded =
     Boolean(authWallet) &&
-    authWallet!.provider !== "accesly" &&
     authWallet!.publicKey === walletAddress
 
   if (isSessionEmbedded) {

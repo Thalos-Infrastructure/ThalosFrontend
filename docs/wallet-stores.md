@@ -6,7 +6,7 @@ as interchangeable sources.
 
 | Store                     | Access path                                                   | Current consumers                                                                                                                      | Purpose                                                                                   |
 | ------------------------- | ------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| Nest `user_wallets`       | `lib/api/wallets.ts` → `${NEXT_PUBLIC_API_URL}/wallets/*`     | Profile linked-wallet UI, dashboard wallet selector, wallet-agreement panel, and wallet persistence in the Stellar/Accesly login flows | Authenticated operating wallets, primary/verified state, balances, and agreement grouping |
+| Nest `user_wallets`       | `lib/api/wallets.ts` → `${NEXT_PUBLIC_API_URL}/wallets/*`     | Profile linked-wallet UI, dashboard wallet selector, wallet-agreement panel, and wallet persistence in Pollar login flows | Authenticated operating wallets, primary/verified state, balances, and agreement grouping |
 | Next BFF `linked_wallets` | `app/api/wallets/{linked,link,unlink,set-primary}` → Supabase | No current UI caller and no reader left: the dead email module that queried it was removed                                             | Legacy wallet-linking routes                                                              |
 
 ## Nest `user_wallets`
